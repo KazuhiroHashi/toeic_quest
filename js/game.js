@@ -798,10 +798,17 @@
     var canCont = hasSave();
     $("btn-continue").style.display = canCont ? "block" : "none";
     $("btn-continue").addEventListener("click", function () { startGame(false); });
+    // double-tap confirm when a save exists (no confirm() dialog: blocked in sandboxed webviews)
+    var newArmed = false;
     $("btn-new").addEventListener("click", function () {
-      if (canCont) {
-        // confirm overwrite via simple flow
-        if (!confirm("ぼうけんのしょが あります。\nさいしょから はじめますか？")) return;
+      if (canCont && !newArmed) {
+        newArmed = true;
+        $("btn-new").textContent = "ほんとうに はじめから？";
+        setTimeout(function () {
+          newArmed = false;
+          $("btn-new").textContent = "はじめから";
+        }, 3000);
+        return;
       }
       startGame(true);
     });

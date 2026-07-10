@@ -1,0 +1,5158 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+</head>
+<body>
+<title>TOEIC QUEST - 英単語で魔王を倒せ</title>
+<style>
+/* TOEIC QUEST - DQ1-style retro RPG styling */
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --win-bg: #000;
+  --win-border: #fff;
+  --accent: #ffd54a;
+  --danger: #ff5a5a;
+  --good: #6fe36f;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  background: #000;
+  overflow: hidden;
+  font-family: "Courier New", "MS Gothic", "Hiragino Kaku Gothic ProN", monospace, sans-serif;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#app {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: #000;
+}
+
+#game-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  flex: 1;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+#screen {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  background: #000;
+  image-rendering: pixelated;
+}
+
+canvas#field-canvas {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* ---------- DQ-style windows ---------- */
+.dq-window {
+  background: var(--win-bg);
+  border: 3px solid var(--win-border);
+  border-radius: 8px;
+  box-shadow: 0 0 0 3px #000, inset 0 0 0 1px #000;
+  color: #fff;
+  padding: 10px 12px;
+  font-size: 15px;
+  line-height: 1.7;
+  letter-spacing: 1px;
+}
+
+/* status window top-left on field */
+#status-win {
+  position: absolute; top: 8px; left: 8px;
+  min-width: 120px;
+  font-size: 13px;
+  line-height: 1.5;
+  z-index: 5;
+  pointer-events: none;
+}
+#status-win .name { color: var(--accent); }
+
+/* message window */
+#msg-win {
+  position: absolute; left: 4%; right: 4%; bottom: 14%;
+  min-height: 96px;
+  z-index: 30;
+  display: none;
+  white-space: pre-wrap;
+}
+#msg-win .arrow {
+  position: absolute; bottom: 2px; right: 12px;
+  animation: blink 0.8s infinite;
+}
+@keyframes blink { 0%,100% {opacity:1;} 50% {opacity:0;} }
+
+/* command menu */
+.menu-win {
+  position: absolute;
+  z-index: 40;
+  display: none;
+  min-width: 150px;
+}
+.menu-win .menu-item {
+  padding: 3px 6px 3px 22px;
+  position: relative;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.menu-win .menu-item.sel::before {
+  content: "▶";
+  position: absolute; left: 2px;
+  color: #fff;
+  animation: blink 1s infinite;
+}
+.menu-win .menu-item.disabled { color: #777; }
+.menu-title {
+  color: var(--accent);
+  border-bottom: 2px solid #fff;
+  margin-bottom: 4px; padding-bottom: 2px;
+  font-size: 13px;
+}
+
+#cmd-win { left: 8px; bottom: 30%; }
+#sub-win { left: 170px; bottom: 26%; max-height: 46%; overflow-y: auto; }
+
+/* ---------- battle ---------- */
+#battle-screen {
+  position: absolute; inset: 0;
+  display: none;
+  background: #000;
+  z-index: 20;
+  overflow: hidden;
+}
+#battle-bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 30%, #1a2a4a 0%, #050510 70%);
+}
+#battle-frame {
+  position: absolute; top: 6%; left: 50%; transform: translateX(-50%);
+  width: 78%; max-width: 380px; aspect-ratio: 4/3;
+  border: 3px solid #fff; border-radius: 6px;
+  background: linear-gradient(#0b1030 0%, #0b1030 62%, #123018 62%, #123018 100%);
+  display: flex; align-items: center; justify-content: center;
+}
+#enemy-sprite {
+  font-size: 96px;
+  line-height: 1;
+  filter: contrast(1.15) saturate(1.2);
+  text-shadow: 0 6px 18px rgba(0,0,0,.7);
+  transition: transform .08s, opacity .4s, filter .3s;
+}
+#enemy-sprite.hit { transform: scale(1.08) translateX(4px); filter: brightness(3); }
+#enemy-sprite.dead { opacity: 0; transform: scale(.2) rotate(20deg); }
+#enemy-sprite.boss { font-size: 130px; }
+#enemy-name-tag {
+  position: absolute; top: 4px; left: 8px;
+  font-size: 13px; color: #fff; text-shadow: 1px 1px 0 #000;
+}
+#enemy-hp-bar {
+  position: absolute; bottom: 6px; left: 8%; right: 8%;
+  height: 8px; border: 1px solid #fff; border-radius: 4px; background: #300;
+}
+#enemy-hp-bar > div {
+  height: 100%; background: var(--danger); border-radius: 3px;
+  transition: width .3s;
+}
+#battle-status {
+  position: absolute; top: 8px; left: 8px; z-index: 5;
+  font-size: 13px; line-height: 1.5; min-width: 118px;
+}
+#battle-msg {
+  position: absolute; left: 4%; right: 4%; bottom: 25%;
+  min-height: 84px; z-index: 25; display: none; white-space: pre-wrap;
+}
+#battle-cmd { left: 8px; bottom: 2%; z-index: 26; }
+#battle-sub { left: 170px; bottom: 2%; z-index: 27; max-height: 40%; overflow-y: auto; }
+
+.shake { animation: shake .35s; }
+@keyframes shake {
+  0%,100% { transform: translate(0,0); }
+  20% { transform: translate(-8px,4px); }
+  40% { transform: translate(8px,-4px); }
+  60% { transform: translate(-6px,-3px); }
+  80% { transform: translate(6px,3px); }
+}
+.flash-red { animation: flashred .3s; }
+@keyframes flashred {
+  0%,100% { background-color: transparent; }
+  50% { background-color: rgba(255,0,0,.35); }
+}
+
+/* ---------- quiz ---------- */
+#quiz-overlay {
+  position: absolute; inset: 0;
+  z-index: 60;
+  display: none;
+  background: rgba(0,0,10,.82);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+#quiz-box {
+  width: 96%; max-width: 430px;
+  text-align: center;
+}
+#quiz-level-tag {
+  color: var(--accent); font-size: 13px; margin-bottom: 4px; letter-spacing: 2px;
+}
+#quiz-word {
+  font-size: 34px;
+  font-weight: bold;
+  color: #fff;
+  margin: 6px 0 4px;
+  letter-spacing: 1px;
+  word-break: break-all;
+}
+#quiz-hint { font-size: 12px; color: #9ad; margin-bottom: 8px; }
+#timer-bar-wrap {
+  width: 100%; height: 14px;
+  border: 2px solid #fff; border-radius: 7px;
+  margin: 6px 0 12px; overflow: hidden; background: #222;
+}
+#timer-bar {
+  height: 100%; width: 100%;
+  background: linear-gradient(90deg, #6fe36f, #ffd54a 60%, #ff5a5a);
+  transform-origin: left center;
+}
+.quiz-choice {
+  display: block; width: 100%;
+  margin: 7px 0;
+  padding: 11px 10px;
+  background: #000;
+  border: 2px solid #fff; border-radius: 8px;
+  color: #fff; font-size: 17px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.quiz-choice .num { color: var(--accent); margin-right: 8px; }
+.quiz-choice:active { background: #234; }
+.quiz-choice.correct { background: #063; border-color: var(--good); }
+.quiz-choice.wrong { background: #611; border-color: var(--danger); }
+#quiz-result {
+  font-size: 22px; font-weight: bold; min-height: 30px; margin-top: 6px;
+}
+#quiz-result.ok { color: var(--good); }
+#quiz-result.ng { color: var(--danger); }
+
+/* ---------- title ---------- */
+#title-screen {
+  position: absolute; inset: 0;
+  z-index: 80;
+  background: radial-gradient(ellipse at 50% 20%, #12224a, #000 75%);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  color: #fff;
+}
+#title-logo {
+  font-size: 44px; font-weight: bold;
+  color: var(--accent);
+  text-shadow: 3px 3px 0 #922, 6px 6px 0 #000;
+  letter-spacing: 4px;
+  margin-bottom: 4px;
+}
+#title-sub { font-size: 14px; color: #cde; margin-bottom: 40px; letter-spacing: 2px; }
+.title-btn {
+  display: block;
+  margin: 10px auto;
+  padding: 12px 34px;
+  font-size: 17px;
+  font-family: inherit;
+  background: #000; color: #fff;
+  border: 3px solid #fff; border-radius: 8px;
+  cursor: pointer;
+  letter-spacing: 3px;
+}
+.title-btn:active { background: #234; }
+#title-copy { position: absolute; bottom: 66px; font-size: 11px; color: #789; }
+
+/* ---------- touch controls ---------- */
+#controls {
+  position: relative;
+  width: 100%;
+  height: 168px;
+  flex: none;
+  background: #0a0a12;
+  border-top: 2px solid #223;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px calc(8px + env(safe-area-inset-bottom));
+  z-index: 90;
+}
+#dpad {
+  position: relative;
+  width: 138px; height: 138px;
+}
+.dpad-btn {
+  position: absolute;
+  width: 46px; height: 46px;
+  background: #223;
+  border: 2px solid #445;
+  border-radius: 8px;
+  color: #9ab;
+  font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+}
+.dpad-btn:active { background: #345; }
+#dpad-up    { top: 0; left: 46px; }
+#dpad-down  { bottom: 0; left: 46px; }
+#dpad-left  { top: 46px; left: 0; }
+#dpad-right { top: 46px; right: 0; }
+#ab-btns { display: flex; gap: 16px; align-items: center; }
+.act-btn {
+  width: 62px; height: 62px;
+  border-radius: 50%;
+  border: 3px solid #556;
+  color: #fff; font-size: 17px; font-weight: bold;
+  display: flex; align-items: center; justify-content: center;
+  font-family: inherit;
+}
+#btn-a { background: #16324a; border-color: #4aa3ff; }
+#btn-b { background: #3a1a1a; border-color: #ff7a7a; }
+.act-btn:active { filter: brightness(1.6); }
+.btn-label { font-size: 10px; color: #789; text-align: center; margin-top: 3px; }
+
+/* ---------- ad banner placeholder ---------- */
+#ad-banner {
+  width: 100%;
+  height: 42px;
+  flex: none;
+  background: repeating-linear-gradient(45deg, #1a1a24, #1a1a24 12px, #12121c 12px, #12121c 24px);
+  color: #667;
+  font-size: 11px;
+  display: flex; align-items: center; justify-content: center;
+  letter-spacing: 2px;
+  border-top: 1px solid #223;
+}
+#ad-banner.hidden { display: none; }
+
+/* misc */
+.gold-text { color: var(--accent); }
+#fade-layer {
+  position: absolute; inset: 0; background: #000;
+  opacity: 0; pointer-events: none; transition: opacity .35s; z-index: 70;
+}
+#fade-layer.on { opacity: 1; }
+
+@media (max-height: 640px) {
+  #controls { height: 132px; }
+  #dpad { width: 114px; height: 114px; }
+  .dpad-btn { width: 38px; height: 38px; }
+  #dpad-up { left: 38px; } #dpad-down { left: 38px; }
+  #dpad-left { top: 38px; } #dpad-right { top: 38px; }
+  .act-btn { width: 52px; height: 52px; }
+}
+
+</style>
+
+<div id="app">
+  <div id="game-wrap">
+    <div id="screen">
+      <canvas id="field-canvas"></canvas>
+      <div id="status-win" class="dq-window"></div>
+
+      <!-- battle -->
+      <div id="battle-screen">
+        <div id="battle-bg"></div>
+        <div id="battle-frame">
+          <div id="enemy-name-tag"></div>
+          <div id="enemy-sprite">👾</div>
+          <div id="enemy-hp-bar"><div></div></div>
+        </div>
+        <div id="battle-status" class="dq-window"></div>
+        <div id="battle-msg" class="dq-window"></div>
+        <div id="battle-cmd" class="dq-window menu-win"></div>
+        <div id="battle-sub" class="dq-window menu-win"></div>
+      </div>
+
+      <!-- field message / menus -->
+      <div id="msg-win" class="dq-window"></div>
+      <div id="cmd-win" class="dq-window menu-win"></div>
+      <div id="sub-win" class="dq-window menu-win"></div>
+
+      <!-- quiz overlay -->
+      <div id="quiz-overlay">
+        <div id="quiz-box" class="dq-window">
+          <div id="quiz-level-tag"></div>
+          <div id="quiz-word"></div>
+          <div id="quiz-hint"></div>
+          <div id="timer-bar-wrap"><div id="timer-bar"></div></div>
+          <div id="quiz-choices"></div>
+          <div id="quiz-result"></div>
+        </div>
+      </div>
+
+      <div id="fade-layer"></div>
+
+      <!-- title -->
+      <div id="title-screen">
+        <div id="title-logo">TOEIC<br>QUEST</div>
+        <div id="title-sub">～ 英単語で魔王を倒せ ～</div>
+        <button id="btn-continue" class="title-btn">つづきから</button>
+        <button id="btn-new" class="title-btn">はじめから</button>
+        <button id="btn-settings" class="title-btn">せってい</button>
+        <div id="title-copy">攻撃するには英単語に5秒以内に答えろ！<br>TOEIC400〜900・全3000語収録</div>
+      </div>
+    </div>
+
+    <!-- touch controls -->
+    <div id="controls">
+      <div id="dpad">
+        <div id="dpad-up" class="dpad-btn">▲</div>
+        <div id="dpad-down" class="dpad-btn">▼</div>
+        <div id="dpad-left" class="dpad-btn">◀</div>
+        <div id="dpad-right" class="dpad-btn">▶</div>
+      </div>
+      <div id="ab-btns">
+        <div>
+          <div id="btn-b" class="act-btn">Ｂ</div>
+          <div class="btn-label">メニュー/もどる</div>
+        </div>
+        <div>
+          <div id="btn-a" class="act-btn">Ａ</div>
+          <div class="btn-label">はなす/けってい</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ad placeholder (hidden when premium) -->
+    <div id="ad-banner">AD ─ 広告スペース（プレミアムで非表示）</div>
+  </div>
+</div>
+
+
+<script>
+// TOEIC 400 level vocabulary (500 words)
+window.VOCAB = window.VOCAB || {};
+window.VOCAB[400] = [
+{w:"purchase",m:"購入する",p:"v"},
+{w:"order",m:"注文する",p:"v"},
+{w:"deliver",m:"配達する",p:"v"},
+{w:"receive",m:"受け取る",p:"v"},
+{w:"send",m:"送る",p:"v"},
+{w:"attend",m:"出席する",p:"v"},
+{w:"arrive",m:"到着する",p:"v"},
+{w:"depart",m:"出発する",p:"v"},
+{w:"confirm",m:"確認する",p:"v"},
+{w:"cancel",m:"取り消す",p:"v"},
+{w:"reserve",m:"予約する",p:"v"},
+{w:"provide",m:"提供する",p:"v"},
+{w:"offer",m:"申し出る",p:"v"},
+{w:"require",m:"要求する",p:"v"},
+{w:"include",m:"含む",p:"v"},
+{w:"complete",m:"完了する",p:"v"},
+{w:"finish",m:"終える",p:"v"},
+{w:"begin",m:"始める",p:"v"},
+{w:"continue",m:"続ける",p:"v"},
+{w:"improve",m:"改善する",p:"v"},
+{w:"increase",m:"増やす",p:"v"},
+{w:"decrease",m:"減らす",p:"v"},
+{w:"reduce",m:"削減する",p:"v"},
+{w:"expand",m:"拡大する",p:"v"},
+{w:"hire",m:"雇う",p:"v"},
+{w:"retire",m:"退職する",p:"v"},
+{w:"apply",m:"応募する",p:"v"},
+{w:"accept",m:"受け入れる",p:"v"},
+{w:"refuse",m:"断る",p:"v"},
+{w:"agree",m:"同意する",p:"v"},
+{w:"discuss",m:"話し合う",p:"v"},
+{w:"explain",m:"説明する",p:"v"},
+{w:"announce",m:"発表する",p:"v"},
+{w:"introduce",m:"紹介する",p:"v"},
+{w:"invite",m:"招待する",p:"v"},
+{w:"visit",m:"訪問する",p:"v"},
+{w:"return",m:"返却する",p:"v"},
+{w:"repair",m:"修理する",p:"v"},
+{w:"replace",m:"交換する",p:"v"},
+{w:"install",m:"設置する",p:"v"},
+{w:"remove",m:"取り除く",p:"v"},
+{w:"prepare",m:"準備する",p:"v"},
+{w:"arrange",m:"手配する",p:"v"},
+{w:"manage",m:"管理する",p:"v"},
+{w:"join",m:"参加する",p:"v"},
+{w:"leave",m:"去る",p:"v"},
+{w:"choose",m:"選ぶ",p:"v"},
+{w:"decide",m:"決める",p:"v"},
+{w:"suggest",m:"提案する",p:"v"},
+{w:"recommend",m:"勧める",p:"v"},
+{w:"promise",m:"約束する",p:"v"},
+{w:"borrow",m:"借りる",p:"v"},
+{w:"lend",m:"貸す",p:"v"},
+{w:"pay",m:"支払う",p:"v"},
+{w:"earn",m:"稼ぐ",p:"v"},
+{w:"spend",m:"費やす",p:"v"},
+{w:"save",m:"貯める",p:"v"},
+{w:"sell",m:"売る",p:"v"},
+{w:"charge",m:"請求する",p:"v"},
+{w:"refund",m:"返金する",p:"v"},
+{w:"sign",m:"署名する",p:"v"},
+{w:"print",m:"印刷する",p:"v"},
+{w:"attach",m:"添付する",p:"v"},
+{w:"submit",m:"提出する",p:"v"},
+{w:"review",m:"見直す",p:"v"},
+{w:"check",m:"点検する",p:"v"},
+{w:"inspect",m:"検査する",p:"v"},
+{w:"notice",m:"気づく",p:"v"},
+{w:"inform",m:"知らせる",p:"v"},
+{w:"contact",m:"連絡する",p:"v"},
+{w:"reply",m:"返信する",p:"v"},
+{w:"greet",m:"あいさつする",p:"v"},
+{w:"support",m:"支援する",p:"v"},
+{w:"train",m:"訓練する",p:"v"},
+{w:"teach",m:"教える",p:"v"},
+{w:"learn",m:"学ぶ",p:"v"},
+{w:"practice",m:"練習する",p:"v"},
+{w:"travel",m:"旅行する",p:"v"},
+{w:"drive",m:"運転する",p:"v"},
+{w:"park",m:"駐車する",p:"v"},
+{w:"ride",m:"乗る",p:"v"},
+{w:"hurry",m:"急ぐ",p:"v"},
+{w:"stay",m:"滞在する",p:"v"},
+{w:"enjoy",m:"楽しむ",p:"v"},
+{w:"prefer",m:"〜の方を好む",p:"v"},
+{w:"hope",m:"望む",p:"v"},
+{w:"wish",m:"願う",p:"v"},
+{w:"plan",m:"計画する",p:"v"},
+{w:"expect",m:"予期する",p:"v"},
+{w:"forget",m:"忘れる",p:"v"},
+{w:"remember",m:"覚えている",p:"v"},
+{w:"remind",m:"思い出させる",p:"v"},
+{w:"belong",m:"所属する",p:"v"},
+{w:"happen",m:"起こる",p:"v"},
+{w:"seem",m:"〜のように見える",p:"v"},
+{w:"wear",m:"身に着けている",p:"v"},
+{w:"try",m:"試す",p:"v"},
+{w:"understand",m:"理解する",p:"v"},
+{w:"believe",m:"信じる",p:"v"},
+{w:"show",m:"見せる",p:"v"},
+{w:"tell",m:"伝える",p:"v"},
+{w:"ask",m:"尋ねる",p:"v"},
+{w:"answer",m:"答える",p:"v"},
+{w:"follow",m:"従う",p:"v"},
+{w:"lose",m:"失う",p:"v"},
+{w:"find",m:"見つける",p:"v"},
+{w:"search",m:"検索する",p:"v"},
+{w:"keep",m:"保つ",p:"v"},
+{w:"hold",m:"開催する",p:"v"},
+{w:"build",m:"建てる",p:"v"},
+{w:"create",m:"生み出す",p:"v"},
+{w:"design",m:"設計する",p:"v"},
+{w:"develop",m:"開発する",p:"v"},
+{w:"produce",m:"生産する",p:"v"},
+{w:"grow",m:"成長する",p:"v"},
+{w:"raise",m:"上げる",p:"v"},
+{w:"lower",m:"下げる",p:"v"},
+{w:"fill",m:"満たす",p:"v"},
+{w:"clean",m:"掃除する",p:"v"},
+{w:"wash",m:"洗う",p:"v"},
+{w:"cook",m:"料理する",p:"v"},
+{w:"recycle",m:"再利用する",p:"v"},
+{w:"postpone",m:"延期する",p:"v"},
+{w:"avoid",m:"避ける",p:"v"},
+{w:"allow",m:"許す",p:"v"},
+{w:"protect",m:"守る",p:"v"},
+{w:"solve",m:"解決する",p:"v"},
+{w:"compare",m:"比較する",p:"v"},
+{w:"measure",m:"測る",p:"v"},
+{w:"count",m:"数える",p:"v"},
+{w:"add",m:"加える",p:"v"},
+{w:"collect",m:"集める",p:"v"},
+{w:"share",m:"共有する",p:"v"},
+{w:"divide",m:"分ける",p:"v"},
+{w:"record",m:"記録する",p:"v"},
+{w:"store",m:"保管する",p:"v"},
+{w:"ship",m:"発送する",p:"v"},
+{w:"pack",m:"荷造りする",p:"v"},
+{w:"rent",m:"賃借りする",p:"v"},
+{w:"celebrate",m:"祝う",p:"v"},
+{w:"discover",m:"発見する",p:"v"},
+{w:"repeat",m:"繰り返す",p:"v"},
+{w:"fix",m:"直す",p:"v"},
+{w:"push",m:"押す",p:"v"},
+{w:"pull",m:"引く",p:"v"},
+{w:"miss",m:"乗り遅れる",p:"v"},
+{w:"reach",m:"〜に届く",p:"v"},
+{w:"pass",m:"手渡す",p:"v"},
+{w:"fall",m:"落ちる",p:"v"},
+{w:"hurt",m:"痛める",p:"v"},
+{w:"office",m:"事務所",p:"n"},
+{w:"meeting",m:"会議",p:"n"},
+{w:"customer",m:"顧客",p:"n"},
+{w:"client",m:"取引先",p:"n"},
+{w:"staff",m:"職員",p:"n"},
+{w:"employee",m:"従業員",p:"n"},
+{w:"employer",m:"雇用主",p:"n"},
+{w:"manager",m:"部長",p:"n"},
+{w:"boss",m:"上司",p:"n"},
+{w:"colleague",m:"同僚",p:"n"},
+{w:"president",m:"社長",p:"n"},
+{w:"company",m:"会社",p:"n"},
+{w:"factory",m:"工場",p:"n"},
+{w:"branch",m:"支店",p:"n"},
+{w:"headquarters",m:"本社",p:"n"},
+{w:"department",m:"部署",p:"n"},
+{w:"salary",m:"給料",p:"n"},
+{w:"wage",m:"賃金",p:"n"},
+{w:"bonus",m:"賞与",p:"n"},
+{w:"income",m:"収入",p:"n"},
+{w:"expense",m:"経費",p:"n"},
+{w:"budget",m:"予算",p:"n"},
+{w:"price",m:"価格",p:"n"},
+{w:"fee",m:"手数料",p:"n"},
+{w:"fare",m:"運賃",p:"n"},
+{w:"bill",m:"請求書",p:"n"},
+{w:"receipt",m:"領収書",p:"n"},
+{w:"invoice",m:"送り状",p:"n"},
+{w:"contract",m:"契約",p:"n"},
+{w:"agreement",m:"合意",p:"n"},
+{w:"document",m:"書類",p:"n"},
+{w:"report",m:"報告書",p:"n"},
+{w:"letter",m:"手紙",p:"n"},
+{w:"envelope",m:"封筒",p:"n"},
+{w:"stamp",m:"切手",p:"n"},
+{w:"package",m:"小包",p:"n"},
+{w:"parcel",m:"荷物",p:"n"},
+{w:"delivery",m:"配達",p:"n"},
+{w:"shipment",m:"出荷",p:"n"},
+{w:"warehouse",m:"倉庫",p:"n"},
+{w:"supply",m:"供給",p:"n"},
+{w:"demand",m:"需要",p:"n"},
+{w:"product",m:"製品",p:"n"},
+{w:"goods",m:"商品",p:"n"},
+{w:"item",m:"品目",p:"n"},
+{w:"equipment",m:"設備",p:"n"},
+{w:"machine",m:"機械",p:"n"},
+{w:"tool",m:"道具",p:"n"},
+{w:"device",m:"装置",p:"n"},
+{w:"printer",m:"印刷機",p:"n"},
+{w:"desk",m:"机",p:"n"},
+{w:"chair",m:"椅子",p:"n"},
+{w:"shelf",m:"棚",p:"n"},
+{w:"drawer",m:"引き出し",p:"n"},
+{w:"building",m:"建物",p:"n"},
+{w:"elevator",m:"エレベーター",p:"n"},
+{w:"stairs",m:"階段",p:"n"},
+{w:"entrance",m:"入口",p:"n"},
+{w:"exit",m:"出口",p:"n"},
+{w:"hallway",m:"廊下",p:"n"},
+{w:"restroom",m:"化粧室",p:"n"},
+{w:"cafeteria",m:"社員食堂",p:"n"},
+{w:"break",m:"休憩",p:"n"},
+{w:"lunch",m:"昼食",p:"n"},
+{w:"dinner",m:"夕食",p:"n"},
+{w:"schedule",m:"予定表",p:"n"},
+{w:"appointment",m:"面会の約束",p:"n"},
+{w:"deadline",m:"締め切り",p:"n"},
+{w:"holiday",m:"祝日",p:"n"},
+{w:"vacation",m:"休暇",p:"n"},
+{w:"weekend",m:"週末",p:"n"},
+{w:"noon",m:"正午",p:"n"},
+{w:"midnight",m:"真夜中",p:"n"},
+{w:"moment",m:"瞬間",p:"n"},
+{w:"season",m:"季節",p:"n"},
+{w:"weather",m:"天気",p:"n"},
+{w:"forecast",m:"予報",p:"n"},
+{w:"temperature",m:"気温",p:"n"},
+{w:"airport",m:"空港",p:"n"},
+{w:"station",m:"駅",p:"n"},
+{w:"flight",m:"航空便",p:"n"},
+{w:"ticket",m:"切符",p:"n"},
+{w:"passport",m:"旅券",p:"n"},
+{w:"luggage",m:"手荷物",p:"n"},
+{w:"trip",m:"小旅行",p:"n"},
+{w:"tour",m:"周遊旅行",p:"n"},
+{w:"guide",m:"案内人",p:"n"},
+{w:"map",m:"地図",p:"n"},
+{w:"guest",m:"宿泊客",p:"n"},
+{w:"reservation",m:"予約",p:"n"},
+{w:"passenger",m:"乗客",p:"n"},
+{w:"driver",m:"運転手",p:"n"},
+{w:"traffic",m:"交通量",p:"n"},
+{w:"road",m:"道路",p:"n"},
+{w:"street",m:"通り",p:"n"},
+{w:"corner",m:"曲がり角",p:"n"},
+{w:"bridge",m:"橋",p:"n"},
+{w:"crosswalk",m:"横断歩道",p:"n"},
+{w:"sidewalk",m:"歩道",p:"n"},
+{w:"vehicle",m:"乗り物",p:"n"},
+{w:"bicycle",m:"自転車",p:"n"},
+{w:"subway",m:"地下鉄",p:"n"},
+{w:"bank",m:"銀行",p:"n"},
+{w:"account",m:"口座",p:"n"},
+{w:"cash",m:"現金",p:"n"},
+{w:"coin",m:"硬貨",p:"n"},
+{w:"loan",m:"貸付金",p:"n"},
+{w:"tax",m:"税金",p:"n"},
+{w:"insurance",m:"保険",p:"n"},
+{w:"hospital",m:"病院",p:"n"},
+{w:"medicine",m:"薬",p:"n"},
+{w:"doctor",m:"医師",p:"n"},
+{w:"nurse",m:"看護師",p:"n"},
+{w:"patient",m:"患者",p:"n"},
+{w:"dentist",m:"歯科医",p:"n"},
+{w:"health",m:"健康",p:"n"},
+{w:"exercise",m:"運動",p:"n"},
+{w:"rest",m:"休息",p:"n"},
+{w:"meal",m:"食事",p:"n"},
+{w:"menu",m:"献立",p:"n"},
+{w:"restaurant",m:"飲食店",p:"n"},
+{w:"waiter",m:"給仕",p:"n"},
+{w:"chef",m:"料理長",p:"n"},
+{w:"kitchen",m:"台所",p:"n"},
+{w:"grocery",m:"食料雑貨",p:"n"},
+{w:"market",m:"市場",p:"n"},
+{w:"shop",m:"店",p:"n"},
+{w:"bakery",m:"パン屋",p:"n"},
+{w:"pharmacy",m:"薬局",p:"n"},
+{w:"library",m:"図書館",p:"n"},
+{w:"museum",m:"博物館",p:"n"},
+{w:"event",m:"行事",p:"n"},
+{w:"festival",m:"祭り",p:"n"},
+{w:"concert",m:"音楽会",p:"n"},
+{w:"movie",m:"映画",p:"n"},
+{w:"theater",m:"劇場",p:"n"},
+{w:"audience",m:"観客",p:"n"},
+{w:"prize",m:"賞品",p:"n"},
+{w:"award",m:"賞",p:"n"},
+{w:"winner",m:"優勝者",p:"n"},
+{w:"newspaper",m:"新聞",p:"n"},
+{w:"magazine",m:"雑誌",p:"n"},
+{w:"article",m:"記事",p:"n"},
+{w:"advertisement",m:"広告",p:"n"},
+{w:"information",m:"情報",p:"n"},
+{w:"message",m:"伝言",p:"n"},
+{w:"email",m:"電子メール",p:"n"},
+{w:"address",m:"住所",p:"n"},
+{w:"list",m:"一覧表",p:"n"},
+{w:"form",m:"記入用紙",p:"n"},
+{w:"survey",m:"調査",p:"n"},
+{w:"result",m:"結果",p:"n"},
+{w:"reason",m:"理由",p:"n"},
+{w:"problem",m:"問題",p:"n"},
+{w:"solution",m:"解決策",p:"n"},
+{w:"idea",m:"考え",p:"n"},
+{w:"opinion",m:"意見",p:"n"},
+{w:"advice",m:"助言",p:"n"},
+{w:"decision",m:"決定",p:"n"},
+{w:"choice",m:"選択",p:"n"},
+{w:"chance",m:"機会",p:"n"},
+{w:"opportunity",m:"好機",p:"n"},
+{w:"goal",m:"目標",p:"n"},
+{w:"purpose",m:"目的",p:"n"},
+{w:"effort",m:"努力",p:"n"},
+{w:"skill",m:"技能",p:"n"},
+{w:"experience",m:"経験",p:"n"},
+{w:"knowledge",m:"知識",p:"n"},
+{w:"ability",m:"能力",p:"n"},
+{w:"career",m:"経歴",p:"n"},
+{w:"job",m:"仕事",p:"n"},
+{w:"task",m:"作業",p:"n"},
+{w:"duty",m:"職務",p:"n"},
+{w:"role",m:"役割",p:"n"},
+{w:"position",m:"職位",p:"n"},
+{w:"interview",m:"面接",p:"n"},
+{w:"resume",m:"履歴書",p:"n"},
+{w:"application",m:"申込書",p:"n"},
+{w:"training",m:"研修",p:"n"},
+{w:"promotion",m:"昇進",p:"n"},
+{w:"success",m:"成功",p:"n"},
+{w:"failure",m:"失敗",p:"n"},
+{w:"mistake",m:"間違い",p:"n"},
+{w:"accident",m:"事故",p:"n"},
+{w:"emergency",m:"緊急事態",p:"n"},
+{w:"safety",m:"安全",p:"n"},
+{w:"rule",m:"規則",p:"n"},
+{w:"law",m:"法律",p:"n"},
+{w:"policy",m:"方針",p:"n"},
+{w:"permission",m:"許可",p:"n"},
+{w:"available",m:"利用できる",p:"adj"},
+{w:"busy",m:"忙しい",p:"adj"},
+{w:"free",m:"無料の",p:"adj"},
+{w:"expensive",m:"高価な",p:"adj"},
+{w:"cheap",m:"安価な",p:"adj"},
+{w:"convenient",m:"便利な",p:"adj"},
+{w:"comfortable",m:"快適な",p:"adj"},
+{w:"important",m:"重要な",p:"adj"},
+{w:"necessary",m:"必要な",p:"adj"},
+{w:"possible",m:"可能な",p:"adj"},
+{w:"impossible",m:"不可能な",p:"adj"},
+{w:"difficult",m:"難しい",p:"adj"},
+{w:"easy",m:"簡単な",p:"adj"},
+{w:"simple",m:"単純な",p:"adj"},
+{w:"useful",m:"役に立つ",p:"adj"},
+{w:"helpful",m:"助けになる",p:"adj"},
+{w:"famous",m:"有名な",p:"adj"},
+{w:"popular",m:"人気のある",p:"adj"},
+{w:"common",m:"一般的な",p:"adj"},
+{w:"special",m:"特別な",p:"adj"},
+{w:"different",m:"異なった",p:"adj"},
+{w:"similar",m:"類似した",p:"adj"},
+{w:"correct",m:"正しい",p:"adj"},
+{w:"wrong",m:"間違った",p:"adj"},
+{w:"true",m:"本当の",p:"adj"},
+{w:"main",m:"主要な",p:"adj"},
+{w:"several",m:"いくつかの",p:"adj"},
+{w:"enough",m:"十分な",p:"adj"},
+{w:"whole",m:"全体の",p:"adj"},
+{w:"early",m:"早い",p:"adj"},
+{w:"late",m:"遅れた",p:"adj"},
+{w:"recent",m:"最近の",p:"adj"},
+{w:"current",m:"現在の",p:"adj"},
+{w:"modern",m:"現代的な",p:"adj"},
+{w:"local",m:"地元の",p:"adj"},
+{w:"foreign",m:"外国の",p:"adj"},
+{w:"international",m:"国際的な",p:"adj"},
+{w:"public",m:"公共の",p:"adj"},
+{w:"private",m:"私的な",p:"adj"},
+{w:"official",m:"公式の",p:"adj"},
+{w:"personal",m:"個人的な",p:"adj"},
+{w:"professional",m:"専門職の",p:"adj"},
+{w:"excellent",m:"優れた",p:"adj"},
+{w:"perfect",m:"完璧な",p:"adj"},
+{w:"terrible",m:"ひどい",p:"adj"},
+{w:"wonderful",m:"すばらしい",p:"adj"},
+{w:"kind",m:"親切な",p:"adj"},
+{w:"polite",m:"礼儀正しい",p:"adj"},
+{w:"friendly",m:"友好的な",p:"adj"},
+{w:"quiet",m:"静かな",p:"adj"},
+{w:"bright",m:"明るい",p:"adj"},
+{w:"dark",m:"暗い",p:"adj"},
+{w:"dirty",m:"汚れた",p:"adj"},
+{w:"fresh",m:"新鮮な",p:"adj"},
+{w:"delicious",m:"おいしい",p:"adj"},
+{w:"healthy",m:"健康的な",p:"adj"},
+{w:"sick",m:"病気の",p:"adj"},
+{w:"tired",m:"疲れた",p:"adj"},
+{w:"hungry",m:"空腹の",p:"adj"},
+{w:"worried",m:"心配して",p:"adj"},
+{w:"warm",m:"暖かい",p:"adj"},
+{w:"cool",m:"涼しい",p:"adj"},
+{w:"heavy",m:"重い",p:"adj"},
+{w:"light",m:"軽い",p:"adj"},
+{w:"huge",m:"巨大な",p:"adj"},
+{w:"wide",m:"幅の広い",p:"adj"},
+{w:"ready",m:"用意ができた",p:"adj"},
+{w:"full",m:"満員の",p:"adj"},
+{w:"empty",m:"空の",p:"adj"},
+{w:"closed",m:"閉店した",p:"adj"},
+{w:"crowded",m:"混雑した",p:"adj"},
+{w:"quick",m:"素早い",p:"adj"},
+{w:"slow",m:"遅い",p:"adj"},
+{w:"careful",m:"注意深い",p:"adj"},
+{w:"dangerous",m:"危険な",p:"adj"},
+{w:"safe",m:"安全な",p:"adj"},
+{w:"serious",m:"深刻な",p:"adj"},
+{w:"strange",m:"奇妙な",p:"adj"},
+{w:"usual",m:"いつもの",p:"adj"},
+{w:"regular",m:"定期的な",p:"adj"},
+{w:"daily",m:"毎日の",p:"adj"},
+{w:"weekly",m:"毎週の",p:"adj"},
+{w:"monthly",m:"毎月の",p:"adj"},
+{w:"annual",m:"年1回の",p:"adj"},
+{w:"temporary",m:"一時的な",p:"adj"},
+{w:"extra",m:"余分の",p:"adj"},
+{w:"additional",m:"追加の",p:"adj"},
+{w:"total",m:"合計の",p:"adj"},
+{w:"average",m:"平均の",p:"adj"},
+{w:"final",m:"最終の",p:"adj"},
+{w:"always",m:"いつも",p:"adv"},
+{w:"usually",m:"たいてい",p:"adv"},
+{w:"often",m:"しばしば",p:"adv"},
+{w:"sometimes",m:"時々",p:"adv"},
+{w:"never",m:"決して〜ない",p:"adv"},
+{w:"soon",m:"まもなく",p:"adv"},
+{w:"already",m:"すでに",p:"adv"},
+{w:"yet",m:"まだ",p:"adv"},
+{w:"still",m:"いまだに",p:"adv"},
+{w:"almost",m:"ほぼ",p:"adv"},
+{w:"nearly",m:"もう少しで",p:"adv"},
+{w:"quite",m:"かなり",p:"adv"},
+{w:"really",m:"本当に",p:"adv"},
+{w:"probably",m:"たぶん",p:"adv"},
+{w:"maybe",m:"もしかすると",p:"adv"},
+{w:"perhaps",m:"おそらく",p:"adv"},
+{w:"certainly",m:"確かに",p:"adv"},
+{w:"exactly",m:"正確に",p:"adv"},
+{w:"especially",m:"特に",p:"adv"},
+{w:"finally",m:"ついに",p:"adv"},
+{w:"suddenly",m:"突然",p:"adv"},
+{w:"immediately",m:"即座に",p:"adv"},
+{w:"slowly",m:"ゆっくりと",p:"adv"},
+{w:"carefully",m:"慎重に",p:"adv"},
+{w:"easily",m:"容易に",p:"adv"},
+{w:"together",m:"一緒に",p:"adv"},
+{w:"alone",m:"ひとりで",p:"adv"},
+{w:"abroad",m:"海外で",p:"adv"},
+{w:"nearby",m:"すぐ近くに",p:"adv"},
+{w:"recently",m:"近ごろ",p:"adv"},
+{w:"later",m:"あとで",p:"adv"},
+{w:"again",m:"再び",p:"adv"},
+{w:"however",m:"しかしながら",p:"adv"},
+{w:"therefore",m:"それゆえに",p:"adv"},
+{w:"unfortunately",m:"残念ながら",p:"adv"},
+{w:"in advance",m:"前もって",p:"phr"},
+{w:"on time",m:"時間通りに",p:"phr"},
+{w:"in time",m:"間に合って",p:"phr"},
+{w:"right away",m:"直ちに",p:"phr"},
+{w:"at least",m:"少なくとも",p:"phr"},
+{w:"for example",m:"例えば",p:"phr"},
+{w:"in fact",m:"実は",p:"phr"},
+{w:"of course",m:"もちろん",p:"phr"},
+{w:"by the way",m:"ところで",p:"phr"},
+{w:"out of stock",m:"在庫切れ",p:"phr"},
+{w:"for free",m:"無料で",p:"phr"},
+{w:"on sale",m:"特売中で",p:"phr"},
+{w:"sold out",m:"売り切れ",p:"phr"},
+{w:"day off",m:"休みの日",p:"phr"},
+{w:"take a break",m:"休憩を取る",p:"phr"},
+{w:"be in charge of",m:"〜を担当して",p:"phr"},
+{w:"look for",m:"〜を探す",p:"phr"},
+{w:"look forward to",m:"楽しみに待つ",p:"phr"},
+{w:"turn on",m:"電源を入れる",p:"phr"},
+{w:"turn off",m:"電源を切る",p:"phr"},
+{w:"pick up",m:"迎えに行く",p:"phr"},
+{w:"drop off",m:"車から降ろす",p:"phr"},
+{w:"check in",m:"搭乗手続きする",p:"phr"},
+{w:"check out",m:"精算して出る",p:"phr"},
+{w:"fill out",m:"記入する",p:"phr"},
+{w:"hand out",m:"配布する",p:"phr"},
+{w:"set up",m:"立ち上げる",p:"phr"},
+{w:"put off",m:"先送りする",p:"phr"},
+{w:"call off",m:"中止する",p:"phr"},
+{w:"get off",m:"降車する",p:"phr"},
+{w:"take off",m:"離陸する",p:"phr"},
+{w:"run out of",m:"使い果たす",p:"phr"},
+{w:"according to",m:"〜によれば",p:"phr"},
+{w:"because of",m:"〜のせいで",p:"phr"},
+{w:"in order to",m:"〜するために",p:"phr"}
+];
+
+</script>
+<script>
+// TOEIC 500 level vocabulary (500 words)
+window.VOCAB = window.VOCAB || {};
+window.VOCAB[500] = [
+{w:"appointment",m:"面会の約束",p:"n"},
+{w:"colleague",m:"同僚",p:"n"},
+{w:"department",m:"部署",p:"n"},
+{w:"employee",m:"従業員",p:"n"},
+{w:"employer",m:"雇用主",p:"n"},
+{w:"salary",m:"給料",p:"n"},
+{w:"resume",m:"履歴書",p:"n"},
+{w:"interview",m:"面接",p:"n"},
+{w:"hire",m:"雇う",p:"v"},
+{w:"promote",m:"昇進させる",p:"v"},
+{w:"retire",m:"退職する",p:"v"},
+{w:"manager",m:"管理者",p:"n"},
+{w:"supervisor",m:"監督者",p:"n"},
+{w:"staff",m:"職員",p:"n"},
+{w:"office",m:"事務所",p:"n"},
+{w:"schedule",m:"予定表",p:"n"},
+{w:"deadline",m:"締め切り",p:"n"},
+{w:"overtime",m:"残業",p:"n"},
+{w:"shift",m:"交代勤務",p:"n"},
+{w:"task",m:"作業、任務",p:"n"},
+{w:"duty",m:"職務、義務",p:"n"},
+{w:"position",m:"職位、立場",p:"n"},
+{w:"career",m:"経歴",p:"n"},
+{w:"training",m:"研修",p:"n"},
+{w:"skill",m:"技能",p:"n"},
+{w:"meeting",m:"会議",p:"n"},
+{w:"conference",m:"協議会",p:"n"},
+{w:"agenda",m:"議題",p:"n"},
+{w:"minutes",m:"議事録",p:"n"},
+{w:"presentation",m:"発表",p:"n"},
+{w:"report",m:"報告書",p:"n"},
+{w:"announce",m:"公表する",p:"v"},
+{w:"inform",m:"知らせる",p:"v"},
+{w:"notify",m:"通知する",p:"v"},
+{w:"confirm",m:"確認する",p:"v"},
+{w:"reply",m:"返信する",p:"v"},
+{w:"respond",m:"応答する",p:"v"},
+{w:"contact",m:"連絡する",p:"v"},
+{w:"discuss",m:"話し合う",p:"v"},
+{w:"suggest",m:"提案する",p:"v"},
+{w:"propose",m:"提議する",p:"v"},
+{w:"agree",m:"同意する",p:"v"},
+{w:"disagree",m:"反対する",p:"v"},
+{w:"attend",m:"出席する",p:"v"},
+{w:"postpone",m:"延期する",p:"v"},
+{w:"cancel",m:"中止する",p:"v"},
+{w:"arrange",m:"手配する",p:"v"},
+{w:"invite",m:"招待する",p:"v"},
+{w:"remind",m:"思い出させる",p:"v"},
+{w:"mention",m:"言及する",p:"v"},
+{w:"flight",m:"航空便",p:"n"},
+{w:"airline",m:"航空会社",p:"n"},
+{w:"airport",m:"空港",p:"n"},
+{w:"passenger",m:"乗客",p:"n"},
+{w:"luggage",m:"旅行かばん",p:"n"},
+{w:"baggage",m:"手荷物",p:"n"},
+{w:"reservation",m:"予約",p:"n"},
+{w:"board",m:"搭乗する",p:"v"},
+{w:"depart",m:"出発する",p:"v"},
+{w:"arrive",m:"到着する",p:"v"},
+{w:"destination",m:"目的地",p:"n"},
+{w:"itinerary",m:"旅程表",p:"n"},
+{w:"fare",m:"運賃",p:"n"},
+{w:"round trip",m:"往復旅行",p:"n"},
+{w:"delay",m:"遅延",p:"n"},
+{w:"transfer",m:"乗り換える",p:"v"},
+{w:"accommodation",m:"宿泊施設",p:"n"},
+{w:"check in",m:"搭乗手続きする",p:"phr"},
+{w:"sightseeing",m:"観光",p:"n"},
+{w:"souvenir",m:"土産",p:"n"},
+{w:"passport",m:"旅券",p:"n"},
+{w:"customs",m:"税関",p:"n"},
+{w:"currency",m:"通貨",p:"n"},
+{w:"abroad",m:"海外で",p:"adv"},
+{w:"tourist",m:"観光客",p:"n"},
+{w:"refund",m:"返金",p:"n"},
+{w:"warranty",m:"保証書",p:"n"},
+{w:"guarantee",m:"保証する",p:"v"},
+{w:"purchase",m:"購入する",p:"v"},
+{w:"customer",m:"顧客",p:"n"},
+{w:"receipt",m:"領収書",p:"n"},
+{w:"discount",m:"割引",p:"n"},
+{w:"bargain",m:"特価品",p:"n"},
+{w:"retail",m:"小売",p:"n"},
+{w:"wholesale",m:"卸売",p:"n"},
+{w:"merchandise",m:"商品",p:"n"},
+{w:"item",m:"品目",p:"n"},
+{w:"price",m:"価格",p:"n"},
+{w:"cost",m:"費用",p:"n"},
+{w:"expense",m:"経費",p:"n"},
+{w:"afford",m:"買う余裕がある",p:"v"},
+{w:"exchange",m:"交換する",p:"v"},
+{w:"return",m:"返品する",p:"v"},
+{w:"order",m:"注文する",p:"v"},
+{w:"deliver",m:"配達する",p:"v"},
+{w:"delivery",m:"配達",p:"n"},
+{w:"shipment",m:"発送品",p:"n"},
+{w:"in stock",m:"在庫あり",p:"phr"},
+{w:"out of stock",m:"在庫切れ",p:"phr"},
+{w:"cashier",m:"レジ係",p:"n"},
+{w:"bank",m:"銀行",p:"n"},
+{w:"account",m:"口座",p:"n"},
+{w:"deposit",m:"預金する",p:"v"},
+{w:"withdraw",m:"引き出す",p:"v"},
+{w:"loan",m:"融資",p:"n"},
+{w:"interest",m:"利子",p:"n"},
+{w:"budget",m:"予算",p:"n"},
+{w:"invoice",m:"請求書",p:"n"},
+{w:"bill",m:"請求明細書",p:"n"},
+{w:"payment",m:"支払い",p:"n"},
+{w:"pay",m:"支払う",p:"v"},
+{w:"owe",m:"借りがある",p:"v"},
+{w:"debt",m:"負債",p:"n"},
+{w:"profit",m:"利益",p:"n"},
+{w:"loss",m:"損失",p:"n"},
+{w:"revenue",m:"収益",p:"n"},
+{w:"income",m:"収入",p:"n"},
+{w:"tax",m:"税金",p:"n"},
+{w:"insurance",m:"保険",p:"n"},
+{w:"invest",m:"投資する",p:"v"},
+{w:"savings",m:"貯金",p:"n"},
+{w:"fee",m:"手数料",p:"n"},
+{w:"charge",m:"代金を請求する",p:"v"},
+{w:"due",m:"支払期限の",p:"adj"},
+{w:"free of charge",m:"無料で",p:"phr"},
+{w:"beverage",m:"飲み物",p:"n"},
+{w:"reserve",m:"予約する",p:"v"},
+{w:"recommend",m:"勧める",p:"v"},
+{w:"serve",m:"給仕する",p:"v"},
+{w:"grocery",m:"食料雑貨",p:"n"},
+{w:"cafeteria",m:"社員食堂",p:"n"},
+{w:"takeout",m:"持ち帰り",p:"n"},
+{w:"fresh",m:"新鮮な",p:"adj"},
+{w:"frozen",m:"冷凍の",p:"adj"},
+{w:"menu",m:"献立表",p:"n"},
+{w:"delicious",m:"とてもおいしい",p:"adj"},
+{w:"hospital",m:"病院",p:"n"},
+{w:"clinic",m:"診療所",p:"n"},
+{w:"pharmacy",m:"薬局",p:"n"},
+{w:"medicine",m:"薬",p:"n"},
+{w:"prescription",m:"処方箋",p:"n"},
+{w:"patient",m:"患者",p:"n"},
+{w:"symptom",m:"症状",p:"n"},
+{w:"fever",m:"発熱",p:"n"},
+{w:"headache",m:"頭痛",p:"n"},
+{w:"injury",m:"負傷",p:"n"},
+{w:"recover",m:"回復する",p:"v"},
+{w:"treatment",m:"治療",p:"n"},
+{w:"checkup",m:"健康診断",p:"n"},
+{w:"dentist",m:"歯科医",p:"n"},
+{w:"emergency",m:"緊急事態",p:"n"},
+{w:"ambulance",m:"救急車",p:"n"},
+{w:"surgery",m:"手術",p:"n"},
+{w:"exercise",m:"運動",p:"n"},
+{w:"healthy",m:"健康的な",p:"adj"},
+{w:"medical",m:"医療の",p:"adj"},
+{w:"apartment",m:"共同住宅",p:"n"},
+{w:"rent",m:"家賃",p:"n"},
+{w:"lease",m:"賃貸契約",p:"n"},
+{w:"landlord",m:"家主",p:"n"},
+{w:"tenant",m:"借家人",p:"n"},
+{w:"utility",m:"公共料金",p:"n"},
+{w:"furniture",m:"家具",p:"n"},
+{w:"appliance",m:"家電製品",p:"n"},
+{w:"repair",m:"修理する",p:"v"},
+{w:"renovate",m:"改装する",p:"v"},
+{w:"move in",m:"入居する",p:"phr"},
+{w:"neighborhood",m:"近隣地域",p:"n"},
+{w:"real estate",m:"不動産",p:"n"},
+{w:"mortgage",m:"住宅ローン",p:"n"},
+{w:"property",m:"物件、財産",p:"n"},
+{w:"garage",m:"車庫",p:"n"},
+{w:"basement",m:"地下室",p:"n"},
+{w:"hallway",m:"廊下",p:"n"},
+{w:"ceiling",m:"天井",p:"n"},
+{w:"floor plan",m:"間取り図",p:"n"},
+{w:"plumber",m:"配管工",p:"n"},
+{w:"electrician",m:"電気技師",p:"n"},
+{w:"construction",m:"建設",p:"n"},
+{w:"architect",m:"建築家",p:"n"},
+{w:"residence",m:"住居",p:"n"},
+{w:"factory",m:"工場",p:"n"},
+{w:"warehouse",m:"倉庫",p:"n"},
+{w:"equipment",m:"設備",p:"n"},
+{w:"machinery",m:"機械類",p:"n"},
+{w:"manufacture",m:"製造する",p:"v"},
+{w:"produce",m:"生産する",p:"v"},
+{w:"product",m:"製品",p:"n"},
+{w:"assembly",m:"組み立て",p:"n"},
+{w:"inventory",m:"在庫",p:"n"},
+{w:"supply",m:"供給する",p:"v"},
+{w:"supplier",m:"供給業者",p:"n"},
+{w:"vendor",m:"販売業者",p:"n"},
+{w:"material",m:"原料",p:"n"},
+{w:"quality",m:"品質",p:"n"},
+{w:"inspect",m:"点検する",p:"v"},
+{w:"inspection",m:"検査",p:"n"},
+{w:"package",m:"小包",p:"n"},
+{w:"wrap",m:"包む",p:"v"},
+{w:"label",m:"荷札",p:"n"},
+{w:"cargo",m:"積み荷",p:"n"},
+{w:"freight",m:"貨物輸送",p:"n"},
+{w:"load",m:"積み込む",p:"v"},
+{w:"unload",m:"荷を降ろす",p:"v"},
+{w:"ship",m:"出荷する",p:"v"},
+{w:"track",m:"追跡する",p:"v"},
+{w:"applicant",m:"応募者",p:"n"},
+{w:"application",m:"応募書類",p:"n"},
+{w:"apply",m:"応募する",p:"v"},
+{w:"candidate",m:"候補者",p:"n"},
+{w:"qualification",m:"資格",p:"n"},
+{w:"qualified",m:"適任の",p:"adj"},
+{w:"experience",m:"経験",p:"n"},
+{w:"reference",m:"推薦状",p:"n"},
+{w:"recruit",m:"募集する",p:"v"},
+{w:"employ",m:"雇用する",p:"v"},
+{w:"dismiss",m:"解雇する",p:"v"},
+{w:"resign",m:"辞職する",p:"v"},
+{w:"quit",m:"辞める",p:"v"},
+{w:"wage",m:"賃金",p:"n"},
+{w:"bonus",m:"賞与",p:"n"},
+{w:"benefit",m:"福利厚生",p:"n"},
+{w:"pension",m:"年金",p:"n"},
+{w:"promotion",m:"昇進",p:"n"},
+{w:"personnel",m:"人事部門",p:"n"},
+{w:"payroll",m:"給与名簿",p:"n"},
+{w:"internship",m:"職業実習",p:"n"},
+{w:"evaluate",m:"評価する",p:"v"},
+{w:"performance",m:"業績",p:"n"},
+{w:"contract",m:"契約",p:"n"},
+{w:"negotiate",m:"交渉する",p:"v"},
+{w:"advertise",m:"宣伝する",p:"v"},
+{w:"advertisement",m:"広告",p:"n"},
+{w:"campaign",m:"販促活動",p:"n"},
+{w:"brand",m:"銘柄",p:"n"},
+{w:"market",m:"市場",p:"n"},
+{w:"survey",m:"調査",p:"n"},
+{w:"research",m:"研究",p:"n"},
+{w:"consumer",m:"消費者",p:"n"},
+{w:"demand",m:"需要",p:"n"},
+{w:"competition",m:"競争",p:"n"},
+{w:"competitor",m:"競合他社",p:"n"},
+{w:"strategy",m:"戦略",p:"n"},
+{w:"launch",m:"売り出す",p:"v"},
+{w:"publicity",m:"広報活動",p:"n"},
+{w:"target",m:"対象、標的",p:"n"},
+{w:"trend",m:"流行、傾向",p:"n"},
+{w:"brochure",m:"パンフレット",p:"n"},
+{w:"flyer",m:"ちらし",p:"n"},
+{w:"sample",m:"見本",p:"n"},
+{w:"exhibit",m:"展示する",p:"v"},
+{w:"exhibition",m:"展示会",p:"n"},
+{w:"trade fair",m:"見本市",p:"n"},
+{w:"sponsor",m:"後援する",p:"v"},
+{w:"client",m:"取引先、依頼人",p:"n"},
+{w:"audience",m:"聴衆",p:"n"},
+{w:"achieve",m:"達成する",p:"v"},
+{w:"improve",m:"改善する",p:"v"},
+{w:"increase",m:"増加する",p:"v"},
+{w:"decrease",m:"減少する",p:"v"},
+{w:"reduce",m:"減らす",p:"v"},
+{w:"expand",m:"拡大する",p:"v"},
+{w:"develop",m:"開発する",p:"v"},
+{w:"create",m:"創り出す",p:"v"},
+{w:"establish",m:"設立する",p:"v"},
+{w:"organize",m:"組織する",p:"v"},
+{w:"manage",m:"管理する",p:"v"},
+{w:"operate",m:"操作する",p:"v"},
+{w:"maintain",m:"維持する",p:"v"},
+{w:"provide",m:"提供する",p:"v"},
+{w:"offer",m:"差し出す",p:"v"},
+{w:"require",m:"必要とする",p:"v"},
+{w:"request",m:"要請する",p:"v"},
+{w:"receive",m:"受け取る",p:"v"},
+{w:"accept",m:"受け入れる",p:"v"},
+{w:"refuse",m:"断る",p:"v"},
+{w:"decline",m:"辞退する",p:"v"},
+{w:"approve",m:"承認する",p:"v"},
+{w:"reject",m:"却下する",p:"v"},
+{w:"submit",m:"提出する",p:"v"},
+{w:"complete",m:"完了する",p:"v"},
+{w:"prepare",m:"準備する",p:"v"},
+{w:"review",m:"見直す",p:"v"},
+{w:"revise",m:"修正する",p:"v"},
+{w:"update",m:"更新する",p:"v"},
+{w:"install",m:"設置する",p:"v"},
+{w:"replace",m:"取り替える",p:"v"},
+{w:"remove",m:"取り除く",p:"v"},
+{w:"attach",m:"添付する",p:"v"},
+{w:"enclose",m:"同封する",p:"v"},
+{w:"sign",m:"署名する",p:"v"},
+{w:"fill out",m:"記入する",p:"phr"},
+{w:"distribute",m:"配布する",p:"v"},
+{w:"collect",m:"集める",p:"v"},
+{w:"gather",m:"集合する",p:"v"},
+{w:"select",m:"選択する",p:"v"},
+{w:"choose",m:"選ぶ",p:"v"},
+{w:"decide",m:"決定する",p:"v"},
+{w:"consider",m:"検討する",p:"v"},
+{w:"expect",m:"予期する",p:"v"},
+{w:"predict",m:"予測する",p:"v"},
+{w:"estimate",m:"見積もる",p:"v"},
+{w:"calculate",m:"計算する",p:"v"},
+{w:"measure",m:"測定する",p:"v"},
+{w:"compare",m:"比較する",p:"v"},
+{w:"avoid",m:"避ける",p:"v"},
+{w:"solve",m:"解決する",p:"v"},
+{w:"explain",m:"説明する",p:"v"},
+{w:"describe",m:"描写する",p:"v"},
+{w:"introduce",m:"紹介する",p:"v"},
+{w:"demonstrate",m:"実演する",p:"v"},
+{w:"translate",m:"翻訳する",p:"v"},
+{w:"borrow",m:"借りる",p:"v"},
+{w:"lend",m:"貸す",p:"v"},
+{w:"spend",m:"費やす",p:"v"},
+{w:"save",m:"節約する",p:"v"},
+{w:"earn",m:"稼ぐ",p:"v"},
+{w:"raise",m:"引き上げる",p:"v"},
+{w:"lower",m:"引き下げる",p:"v"},
+{w:"hurry",m:"急ぐ",p:"v"},
+{w:"leave",m:"去る",p:"v"},
+{w:"remain",m:"残る",p:"v"},
+{w:"continue",m:"継続する",p:"v"},
+{w:"finish",m:"終える",p:"v"},
+{w:"begin",m:"開始する",p:"v"},
+{w:"participate",m:"参加する",p:"v"},
+{w:"cooperate",m:"協力する",p:"v"},
+{w:"assist",m:"手伝う",p:"v"},
+{w:"support",m:"支援する",p:"v"},
+{w:"encourage",m:"励ます",p:"v"},
+{w:"allow",m:"許可する",p:"v"},
+{w:"permit",m:"認可する",p:"v"},
+{w:"available",m:"利用可能な",p:"adj"},
+{w:"convenient",m:"便利な",p:"adj"},
+{w:"efficient",m:"効率的な",p:"adj"},
+{w:"effective",m:"効果的な",p:"adj"},
+{w:"important",m:"重要な",p:"adj"},
+{w:"necessary",m:"必要な",p:"adj"},
+{w:"essential",m:"不可欠な",p:"adj"},
+{w:"urgent",m:"緊急の",p:"adj"},
+{w:"immediate",m:"即時の",p:"adj"},
+{w:"temporary",m:"一時的な",p:"adj"},
+{w:"permanent",m:"永続的な",p:"adj"},
+{w:"current",m:"現在の",p:"adj"},
+{w:"previous",m:"以前の",p:"adj"},
+{w:"following",m:"次の",p:"adj"},
+{w:"additional",m:"追加の",p:"adj"},
+{w:"several",m:"いくつかの",p:"adj"},
+{w:"various",m:"さまざまな",p:"adj"},
+{w:"similar",m:"類似した",p:"adj"},
+{w:"different",m:"異なった",p:"adj"},
+{w:"entire",m:"全体の",p:"adj"},
+{w:"main",m:"主要な",p:"adj"},
+{w:"particular",m:"特定の",p:"adj"},
+{w:"general",m:"全般的な",p:"adj"},
+{w:"specific",m:"具体的な",p:"adj"},
+{w:"detailed",m:"詳細な",p:"adj"},
+{w:"expensive",m:"高価な",p:"adj"},
+{w:"inexpensive",m:"安価な",p:"adj"},
+{w:"reasonable",m:"手頃な",p:"adj"},
+{w:"valuable",m:"価値のある",p:"adj"},
+{w:"popular",m:"人気のある",p:"adj"},
+{w:"famous",m:"有名な",p:"adj"},
+{w:"successful",m:"成功した",p:"adj"},
+{w:"professional",m:"専門職の",p:"adj"},
+{w:"responsible",m:"責任がある",p:"adj"},
+{w:"reliable",m:"信頼できる",p:"adj"},
+{w:"punctual",m:"時間を守る",p:"adj"},
+{w:"polite",m:"礼儀正しい",p:"adj"},
+{w:"friendly",m:"親しみやすい",p:"adj"},
+{w:"helpful",m:"役に立つ",p:"adj"},
+{w:"comfortable",m:"快適な",p:"adj"},
+{w:"spacious",m:"広々とした",p:"adj"},
+{w:"crowded",m:"混雑した",p:"adj"},
+{w:"quiet",m:"静かな",p:"adj"},
+{w:"noisy",m:"騒がしい",p:"adj"},
+{w:"broken",m:"壊れた",p:"adj"},
+{w:"damaged",m:"損傷した",p:"adj"},
+{w:"missing",m:"見当たらない",p:"adj"},
+{w:"correct",m:"正しい",p:"adj"},
+{w:"incorrect",m:"誤った",p:"adj"},
+{w:"suitable",m:"適した",p:"adj"},
+{w:"immediately",m:"すぐに",p:"adv"},
+{w:"recently",m:"最近",p:"adv"},
+{w:"currently",m:"現在は",p:"adv"},
+{w:"usually",m:"普段は",p:"adv"},
+{w:"frequently",m:"頻繁に",p:"adv"},
+{w:"occasionally",m:"時々",p:"adv"},
+{w:"rarely",m:"めったに〜ない",p:"adv"},
+{w:"approximately",m:"おおよそ",p:"adv"},
+{w:"exactly",m:"正確に",p:"adv"},
+{w:"directly",m:"直接に",p:"adv"},
+{w:"finally",m:"ついに",p:"adv"},
+{w:"eventually",m:"結局は",p:"adv"},
+{w:"probably",m:"たぶん",p:"adv"},
+{w:"certainly",m:"確かに",p:"adv"},
+{w:"especially",m:"特に",p:"adv"},
+{w:"carefully",m:"注意深く",p:"adv"},
+{w:"quickly",m:"素早く",p:"adv"},
+{w:"slowly",m:"ゆっくりと",p:"adv"},
+{w:"early",m:"早めに",p:"adv"},
+{w:"already",m:"すでに",p:"adv"},
+{w:"soon",m:"まもなく",p:"adv"},
+{w:"together",m:"一緒に",p:"adv"},
+{w:"instead",m:"代わりに",p:"adv"},
+{w:"however",m:"しかしながら",p:"adv"},
+{w:"therefore",m:"それゆえに",p:"adv"},
+{w:"in advance",m:"前もって",p:"phr"},
+{w:"on time",m:"時間通りに",p:"phr"},
+{w:"right away",m:"直ちに",p:"phr"},
+{w:"at least",m:"少なくとも",p:"phr"},
+{w:"at most",m:"多くとも",p:"phr"},
+{w:"as soon as possible",m:"できるだけ早く",p:"phr"},
+{w:"for example",m:"例えば",p:"phr"},
+{w:"in charge of",m:"〜を担当して",p:"phr"},
+{w:"due to",m:"〜が原因で",p:"phr"},
+{w:"according to",m:"〜によれば",p:"phr"},
+{w:"in addition",m:"さらに",p:"phr"},
+{w:"on business",m:"仕事で",p:"phr"},
+{w:"out of order",m:"故障中で",p:"phr"},
+{w:"under construction",m:"工事中で",p:"phr"},
+{w:"be about to",m:"まさに〜する",p:"phr"},
+{w:"look forward to",m:"楽しみに待つ",p:"phr"},
+{w:"take place",m:"開催される",p:"phr"},
+{w:"carry out",m:"実行する",p:"phr"},
+{w:"put off",m:"先延ばしする",p:"phr"},
+{w:"turn down",m:"拒絶する",p:"phr"},
+{w:"set up",m:"立ち上げる",p:"phr"},
+{w:"find out",m:"突き止める",p:"phr"},
+{w:"pick up",m:"迎えに行く",p:"phr"},
+{w:"drop off",m:"送り届ける",p:"phr"},
+{w:"run out of",m:"使い果たす",p:"phr"},
+{w:"document",m:"文書",p:"n"},
+{w:"file",m:"書類綴じ",p:"n"},
+{w:"copy",m:"複写",p:"n"},
+{w:"form",m:"記入用紙",p:"n"},
+{w:"signature",m:"署名",p:"n"},
+{w:"envelope",m:"封筒",p:"n"},
+{w:"stationery",m:"文房具",p:"n"},
+{w:"printer",m:"印刷機",p:"n"},
+{w:"photocopier",m:"複写機",p:"n"},
+{w:"supplies",m:"備品",p:"n"},
+{w:"branch",m:"支店",p:"n"},
+{w:"headquarters",m:"本社",p:"n"},
+{w:"division",m:"事業部",p:"n"},
+{w:"section",m:"課、区画",p:"n"},
+{w:"committee",m:"委員会",p:"n"},
+{w:"board of directors",m:"取締役会",p:"phr"},
+{w:"president",m:"社長",p:"n"},
+{w:"executive",m:"経営幹部",p:"n"},
+{w:"secretary",m:"秘書",p:"n"},
+{w:"receptionist",m:"受付係",p:"n"},
+{w:"accountant",m:"会計士",p:"n"},
+{w:"lawyer",m:"弁護士",p:"n"},
+{w:"engineer",m:"技術者",p:"n"},
+{w:"consultant",m:"相談役",p:"n"},
+{w:"assistant",m:"助手",p:"n"},
+{w:"policy",m:"方針",p:"n"},
+{w:"regulation",m:"規制",p:"n"},
+{w:"rule",m:"規則",p:"n"},
+{w:"procedure",m:"手順",p:"n"},
+{w:"process",m:"過程",p:"n"},
+{w:"method",m:"方法",p:"n"},
+{w:"purpose",m:"目的",p:"n"},
+{w:"goal",m:"目標",p:"n"},
+{w:"result",m:"結果",p:"n"},
+{w:"effect",m:"影響、効果",p:"n"},
+{w:"opportunity",m:"機会",p:"n"},
+{w:"chance",m:"見込み、好機",p:"n"},
+{w:"issue",m:"問題点",p:"n"},
+{w:"problem",m:"問題",p:"n"},
+{w:"solution",m:"解決策",p:"n"},
+{w:"situation",m:"状況",p:"n"},
+{w:"condition",m:"状態、条件",p:"n"},
+{w:"environment",m:"環境",p:"n"},
+{w:"facility",m:"施設",p:"n"},
+{w:"location",m:"場所、立地",p:"n"},
+{w:"region",m:"地域",p:"n"},
+{w:"area",m:"区域",p:"n"},
+{w:"period",m:"期間",p:"n"},
+{w:"term",m:"期限、用語",p:"n"},
+{w:"detail",m:"詳細",p:"n"},
+{w:"vehicle",m:"車両",p:"n"},
+{w:"traffic",m:"交通量",p:"n"},
+{w:"license",m:"免許証",p:"n"},
+{w:"parking lot",m:"駐車場",p:"n"},
+{w:"agreement",m:"合意",p:"n"},
+{w:"permission",m:"許可",p:"n"},
+{w:"instruction",m:"指示",p:"n"},
+{w:"direction",m:"道順",p:"n"},
+{w:"notice",m:"掲示",p:"n"},
+{w:"message",m:"伝言",p:"n"},
+{w:"feedback",m:"意見、感想",p:"n"},
+{w:"complaint",m:"苦情",p:"n"},
+{w:"complain",m:"苦情を言う",p:"v"},
+{w:"apologize",m:"謝罪する",p:"v"},
+{w:"apology",m:"謝罪",p:"n"},
+{w:"appreciate",m:"感謝する",p:"v"},
+{w:"retirement",m:"退職",p:"n"},
+{w:"visitor",m:"訪問客",p:"n"}
+];
+
+</script>
+<script>
+// TOEIC 600 vocabulary (500 entries)
+window.VOCAB = window.VOCAB || {};
+window.VOCAB[600] = [
+{w:"negotiate",m:"交渉する",p:"v"},
+{w:"implement",m:"実施する",p:"v"},
+{w:"distribute",m:"配布する",p:"v"},
+{w:"estimate",m:"見積もる",p:"v"},
+{w:"attend",m:"出席する",p:"v"},
+{w:"postpone",m:"延期する",p:"v"},
+{w:"confirm",m:"確認する",p:"v"},
+{w:"submit",m:"提出する",p:"v"},
+{w:"approve",m:"承認する",p:"v"},
+{w:"reject",m:"却下する",p:"v"},
+{w:"hire",m:"雇う",p:"v"},
+{w:"recruit",m:"採用する",p:"v"},
+{w:"promote",m:"昇進させる",p:"v"},
+{w:"resign",m:"辞職する",p:"v"},
+{w:"retire",m:"退職する",p:"v"},
+{w:"transfer",m:"転勤させる",p:"v"},
+{w:"supervise",m:"監督する",p:"v"},
+{w:"evaluate",m:"評価する",p:"v"},
+{w:"assign",m:"割り当てる",p:"v"},
+{w:"schedule",m:"予定を組む",p:"v"},
+{w:"arrange",m:"手配する",p:"v"},
+{w:"organize",m:"組織する",p:"v"},
+{w:"cancel",m:"取り消す",p:"v"},
+{w:"announce",m:"公表する",p:"v"},
+{w:"inform",m:"知らせる",p:"v"},
+{w:"notify",m:"通知する",p:"v"},
+{w:"remind",m:"思い出させる",p:"v"},
+{w:"respond",m:"返答する",p:"v"},
+{w:"reply",m:"返信する",p:"v"},
+{w:"inquire",m:"問い合わせる",p:"v"},
+{w:"request",m:"要請する",p:"v"},
+{w:"require",m:"必要とする",p:"v"},
+{w:"provide",m:"提供する",p:"v"},
+{w:"supply",m:"供給する",p:"v"},
+{w:"offer",m:"申し出る",p:"v"},
+{w:"deliver",m:"配達する",p:"v"},
+{w:"ship",m:"発送する",p:"v"},
+{w:"order",m:"注文する",p:"v"},
+{w:"purchase",m:"購入する",p:"v"},
+{w:"manufacture",m:"製造する",p:"v"},
+{w:"produce",m:"生産する",p:"v"},
+{w:"assemble",m:"組み立てる",p:"v"},
+{w:"install",m:"取り付ける",p:"v"},
+{w:"repair",m:"修理する",p:"v"},
+{w:"maintain",m:"維持する",p:"v"},
+{w:"inspect",m:"検査する",p:"v"},
+{w:"examine",m:"調べる",p:"v"},
+{w:"review",m:"見直す",p:"v"},
+{w:"revise",m:"改訂する",p:"v"},
+{w:"update",m:"最新にする",p:"v"},
+{w:"renew",m:"更新する",p:"v"},
+{w:"improve",m:"改善する",p:"v"},
+{w:"expand",m:"拡大する",p:"v"},
+{w:"increase",m:"増加する",p:"v"},
+{w:"decrease",m:"減少する",p:"v"},
+{w:"reduce",m:"削減する",p:"v"},
+{w:"raise",m:"引き上げる",p:"v"},
+{w:"lower",m:"引き下げる",p:"v"},
+{w:"launch",m:"売り出す",p:"v"},
+{w:"release",m:"公開する",p:"v"},
+{w:"develop",m:"開発する",p:"v"},
+{w:"design",m:"設計する",p:"v"},
+{w:"invest",m:"投資する",p:"v"},
+{w:"finance",m:"資金調達する",p:"v"},
+{w:"merge",m:"合併する",p:"v"},
+{w:"acquire",m:"買収する",p:"v"},
+{w:"compete",m:"競争する",p:"v"},
+{w:"cooperate",m:"協力する",p:"v"},
+{w:"collaborate",m:"共同作業する",p:"v"},
+{w:"participate",m:"参加する",p:"v"},
+{w:"contribute",m:"貢献する",p:"v"},
+{w:"donate",m:"寄付する",p:"v"},
+{w:"advertise",m:"宣伝する",p:"v"},
+{w:"share",m:"共有する",p:"v"},
+{w:"withdraw",m:"引き出す",p:"v"},
+{w:"attach",m:"添付する",p:"v"},
+{w:"enclose",m:"同封する",p:"v"},
+{w:"forward",m:"転送する",p:"v"},
+{w:"handle",m:"取り扱う",p:"v"},
+{w:"operate",m:"操作する",p:"v"},
+{w:"process",m:"処理する",p:"v"},
+{w:"complete",m:"完了する",p:"v"},
+{w:"accomplish",m:"成し遂げる",p:"v"},
+{w:"achieve",m:"達成する",p:"v"},
+{w:"expire",m:"期限が切れる",p:"v"},
+{w:"depart",m:"出発する",p:"v"},
+{w:"relocate",m:"移転する",p:"v"},
+{w:"transport",m:"輸送する",p:"v"},
+{w:"pack",m:"梱包する",p:"v"},
+{w:"reserve",m:"予約する",p:"v"},
+{w:"host",m:"主催する",p:"v"},
+{w:"introduce",m:"紹介する",p:"v"},
+{w:"demonstrate",m:"実演する",p:"v"},
+{w:"exhibit",m:"展示する",p:"v"},
+{w:"display",m:"陳列する",p:"v"},
+{w:"feature",m:"特集する",p:"v"},
+{w:"publish",m:"出版する",p:"v"},
+{w:"edit",m:"編集する",p:"v"},
+{w:"translate",m:"翻訳する",p:"v"},
+{w:"summarize",m:"要約する",p:"v"},
+{w:"clarify",m:"明確にする",p:"v"},
+{w:"specify",m:"明記する",p:"v"},
+{w:"indicate",m:"示す",p:"v"},
+{w:"mention",m:"言及する",p:"v"},
+{w:"appreciate",m:"感謝する",p:"v"},
+{w:"apologize",m:"謝罪する",p:"v"},
+{w:"complain",m:"苦情を言う",p:"v"},
+{w:"compensate",m:"補償する",p:"v"},
+{w:"reimburse",m:"払い戻す",p:"v"},
+{w:"guarantee",m:"保証する",p:"v"},
+{w:"claim",m:"請求する",p:"v"},
+{w:"renovate",m:"改装する",p:"v"},
+{w:"construct",m:"建設する",p:"v"},
+{w:"equip",m:"装備する",p:"v"},
+{w:"utilize",m:"活用する",p:"v"},
+{w:"consume",m:"消費する",p:"v"},
+{w:"adjust",m:"調整する",p:"v"},
+{w:"modify",m:"修正する",p:"v"},
+{w:"replace",m:"取り替える",p:"v"},
+{w:"eliminate",m:"除去する",p:"v"},
+{w:"remove",m:"取り除く",p:"v"},
+{w:"recycle",m:"再利用する",p:"v"},
+{w:"prevent",m:"防ぐ",p:"v"},
+{w:"avoid",m:"避ける",p:"v"},
+{w:"protect",m:"保護する",p:"v"},
+{w:"secure",m:"確保する",p:"v"},
+{w:"ensure",m:"確実にする",p:"v"},
+{w:"verify",m:"検証する",p:"v"},
+{w:"authorize",m:"権限を与える",p:"v"},
+{w:"appoint",m:"任命する",p:"v"},
+{w:"dismiss",m:"解雇する",p:"v"},
+{w:"conduct",m:"行う",p:"v"},
+{w:"perform",m:"遂行する",p:"v"},
+{w:"proceed",m:"続行する",p:"v"},
+{w:"delay",m:"遅らせる",p:"v"},
+{w:"suspend",m:"一時停止する",p:"v"},
+{w:"terminate",m:"終了させる",p:"v"},
+{w:"conclude",m:"締めくくる",p:"v"},
+{w:"determine",m:"決定する",p:"v"},
+{w:"resolve",m:"解決する",p:"v"},
+{w:"identify",m:"特定する",p:"v"},
+{w:"recognize",m:"認識する",p:"v"},
+{w:"predict",m:"予測する",p:"v"},
+{w:"anticipate",m:"見込む",p:"v"},
+{w:"recommend",m:"勧める",p:"v"},
+{w:"propose",m:"提案する",p:"v"},
+{w:"decline",m:"辞退する",p:"v"},
+{w:"measure",m:"測定する",p:"v"},
+{w:"register",m:"登録する",p:"v"},
+{w:"contact",m:"連絡する",p:"v"},
+{w:"establish",m:"設立する",p:"v"},
+{w:"sign",m:"署名する",p:"v"},
+{w:"extend",m:"延長する",p:"v"},
+{w:"analyze",m:"分析する",p:"v"},
+{w:"train",m:"訓練する",p:"v"},
+{w:"applicant",m:"応募者",p:"n"},
+{w:"interview",m:"面接",p:"n"},
+{w:"resume",m:"履歴書",p:"n"},
+{w:"candidate",m:"候補者",p:"n"},
+{w:"employee",m:"従業員",p:"n"},
+{w:"employer",m:"雇用主",p:"n"},
+{w:"staff",m:"職員",p:"n"},
+{w:"colleague",m:"同僚",p:"n"},
+{w:"supervisor",m:"監督者",p:"n"},
+{w:"manager",m:"管理職",p:"n"},
+{w:"executive",m:"経営幹部",p:"n"},
+{w:"president",m:"社長",p:"n"},
+{w:"board",m:"取締役会",p:"n"},
+{w:"department",m:"部署",p:"n"},
+{w:"division",m:"事業部",p:"n"},
+{w:"branch",m:"支店",p:"n"},
+{w:"headquarters",m:"本社",p:"n"},
+{w:"facility",m:"施設",p:"n"},
+{w:"warehouse",m:"倉庫",p:"n"},
+{w:"factory",m:"工場",p:"n"},
+{w:"equipment",m:"機器",p:"n"},
+{w:"device",m:"装置",p:"n"},
+{w:"supplies",m:"備品",p:"n"},
+{w:"inventory",m:"在庫",p:"n"},
+{w:"stock",m:"株式",p:"n"},
+{w:"merchandise",m:"商品",p:"n"},
+{w:"goods",m:"品物",p:"n"},
+{w:"product",m:"製品",p:"n"},
+{w:"item",m:"品目",p:"n"},
+{w:"material",m:"材料",p:"n"},
+{w:"component",m:"部品",p:"n"},
+{w:"ingredient",m:"成分",p:"n"},
+{w:"shipment",m:"発送品",p:"n"},
+{w:"delivery",m:"配達",p:"n"},
+{w:"freight",m:"貨物",p:"n"},
+{w:"logistics",m:"物流",p:"n"},
+{w:"vehicle",m:"車両",p:"n"},
+{w:"route",m:"経路",p:"n"},
+{w:"destination",m:"目的地",p:"n"},
+{w:"departure",m:"出発",p:"n"},
+{w:"arrival",m:"到着",p:"n"},
+{w:"itinerary",m:"旅程",p:"n"},
+{w:"accommodation",m:"宿泊施設",p:"n"},
+{w:"fare",m:"運賃",p:"n"},
+{w:"fee",m:"手数料",p:"n"},
+{w:"charge",m:"料金",p:"n"},
+{w:"cost",m:"費用",p:"n"},
+{w:"expense",m:"経費",p:"n"},
+{w:"price",m:"価格",p:"n"},
+{w:"discount",m:"割引",p:"n"},
+{w:"refund",m:"返金",p:"n"},
+{w:"receipt",m:"領収書",p:"n"},
+{w:"invoice",m:"請求書",p:"n"},
+{w:"payment",m:"支払い",p:"n"},
+{w:"transaction",m:"取引",p:"n"},
+{w:"deposit",m:"頭金",p:"n"},
+{w:"account",m:"口座",p:"n"},
+{w:"balance",m:"残高",p:"n"},
+{w:"loan",m:"貸付金",p:"n"},
+{w:"interest",m:"利息",p:"n"},
+{w:"tax",m:"税金",p:"n"},
+{w:"salary",m:"給料",p:"n"},
+{w:"wage",m:"賃金",p:"n"},
+{w:"income",m:"収入",p:"n"},
+{w:"revenue",m:"収益",p:"n"},
+{w:"profit",m:"利益",p:"n"},
+{w:"loss",m:"損失",p:"n"},
+{w:"budget",m:"予算",p:"n"},
+{w:"expenditure",m:"支出",p:"n"},
+{w:"asset",m:"資産",p:"n"},
+{w:"liability",m:"負債",p:"n"},
+{w:"shareholder",m:"株主",p:"n"},
+{w:"investor",m:"投資家",p:"n"},
+{w:"economy",m:"経済",p:"n"},
+{w:"industry",m:"産業",p:"n"},
+{w:"market",m:"市場",p:"n"},
+{w:"demand",m:"需要",p:"n"},
+{w:"consumer",m:"消費者",p:"n"},
+{w:"customer",m:"顧客",p:"n"},
+{w:"client",m:"依頼客",p:"n"},
+{w:"vendor",m:"販売業者",p:"n"},
+{w:"supplier",m:"供給業者",p:"n"},
+{w:"distributor",m:"販売代理店",p:"n"},
+{w:"retailer",m:"小売業者",p:"n"},
+{w:"manufacturer",m:"製造業者",p:"n"},
+{w:"competitor",m:"競合他社",p:"n"},
+{w:"advertisement",m:"広告",p:"n"},
+{w:"promotion",m:"販売促進",p:"n"},
+{w:"campaign",m:"宣伝活動",p:"n"},
+{w:"brand",m:"銘柄",p:"n"},
+{w:"survey",m:"調査",p:"n"},
+{w:"questionnaire",m:"アンケート",p:"n"},
+{w:"feedback",m:"意見・感想",p:"n"},
+{w:"report",m:"報告書",p:"n"},
+{w:"document",m:"書類",p:"n"},
+{w:"contract",m:"契約",p:"n"},
+{w:"agreement",m:"合意",p:"n"},
+{w:"term",m:"条件",p:"n"},
+{w:"condition",m:"状態",p:"n"},
+{w:"proposal",m:"提案書",p:"n"},
+{w:"permission",m:"許可",p:"n"},
+{w:"permit",m:"許可証",p:"n"},
+{w:"signature",m:"署名",p:"n"},
+{w:"deadline",m:"締め切り",p:"n"},
+{w:"appointment",m:"面会の約束",p:"n"},
+{w:"meeting",m:"会議",p:"n"},
+{w:"conference",m:"協議会",p:"n"},
+{w:"seminar",m:"講習会",p:"n"},
+{w:"workshop",m:"研修会",p:"n"},
+{w:"agenda",m:"議題",p:"n"},
+{w:"minutes",m:"議事録",p:"n"},
+{w:"handout",m:"配布資料",p:"n"},
+{w:"presentation",m:"発表",p:"n"},
+{w:"audience",m:"聴衆",p:"n"},
+{w:"attendee",m:"出席者",p:"n"},
+{w:"participant",m:"参加者",p:"n"},
+{w:"venue",m:"開催地",p:"n"},
+{w:"complaint",m:"苦情",p:"n"},
+{w:"warranty",m:"保証書",p:"n"},
+{w:"insurance",m:"保険",p:"n"},
+{w:"lease",m:"賃貸契約",p:"n"},
+{w:"objective",m:"目的",p:"n"},
+{w:"target",m:"標的",p:"n"},
+{w:"strategy",m:"戦略",p:"n"},
+{w:"policy",m:"方針",p:"n"},
+{w:"procedure",m:"手順",p:"n"},
+{w:"method",m:"方法",p:"n"},
+{w:"approach",m:"取り組み方",p:"n"},
+{w:"solution",m:"解決策",p:"n"},
+{w:"alternative",m:"代替案",p:"n"},
+{w:"option",m:"選択肢",p:"n"},
+{w:"opportunity",m:"機会",p:"n"},
+{w:"circumstance",m:"事情",p:"n"},
+{w:"status",m:"状況",p:"n"},
+{w:"issue",m:"問題点",p:"n"},
+{w:"concern",m:"懸念",p:"n"},
+{w:"risk",m:"危険性",p:"n"},
+{w:"benefit",m:"恩恵",p:"n"},
+{w:"advantage",m:"利点",p:"n"},
+{w:"disadvantage",m:"不利な点",p:"n"},
+{w:"quality",m:"品質",p:"n"},
+{w:"quantity",m:"数量",p:"n"},
+{w:"amount",m:"量",p:"n"},
+{w:"capacity",m:"収容能力",p:"n"},
+{w:"efficiency",m:"効率",p:"n"},
+{w:"performance",m:"業績",p:"n"},
+{w:"achievement",m:"功績",p:"n"},
+{w:"productivity",m:"生産性",p:"n"},
+{w:"growth",m:"成長",p:"n"},
+{w:"trend",m:"傾向",p:"n"},
+{w:"rate",m:"割合",p:"n"},
+{w:"enterprise",m:"企業",p:"n"},
+{w:"corporation",m:"株式会社",p:"n"},
+{w:"organization",m:"組織",p:"n"},
+{w:"association",m:"協会",p:"n"},
+{w:"committee",m:"委員会",p:"n"},
+{w:"regulation",m:"規制",p:"n"},
+{w:"requirement",m:"必要条件",p:"n"},
+{w:"qualification",m:"資格",p:"n"},
+{w:"certificate",m:"証明書",p:"n"},
+{w:"license",m:"免許",p:"n"},
+{w:"degree",m:"学位",p:"n"},
+{w:"background",m:"背景",p:"n"},
+{w:"reference",m:"推薦状",p:"n"},
+{w:"union",m:"労働組合",p:"n"},
+{w:"pension",m:"年金",p:"n"},
+{w:"bonus",m:"賞与",p:"n"},
+{w:"overtime",m:"残業",p:"n"},
+{w:"shift",m:"交替勤務",p:"n"},
+{w:"task",m:"作業",p:"n"},
+{w:"assignment",m:"課題",p:"n"},
+{w:"responsibility",m:"責任",p:"n"},
+{w:"career",m:"経歴",p:"n"},
+{w:"position",m:"職位",p:"n"},
+{w:"profession",m:"専門職",p:"n"},
+{w:"vacancy",m:"欠員",p:"n"},
+{w:"brochure",m:"パンフレット",p:"n"},
+{w:"catalog",m:"商品目録",p:"n"},
+{w:"manual",m:"取扱説明書",p:"n"},
+{w:"form",m:"記入用紙",p:"n"},
+{w:"application",m:"申込書",p:"n"},
+{w:"attachment",m:"添付ファイル",p:"n"},
+{w:"article",m:"記事",p:"n"},
+{w:"publication",m:"出版物",p:"n"},
+{w:"editor",m:"編集者",p:"n"},
+{w:"author",m:"著者",p:"n"},
+{w:"beverage",m:"飲料",p:"n"},
+{w:"banquet",m:"宴会",p:"n"},
+{w:"reception",m:"歓迎会",p:"n"},
+{w:"receptionist",m:"受付係",p:"n"},
+{w:"available",m:"利用可能な",p:"adj"},
+{w:"convenient",m:"便利な",p:"adj"},
+{w:"efficient",m:"効率的な",p:"adj"},
+{w:"effective",m:"効果的な",p:"adj"},
+{w:"productive",m:"生産的な",p:"adj"},
+{w:"profitable",m:"利益になる",p:"adj"},
+{w:"affordable",m:"手頃な価格の",p:"adj"},
+{w:"expensive",m:"高価な",p:"adj"},
+{w:"inexpensive",m:"安価な",p:"adj"},
+{w:"reasonable",m:"妥当な",p:"adj"},
+{w:"valuable",m:"価値のある",p:"adj"},
+{w:"reliable",m:"信頼できる",p:"adj"},
+{w:"responsible",m:"責任がある",p:"adj"},
+{w:"capable",m:"有能な",p:"adj"},
+{w:"qualified",m:"資格のある",p:"adj"},
+{w:"experienced",m:"経験豊富な",p:"adj"},
+{w:"skilled",m:"熟練した",p:"adj"},
+{w:"professional",m:"専門職の",p:"adj"},
+{w:"temporary",m:"一時的な",p:"adj"},
+{w:"permanent",m:"永続的な",p:"adj"},
+{w:"part-time",m:"非常勤の",p:"adj"},
+{w:"full-time",m:"常勤の",p:"adj"},
+{w:"annual",m:"年一回の",p:"adj"},
+{w:"quarterly",m:"四半期の",p:"adj"},
+{w:"monthly",m:"毎月の",p:"adj"},
+{w:"weekly",m:"毎週の",p:"adj"},
+{w:"current",m:"現在の",p:"adj"},
+{w:"previous",m:"以前の",p:"adj"},
+{w:"former",m:"元の",p:"adj"},
+{w:"recent",m:"最近の",p:"adj"},
+{w:"upcoming",m:"来たる",p:"adj"},
+{w:"initial",m:"最初の",p:"adj"},
+{w:"final",m:"最終の",p:"adj"},
+{w:"additional",m:"追加の",p:"adj"},
+{w:"overall",m:"全般的な",p:"adj"},
+{w:"general",m:"一般的な",p:"adj"},
+{w:"specific",m:"特定の",p:"adj"},
+{w:"detailed",m:"詳細な",p:"adj"},
+{w:"complicated",m:"複雑な",p:"adj"},
+{w:"significant",m:"重大な",p:"adj"},
+{w:"essential",m:"不可欠な",p:"adj"},
+{w:"necessary",m:"必要な",p:"adj"},
+{w:"optional",m:"任意の",p:"adj"},
+{w:"mandatory",m:"義務的な",p:"adj"},
+{w:"urgent",m:"緊急の",p:"adj"},
+{w:"immediate",m:"即時の",p:"adj"},
+{w:"prompt",m:"迅速な",p:"adj"},
+{w:"rapid",m:"急速な",p:"adj"},
+{w:"stable",m:"安定した",p:"adj"},
+{w:"flexible",m:"柔軟な",p:"adj"},
+{w:"strict",m:"厳しい",p:"adj"},
+{w:"accurate",m:"正確な",p:"adj"},
+{w:"appropriate",m:"適切な",p:"adj"},
+{w:"suitable",m:"ふさわしい",p:"adj"},
+{w:"proper",m:"適正な",p:"adj"},
+{w:"sufficient",m:"十分な",p:"adj"},
+{w:"insufficient",m:"不十分な",p:"adj"},
+{w:"limited",m:"限られた",p:"adj"},
+{w:"various",m:"さまざまな",p:"adj"},
+{w:"numerous",m:"多数の",p:"adj"},
+{w:"multiple",m:"複数の",p:"adj"},
+{w:"potential",m:"潜在的な",p:"adj"},
+{w:"familiar",m:"精通した",p:"adj"},
+{w:"confident",m:"自信のある",p:"adj"},
+{w:"satisfied",m:"満足した",p:"adj"},
+{w:"disappointed",m:"がっかりした",p:"adj"},
+{w:"impressive",m:"印象的な",p:"adj"},
+{w:"outstanding",m:"傑出した",p:"adj"},
+{w:"remarkable",m:"注目に値する",p:"adj"},
+{w:"maximum",m:"最大の",p:"adj"},
+{w:"minimum",m:"最小の",p:"adj"},
+{w:"domestic",m:"国内の",p:"adj"},
+{w:"international",m:"国際的な",p:"adj"},
+{w:"global",m:"世界的な",p:"adj"},
+{w:"local",m:"地元の",p:"adj"},
+{w:"overseas",m:"海外の",p:"adj"},
+{w:"foreign",m:"外国の",p:"adj"},
+{w:"official",m:"公式の",p:"adj"},
+{w:"formal",m:"正式な",p:"adj"},
+{w:"confidential",m:"機密の",p:"adj"},
+{w:"public",m:"公共の",p:"adj"},
+{w:"private",m:"私的な",p:"adj"},
+{w:"corporate",m:"企業の",p:"adj"},
+{w:"commercial",m:"商業の",p:"adj"},
+{w:"financial",m:"財務の",p:"adj"},
+{w:"economic",m:"経済の",p:"adj"},
+{w:"legal",m:"法律の",p:"adj"},
+{w:"illegal",m:"違法の",p:"adj"},
+{w:"environmental",m:"環境の",p:"adj"},
+{w:"technical",m:"技術的な",p:"adj"},
+{w:"defective",m:"欠陥のある",p:"adj"},
+{w:"damaged",m:"損傷した",p:"adj"},
+{w:"durable",m:"耐久性のある",p:"adj"},
+{w:"due",m:"期限の",p:"adj"},
+{w:"complimentary",m:"無料進呈の",p:"adj"},
+{w:"approximately",m:"およそ",p:"adv"},
+{w:"nearly",m:"ほぼ",p:"adv"},
+{w:"exactly",m:"正確に",p:"adv"},
+{w:"currently",m:"現在は",p:"adv"},
+{w:"recently",m:"最近",p:"adv"},
+{w:"previously",m:"以前に",p:"adv"},
+{w:"formerly",m:"かつては",p:"adv"},
+{w:"immediately",m:"ただちに",p:"adv"},
+{w:"promptly",m:"すみやかに",p:"adv"},
+{w:"shortly",m:"まもなく",p:"adv"},
+{w:"eventually",m:"結局は",p:"adv"},
+{w:"finally",m:"ついに",p:"adv"},
+{w:"frequently",m:"頻繁に",p:"adv"},
+{w:"occasionally",m:"時々",p:"adv"},
+{w:"rarely",m:"めったにない",p:"adv"},
+{w:"regularly",m:"定期的に",p:"adv"},
+{w:"temporarily",m:"一時的に",p:"adv"},
+{w:"permanently",m:"永久に",p:"adv"},
+{w:"significantly",m:"大幅に",p:"adv"},
+{w:"considerably",m:"かなり",p:"adv"},
+{w:"slightly",m:"わずかに",p:"adv"},
+{w:"gradually",m:"徐々に",p:"adv"},
+{w:"steadily",m:"着実に",p:"adv"},
+{w:"rapidly",m:"急速に",p:"adv"},
+{w:"efficiently",m:"効率的に",p:"adv"},
+{w:"successfully",m:"首尾よく",p:"adv"},
+{w:"properly",m:"適切に",p:"adv"},
+{w:"thoroughly",m:"徹底的に",p:"adv"},
+{w:"carefully",m:"注意深く",p:"adv"},
+{w:"accordingly",m:"それに応じて",p:"adv"},
+{w:"therefore",m:"それゆえに",p:"adv"},
+{w:"however",m:"しかしながら",p:"adv"},
+{w:"moreover",m:"さらに",p:"adv"},
+{w:"furthermore",m:"その上",p:"adv"},
+{w:"nevertheless",m:"それでもなお",p:"adv"},
+{w:"in advance",m:"前もって",p:"phr"},
+{w:"on time",m:"時間通りに",p:"phr"},
+{w:"in time",m:"間に合って",p:"phr"},
+{w:"out of stock",m:"在庫切れ",p:"phr"},
+{w:"in stock",m:"在庫あり",p:"phr"},
+{w:"out of order",m:"故障中",p:"phr"},
+{w:"in charge of",m:"~を担当して",p:"phr"},
+{w:"due to",m:"~が原因で",p:"phr"},
+{w:"according to",m:"~によれば",p:"phr"},
+{w:"as of",m:"~現在で",p:"phr"},
+{w:"in terms of",m:"~の点で",p:"phr"},
+{w:"on behalf of",m:"~を代表して",p:"phr"},
+{w:"in addition to",m:"~に加えて",p:"phr"},
+{w:"instead of",m:"~の代わりに",p:"phr"},
+{w:"regardless of",m:"~に関係なく",p:"phr"},
+{w:"prior to",m:"~より前に",p:"phr"},
+{w:"take place",m:"開催される",p:"phr"},
+{w:"carry out",m:"実行する",p:"phr"},
+{w:"fill out",m:"記入する",p:"phr"},
+{w:"turn down",m:"断る",p:"phr"},
+{w:"call off",m:"中止する",p:"phr"},
+{w:"set up",m:"設置する",p:"phr"},
+{w:"deal with",m:"~に対処する",p:"phr"},
+{w:"comply with",m:"~に従う",p:"phr"},
+{w:"apply for",m:"~に応募する",p:"phr"}
+];
+
+</script>
+<script>
+// TOEIC 700 level vocabulary (500 words)
+window.VOCAB = window.VOCAB || {};
+window.VOCAB[700] = [
+{w:"comply",m:"順守する",p:"v"},
+{w:"regulation",m:"規制",p:"n"},
+{w:"compliance",m:"法令順守",p:"n"},
+{w:"violation",m:"違反",p:"n"},
+{w:"prohibit",m:"禁止する",p:"v"},
+{w:"mandatory",m:"義務的な",p:"adj"},
+{w:"legislation",m:"立法",p:"n"},
+{w:"clause",m:"条項",p:"n"},
+{w:"liability",m:"法的責任",p:"n"},
+{w:"lawsuit",m:"訴訟",p:"n"},
+{w:"attorney",m:"弁護士",p:"n"},
+{w:"verdict",m:"評決",p:"n"},
+{w:"infringe",m:"侵害する",p:"v"},
+{w:"patent",m:"特許",p:"n"},
+{w:"copyright",m:"著作権",p:"n"},
+{w:"confidential",m:"機密の",p:"adj"},
+{w:"disclose",m:"開示する",p:"v"},
+{w:"enforce",m:"施行する",p:"v"},
+{w:"amendment",m:"改正",p:"n"},
+{w:"abide by",m:"従う",p:"phr"},
+{w:"contract",m:"契約",p:"n"},
+{w:"negotiate",m:"交渉する",p:"v"},
+{w:"stipulate",m:"規定する",p:"v"},
+{w:"terms",m:"契約条件",p:"n"},
+{w:"breach",m:"契約違反",p:"n"},
+{w:"renew",m:"更新する",p:"v"},
+{w:"expire",m:"期限が切れる",p:"v"},
+{w:"expiration",m:"満了",p:"n"},
+{w:"void",m:"無効の",p:"adj"},
+{w:"binding",m:"拘束力のある",p:"adj"},
+{w:"agreement",m:"合意",p:"n"},
+{w:"proposal",m:"提案書",p:"n"},
+{w:"counterpart",m:"相手方",p:"n"},
+{w:"concession",m:"譲歩",p:"n"},
+{w:"compromise",m:"妥協する",p:"v"},
+{w:"arbitration",m:"仲裁",p:"n"},
+{w:"mediate",m:"調停する",p:"v"},
+{w:"mutual",m:"相互の",p:"adj"},
+{w:"provision",m:"規定",p:"n"},
+{w:"warranty",m:"保証書",p:"n"},
+{w:"expenditure",m:"支出",p:"n"},
+{w:"revenue",m:"収益",p:"n"},
+{w:"profit",m:"利益",p:"n"},
+{w:"deficit",m:"赤字",p:"n"},
+{w:"surplus",m:"黒字",p:"n"},
+{w:"asset",m:"資産",p:"n"},
+{w:"budget",m:"予算",p:"n"},
+{w:"audit",m:"会計監査",p:"n"},
+{w:"invoice",m:"請求書",p:"n"},
+{w:"receipt",m:"領収書",p:"n"},
+{w:"reimburse",m:"払い戻す",p:"v"},
+{w:"reimbursement",m:"経費精算",p:"n"},
+{w:"transaction",m:"取引",p:"n"},
+{w:"installment",m:"分割払い",p:"n"},
+{w:"mortgage",m:"住宅ローン",p:"n"},
+{w:"interest rate",m:"金利",p:"n"},
+{w:"deposit",m:"預金",p:"n"},
+{w:"withdraw",m:"引き出す",p:"v"},
+{w:"currency",m:"通貨",p:"n"},
+{w:"exchange rate",m:"為替レート",p:"n"},
+{w:"fiscal",m:"会計の",p:"adj"},
+{w:"quarterly",m:"四半期の",p:"adj"},
+{w:"annual",m:"年次の",p:"adj"},
+{w:"estimate",m:"見積もる",p:"v"},
+{w:"quotation",m:"見積書",p:"n"},
+{w:"figure",m:"数値",p:"n"},
+{w:"balance",m:"残高",p:"n"},
+{w:"debt",m:"負債",p:"n"},
+{w:"loan",m:"融資",p:"n"},
+{w:"fund",m:"資金",p:"n"},
+{w:"allocate",m:"割り当てる",p:"v"},
+{w:"allocation",m:"配分",p:"n"},
+{w:"accounting",m:"経理",p:"n"},
+{w:"bookkeeping",m:"簿記",p:"n"},
+{w:"payroll",m:"給与支払業務",p:"n"},
+{w:"taxation",m:"課税",p:"n"},
+{w:"deduct",m:"差し引く",p:"v"},
+{w:"deduction",m:"控除",p:"n"},
+{w:"subsidy",m:"補助金",p:"n"},
+{w:"grant",m:"助成金",p:"n"},
+{w:"invest",m:"投資する",p:"v"},
+{w:"investor",m:"投資家",p:"n"},
+{w:"shareholder",m:"株主",p:"n"},
+{w:"stock",m:"株式",p:"n"},
+{w:"dividend",m:"配当金",p:"n"},
+{w:"merger",m:"合併",p:"n"},
+{w:"acquisition",m:"買収",p:"n"},
+{w:"subsidiary",m:"子会社",p:"n"},
+{w:"headquarters",m:"本社",p:"n"},
+{w:"affiliate",m:"関連会社",p:"n"},
+{w:"enterprise",m:"企業",p:"n"},
+{w:"corporation",m:"法人",p:"n"},
+{w:"firm",m:"会社",p:"n"},
+{w:"entrepreneur",m:"起業家",p:"n"},
+{w:"startup",m:"新興企業",p:"n"},
+{w:"founder",m:"創業者",p:"n"},
+{w:"bankruptcy",m:"倒産",p:"n"},
+{w:"liquidate",m:"清算する",p:"v"},
+{w:"monopoly",m:"独占",p:"n"},
+{w:"stake",m:"出資分",p:"n"},
+{w:"recruit",m:"採用する",p:"v"},
+{w:"recruitment",m:"人材募集",p:"n"},
+{w:"applicant",m:"応募者",p:"n"},
+{w:"candidate",m:"候補者",p:"n"},
+{w:"resume",m:"履歴書",p:"n"},
+{w:"qualification",m:"資格",p:"n"},
+{w:"qualified",m:"適任の",p:"adj"},
+{w:"credential",m:"資格証明",p:"n"},
+{w:"interviewer",m:"面接官",p:"n"},
+{w:"vacancy",m:"欠員",p:"n"},
+{w:"personnel",m:"職員",p:"n"},
+{w:"workforce",m:"全従業員",p:"n"},
+{w:"supervisor",m:"監督者",p:"n"},
+{w:"subordinate",m:"部下",p:"n"},
+{w:"colleague",m:"同僚",p:"n"},
+{w:"predecessor",m:"前任者",p:"n"},
+{w:"successor",m:"後任者",p:"n"},
+{w:"promotion",m:"昇進",p:"n"},
+{w:"demote",m:"降格させる",p:"v"},
+{w:"resign",m:"辞職する",p:"v"},
+{w:"retirement",m:"引退",p:"n"},
+{w:"pension",m:"年金",p:"n"},
+{w:"salary",m:"給料",p:"n"},
+{w:"wage",m:"賃金",p:"n"},
+{w:"compensation",m:"報酬",p:"n"},
+{w:"bonus",m:"賞与",p:"n"},
+{w:"benefits",m:"福利厚生",p:"n"},
+{w:"allowance",m:"手当",p:"n"},
+{w:"overtime",m:"残業",p:"n"},
+{w:"paid leave",m:"有給休暇",p:"n"},
+{w:"probation",m:"試用期間",p:"n"},
+{w:"apprentice",m:"見習い",p:"n"},
+{w:"internship",m:"実務研修",p:"n"},
+{w:"orientation",m:"新人研修",p:"n"},
+{w:"evaluate",m:"評価する",p:"v"},
+{w:"evaluation",m:"査定",p:"n"},
+{w:"performance",m:"業績",p:"n"},
+{w:"appraisal",m:"人事評価",p:"n"},
+{w:"dismiss",m:"解雇する",p:"v"},
+{w:"layoff",m:"一時解雇",p:"n"},
+{w:"transfer",m:"転勤する",p:"v"},
+{w:"relocate",m:"移転する",p:"v"},
+{w:"relocation",m:"移転",p:"n"},
+{w:"assign",m:"任命する",p:"v"},
+{w:"assignment",m:"任務",p:"n"},
+{w:"delegate",m:"委任する",p:"v"},
+{w:"expertise",m:"専門知識",p:"n"},
+{w:"proficient",m:"熟達した",p:"adj"},
+{w:"competent",m:"有能な",p:"adj"},
+{w:"diligent",m:"勤勉な",p:"adj"},
+{w:"administrative",m:"管理の",p:"adj"},
+{w:"clerical",m:"事務の",p:"adj"},
+{w:"paperwork",m:"書類仕事",p:"n"},
+{w:"document",m:"文書",p:"n"},
+{w:"archive",m:"保管記録",p:"n"},
+{w:"duplicate",m:"複製",p:"n"},
+{w:"photocopier",m:"コピー機",p:"n"},
+{w:"stationery",m:"文房具",p:"n"},
+{w:"supplies",m:"備品",p:"n"},
+{w:"appliance",m:"家電製品",p:"n"},
+{w:"schedule",m:"予定を組む",p:"v"},
+{w:"appointment",m:"面会の約束",p:"n"},
+{w:"reschedule",m:"予定変更する",p:"v"},
+{w:"postpone",m:"延期する",p:"v"},
+{w:"cancellation",m:"取り消し",p:"n"},
+{w:"deadline",m:"締め切り",p:"n"},
+{w:"prior",m:"前の",p:"adj"},
+{w:"prompt",m:"迅速な",p:"adj"},
+{w:"punctual",m:"時間厳守の",p:"adj"},
+{w:"agenda",m:"議題",p:"n"},
+{w:"minutes",m:"議事録",p:"n"},
+{w:"attendee",m:"出席者",p:"n"},
+{w:"attendance",m:"出席",p:"n"},
+{w:"convene",m:"招集する",p:"v"},
+{w:"adjourn",m:"休会する",p:"v"},
+{w:"unanimous",m:"全会一致の",p:"adj"},
+{w:"consensus",m:"総意",p:"n"},
+{w:"objection",m:"異議",p:"n"},
+{w:"preside",m:"議長を務める",p:"v"},
+{w:"briefing",m:"状況説明",p:"n"},
+{w:"correspondence",m:"文書のやり取り",p:"n"},
+{w:"notify",m:"通知する",p:"v"},
+{w:"notification",m:"通知",p:"n"},
+{w:"inquiry",m:"問い合わせ",p:"n"},
+{w:"respond",m:"返答する",p:"v"},
+{w:"response",m:"応答",p:"n"},
+{w:"acknowledge",m:"受領を知らせる",p:"v"},
+{w:"attachment",m:"添付ファイル",p:"n"},
+{w:"enclose",m:"同封する",p:"v"},
+{w:"forward",m:"転送する",p:"v"},
+{w:"recipient",m:"受取人",p:"n"},
+{w:"sender",m:"差出人",p:"n"},
+{w:"memo",m:"社内連絡",p:"n"},
+{w:"circulate",m:"回覧する",p:"v"},
+{w:"bulletin",m:"公報",p:"n"},
+{w:"courier",m:"宅配便業者",p:"n"},
+{w:"regarding",m:"~に関して",p:"phr"},
+{w:"clarify",m:"明確にする",p:"v"},
+{w:"confirm",m:"確認する",p:"v"},
+{w:"confirmation",m:"確認通知",p:"n"},
+{w:"advertise",m:"宣伝する",p:"v"},
+{w:"advertisement",m:"広告",p:"n"},
+{w:"publicity",m:"広報活動",p:"n"},
+{w:"campaign",m:"宣伝活動",p:"n"},
+{w:"brochure",m:"パンフレット",p:"n"},
+{w:"flyer",m:"ちらし",p:"n"},
+{w:"catalog",m:"商品目録",p:"n"},
+{w:"testimonial",m:"推薦の言葉",p:"n"},
+{w:"endorse",m:"支持する",p:"v"},
+{w:"promote",m:"販売促進する",p:"v"},
+{w:"consumer",m:"消費者",p:"n"},
+{w:"customer",m:"顧客",p:"n"},
+{w:"client",m:"依頼人",p:"n"},
+{w:"clientele",m:"顧客層",p:"n"},
+{w:"demand",m:"需要",p:"n"},
+{w:"supply",m:"供給",p:"n"},
+{w:"market share",m:"市場占有率",p:"n"},
+{w:"competitor",m:"競合他社",p:"n"},
+{w:"competitive",m:"競争力のある",p:"adj"},
+{w:"strategy",m:"戦略",p:"n"},
+{w:"launch",m:"発売する",p:"v"},
+{w:"release",m:"発表する",p:"v"},
+{w:"brand",m:"銘柄",p:"n"},
+{w:"trend",m:"流行",p:"n"},
+{w:"survey",m:"調査",p:"n"},
+{w:"questionnaire",m:"アンケート",p:"n"},
+{w:"feedback",m:"感想",p:"n"},
+{w:"respondent",m:"回答者",p:"n"},
+{w:"target",m:"対象とする",p:"v"},
+{w:"segment",m:"区分",p:"n"},
+{w:"retail",m:"小売",p:"n"},
+{w:"wholesale",m:"卸売",p:"n"},
+{w:"merchandise",m:"商品",p:"n"},
+{w:"inventory",m:"在庫",p:"n"},
+{w:"warehouse",m:"倉庫",p:"n"},
+{w:"vendor",m:"販売業者",p:"n"},
+{w:"supplier",m:"供給業者",p:"n"},
+{w:"distributor",m:"販売代理店",p:"n"},
+{w:"purchase",m:"購入する",p:"v"},
+{w:"refund",m:"返金",p:"n"},
+{w:"voucher",m:"割引券",p:"n"},
+{w:"coupon",m:"クーポン券",p:"n"},
+{w:"discount",m:"割引",p:"n"},
+{w:"bargain",m:"特価品",p:"n"},
+{w:"bulk",m:"大量",p:"n"},
+{w:"complimentary",m:"無料の",p:"adj"},
+{w:"redeem",m:"商品と引き換える",p:"v"},
+{w:"guarantee",m:"保証する",p:"v"},
+{w:"out of stock",m:"在庫切れ",p:"phr"},
+{w:"in stock",m:"在庫あり",p:"phr"},
+{w:"manufacture",m:"製造する",p:"v"},
+{w:"manufacturer",m:"製造業者",p:"n"},
+{w:"assembly",m:"組み立て",p:"n"},
+{w:"plant",m:"製造工場",p:"n"},
+{w:"facility",m:"施設",p:"n"},
+{w:"equipment",m:"装置",p:"n"},
+{w:"machinery",m:"機械類",p:"n"},
+{w:"component",m:"部品",p:"n"},
+{w:"raw material",m:"原材料",p:"n"},
+{w:"specification",m:"仕様",p:"n"},
+{w:"procedure",m:"手順",p:"n"},
+{w:"output",m:"生産高",p:"n"},
+{w:"capacity",m:"生産能力",p:"n"},
+{w:"efficiency",m:"効率",p:"n"},
+{w:"productivity",m:"生産性",p:"n"},
+{w:"defect",m:"欠陥",p:"n"},
+{w:"defective",m:"欠陥のある",p:"adj"},
+{w:"flaw",m:"不備",p:"n"},
+{w:"inspect",m:"検査する",p:"v"},
+{w:"inspection",m:"点検",p:"n"},
+{w:"shipment",m:"発送品",p:"n"},
+{w:"shipping",m:"輸送",p:"n"},
+{w:"freight",m:"貨物",p:"n"},
+{w:"cargo",m:"積み荷",p:"n"},
+{w:"carrier",m:"運送会社",p:"n"},
+{w:"logistics",m:"物流",p:"n"},
+{w:"distribution",m:"流通",p:"n"},
+{w:"dispatch",m:"発送する",p:"v"},
+{w:"deliver",m:"配達する",p:"v"},
+{w:"delivery",m:"配達",p:"n"},
+{w:"tracking number",m:"追跡番号",p:"n"},
+{w:"customs",m:"税関",p:"n"},
+{w:"tariff",m:"関税",p:"n"},
+{w:"declare",m:"申告する",p:"v"},
+{w:"fragile",m:"壊れやすい",p:"adj"},
+{w:"handle with care",m:"取扱注意",p:"phr"},
+{w:"load",m:"積み込む",p:"v"},
+{w:"unload",m:"荷を降ろす",p:"v"},
+{w:"crate",m:"木箱",p:"n"},
+{w:"pallet",m:"運搬台",p:"n"},
+{w:"itinerary",m:"旅程表",p:"n"},
+{w:"reservation",m:"予約",p:"n"},
+{w:"book",m:"予約する",p:"v"},
+{w:"accommodation",m:"宿泊施設",p:"n"},
+{w:"lodging",m:"宿泊",p:"n"},
+{w:"amenity",m:"快適設備",p:"n"},
+{w:"concierge",m:"接客係",p:"n"},
+{w:"fare",m:"運賃",p:"n"},
+{w:"destination",m:"目的地",p:"n"},
+{w:"departure",m:"出発",p:"n"},
+{w:"arrival",m:"到着",p:"n"},
+{w:"boarding pass",m:"搭乗券",p:"n"},
+{w:"aisle",m:"通路",p:"n"},
+{w:"layover",m:"乗り継ぎ時間",p:"n"},
+{w:"transit",m:"通過",p:"n"},
+{w:"delay",m:"遅延",p:"n"},
+{w:"cancel",m:"中止する",p:"v"},
+{w:"luggage",m:"手荷物",p:"n"},
+{w:"baggage claim",m:"手荷物受取所",p:"n"},
+{w:"jet lag",m:"時差ぼけ",p:"n"},
+{w:"passport",m:"旅券",p:"n"},
+{w:"visa",m:"査証",p:"n"},
+{w:"embassy",m:"大使館",p:"n"},
+{w:"souvenir",m:"土産",p:"n"},
+{w:"sightseeing",m:"観光",p:"n"},
+{w:"excursion",m:"小旅行",p:"n"},
+{w:"round trip",m:"往復旅行",p:"n"},
+{w:"one-way",m:"片道の",p:"adj"},
+{w:"travel agency",m:"旅行代理店",p:"n"},
+{w:"vehicle",m:"車両",p:"n"},
+{w:"real estate",m:"不動産",p:"n"},
+{w:"property",m:"物件",p:"n"},
+{w:"lease",m:"賃貸借契約",p:"n"},
+{w:"tenant",m:"賃借人",p:"n"},
+{w:"landlord",m:"家主",p:"n"},
+{w:"rent",m:"家賃",p:"n"},
+{w:"utility",m:"公共料金",p:"n"},
+{w:"premises",m:"敷地",p:"n"},
+{w:"renovation",m:"改装",p:"n"},
+{w:"refurbish",m:"改修する",p:"v"},
+{w:"plumber",m:"配管工",p:"n"},
+{w:"electrician",m:"電気技師",p:"n"},
+{w:"janitor",m:"用務員",p:"n"},
+{w:"maintenance",m:"保守管理",p:"n"},
+{w:"repair",m:"修理する",p:"v"},
+{w:"malfunction",m:"故障",p:"n"},
+{w:"leak",m:"水漏れ",p:"n"},
+{w:"corridor",m:"廊下",p:"n"},
+{w:"storage",m:"保管",p:"n"},
+{w:"demolish",m:"取り壊す",p:"v"},
+{w:"implement",m:"実行に移す",p:"v"},
+{w:"execute",m:"遂行する",p:"v"},
+{w:"conduct",m:"実施する",p:"v"},
+{w:"undertake",m:"引き受ける",p:"v"},
+{w:"accomplish",m:"成し遂げる",p:"v"},
+{w:"achieve",m:"達成する",p:"v"},
+{w:"attain",m:"到達する",p:"v"},
+{w:"facilitate",m:"促進する",p:"v"},
+{w:"enhance",m:"高める",p:"v"},
+{w:"boost",m:"押し上げる",p:"v"},
+{w:"expand",m:"拡大する",p:"v"},
+{w:"extend",m:"延長する",p:"v"},
+{w:"accelerate",m:"加速させる",p:"v"},
+{w:"diminish",m:"減少する",p:"v"},
+{w:"decline",m:"衰退する",p:"v"},
+{w:"reduce",m:"減らす",p:"v"},
+{w:"curtail",m:"削減する",p:"v"},
+{w:"minimize",m:"最小限にする",p:"v"},
+{w:"maximize",m:"最大限にする",p:"v"},
+{w:"optimize",m:"最適化する",p:"v"},
+{w:"anticipate",m:"予期する",p:"v"},
+{w:"foresee",m:"予見する",p:"v"},
+{w:"forecast",m:"予測する",p:"v"},
+{w:"assess",m:"算定する",p:"v"},
+{w:"analyze",m:"分析する",p:"v"},
+{w:"determine",m:"決定する",p:"v"},
+{w:"resolve",m:"解決する",p:"v"},
+{w:"address",m:"対処する",p:"v"},
+{w:"tackle",m:"取り組む",p:"v"},
+{w:"verify",m:"検証する",p:"v"},
+{w:"ensure",m:"確実にする",p:"v"},
+{w:"adhere to",m:"固守する",p:"phr"},
+{w:"conform",m:"適合する",p:"v"},
+{w:"oblige",m:"義務付ける",p:"v"},
+{w:"obligation",m:"義務",p:"n"},
+{w:"authorize",m:"権限を与える",p:"v"},
+{w:"approval",m:"承認",p:"n"},
+{w:"approve",m:"承認する",p:"v"},
+{w:"consent",m:"同意",p:"n"},
+{w:"submit",m:"提出する",p:"v"},
+{w:"submission",m:"提出",p:"n"},
+{w:"retrieve",m:"取り戻す",p:"v"},
+{w:"obtain",m:"入手する",p:"v"},
+{w:"acquire",m:"獲得する",p:"v"},
+{w:"secure",m:"確保する",p:"v"},
+{w:"distribute",m:"分配する",p:"v"},
+{w:"dispose of",m:"処分する",p:"phr"},
+{w:"discard",m:"捨てる",p:"v"},
+{w:"eliminate",m:"排除する",p:"v"},
+{w:"omit",m:"省略する",p:"v"},
+{w:"tentative",m:"仮の",p:"adj"},
+{w:"provisional",m:"暫定的な",p:"adj"},
+{w:"preliminary",m:"予備の",p:"adj"},
+{w:"subsequent",m:"次に続く",p:"adj"},
+{w:"consecutive",m:"連続した",p:"adj"},
+{w:"simultaneous",m:"同時の",p:"adj"},
+{w:"immediate",m:"即時の",p:"adj"},
+{w:"urgent",m:"緊急の",p:"adj"},
+{w:"imperative",m:"絶対必要な",p:"adj"},
+{w:"crucial",m:"極めて重要な",p:"adj"},
+{w:"essential",m:"不可欠な",p:"adj"},
+{w:"substantial",m:"相当な",p:"adj"},
+{w:"considerable",m:"かなりの",p:"adj"},
+{w:"significant",m:"重要な",p:"adj"},
+{w:"adequate",m:"適量の",p:"adj"},
+{w:"sufficient",m:"十分な",p:"adj"},
+{w:"insufficient",m:"不十分な",p:"adj"},
+{w:"excessive",m:"過度の",p:"adj"},
+{w:"moderate",m:"適度な",p:"adj"},
+{w:"marginal",m:"わずかな",p:"adj"},
+{w:"lucrative",m:"もうかる",p:"adj"},
+{w:"profitable",m:"利益になる",p:"adj"},
+{w:"feasible",m:"実現可能な",p:"adj"},
+{w:"viable",m:"実行可能な",p:"adj"},
+{w:"plausible",m:"もっともらしい",p:"adj"},
+{w:"credible",m:"信用できる",p:"adj"},
+{w:"reliable",m:"信頼できる",p:"adj"},
+{w:"durable",m:"耐久性のある",p:"adj"},
+{w:"sturdy",m:"頑丈な",p:"adj"},
+{w:"versatile",m:"多用途の",p:"adj"},
+{w:"innovative",m:"革新的な",p:"adj"},
+{w:"state-of-the-art",m:"最新式の",p:"adj"},
+{w:"cutting-edge",m:"最先端の",p:"adj"},
+{w:"obsolete",m:"時代遅れの",p:"adj"},
+{w:"outdated",m:"旧式の",p:"adj"},
+{w:"conventional",m:"従来の",p:"adj"},
+{w:"customary",m:"慣習的な",p:"adj"},
+{w:"routine",m:"型通りの",p:"adj"},
+{w:"periodic",m:"定期的な",p:"adj"},
+{w:"sporadic",m:"散発的な",p:"adj"},
+{w:"approximately",m:"およそ",p:"adv"},
+{w:"roughly",m:"ざっと",p:"adv"},
+{w:"precisely",m:"正確に",p:"adv"},
+{w:"accurately",m:"的確に",p:"adv"},
+{w:"thoroughly",m:"徹底的に",p:"adv"},
+{w:"promptly",m:"即座に",p:"adv"},
+{w:"shortly",m:"まもなく",p:"adv"},
+{w:"currently",m:"現在は",p:"adv"},
+{w:"formerly",m:"かつては",p:"adv"},
+{w:"previously",m:"以前に",p:"adv"},
+{w:"subsequently",m:"その後に",p:"adv"},
+{w:"eventually",m:"最終的に",p:"adv"},
+{w:"ultimately",m:"究極的には",p:"adv"},
+{w:"consequently",m:"その結果",p:"adv"},
+{w:"accordingly",m:"それに応じて",p:"adv"},
+{w:"respectively",m:"それぞれ",p:"adv"},
+{w:"significantly",m:"大幅に",p:"adv"},
+{w:"considerably",m:"かなり",p:"adv"},
+{w:"slightly",m:"わずかに",p:"adv"},
+{w:"increasingly",m:"ますます",p:"adv"},
+{w:"frequently",m:"頻繁に",p:"adv"},
+{w:"occasionally",m:"時折",p:"adv"},
+{w:"rarely",m:"めったにない",p:"adv"},
+{w:"barely",m:"かろうじて",p:"adv"},
+{w:"merely",m:"単に",p:"adv"},
+{w:"solely",m:"もっぱら",p:"adv"},
+{w:"primarily",m:"主に",p:"adv"},
+{w:"notably",m:"特に",p:"adv"},
+{w:"readily",m:"容易に",p:"adv"},
+{w:"mutually",m:"相互に",p:"adv"},
+{w:"in advance",m:"前もって",p:"phr"},
+{w:"on behalf of",m:"~を代表して",p:"phr"},
+{w:"in charge of",m:"~を担当して",p:"phr"},
+{w:"in accordance with",m:"~に従って",p:"phr"},
+{w:"due to",m:"~が原因で",p:"phr"},
+{w:"prior to",m:"~より前に",p:"phr"},
+{w:"with regard to",m:"~について",p:"phr"},
+{w:"as of",m:"~現在で",p:"phr"},
+{w:"no later than",m:"~までに",p:"phr"},
+{w:"in a timely manner",m:"適時に",p:"phr"},
+{w:"free of charge",m:"無料で",p:"phr"},
+{w:"out of order",m:"故障中で",p:"phr"},
+{w:"on duty",m:"勤務中で",p:"phr"},
+{w:"take over",m:"引き継ぐ",p:"phr"},
+{w:"carry out",m:"実行する",p:"phr"},
+{w:"put off",m:"先延ばしにする",p:"phr"},
+{w:"fill out",m:"記入する",p:"phr"},
+{w:"turn in",m:"届け出る",p:"phr"},
+{w:"run out of",m:"~を使い果たす",p:"phr"},
+{w:"look over",m:"ざっと目を通す",p:"phr"},
+{w:"set up",m:"設置する",p:"phr"},
+{w:"account for",m:"割合を占める",p:"phr"},
+{w:"deal with",m:"取り扱う",p:"phr"},
+{w:"figure out",m:"考え出す",p:"phr"},
+{w:"call off",m:"取りやめる",p:"phr"},
+{w:"drop by",m:"立ち寄る",p:"phr"},
+{w:"keep track of",m:"経過を追う",p:"phr"},
+{w:"be subject to",m:"~の対象となる",p:"phr"},
+{w:"in effect",m:"有効で",p:"phr"},
+{w:"on short notice",m:"直前の通知で",p:"phr"},
+{w:"establish",m:"設立する",p:"v"},
+{w:"sustain",m:"持続させる",p:"v"},
+{w:"sustainable",m:"持続可能な",p:"adj"},
+{w:"initiative",m:"新規構想",p:"n"},
+{w:"objective",m:"目標",p:"n"},
+{w:"criterion",m:"基準",p:"n"},
+{w:"milestone",m:"節目",p:"n"},
+{w:"outcome",m:"成果",p:"n"},
+{w:"implication",m:"含意",p:"n"},
+{w:"constraint",m:"制約",p:"n"}
+];
+
+</script>
+<script>
+// TOEIC 800 level vocabulary (500 words)
+window.VOCAB = window.VOCAB || {};
+window.VOCAB[800] = [
+{w:"discrepancy",m:"不一致",p:"n"},
+{w:"amendment",m:"修正、改正",p:"n"},
+{w:"liability",m:"法的責任",p:"n"},
+{w:"meticulous",m:"細心の",p:"adj"},
+{w:"provisional",m:"暫定的な",p:"adj"},
+{w:"consolidate",m:"統合する",p:"v"},
+{w:"compliance",m:"法令遵守",p:"n"},
+{w:"arbitration",m:"仲裁",p:"n"},
+{w:"litigation",m:"訴訟",p:"n"},
+{w:"indemnify",m:"賠償する",p:"v"},
+{w:"waive",m:"権利を放棄する",p:"v"},
+{w:"statute",m:"法令",p:"n"},
+{w:"jurisdiction",m:"管轄権",p:"n"},
+{w:"plaintiff",m:"原告",p:"n"},
+{w:"defendant",m:"被告",p:"n"},
+{w:"enact",m:"制定する",p:"v"},
+{w:"repeal",m:"廃止する",p:"v"},
+{w:"stipulate",m:"規定する",p:"v"},
+{w:"ratify",m:"批准する",p:"v"},
+{w:"nullify",m:"無効にする",p:"v"},
+{w:"binding",m:"拘束力のある",p:"adj"},
+{w:"infringement",m:"権利侵害",p:"n"},
+{w:"patent",m:"特許",p:"n"},
+{w:"confidentiality",m:"機密性",p:"n"},
+{w:"disclosure",m:"情報開示",p:"n"},
+{w:"clause",m:"条項",p:"n"},
+{w:"breach",m:"契約違反",p:"n"},
+{w:"mandate",m:"命令、権限",p:"n"},
+{w:"attorney",m:"弁護士",p:"n"},
+{w:"verdict",m:"評決",p:"n"},
+{w:"audit",m:"会計監査",p:"n"},
+{w:"ledger",m:"元帳",p:"n"},
+{w:"dividend",m:"配当金",p:"n"},
+{w:"equity",m:"株主資本",p:"n"},
+{w:"collateral",m:"担保",p:"n"},
+{w:"depreciation",m:"減価償却",p:"n"},
+{w:"solvent",m:"支払能力のある",p:"adj"},
+{w:"insolvent",m:"支払不能の",p:"adj"},
+{w:"liquidate",m:"清算する",p:"v"},
+{w:"fiscal",m:"会計の",p:"adj"},
+{w:"deficit",m:"赤字、不足",p:"n"},
+{w:"surplus",m:"黒字、余剰",p:"n"},
+{w:"expenditure",m:"支出",p:"n"},
+{w:"revenue",m:"歳入、収益",p:"n"},
+{w:"reimburse",m:"払い戻す",p:"v"},
+{w:"remit",m:"送金する",p:"v"},
+{w:"invoice",m:"請求書",p:"n"},
+{w:"quotation",m:"見積書",p:"n"},
+{w:"tariff",m:"関税",p:"n"},
+{w:"levy",m:"課税する",p:"v"},
+{w:"subsidy",m:"補助金",p:"n"},
+{w:"appraise",m:"査定する",p:"v"},
+{w:"underwrite",m:"保険を引き受ける",p:"v"},
+{w:"portfolio",m:"資産構成",p:"n"},
+{w:"volatile",m:"変動しやすい",p:"adj"},
+{w:"lucrative",m:"儲かる",p:"adj"},
+{w:"expedite",m:"迅速に処理する",p:"v"},
+{w:"facilitate",m:"容易にする",p:"v"},
+{w:"implement",m:"実行に移す",p:"v"},
+{w:"allocate",m:"割り当てる",p:"v"},
+{w:"delegate",m:"委任する",p:"v"},
+{w:"designate",m:"指名する",p:"v"},
+{w:"authorize",m:"権限を与える",p:"v"},
+{w:"endorse",m:"是認する",p:"v"},
+{w:"comply",m:"従う、応じる",p:"v"},
+{w:"adhere",m:"固守する",p:"v"},
+{w:"oversee",m:"監督する",p:"v"},
+{w:"streamline",m:"合理化する",p:"v"},
+{w:"optimize",m:"最適化する",p:"v"},
+{w:"leverage",m:"活用する",p:"v"},
+{w:"procure",m:"調達する",p:"v"},
+{w:"solicit",m:"懇請する",p:"v"},
+{w:"deteriorate",m:"悪化する",p:"v"},
+{w:"fluctuate",m:"変動する",p:"v"},
+{w:"plummet",m:"急落する",p:"v"},
+{w:"surge",m:"急上昇する",p:"v"},
+{w:"curtail",m:"切り詰める",p:"v"},
+{w:"mitigate",m:"和らげる",p:"v"},
+{w:"alleviate",m:"軽減する",p:"v"},
+{w:"exacerbate",m:"悪化させる",p:"v"},
+{w:"undermine",m:"徐々に弱める",p:"v"},
+{w:"bolster",m:"強化する",p:"v"},
+{w:"augment",m:"増強する",p:"v"},
+{w:"diminish",m:"減少する",p:"v"},
+{w:"dwindle",m:"次第に減る",p:"v"},
+{w:"offset",m:"相殺する",p:"v"},
+{w:"outsource",m:"外部委託する",p:"v"},
+{w:"relinquish",m:"手放す",p:"v"},
+{w:"retain",m:"保持する",p:"v"},
+{w:"terminate",m:"終了させる",p:"v"},
+{w:"suspend",m:"一時停止する",p:"v"},
+{w:"defer",m:"延期する",p:"v"},
+{w:"adjourn",m:"休会する",p:"v"},
+{w:"convene",m:"招集する",p:"v"},
+{w:"preside",m:"議長を務める",p:"v"},
+{w:"reconcile",m:"調和させる",p:"v"},
+{w:"rectify",m:"是正する",p:"v"},
+{w:"revamp",m:"刷新する",p:"v"},
+{w:"overhaul",m:"全面的に見直す",p:"v"},
+{w:"disseminate",m:"広める",p:"v"},
+{w:"compile",m:"編纂する",p:"v"},
+{w:"collate",m:"照合する",p:"v"},
+{w:"scrutinize",m:"精査する",p:"v"},
+{w:"substantiate",m:"立証する",p:"v"},
+{w:"corroborate",m:"裏付ける",p:"v"},
+{w:"attest",m:"証明する",p:"v"},
+{w:"certify",m:"認証する",p:"v"},
+{w:"accredit",m:"認定する",p:"v"},
+{w:"itinerary",m:"旅程表",p:"n"},
+{w:"memorandum",m:"覚書",p:"n"},
+{w:"protocol",m:"議定書、手順",p:"n"},
+{w:"criterion",m:"判断基準",p:"n"},
+{w:"benchmark",m:"指標、水準",p:"n"},
+{w:"milestone",m:"節目",p:"n"},
+{w:"quota",m:"割当量",p:"n"},
+{w:"threshold",m:"閾値、境界",p:"n"},
+{w:"contingency",m:"不測の事態",p:"n"},
+{w:"precaution",m:"予防策",p:"n"},
+{w:"precedent",m:"前例",p:"n"},
+{w:"proponent",m:"支持者",p:"n"},
+{w:"advocate",m:"提唱する",p:"v"},
+{w:"incentive",m:"動機付け",p:"n"},
+{w:"remuneration",m:"報酬",p:"n"},
+{w:"compensation",m:"補償",p:"n"},
+{w:"severance",m:"退職手当",p:"n"},
+{w:"tenure",m:"在職期間",p:"n"},
+{w:"apprentice",m:"見習い",p:"n"},
+{w:"credential",m:"資格証明",p:"n"},
+{w:"proficiency",m:"熟達",p:"n"},
+{w:"expertise",m:"専門知識",p:"n"},
+{w:"aptitude",m:"適性",p:"n"},
+{w:"endeavor",m:"努力、試み",p:"n"},
+{w:"initiative",m:"主導権",p:"n"},
+{w:"venture",m:"冒険的事業",p:"n"},
+{w:"merger",m:"合併",p:"n"},
+{w:"acquisition",m:"買収",p:"n"},
+{w:"subsidiary",m:"子会社",p:"n"},
+{w:"affiliate",m:"系列会社",p:"n"},
+{w:"conglomerate",m:"複合企業",p:"n"},
+{w:"franchise",m:"営業権",p:"n"},
+{w:"clientele",m:"顧客層",p:"n"},
+{w:"stakeholder",m:"利害関係者",p:"n"},
+{w:"shareholder",m:"株主",p:"n"},
+{w:"proprietor",m:"事業主",p:"n"},
+{w:"entrepreneur",m:"起業家",p:"n"},
+{w:"consortium",m:"企業連合",p:"n"},
+{w:"tentative",m:"仮の",p:"adj"},
+{w:"feasible",m:"実現可能な",p:"adj"},
+{w:"viable",m:"存続可能な",p:"adj"},
+{w:"plausible",m:"もっともらしい",p:"adj"},
+{w:"prudent",m:"慎重な",p:"adj"},
+{w:"diligent",m:"勤勉な",p:"adj"},
+{w:"thorough",m:"徹底的な",p:"adj"},
+{w:"rigorous",m:"厳密な",p:"adj"},
+{w:"stringent",m:"厳しい",p:"adj"},
+{w:"lenient",m:"寛大な",p:"adj"},
+{w:"cumbersome",m:"扱いにくい",p:"adj"},
+{w:"redundant",m:"余剰の",p:"adj"},
+{w:"obsolete",m:"時代遅れの",p:"adj"},
+{w:"imminent",m:"差し迫った",p:"adj"},
+{w:"impending",m:"間近に迫った",p:"adj"},
+{w:"pending",m:"保留中の",p:"adj"},
+{w:"subsequent",m:"その後の",p:"adj"},
+{w:"preliminary",m:"予備的な",p:"adj"},
+{w:"comprehensive",m:"包括的な",p:"adj"},
+{w:"exhaustive",m:"網羅的な",p:"adj"},
+{w:"intricate",m:"入り組んだ",p:"adj"},
+{w:"ambiguous",m:"曖昧な",p:"adj"},
+{w:"explicit",m:"明示的な",p:"adj"},
+{w:"implicit",m:"暗黙の",p:"adj"},
+{w:"concise",m:"簡潔な",p:"adj"},
+{w:"succinct",m:"簡明な",p:"adj"},
+{w:"coherent",m:"首尾一貫した",p:"adj"},
+{w:"compatible",m:"互換性のある",p:"adj"},
+{w:"adjacent",m:"隣接した",p:"adj"},
+{w:"adequate",m:"十分な",p:"adj"},
+{w:"promptly",m:"即座に",p:"adv"},
+{w:"thoroughly",m:"徹底的に",p:"adv"},
+{w:"subsequently",m:"その後に",p:"adv"},
+{w:"consequently",m:"その結果",p:"adv"},
+{w:"accordingly",m:"それに応じて",p:"adv"},
+{w:"respectively",m:"それぞれ",p:"adv"},
+{w:"presumably",m:"おそらく",p:"adv"},
+{w:"allegedly",m:"申し立てでは",p:"adv"},
+{w:"tentatively",m:"仮に",p:"adv"},
+{w:"unanimously",m:"満場一致で",p:"adv"},
+{w:"mutually",m:"相互に",p:"adv"},
+{w:"inadvertently",m:"うっかり",p:"adv"},
+{w:"deliberately",m:"故意に",p:"adv"},
+{w:"meticulously",m:"細心に",p:"adv"},
+{w:"in accordance with",m:"～に従って",p:"phr"},
+{w:"on behalf of",m:"～を代表して",p:"phr"},
+{w:"with regard to",m:"～に関して",p:"phr"},
+{w:"in lieu of",m:"～の代わりに",p:"phr"},
+{w:"pursuant to",m:"～に基づいて",p:"phr"},
+{w:"in the event of",m:"万一～の場合",p:"phr"},
+{w:"subject to",m:"～を条件として",p:"phr"},
+{w:"prior to",m:"～より前に",p:"phr"},
+{w:"comply with",m:"～を順守する",p:"phr"},
+{w:"phase out",m:"段階的に廃止する",p:"phr"},
+{w:"carry out",m:"実施する",p:"phr"},
+{w:"draw up",m:"文書を作成する",p:"phr"},
+{w:"set forth",m:"明記する",p:"phr"},
+{w:"opt out",m:"離脱を選ぶ",p:"phr"},
+{w:"in conjunction with",m:"～と連携して",p:"phr"},
+{w:"as of",m:"～現在で",p:"phr"},
+{w:"take effect",m:"効力を生じる",p:"phr"},
+{w:"in advance",m:"前もって",p:"phr"},
+{w:"free of charge",m:"無料で",p:"phr"},
+{w:"out of stock",m:"在庫切れで",p:"phr"},
+{w:"notwithstanding",m:"～にもかかわらず",p:"adv"},
+{w:"albeit",m:"～ではあるが",p:"phr"},
+{w:"thereby",m:"それによって",p:"adv"},
+{w:"hereby",m:"本書により",p:"adv"},
+{w:"therein",m:"その中に",p:"adv"},
+{w:"aforementioned",m:"前述の",p:"adj"},
+{w:"foregoing",m:"上記の",p:"adj"},
+{w:"herein",m:"本書中に",p:"adv"},
+{w:"forthwith",m:"直ちに",p:"adv"},
+{w:"deposition",m:"証言録取",p:"n"},
+{w:"affidavit",m:"宣誓供述書",p:"n"},
+{w:"injunction",m:"差止命令",p:"n"},
+{w:"settlement",m:"和解",p:"n"},
+{w:"negligence",m:"過失",p:"n"},
+{w:"misconduct",m:"不正行為",p:"n"},
+{w:"fraud",m:"詐欺",p:"n"},
+{w:"embezzlement",m:"横領",p:"n"},
+{w:"bribery",m:"賄賂",p:"n"},
+{w:"forgery",m:"偽造",p:"n"},
+{w:"defamation",m:"名誉毀損",p:"n"},
+{w:"slander",m:"中傷",p:"n"},
+{w:"abide by",m:"～を厳守する",p:"phr"},
+{w:"annul",m:"取り消す",p:"v"},
+{w:"revoke",m:"撤回する",p:"v"},
+{w:"rescind",m:"解除する",p:"v"},
+{w:"uphold",m:"擁護する",p:"v"},
+{w:"overrule",m:"却下する",p:"v"},
+{w:"acquit",m:"無罪とする",p:"v"},
+{w:"convict",m:"有罪とする",p:"v"},
+{w:"custody",m:"保管、拘留",p:"n"},
+{w:"hearing",m:"聴聞会",p:"n"},
+{w:"tribunal",m:"審判所",p:"n"},
+{w:"statutory",m:"法定の",p:"adj"},
+{w:"contractual",m:"契約上の",p:"adj"},
+{w:"fiduciary",m:"受託者の",p:"adj"},
+{w:"proprietary",m:"専有の",p:"adj"},
+{w:"negotiable",m:"交渉可能な",p:"adj"},
+{w:"enforceable",m:"執行可能な",p:"adj"},
+{w:"admissible",m:"容認できる",p:"adj"},
+{w:"inflation",m:"物価上昇",p:"n"},
+{w:"recession",m:"景気後退",p:"n"},
+{w:"downturn",m:"景気の下降",p:"n"},
+{w:"upturn",m:"好転",p:"n"},
+{w:"stagnation",m:"停滞",p:"n"},
+{w:"monopoly",m:"独占",p:"n"},
+{w:"oligopoly",m:"寡占",p:"n"},
+{w:"procurement",m:"調達",p:"n"},
+{w:"logistics",m:"物流",p:"n"},
+{w:"inventory",m:"在庫",p:"n"},
+{w:"turnover",m:"離職率",p:"n"},
+{w:"attrition",m:"自然減",p:"n"},
+{w:"layoff",m:"一時解雇",p:"n"},
+{w:"redundancy",m:"余剰人員削減",p:"n"},
+{w:"vacancy",m:"欠員",p:"n"},
+{w:"recruitment",m:"人材採用",p:"n"},
+{w:"retention",m:"定着、保持",p:"n"},
+{w:"appraisal",m:"業績評価",p:"n"},
+{w:"payroll",m:"給与支払簿",p:"n"},
+{w:"pension",m:"年金",p:"n"},
+{w:"gratuity",m:"心付け",p:"n"},
+{w:"stipend",m:"定期支給金",p:"n"},
+{w:"allowance",m:"手当",p:"n"},
+{w:"deduction",m:"控除",p:"n"},
+{w:"withholding",m:"源泉徴収",p:"n"},
+{w:"exemption",m:"免除",p:"n"},
+{w:"rebate",m:"割戻金",p:"n"},
+{w:"voucher",m:"引換券",p:"n"},
+{w:"installment",m:"分割払い",p:"n"},
+{w:"arrears",m:"滞納金",p:"n"},
+{w:"creditor",m:"債権者",p:"n"},
+{w:"debtor",m:"債務者",p:"n"},
+{w:"mortgage",m:"住宅ローン",p:"n"},
+{w:"lease",m:"賃貸借契約",p:"n"},
+{w:"tenant",m:"賃借人",p:"n"},
+{w:"landlord",m:"家主",p:"n"},
+{w:"premises",m:"構内、敷地",p:"n"},
+{w:"utility",m:"公共料金",p:"n"},
+{w:"amenity",m:"快適な設備",p:"n"},
+{w:"refurbish",m:"改装する",p:"v"},
+{w:"renovate",m:"改修する",p:"v"},
+{w:"demolish",m:"取り壊す",p:"v"},
+{w:"erect",m:"建てる",p:"v"},
+{w:"excavate",m:"掘削する",p:"v"},
+{w:"landmark",m:"目印、名所",p:"n"},
+{w:"infrastructure",m:"社会基盤",p:"n"},
+{w:"zoning",m:"地域区分",p:"n"},
+{w:"easement",m:"地役権",p:"n"},
+{w:"appraiser",m:"鑑定士",p:"n"},
+{w:"surveyor",m:"測量士",p:"n"},
+{w:"contractor",m:"請負業者",p:"n"},
+{w:"subcontract",m:"下請けに出す",p:"v"},
+{w:"tender",m:"入札",p:"n"},
+{w:"bid",m:"入札する",p:"v"},
+{w:"specification",m:"仕様書",p:"n"},
+{w:"blueprint",m:"設計図",p:"n"},
+{w:"prototype",m:"試作品",p:"n"},
+{w:"warranty",m:"品質保証",p:"n"},
+{w:"defect",m:"欠陥",p:"n"},
+{w:"malfunction",m:"故障",p:"n"},
+{w:"durability",m:"耐久性",p:"n"},
+{w:"longevity",m:"長寿命",p:"n"},
+{w:"obsolescence",m:"陳腐化",p:"n"},
+{w:"calibration",m:"校正、調整",p:"n"},
+{w:"certification",m:"資格認定",p:"n"},
+{w:"accreditation",m:"公式認定",p:"n"},
+{w:"inspection",m:"検査",p:"n"},
+{w:"verification",m:"検証",p:"n"},
+{w:"validation",m:"妥当性確認",p:"n"},
+{w:"authentication",m:"本人認証",p:"n"},
+{w:"encryption",m:"暗号化",p:"n"},
+{w:"vulnerability",m:"脆弱性",p:"n"},
+{w:"safeguard",m:"保護手段",p:"n"},
+{w:"deterrent",m:"抑止力",p:"n"},
+{w:"surveillance",m:"監視",p:"n"},
+{w:"oversight",m:"監督、手落ち",p:"n"},
+{w:"discretion",m:"裁量",p:"n"},
+{w:"directive",m:"指令",p:"n"},
+{w:"decree",m:"政令、布告",p:"n"},
+{w:"ordinance",m:"条例",p:"n"},
+{w:"legislation",m:"法律制定",p:"n"},
+{w:"legislature",m:"立法府",p:"n"},
+{w:"constituency",m:"選挙区",p:"n"},
+{w:"referendum",m:"国民投票",p:"n"},
+{w:"bureaucracy",m:"官僚制",p:"n"},
+{w:"diplomacy",m:"外交",p:"n"},
+{w:"embassy",m:"大使館",p:"n"},
+{w:"consulate",m:"領事館",p:"n"},
+{w:"delegation",m:"代表団",p:"n"},
+{w:"summit",m:"首脳会談",p:"n"},
+{w:"treaty",m:"条約",p:"n"},
+{w:"sanction",m:"制裁",p:"n"},
+{w:"embargo",m:"禁輸",p:"n"},
+{w:"customs",m:"税関",p:"n"},
+{w:"duty-free",m:"免税の",p:"adj"},
+{w:"freight",m:"貨物運送",p:"n"},
+{w:"cargo",m:"積み荷",p:"n"},
+{w:"shipment",m:"出荷",p:"n"},
+{w:"consignment",m:"委託販売品",p:"n"},
+{w:"courier",m:"宅配業者",p:"n"},
+{w:"dispatch",m:"発送する",p:"v"},
+{w:"haul",m:"運搬する",p:"v"},
+{w:"warehouse",m:"倉庫",p:"n"},
+{w:"depot",m:"貯蔵所",p:"n"},
+{w:"transit",m:"輸送、通過",p:"n"},
+{w:"detour",m:"迂回路",p:"n"},
+{w:"congestion",m:"混雑",p:"n"},
+{w:"layover",m:"途中降機",p:"n"},
+{w:"embark",m:"乗り込む",p:"v"},
+{w:"disembark",m:"降りる",p:"v"},
+{w:"accommodate",m:"収容する",p:"v"},
+{w:"concierge",m:"接客係",p:"n"},
+{w:"cancellation",m:"解約",p:"n"},
+{w:"postponement",m:"延期",p:"n"},
+{w:"rescheduling",m:"日程変更",p:"n"},
+{w:"venue",m:"開催地",p:"n"},
+{w:"exhibition",m:"展示会",p:"n"},
+{w:"convention",m:"大会、慣習",p:"n"},
+{w:"symposium",m:"討論会",p:"n"},
+{w:"keynote",m:"基調講演",p:"n"},
+{w:"podium",m:"演壇",p:"n"},
+{w:"attendee",m:"出席者",p:"n"},
+{w:"moderator",m:"司会者",p:"n"},
+{w:"panelist",m:"登壇者",p:"n"},
+{w:"transcript",m:"筆記録",p:"n"},
+{w:"handout",m:"配布資料",p:"n"},
+{w:"minutes",m:"議事録",p:"n"},
+{w:"proceedings",m:"訴訟手続",p:"n"},
+{w:"adjournment",m:"休会",p:"n"},
+{w:"quorum",m:"定足数",p:"n"},
+{w:"consensus",m:"総意、合意",p:"n"},
+{w:"deadlock",m:"行き詰まり",p:"n"},
+{w:"concession",m:"譲歩",p:"n"},
+{w:"compromise",m:"妥協",p:"n"},
+{w:"stalemate",m:"膠着状態",p:"n"},
+{w:"mediation",m:"調停",p:"n"},
+{w:"ultimatum",m:"最後通告",p:"n"},
+{w:"stipulation",m:"契約条件",p:"n"},
+{w:"addendum",m:"補遺",p:"n"},
+{w:"annex",m:"別館、付属物",p:"n"},
+{w:"appendix",m:"付録",p:"n"},
+{w:"excerpt",m:"抜粋",p:"n"},
+{w:"synopsis",m:"あらすじ",p:"n"},
+{w:"abstract",m:"要旨",p:"n"},
+{w:"citation",m:"引用",p:"n"},
+{w:"plagiarism",m:"盗用",p:"n"},
+{w:"copyright",m:"著作権",p:"n"},
+{w:"trademark",m:"商標",p:"n"},
+{w:"royalty",m:"特許使用料",p:"n"},
+{w:"licensing",m:"実施許諾",p:"n"},
+{w:"endorsement",m:"推薦、支持",p:"n"},
+{w:"testimonial",m:"体験談",p:"n"},
+{w:"publicity",m:"宣伝、周知",p:"n"},
+{w:"outreach",m:"働きかけ",p:"n"},
+{w:"patron",m:"後援者",p:"n"},
+{w:"philanthropy",m:"慈善活動",p:"n"},
+{w:"endowment",m:"寄付基金",p:"n"},
+{w:"grant",m:"助成金",p:"n"},
+{w:"fundraising",m:"資金集め",p:"n"},
+{w:"solicitation",m:"勧誘",p:"n"},
+{w:"auction",m:"競売",p:"n"},
+{w:"memorabilia",m:"記念品",p:"n"},
+{w:"artifact",m:"工芸品",p:"n"},
+{w:"curator",m:"学芸員",p:"n"},
+{w:"archive",m:"記録保管所",p:"n"},
+{w:"repository",m:"保管庫",p:"n"},
+{w:"compilation",m:"編集物",p:"n"},
+{w:"anthology",m:"選集",p:"n"},
+{w:"periodical",m:"定期刊行物",p:"n"},
+{w:"circulation",m:"発行部数",p:"n"},
+{w:"subscription",m:"定期購読",p:"n"},
+{w:"readership",m:"読者層",p:"n"},
+{w:"editorial",m:"社説",p:"n"},
+{w:"columnist",m:"コラム記者",p:"n"},
+{w:"correspondent",m:"特派員",p:"n"},
+{w:"bulletin",m:"公報、告示",p:"n"},
+{w:"retraction",m:"記事の撤回",p:"n"},
+{w:"obituary",m:"死亡記事",p:"n"},
+{w:"caption",m:"見出し文",p:"n"},
+{w:"adverse",m:"不利な",p:"adj"},
+{w:"detrimental",m:"有害な",p:"adj"},
+{w:"conducive",m:"助けとなる",p:"adj"},
+{w:"instrumental",m:"重要な役割の",p:"adj"},
+{w:"pivotal",m:"中枢的な",p:"adj"},
+{w:"paramount",m:"最重要の",p:"adj"},
+{w:"negligible",m:"無視できる",p:"adj"},
+{w:"marginal",m:"わずかな",p:"adj"},
+{w:"substantial",m:"かなりの",p:"adj"},
+{w:"considerable",m:"相当な",p:"adj"},
+{w:"exorbitant",m:"法外な",p:"adj"},
+{w:"affordable",m:"手頃な価格の",p:"adj"},
+{w:"economical",m:"経済的な",p:"adj"},
+{w:"frugal",m:"倹約な",p:"adj"},
+{w:"extravagant",m:"浪費的な",p:"adj"},
+{w:"opulent",m:"豪華な",p:"adj"},
+{w:"austere",m:"禁欲的な",p:"adj"},
+{w:"impeccable",m:"非の打ち所ない",p:"adj"},
+{w:"exemplary",m:"模範的な",p:"adj"},
+{w:"mediocre",m:"平凡な",p:"adj"},
+{w:"subpar",m:"標準以下の",p:"adj"},
+{w:"substandard",m:"基準以下の",p:"adj"},
+{w:"defective",m:"欠陥のある",p:"adj"},
+{w:"faulty",m:"誤りのある",p:"adj"},
+{w:"flawless",m:"完璧な",p:"adj"},
+{w:"seamless",m:"継ぎ目のない",p:"adj"},
+{w:"robust",m:"頑健な",p:"adj"},
+{w:"resilient",m:"回復力のある",p:"adj"},
+{w:"versatile",m:"多用途の",p:"adj"},
+{w:"indispensable",m:"不可欠な",p:"adj"},
+{w:"imperative",m:"必須の",p:"adj"},
+{w:"mandatory",m:"義務的な",p:"adj"},
+{w:"compulsory",m:"強制的な",p:"adj"},
+{w:"voluntary",m:"自発的な",p:"adj"},
+{w:"discretionary",m:"裁量による",p:"adj"},
+{w:"unprecedented",m:"前例のない",p:"adj"},
+{w:"unforeseen",m:"予期しない",p:"adj"},
+{w:"inevitable",m:"避けられない",p:"adj"},
+{w:"irreversible",m:"元に戻せない",p:"adj"},
+{w:"irrevocable",m:"取消不能の",p:"adj"},
+{w:"anticipate",m:"予期する",p:"v"},
+{w:"envision",m:"思い描く",p:"v"},
+{w:"forecast",m:"予測する",p:"v"},
+{w:"speculate",m:"推測する",p:"v"},
+{w:"presume",m:"推定する",p:"v"},
+{w:"infer",m:"推論する",p:"v"},
+{w:"deduce",m:"演繹する",p:"v"},
+{w:"ascertain",m:"突き止める",p:"v"},
+{w:"discern",m:"識別する",p:"v"},
+{w:"differentiate",m:"区別する",p:"v"},
+{w:"diversify",m:"多角化する",p:"v"},
+{w:"diverge",m:"分岐する",p:"v"},
+{w:"converge",m:"収束する",p:"v"},
+{w:"integrate",m:"一体化する",p:"v"},
+{w:"segregate",m:"分離する",p:"v"},
+{w:"segment",m:"一区分",p:"n"},
+{w:"apportion",m:"配分する",p:"v"},
+{w:"disburse",m:"払い出す",p:"v"},
+{w:"remittance",m:"送金",p:"n"},
+{w:"accrue",m:"蓄積する",p:"v"},
+{w:"amortize",m:"分割償却する",p:"v"},
+{w:"capitalize",m:"資本化する",p:"v"},
+{w:"depreciate",m:"価値が下がる",p:"v"},
+{w:"appreciate",m:"値上がりする",p:"v"},
+{w:"hedge",m:"リスク回避",p:"n"},
+{w:"speculation",m:"投機",p:"n"},
+{w:"stockpile",m:"備蓄",p:"n"},
+{w:"shortfall",m:"不足額",p:"n"},
+{w:"windfall",m:"思わぬ収入",p:"n"},
+{w:"bankruptcy",m:"倒産、破産",p:"n"},
+{w:"affluent",m:"裕福な",p:"adj"},
+{w:"proximity",m:"近接",p:"n"}
+];
+
+</script>
+<script>
+// TOEIC 900-level vocabulary (500 words)
+window.VOCAB = window.VOCAB || {};
+window.VOCAB[900] = [
+{w:"stipulate",m:"規定する",p:"v"},
+{w:"indemnify",m:"損害を補償する",p:"v"},
+{w:"promulgate",m:"公布する",p:"v"},
+{w:"rescind",m:"取り消す",p:"v"},
+{w:"abrogate",m:"廃止する",p:"v"},
+{w:"adjudicate",m:"裁定する",p:"v"},
+{w:"arbitrate",m:"仲裁する",p:"v"},
+{w:"apprise",m:"通知する",p:"v"},
+{w:"ascertain",m:"突き止める",p:"v"},
+{w:"attenuate",m:"弱める",p:"v"},
+{w:"augment",m:"増大させる",p:"v"},
+{w:"bolster",m:"強化する",p:"v"},
+{w:"burgeon",m:"急成長する",p:"v"},
+{w:"capitulate",m:"降伏する",p:"v"},
+{w:"circumvent",m:"回避する",p:"v"},
+{w:"coalesce",m:"合体する",p:"v"},
+{w:"collate",m:"照合する",p:"v"},
+{w:"concur",m:"同意する",p:"v"},
+{w:"condone",m:"容認する",p:"v"},
+{w:"confer",m:"授与する",p:"v"},
+{w:"consolidate",m:"統合する",p:"v"},
+{w:"corroborate",m:"裏付ける",p:"v"},
+{w:"curtail",m:"削減する",p:"v"},
+{w:"debilitate",m:"衰弱させる",p:"v"},
+{w:"delineate",m:"輪郭を描く",p:"v"},
+{w:"demarcate",m:"境界を定める",p:"v"},
+{w:"deprecate",m:"軽視する",p:"v"},
+{w:"disburse",m:"支払う",p:"v"},
+{w:"disseminate",m:"広める",p:"v"},
+{w:"divest",m:"売却する",p:"v"},
+{w:"elucidate",m:"解明する",p:"v"},
+{w:"embezzle",m:"横領する",p:"v"},
+{w:"emulate",m:"見習う",p:"v"},
+{w:"engender",m:"生じさせる",p:"v"},
+{w:"enumerate",m:"列挙する",p:"v"},
+{w:"espouse",m:"信奉する",p:"v"},
+{w:"exacerbate",m:"悪化させる",p:"v"},
+{w:"exempt",m:"免除する",p:"v"},
+{w:"expedite",m:"迅速化する",p:"v"},
+{w:"expunge",m:"抹消する",p:"v"},
+{w:"extol",m:"絶賛する",p:"v"},
+{w:"extrapolate",m:"外挿する",p:"v"},
+{w:"forestall",m:"未然に防ぐ",p:"v"},
+{w:"galvanize",m:"奮起させる",p:"v"},
+{w:"garner",m:"集める",p:"v"},
+{w:"impede",m:"妨げる",p:"v"},
+{w:"inaugurate",m:"就任させる",p:"v"},
+{w:"incur",m:"被る",p:"v"},
+{w:"infringe",m:"侵害する",p:"v"},
+{w:"instigate",m:"扇動する",p:"v"},
+{w:"inundate",m:"殺到させる",p:"v"},
+{w:"jeopardize",m:"危うくする",p:"v"},
+{w:"juxtapose",m:"並置する",p:"v"},
+{w:"liaise",m:"連携する",p:"v"},
+{w:"mitigate",m:"緩和する",p:"v"},
+{w:"nullify",m:"無効にする",p:"v"},
+{w:"obfuscate",m:"分かりにくくする",p:"v"},
+{w:"obviate",m:"不要にする",p:"v"},
+{w:"peruse",m:"熟読する",p:"v"},
+{w:"placate",m:"なだめる",p:"v"},
+{w:"preclude",m:"排除する",p:"v"},
+{w:"preempt",m:"先手を打つ",p:"v"},
+{w:"procrastinate",m:"先延ばしにする",p:"v"},
+{w:"procure",m:"調達する",p:"v"},
+{w:"proliferate",m:"急増する",p:"v"},
+{w:"ratify",m:"批准する",p:"v"},
+{w:"reconcile",m:"調和させる",p:"v"},
+{w:"rectify",m:"是正する",p:"v"},
+{w:"reimburse",m:"払い戻す",p:"v"},
+{w:"reinstate",m:"復職させる",p:"v"},
+{w:"relinquish",m:"放棄する",p:"v"},
+{w:"remit",m:"送金する",p:"v"},
+{w:"renege",m:"約束を破る",p:"v"},
+{w:"repeal",m:"撤廃する",p:"v"},
+{w:"reprimand",m:"叱責する",p:"v"},
+{w:"repudiate",m:"拒絶する",p:"v"},
+{w:"retract",m:"撤回する",p:"v"},
+{w:"revoke",m:"失効させる",p:"v"},
+{w:"abate",m:"和らぐ",p:"v"},
+{w:"abscond",m:"持ち逃げする",p:"v"},
+{w:"accentuate",m:"強調する",p:"v"},
+{w:"accrue",m:"利息が生じる",p:"v"},
+{w:"adhere",m:"固守する",p:"v"},
+{w:"admonish",m:"戒める",p:"v"},
+{w:"alleviate",m:"軽減する",p:"v"},
+{w:"allocate",m:"配分する",p:"v"},
+{w:"amend",m:"改正する",p:"v"},
+{w:"annul",m:"無効と宣言する",p:"v"},
+{w:"appease",m:"機嫌を取る",p:"v"},
+{w:"attest",m:"証明する",p:"v"},
+{w:"avert",m:"そらす",p:"v"},
+{w:"bequeath",m:"遺贈する",p:"v"},
+{w:"capitalize",m:"資本化する",p:"v"},
+{w:"censure",m:"公然と非難する",p:"v"},
+{w:"cede",m:"割譲する",p:"v"},
+{w:"commence",m:"開始する",p:"v"},
+{w:"commend",m:"称賛する",p:"v"},
+{w:"compensate",m:"補償する",p:"v"},
+{w:"comply",m:"従う",p:"v"},
+{w:"comprise",m:"構成する",p:"v"},
+{w:"concede",m:"しぶしぶ認める",p:"v"},
+{w:"conjecture",m:"推測する",p:"v"},
+{w:"contravene",m:"違反する",p:"v"},
+{w:"converge",m:"収束する",p:"v"},
+{w:"convene",m:"招集する",p:"v"},
+{w:"culminate",m:"最高潮に達する",p:"v"},
+{w:"decipher",m:"解読する",p:"v"},
+{w:"deduct",m:"控除する",p:"v"},
+{w:"delegate",m:"委任する",p:"v"},
+{w:"deplete",m:"枯渇させる",p:"v"},
+{w:"depreciate",m:"価値が下がる",p:"v"},
+{w:"designate",m:"指名する",p:"v"},
+{w:"deteriorate",m:"悪化する",p:"v"},
+{w:"detract",m:"価値を減じる",p:"v"},
+{w:"deviate",m:"逸脱する",p:"v"},
+{w:"discern",m:"識別する",p:"v"},
+{w:"dispatch",m:"発送する",p:"v"},
+{w:"dissuade",m:"思いとどまらせる",p:"v"},
+{w:"dwindle",m:"次第に減る",p:"v"},
+{w:"earmark",m:"使途を定める",p:"v"},
+{w:"elicit",m:"引き出す",p:"v"},
+{w:"embark",m:"乗り出す",p:"v"},
+{w:"encompass",m:"包含する",p:"v"},
+{w:"endorse",m:"裏書きする",p:"v"},
+{w:"enact",m:"制定する",p:"v"},
+{w:"entail",m:"伴う",p:"v"},
+{w:"entice",m:"誘い込む",p:"v"},
+{w:"envisage",m:"想定する",p:"v"},
+{w:"eradicate",m:"根絶する",p:"v"},
+{w:"evade",m:"逃れる",p:"v"},
+{w:"evoke",m:"呼び起こす",p:"v"},
+{w:"exert",m:"行使する",p:"v"},
+{w:"exonerate",m:"免罪する",p:"v"},
+{w:"extort",m:"ゆすり取る",p:"v"},
+{w:"fabricate",m:"捏造する",p:"v"},
+{w:"facilitate",m:"促進する",p:"v"},
+{w:"falter",m:"揺らぐ",p:"v"},
+{w:"flourish",m:"繁栄する",p:"v"},
+{w:"forfeit",m:"没収される",p:"v"},
+{w:"forgo",m:"見送る",p:"v"},
+{w:"fortify",m:"補強する",p:"v"},
+{w:"foster",m:"育成する",p:"v"},
+{w:"gauge",m:"測定する",p:"v"},
+{w:"hamper",m:"阻害する",p:"v"},
+{w:"harness",m:"有効活用する",p:"v"},
+{w:"impair",m:"損なう",p:"v"},
+{w:"impart",m:"伝授する",p:"v"},
+{w:"implement",m:"実施する",p:"v"},
+{w:"induce",m:"誘発する",p:"v"},
+{w:"infer",m:"推論する",p:"v"},
+{w:"inhibit",m:"抑制する",p:"v"},
+{w:"instill",m:"教え込む",p:"v"},
+{w:"interrogate",m:"尋問する",p:"v"},
+{w:"intervene",m:"介入する",p:"v"},
+{w:"invoke",m:"発動する",p:"v"},
+{w:"lament",m:"嘆く",p:"v"},
+{w:"languish",m:"低迷する",p:"v"},
+{w:"lure",m:"おびき寄せる",p:"v"},
+{w:"mediate",m:"調停する",p:"v"},
+{w:"negate",m:"打ち消す",p:"v"},
+{w:"oust",m:"追放する",p:"v"},
+{w:"outsource",m:"外部委託する",p:"v"},
+{w:"oversee",m:"監督する",p:"v"},
+{w:"offset",m:"相殺する",p:"v"},
+{w:"penalize",m:"罰する",p:"v"},
+{w:"perpetuate",m:"永続させる",p:"v"},
+{w:"pertain",m:"関係する",p:"v"},
+{w:"pinpoint",m:"正確に特定する",p:"v"},
+{w:"plummet",m:"急落する",p:"v"},
+{w:"preside",m:"議長を務める",p:"v"},
+{w:"prevail",m:"打ち勝つ",p:"v"},
+{w:"propel",m:"推進する",p:"v"},
+{w:"prosecute",m:"起訴する",p:"v"},
+{w:"quantify",m:"数量化する",p:"v"},
+{w:"quash",m:"却下する",p:"v"},
+{w:"recoup",m:"取り戻す",p:"v"},
+{w:"refurbish",m:"改装する",p:"v"},
+{w:"refute",m:"論破する",p:"v"},
+{w:"reiterate",m:"繰り返し述べる",p:"v"},
+{w:"rejuvenate",m:"若返らせる",p:"v"},
+{w:"relegate",m:"降格させる",p:"v"},
+{w:"remunerate",m:"報酬を払う",p:"v"},
+{w:"replenish",m:"補充する",p:"v"},
+{w:"retrench",m:"経費を切り詰める",p:"v"},
+{w:"revamp",m:"刷新する",p:"v"},
+{w:"revitalize",m:"活性化する",p:"v"},
+{w:"salvage",m:"救い出す",p:"v"},
+{w:"sanction",m:"認可する",p:"v"},
+{w:"scrutinize",m:"精査する",p:"v"},
+{w:"sequester",m:"隔離する",p:"v"},
+{w:"solicit",m:"懇請する",p:"v"},
+{w:"spearhead",m:"陣頭に立つ",p:"v"},
+{w:"squander",m:"浪費する",p:"v"},
+{w:"stagnate",m:"停滞する",p:"v"},
+{w:"stifle",m:"抑圧する",p:"v"},
+{w:"streamline",m:"合理化する",p:"v"},
+{w:"subcontract",m:"下請けに出す",p:"v"},
+{w:"subsidize",m:"補助金を出す",p:"v"},
+{w:"substantiate",m:"立証する",p:"v"},
+{w:"supersede",m:"取って代わる",p:"v"},
+{w:"supplant",m:"座を奪う",p:"v"},
+{w:"surmise",m:"推量する",p:"v"},
+{w:"surmount",m:"乗り越える",p:"v"},
+{w:"tabulate",m:"表にまとめる",p:"v"},
+{w:"tamper",m:"改ざんする",p:"v"},
+{w:"terminate",m:"終了させる",p:"v"},
+{w:"thrive",m:"繁盛する",p:"v"},
+{w:"transcend",m:"超越する",p:"v"},
+{w:"undermine",m:"弱体化させる",p:"v"},
+{w:"underpin",m:"下支えする",p:"v"},
+{w:"undertake",m:"引き受ける",p:"v"},
+{w:"unveil",m:"披露する",p:"v"},
+{w:"uphold",m:"支持する",p:"v"},
+{w:"usurp",m:"強奪する",p:"v"},
+{w:"vacate",m:"立ち退く",p:"v"},
+{w:"venerate",m:"崇敬する",p:"v"},
+{w:"vindicate",m:"潔白を証明する",p:"v"},
+{w:"waive",m:"権利を放棄する",p:"v"},
+{w:"wane",m:"衰える",p:"v"},
+{w:"withhold",m:"差し控える",p:"v"},
+{w:"withstand",m:"持ちこたえる",p:"v"},
+{w:"exorbitant",m:"法外な",p:"adj"},
+{w:"unequivocal",m:"明確な",p:"adj"},
+{w:"astute",m:"抜け目のない",p:"adj"},
+{w:"arduous",m:"骨の折れる",p:"adj"},
+{w:"cogent",m:"説得力のある",p:"adj"},
+{w:"copious",m:"豊富な",p:"adj"},
+{w:"cumbersome",m:"扱いにくい",p:"adj"},
+{w:"cursory",m:"ぞんざいな",p:"adj"},
+{w:"defunct",m:"現存しない",p:"adj"},
+{w:"discreet",m:"口が堅い",p:"adj"},
+{w:"discrete",m:"別個の",p:"adj"},
+{w:"eloquent",m:"雄弁な",p:"adj"},
+{w:"exemplary",m:"模範的な",p:"adj"},
+{w:"exhaustive",m:"徹底的な",p:"adj"},
+{w:"feasible",m:"実行可能な",p:"adj"},
+{w:"fiscal",m:"財政の",p:"adj"},
+{w:"frugal",m:"倹約な",p:"adj"},
+{w:"impeccable",m:"非の打ち所ない",p:"adj"},
+{w:"imperative",m:"急務の",p:"adj"},
+{w:"impending",m:"差し迫った",p:"adj"},
+{w:"incessant",m:"絶え間ない",p:"adj"},
+{w:"indispensable",m:"不可欠な",p:"adj"},
+{w:"inclement",m:"荒れ模様の",p:"adj"},
+{w:"lucrative",m:"儲かる",p:"adj"},
+{w:"meticulous",m:"細心の",p:"adj"},
+{w:"negligible",m:"無視できるほどの",p:"adj"},
+{w:"obsolete",m:"時代遅れの",p:"adj"},
+{w:"onerous",m:"厄介な",p:"adj"},
+{w:"ostensible",m:"表向きの",p:"adj"},
+{w:"pecuniary",m:"金銭上の",p:"adj"},
+{w:"perennial",m:"長年続く",p:"adj"},
+{w:"pertinent",m:"適切な",p:"adj"},
+{w:"plausible",m:"もっともらしい",p:"adj"},
+{w:"precarious",m:"不安定な",p:"adj"},
+{w:"proficient",m:"熟達した",p:"adj"},
+{w:"prolific",m:"多作の",p:"adj"},
+{w:"prudent",m:"慎重な",p:"adj"},
+{w:"redundant",m:"余剰の",p:"adj"},
+{w:"resilient",m:"回復力のある",p:"adj"},
+{w:"rigorous",m:"厳格な",p:"adj"},
+{w:"salient",m:"顕著な",p:"adj"},
+{w:"scrupulous",m:"良心的な",p:"adj"},
+{w:"stagnant",m:"停滞した",p:"adj"},
+{w:"stringent",m:"厳しい",p:"adj"},
+{w:"tentative",m:"暫定的な",p:"adj"},
+{w:"transient",m:"一時的な",p:"adj"},
+{w:"ubiquitous",m:"遍在する",p:"adj"},
+{w:"unanimous",m:"満場一致の",p:"adj"},
+{w:"unprecedented",m:"前例のない",p:"adj"},
+{w:"verbose",m:"冗長な",p:"adj"},
+{w:"viable",m:"存続可能な",p:"adj"},
+{w:"vigilant",m:"警戒している",p:"adj"},
+{w:"volatile",m:"変動しやすい",p:"adj"},
+{w:"adamant",m:"断固とした",p:"adj"},
+{w:"adept",m:"熟練した",p:"adj"},
+{w:"adjacent",m:"隣接した",p:"adj"},
+{w:"adverse",m:"不利な",p:"adj"},
+{w:"affluent",m:"裕福な",p:"adj"},
+{w:"ambiguous",m:"曖昧な",p:"adj"},
+{w:"apprehensive",m:"不安げな",p:"adj"},
+{w:"austere",m:"質素な",p:"adj"},
+{w:"authoritative",m:"権威ある",p:"adj"},
+{w:"avid",m:"熱心な",p:"adj"},
+{w:"bleak",m:"見通しが暗い",p:"adj"},
+{w:"brisk",m:"活発な",p:"adj"},
+{w:"candid",m:"率直な",p:"adj"},
+{w:"clandestine",m:"秘密の",p:"adj"},
+{w:"coherent",m:"首尾一貫した",p:"adj"},
+{w:"commensurate",m:"相応の",p:"adj"},
+{w:"compulsory",m:"義務的な",p:"adj"},
+{w:"conducive",m:"助けとなる",p:"adj"},
+{w:"confidential",m:"機密の",p:"adj"},
+{w:"conscientious",m:"誠実な",p:"adj"},
+{w:"contentious",m:"論争を呼ぶ",p:"adj"},
+{w:"courteous",m:"礼儀正しい",p:"adj"},
+{w:"credible",m:"信用できる",p:"adj"},
+{w:"culpable",m:"有責の",p:"adj"},
+{w:"cutthroat",m:"熾烈な",p:"adj"},
+{w:"defective",m:"欠陥のある",p:"adj"},
+{w:"delinquent",m:"滞納中の",p:"adj"},
+{w:"derelict",m:"遺棄された",p:"adj"},
+{w:"detrimental",m:"有害な",p:"adj"},
+{w:"dire",m:"悲惨な",p:"adj"},
+{w:"dismal",m:"陰鬱な",p:"adj"},
+{w:"disparate",m:"異種の",p:"adj"},
+{w:"dormant",m:"休眠状態の",p:"adj"},
+{w:"dubious",m:"疑わしい",p:"adj"},
+{w:"eminent",m:"著名な",p:"adj"},
+{w:"equitable",m:"公平な",p:"adj"},
+{w:"erratic",m:"不規則な",p:"adj"},
+{w:"exquisite",m:"精巧な",p:"adj"},
+{w:"extraneous",m:"無関係の",p:"adj"},
+{w:"exuberant",m:"活気あふれる",p:"adj"},
+{w:"fastidious",m:"気難しい",p:"adj"},
+{w:"fervent",m:"熱烈な",p:"adj"},
+{w:"flagrant",m:"目に余る",p:"adj"},
+{w:"fledgling",m:"駆け出しの",p:"adj"},
+{w:"formidable",m:"手ごわい",p:"adj"},
+{w:"forthcoming",m:"来たるべき",p:"adj"},
+{w:"fraudulent",m:"詐欺的な",p:"adj"},
+{w:"futile",m:"無駄な",p:"adj"},
+{w:"grueling",m:"過酷な",p:"adj"},
+{w:"illegible",m:"判読できない",p:"adj"},
+{w:"immaculate",m:"汚れ一つない",p:"adj"},
+{w:"imminent",m:"目前に迫った",p:"adj"},
+{w:"impartial",m:"公平無私な",p:"adj"},
+{w:"impervious",m:"影響されない",p:"adj"},
+{w:"implicit",m:"暗黙の",p:"adj"},
+{w:"inadvertent",m:"不注意による",p:"adj"},
+{w:"incumbent",m:"現職の",p:"adj"},
+{w:"indigenous",m:"土着の",p:"adj"},
+{w:"indignant",m:"憤慨した",p:"adj"},
+{w:"inquisitive",m:"詮索好きな",p:"adj"},
+{w:"insurmountable",m:"克服できない",p:"adj"},
+{w:"intact",m:"無傷の",p:"adj"},
+{w:"integral",m:"欠かせない",p:"adj"},
+{w:"intermittent",m:"断続的な",p:"adj"},
+{w:"intricate",m:"込み入った",p:"adj"},
+{w:"irrevocable",m:"取消不能の",p:"adj"},
+{w:"laudable",m:"称賛に値する",p:"adj"},
+{w:"lax",m:"手ぬるい",p:"adj"},
+{w:"legitimate",m:"合法的な",p:"adj"},
+{w:"lenient",m:"寛大な",p:"adj"},
+{w:"lethargic",m:"無気力な",p:"adj"},
+{w:"lucid",m:"明快な",p:"adj"},
+{w:"makeshift",m:"間に合わせの",p:"adj"},
+{w:"mandatory",m:"強制的な",p:"adj"},
+{w:"marginal",m:"わずかな",p:"adj"},
+{w:"momentous",m:"重大な",p:"adj"},
+{w:"mundane",m:"ありふれた",p:"adj"},
+{w:"myriad",m:"無数の",p:"adj"},
+{w:"nominal",m:"名目上の",p:"adj"},
+{w:"noteworthy",m:"注目に値する",p:"adj"},
+{w:"obstinate",m:"頑固な",p:"adj"},
+{w:"opulent",m:"豪華な",p:"adj"},
+{w:"outmoded",m:"流行遅れの",p:"adj"},
+{w:"overdue",m:"期限を過ぎた",p:"adj"},
+{w:"paramount",m:"最重要の",p:"adj"},
+{w:"pivotal",m:"極めて重要な",p:"adj"},
+{w:"pragmatic",m:"実利的な",p:"adj"},
+{w:"provisional",m:"仮の",p:"adj"},
+{w:"punitive",m:"懲罰的な",p:"adj"},
+{w:"rampant",m:"蔓延する",p:"adj"},
+{w:"reciprocal",m:"相互の",p:"adj"},
+{w:"reputable",m:"評判の良い",p:"adj"},
+{w:"robust",m:"頑健な",p:"adj"},
+{w:"rudimentary",m:"初歩的な",p:"adj"},
+{w:"sanguine",m:"楽観的な",p:"adj"},
+{w:"shrewd",m:"やり手の",p:"adj"},
+{w:"sluggish",m:"不振の",p:"adj"},
+{w:"arrears",m:"滞納金",p:"n"},
+{w:"remuneration",m:"報酬",p:"n"},
+{w:"acumen",m:"洞察力",p:"n"},
+{w:"adversary",m:"敵対者",p:"n"},
+{w:"affidavit",m:"宣誓供述書",p:"n"},
+{w:"appraisal",m:"査定",p:"n"},
+{w:"attrition",m:"自然減",p:"n"},
+{w:"backlog",m:"未処理案件",p:"n"},
+{w:"benchmark",m:"基準指標",p:"n"},
+{w:"bequest",m:"遺贈",p:"n"},
+{w:"breach",m:"契約違反",p:"n"},
+{w:"bureaucracy",m:"官僚主義",p:"n"},
+{w:"caliber",m:"力量",p:"n"},
+{w:"clientele",m:"顧客層",p:"n"},
+{w:"collateral",m:"担保",p:"n"},
+{w:"compliance",m:"法令遵守",p:"n"},
+{w:"concession",m:"譲歩",p:"n"},
+{w:"conglomerate",m:"複合企業",p:"n"},
+{w:"connoisseur",m:"目利き",p:"n"},
+{w:"consortium",m:"企業連合",p:"n"},
+{w:"contingency",m:"不測の事態",p:"n"},
+{w:"covenant",m:"契約上の約束",p:"n"},
+{w:"credential",m:"資格証明書",p:"n"},
+{w:"culmination",m:"到達点",p:"n"},
+{w:"deficit",m:"赤字",p:"n"},
+{w:"depreciation",m:"減価償却",p:"n"},
+{w:"deterrent",m:"抑止力",p:"n"},
+{w:"directive",m:"指令",p:"n"},
+{w:"discrepancy",m:"不一致",p:"n"},
+{w:"downturn",m:"景気後退",p:"n"},
+{w:"embargo",m:"禁輸措置",p:"n"},
+{w:"endorsement",m:"支持表明",p:"n"},
+{w:"entrepreneur",m:"起業家",p:"n"},
+{w:"epitome",m:"典型",p:"n"},
+{w:"equity",m:"株主資本",p:"n"},
+{w:"exodus",m:"大量流出",p:"n"},
+{w:"expenditure",m:"支出",p:"n"},
+{w:"foreclosure",m:"差し押さえ",p:"n"},
+{w:"grievance",m:"苦情",p:"n"},
+{w:"hierarchy",m:"階層",p:"n"},
+{w:"impasse",m:"行き詰まり",p:"n"},
+{w:"incentive",m:"奨励金",p:"n"},
+{w:"inception",m:"発足",p:"n"},
+{w:"influx",m:"流入",p:"n"},
+{w:"injunction",m:"差し止め命令",p:"n"},
+{w:"insolvency",m:"支払い不能",p:"n"},
+{w:"itinerary",m:"旅程表",p:"n"},
+{w:"jurisdiction",m:"管轄権",p:"n"},
+{w:"layoff",m:"一時解雇",p:"n"},
+{w:"levy",m:"徴税",p:"n"},
+{w:"liability",m:"負債",p:"n"},
+{w:"liaison",m:"連絡役",p:"n"},
+{w:"litigation",m:"訴訟",p:"n"},
+{w:"loophole",m:"抜け穴",p:"n"},
+{w:"memorandum",m:"覚書",p:"n"},
+{w:"merger",m:"合併",p:"n"},
+{w:"moratorium",m:"一時停止措置",p:"n"},
+{w:"niche",m:"隙間市場",p:"n"},
+{w:"overhaul",m:"総点検",p:"n"},
+{w:"patronage",m:"愛顧",p:"n"},
+{w:"perquisite",m:"役得",p:"n"},
+{w:"plaintiff",m:"原告",p:"n"},
+{w:"plethora",m:"過多",p:"n"},
+{w:"precedent",m:"前例",p:"n"},
+{w:"prerequisite",m:"前提条件",p:"n"},
+{w:"proceeds",m:"収益金",p:"n"},
+{w:"procurement",m:"調達",p:"n"},
+{w:"proprietor",m:"事業主",p:"n"},
+{w:"proxy",m:"代理人",p:"n"},
+{w:"quorum",m:"定足数",p:"n"},
+{w:"ramification",m:"波及効果",p:"n"},
+{w:"rapport",m:"信頼関係",p:"n"},
+{w:"rebate",m:"払戻金",p:"n"},
+{w:"reciprocity",m:"相互主義",p:"n"},
+{w:"referendum",m:"住民投票",p:"n"},
+{w:"remittance",m:"送金額",p:"n"},
+{w:"repercussion",m:"悪影響",p:"n"},
+{w:"restitution",m:"返還",p:"n"},
+{w:"sabbatical",m:"長期研究休暇",p:"n"},
+{w:"scrutiny",m:"精査",p:"n"},
+{w:"solvency",m:"支払い能力",p:"n"},
+{w:"stakeholder",m:"利害関係者",p:"n"},
+{w:"stipend",m:"定期手当",p:"n"},
+{w:"subsidiary",m:"子会社",p:"n"},
+{w:"subsidy",m:"補助金",p:"n"},
+{w:"surcharge",m:"追加料金",p:"n"},
+{w:"tariff",m:"関税",p:"n"},
+{w:"tenure",m:"在職期間",p:"n"},
+{w:"testimonial",m:"推薦文",p:"n"},
+{w:"threshold",m:"閾値",p:"n"},
+{w:"turnaround",m:"業績好転",p:"n"},
+{w:"turnover",m:"離職率",p:"n"},
+{w:"underwriter",m:"保険引受人",p:"n"},
+{w:"upheaval",m:"大変動",p:"n"},
+{w:"windfall",m:"思わぬ収入",p:"n"},
+{w:"inadvertently",m:"うっかり",p:"adv"},
+{w:"expressly",m:"明示的に",p:"adv"},
+{w:"duly",m:"しかるべく",p:"adv"},
+{w:"hitherto",m:"これまでのところ",p:"adv"},
+{w:"henceforth",m:"今後は",p:"adv"},
+{w:"retroactively",m:"遡って",p:"adv"},
+{w:"sporadically",m:"散発的に",p:"adv"},
+{w:"concurrently",m:"同時並行で",p:"adv"},
+{w:"exponentially",m:"加速度的に",p:"adv"},
+{w:"succinctly",m:"簡潔に",p:"adv"},
+{w:"presumably",m:"おそらく",p:"adv"},
+{w:"invariably",m:"例外なく",p:"adv"},
+{w:"forthwith",m:"直ちに",p:"adv"},
+{w:"whereby",m:"それによって",p:"adv"},
+{w:"in arrears",m:"滞納して",p:"phr"},
+{w:"in lieu of",m:"～の代わりに",p:"phr"},
+{w:"pursuant to",m:"～に準拠して",p:"phr"},
+{w:"on behalf of",m:"～を代表して",p:"phr"},
+{w:"in the black",m:"黒字で",p:"phr"},
+{w:"in the red",m:"赤字で",p:"phr"},
+{w:"across the board",m:"全面的に",p:"phr"},
+{w:"phase out",m:"段階的に廃止する",p:"phr"},
+{w:"iron out",m:"問題を解決する",p:"phr"},
+{w:"touch base",m:"連絡を取り合う",p:"phr"},
+{w:"by and large",m:"概して",p:"phr"},
+{w:"in due course",m:"やがて",p:"phr"},
+{w:"on the verge of",m:"～の寸前で",p:"phr"},
+{w:"at stake",m:"危機にさらされて",p:"phr"},
+{w:"around the clock",m:"昼夜休みなく",p:"phr"},
+{w:"state-of-the-art",m:"最新鋭の",p:"adj"},
+{w:"run-of-the-mill",m:"平凡な",p:"adj"},
+{w:"in hindsight",m:"後から考えれば",p:"phr"},
+{w:"draw up",m:"文書を作成する",p:"phr"},
+{w:"opt out of",m:"～から脱退する",p:"phr"}
+];
+
+</script>
+<script>
+// TOEIC QUEST - enemy definitions (32 species)
+// lv: TOEIC vocab level asked when fighting this enemy
+// traits: double=attacks twice sometimes, heal=heals self, fire=strong breath,
+//         hasty=quiz timer shortened, flee=often runs away, boss=boss flags
+window.ENEMIES = [
+  // ---- zone1 : TOEIC400 ----
+  {id:"slime",    name:"ワードスライム",      icon:"🫠", lv:400, hp:8,   atk:5,  def:2,  exp:2,   gold:3,   traits:[]},
+  {id:"bat",      name:"アルファベット・バット", icon:"🦇", lv:400, hp:10,  atk:6,  def:2,  exp:3,   gold:4,   traits:[]},
+  {id:"rat",      name:"ペンシルラット",      icon:"🐀", lv:400, hp:13,  atk:7,  def:3,  exp:4,   gold:6,   traits:[]},
+  {id:"mush",     name:"イレイザーだけ",      icon:"🍄", lv:400, hp:15,  atk:8,  def:6,  exp:6,   gold:7,   traits:[]},
+  {id:"goblin",   name:"ノートゴブリン",      icon:"👺", lv:400, hp:18,  atk:10, def:4,  exp:8,   gold:10,  traits:[]},
+  // ---- zone2 : TOEIC500 ----
+  {id:"bee",      name:"スペルビー",          icon:"🐝", lv:500, hp:20,  atk:12, def:5,  exp:10,  gold:12,  traits:["double"]},
+  {id:"worm",     name:"ブックワーム",        icon:"🐛", lv:500, hp:26,  atk:13, def:8,  exp:13,  gold:14,  traits:[]},
+  {id:"snake",    name:"グラマースネーク",    icon:"🐍", lv:500, hp:28,  atk:15, def:9,  exp:16,  gold:17,  traits:[]},
+  {id:"ghost",    name:"カンニングゴースト",  icon:"👻", lv:500, hp:30,  atk:17, def:11, exp:20,  gold:20,  traits:[]},
+  {id:"wolf",     name:"リスニングウルフ",    icon:"🐺", lv:500, hp:36,  atk:19, def:11, exp:24,  gold:24,  traits:["double"]},
+  // ---- zone3 : TOEIC600 ----
+  {id:"owl",      name:"イディオムアウル",    icon:"🦉", lv:600, hp:40,  atk:21, def:13, exp:28,  gold:26,  traits:[]},
+  {id:"twins",    name:"シノニムツインズ",    icon:"👯", lv:600, hp:44,  atk:23, def:14, exp:33,  gold:30,  traits:["double"]},
+  {id:"lizard",   name:"リーディングリザード", icon:"🦎", lv:600, hp:50,  atk:25, def:16, exp:38,  gold:34,  traits:[]},
+  {id:"clock",    name:"タイムイーター",      icon:"⏰", lv:600, hp:46,  atk:27, def:15, exp:44,  gold:38,  traits:["hasty"]},
+  {id:"knight5",  name:"パートファイブナイト", icon:"♞",  lv:600, hp:58,  atk:29, def:22, exp:52,  gold:46,  traits:[]},
+  // ---- zone4 : TOEIC700 ----
+  {id:"golem",    name:"グラマーゴーレム",    icon:"🗿", lv:700, hp:70,  atk:33, def:28, exp:62,  gold:52,  traits:[]},
+  {id:"demon",    name:"デッドラインデーモン", icon:"😈", lv:700, hp:66,  atk:36, def:24, exp:68,  gold:58,  traits:["hasty"]},
+  {id:"mummy",    name:"マークシートマミー",  icon:"🧟", lv:700, hp:74,  atk:37, def:27, exp:74,  gold:62,  traits:[]},
+  {id:"ogre",     name:"オーバーワークオーガ", icon:"👹", lv:700, hp:84,  atk:41, def:27, exp:84,  gold:70,  traits:["double"]},
+  {id:"snight",   name:"サイレントナイト",    icon:"🛡️", lv:700, hp:88,  atk:43, def:34, exp:95,  gold:82,  traits:[]},
+  // ---- zone5 : TOEIC800 ----
+  {id:"harpy",    name:"ハイスコアハーピー",  icon:"🦅", lv:800, hp:90,  atk:50, def:34, exp:110, gold:92,  traits:["double"]},
+  {id:"reaper",   name:"スコアリーパー",      icon:"💀", lv:800, hp:96,  atk:53, def:37, exp:122, gold:100, traits:[]},
+  {id:"kraken",   name:"リスニングクラーケン", icon:"🐙", lv:800, hp:110, atk:56, def:40, exp:140, gold:115, traits:[]},
+  {id:"phoenix",  name:"パラフレーズフェニックス", icon:"🐦‍🔥", lv:800, hp:100, atk:54, def:38, exp:135, gold:108, traits:["heal"]},
+  {id:"dragon",   name:"ダブルパッセージドラゴン", icon:"🐉", lv:800, hp:130, atk:62, def:44, exp:170, gold:140, traits:["fire"]},
+  // ---- zone6 : TOEIC900 (魔王城周辺) ----
+  {id:"wizard",   name:"パーフェクトウィザード", icon:"🧙", lv:900, hp:105, atk:60, def:42, exp:160, gold:130, traits:["fire"]},
+  {id:"shadow",   name:"ネイティブシャドー",  icon:"🥷", lv:900, hp:120, atk:66, def:47, exp:185, gold:150, traits:["double"]},
+  {id:"mimic",    name:"リワードミミック",    icon:"🎁", lv:900, hp:100, atk:64, def:45, exp:200, gold:280, traits:["hasty"]},
+  {id:"metal",    name:"メタルワード",        icon:"✨", lv:900, hp:12,  atk:35, def:120, exp:500, gold:8,  traits:["flee"]},
+  // ---- bosses ----
+  {id:"gen_r",    name:"リーディング将軍レクトス", icon:"🦁", lv:800, hp:240, atk:58, def:42, exp:450, gold:350, traits:["double","boss"]},
+  {id:"gen_l",    name:"リスニング将軍ヒアロス",  icon:"🐲", lv:800, hp:280, atk:64, def:46, exp:550, gold:420, traits:["fire","boss"]},
+  {id:"maou",     name:"魔王ヴォキャブロス",  icon:"👿", lv:900, hp:480, atk:74, def:52, exp:0,   gold:0,  traits:["double","fire","heal","boss","last"]}
+];
+
+window.ENEMY_BY_ID = {};
+window.ENEMIES.forEach(function(e){ window.ENEMY_BY_ID[e.id] = e; });
+
+// encounter tables per zone (weighted)
+window.ZONE_TABLE = {
+  1: [["slime",30],["bat",28],["rat",22],["mush",12],["goblin",8]],
+  2: [["goblin",15],["bee",25],["worm",22],["snake",18],["ghost",12],["wolf",8]],
+  3: [["wolf",12],["owl",24],["twins",20],["lizard",18],["clock",14],["knight5",12]],
+  4: [["knight5",10],["golem",22],["demon",20],["mummy",18],["ogre",16],["snight",10],["metal",4]],
+  5: [["snight",10],["harpy",22],["reaper",20],["kraken",16],["phoenix",16],["dragon",12],["metal",4]],
+  6: [["wizard",26],["shadow",26],["mimic",18],["dragon",14],["phoenix",10],["metal",6]]
+};
+
+// ---- player growth ----
+window.LEVEL_TABLE = (function(){
+  var t = [];
+  for (var lv = 1; lv <= 30; lv++) {
+    t.push({
+      lv: lv,
+      exp: lv === 1 ? 0 : Math.round(7 * Math.pow(lv - 1, 2.35)),
+      maxhp: 16 + Math.round((lv - 1) * 7.5),
+      maxmp: lv < 3 ? 0 : Math.round((lv - 2) * 4.5),
+      str: 5 + Math.round((lv - 1) * 2.6),
+      vit: 4 + Math.round((lv - 1) * 2.0)
+    });
+  }
+  return t;
+})();
+
+// spells: quizLv = TOEIC level question required to cast
+window.SPELLS = [
+  {id:"heal1",  name:"ヒール５００",   learnLv:4,  mp:4,  quizLv:500, type:"heal",   power:35,  desc:"HPを35回復"},
+  {id:"fire1",  name:"ファイア６００", learnLv:7,  mp:5,  quizLv:600, type:"attack", power:28,  desc:"炎で28前後のダメージ"},
+  {id:"return", name:"リターン",       learnLv:10, mp:8,  quizLv:600, type:"field",  power:0,   desc:"城へ瞬間移動"},
+  {id:"heal2",  name:"ヒールラ７００", learnLv:13, mp:8,  quizLv:700, type:"heal",   power:90,  desc:"HPを90回復"},
+  {id:"thun1",  name:"サンダー８００", learnLv:16, mp:10, quizLv:800, type:"attack", power:65,  desc:"雷で65前後のダメージ"},
+  {id:"meteo",  name:"メテオ９００",   learnLv:20, mp:15, quizLv:900, type:"attack", power:120, desc:"隕石で120前後のダメージ"}
+];
+
+window.WEAPONS = [
+  {id:"w0", name:"たけざお",         atk:1,  price:0},
+  {id:"w1", name:"こんぼう",         atk:5,  price:60},
+  {id:"w2", name:"どうのつるぎ",     atk:12, price:220},
+  {id:"w3", name:"はがねのつるぎ",   atk:22, price:700},
+  {id:"w4", name:"ほのおのつるぎ",   atk:34, price:2200},
+  {id:"w5", name:"レジェンドソード", atk:48, price:0}
+];
+window.ARMORS = [
+  {id:"a0", name:"ぬののふく",       def:1,  price:0},
+  {id:"a1", name:"かわのよろい",     def:6,  price:150},
+  {id:"a2", name:"くさりかたびら",   def:14, price:480},
+  {id:"a3", name:"はがねのよろい",   def:24, price:1300},
+  {id:"a4", name:"まほうのよろい",   def:36, price:3000},
+  {id:"a5", name:"レジェンドアーマー", def:50, price:0}
+];
+window.ITEM_DEFS = {
+  herb:  {name:"やくそう",     price:12,  desc:"HPを30回復"},
+  wing:  {name:"リターンの羽", price:40,  desc:"城へ瞬間移動"},
+  key:   {name:"まりょくのカギ", price:0,  desc:"魔王城の扉を開く"},
+  elixir:{name:"けんじゃの雫", price:200, desc:"MPを40回復"}
+};
+
+</script>
+<script>
+// TOEIC QUEST - map data
+// tile legend:
+//  . grass  t forest  m mountain  w water  s sand  b bridge
+//  = wall   , floor   - dungeon floor  ^ exit/stairs  c chest(base floor)
+//  C castle T town  D cave  U tower  X demon castle gate (overworld entrances)
+
+(function () {
+  "use strict";
+
+  // ---------- overworld (code-built, 40 x 36) ----------
+  var OW_W = 40, OW_H = 36;
+
+  function buildOverworld() {
+    var g = [];
+    for (var y = 0; y < OW_H; y++) {
+      g.push(new Array(OW_W).fill("w"));
+    }
+    function rect(x0, y0, x1, y1, ch) {
+      for (var y = y0; y <= y1; y++) for (var x = x0; x <= x1; x++) g[y][x] = ch;
+    }
+    function put(x, y, ch) { g[y][x] = ch; }
+
+    // landmass
+    rect(2, 2, 37, 33, ".");
+    // rounded-ish coast corners
+    rect(2, 2, 5, 3, "w"); rect(2, 2, 3, 5, "w");
+    rect(34, 2, 37, 3, "w"); rect(36, 2, 37, 5, "w");
+    rect(2, 30, 4, 33, "w"); rect(2, 32, 6, 33, "w");
+    rect(35, 32, 37, 33, "w");
+
+    // seeded decoration (deterministic)
+    var seed = 20260710;
+    function rnd() { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; }
+    for (var y = 2; y < 34; y++) {
+      for (var x = 2; x < 38; x++) {
+        if (g[y][x] !== ".") continue;
+        var r = rnd();
+        if (r < 0.16) g[y][x] = "t";
+        else if (r < 0.19) g[y][x] = "s";
+      }
+    }
+
+    // mountain ranges (impassable walls shaping the routes)
+    rect(2, 14, 9, 15, "m");          // west ridge below castle area
+    rect(22, 2, 23, 7, "m");          // north ridge
+    rect(30, 12, 37, 13, "m");        // east ridge
+    rect(16, 24, 17, 33, "m");        // south divider
+    rect(24, 20, 25, 27, "m");        // south-east divider
+
+    // rivers
+    rect(18, 2, 18, 17, "w");         // vertical river NW/NE
+    rect(18, 17, 37, 17, "w");        // horizontal river to east coast
+    rect(2, 21, 13, 21, "w");         // west horizontal river
+    rect(13, 21, 13, 33, "w");        // south vertical river
+
+    // bridges
+    put(18, 9, "b");
+    put(28, 17, "b");
+    put(10, 21, "b");
+    put(13, 27, "b");
+
+    // demon castle island (SE), ringed by mountains, one gate
+    rect(29, 27, 37, 33, "m");
+    rect(31, 29, 35, 32, "s");
+    put(29, 30, "s");                  // gap in the ring (approach)
+    put(30, 30, "s");
+    put(33, 30, "X");                  // demon castle gate
+
+    // clear paths around key points (keep them walkable grass)
+    var keep = [[7,7],[11,9],[24,9],[33,22],[8,27],[20,31],[18,8],[18,10],[28,16],[28,18],[10,20],[10,22],[13,26],[13,28],[26,30],[27,30],[28,30]];
+    keep.forEach(function (p) { if (g[p[1]][p[0]] !== "b") g[p[1]][p[0]] = "."; });
+
+    // entrances
+    put(7, 7, "C");    // レキシア城
+    put(11, 9, "T");   // town1
+    put(24, 9, "T");   // town2
+    put(8, 27, "T");   // town3
+    put(33, 22, "D");  // cave
+    put(20, 31, "U");  // tower
+
+    return g.map(function (row) { return row.join(""); });
+  }
+
+  // ---------- interiors (hand-authored) ----------
+  var CASTLE_ROWS = [
+    "====================",
+    "=ccc,,,,,,,,,,,,,,,=",
+    "=,,,,,,,,,,,,,,,,,,=",
+    "=,,==,,,,,,,,,,==,,=",
+    "=,,,,,,,,,,,,,,,,,,=",
+    "=,,,,,,,,,,,,,,,,,,=",
+    "=,,,,,,,,,,,,,,,,,,=",
+    "=,,,,,,,,,,,,,,,,,,=",
+    "=========^=========="
+  ];
+
+  var TOWN_ROWS = [
+    "====================",
+    "=,,,,,,,,,,,,,,,,,,=",
+    "=,,,,,,,,,,,,,,,,,,=",
+    "=,,==,,,,,==,,,,==,=",
+    "=,,,,,,,,,,,,,,,,,,=",
+    "=,,,,,,,,,,,,,,,,,,=",
+    "=,,,,,,,,,,,,,,,,,,=",
+    "=,,,,,,,,,,,,,,,,,,=",
+    "=========^=========="
+  ];
+
+  var CAVE_ROWS = [
+    "====================",
+    "=--------=---------=",
+    "=-==-===-=-======--=",
+    "=-=cc---=--------=-=",
+    "=-=--====-======-=-=",
+    "=-=--=---------=-=-=",
+    "=-====-=======-=-=-=",
+    "=------=-----=-=---=",
+    "=-====-=-===-=-==--=",
+    "=-=--=-=-=c=-=-----=",
+    "=-=--=-=-=-=-=-==--=",
+    "=-=--=-=-----------=",
+    "=-=--=-==========--=",
+    "=-=----------------=",
+    "=^=================="
+  ];
+
+  var TOWER1_ROWS = [
+    "====================",
+    "=------------------=",
+    "=-====-=======-===-=",
+    "=-=--=-=-----=-=-=-=",
+    "=-=--=-=-=-=-=-=-=-=",
+    "=-=--=-=-=c=-=-=-=-=",
+    "=-=--=-=-=^=-=-=-=-=",
+    "=-=--=-=-====-=-=--=",
+    "=-=-c=-=------=-==-=",
+    "=-=--=-=-======-=--=",
+    "=-=----------------=",
+    "=========v=========="
+  ];
+
+  var TOWER2_ROWS = [
+    "====================",
+    "=,,,,,,,,,,,,,,,,,,=",
+    "=,,,,,,,,,,,,,,,,,,=",
+    "=,,,,,,,,,,,,,,,,,,=",
+    "=,,,,,,,,c,,,,,,,,,=",
+    "=,,,,,,,,,,,,,,,,,,=",
+    "=,,,,,,,,,,,,,,,,,,=",
+    "=========^=========="
+  ];
+
+  var MAOU_ROWS = [
+    "====================",
+    "=,,,,,,,,,,,,,,,,,,=",
+    "=,,,,,,,,,,,,,,,,,,=",
+    "=,,====,,,,,,====,,=",
+    "=,,=cc=,,,,,,=cc=,,=",
+    "=,,=,,=,,,,,,=,,=,,=",
+    "=,,=,,=,,,,,,=,,=,,=",
+    "=,,,,,,,,,,,,,,,,,,=",
+    "=,,,,,,,,,,,,,,,,,,=",
+    "=,,,,,,,,,,,,,,,,,,=",
+    "=,,,,,,,,,,,,,,,,,,=",
+    "=========^=========="
+  ];
+
+  // ---------- events ----------
+  // npc: {type:"npc", x,y, icon, text:[...] , shop:{kind,items}, inn:{price}}
+  // chest:{type:"chest", x,y, id, loot:{gold|item|weapon|armor}}
+  // boss: {type:"boss", x,y, icon, enemy, flag, pre:[...], drops:{...}, after:[...]}
+
+  window.MAPS = {
+
+    world: {
+      id: "world", name: "レキシア大陸", kind: "world",
+      rows: buildOverworld(),
+      start: { x: 7, y: 8 },
+      events: [
+        { type: "enter", x: 7, y: 7, map: "castle", tx: 9, ty: 7 },
+        { type: "enter", x: 11, y: 9, map: "town1", tx: 9, ty: 7 },
+        { type: "enter", x: 24, y: 9, map: "town2", tx: 9, ty: 7 },
+        { type: "enter", x: 8, y: 27, map: "town3", tx: 9, ty: 7 },
+        { type: "enter", x: 33, y: 22, map: "cave", tx: 1, ty: 13 },
+        { type: "enter", x: 20, y: 31, map: "tower1", tx: 9, ty: 10 },
+        { type: "gate", x: 33, y: 30, needs: "key", map: "maou", tx: 9, ty: 10,
+          lockedMsg: "扉は固く閉ざされている。\n『まりょくのカギ』が必要だ。" }
+      ]
+    },
+
+    castle: {
+      id: "castle", name: "レキシア城", kind: "town",
+      rows: CASTLE_ROWS,
+      exit: { map: "world", x: 7, y: 8 },
+      events: [
+        { type: "npc", x: 9, y: 2, icon: "👑", king: true },
+        { type: "npc", x: 6, y: 4, icon: "💂", text: ["東の橋を渡ると 敵が強くなるぞ。\nまずは 村で 装備を整えるのだ。"] },
+        { type: "npc", x: 12, y: 4, icon: "💂", text: ["敵に攻撃するには『英単語』に\n5秒以内に 答えるのだ。\n2秒以内に答えると 会心の一撃だ！"] },
+        { type: "npc", x: 15, y: 6, icon: "🧙", text: ["魔法にも 単語の試練がある。\n『ファイア６００』なら\nTOEIC600点レベルの単語だ。"] },
+        { type: "chest", x: 1, y: 1, id: "castle_c1", loot: { gold: 50 } },
+        { type: "chest", x: 2, y: 1, id: "castle_c2", loot: { item: "herb", n: 2 } },
+        { type: "chest", x: 3, y: 1, id: "castle_c3", loot: { item: "wing", n: 1 } }
+      ]
+    },
+
+    town1: {
+      id: "town1", name: "スタディの村", kind: "town",
+      rows: TOWN_ROWS,
+      exit: { map: "world", x: 11, y: 10 },
+      events: [
+        { type: "npc", x: 3, y: 4, icon: "⚔️", shop: { kind: "weapon", items: ["w1", "w2", "a1"] },
+          text: ["いらっしゃい！ 武器と防具だよ。"] },
+        { type: "npc", x: 10, y: 4, icon: "🧴", shop: { kind: "item", items: ["herb", "wing"] },
+          text: ["道具はいかが？"] },
+        { type: "npc", x: 17, y: 4, icon: "🛏️", inn: { price: 10 },
+          text: [] },
+        { type: "npc", x: 5, y: 6, icon: "👵", text: ["昔は この大陸のみんなが\n英語を話せたんじゃよ…。\n魔王が『言葉の力』を奪うまではね。"] },
+        { type: "npc", x: 13, y: 7, icon: "👦", text: ["まちがえた単語は メニューの\n『たんごちょう』で復習できるよ！"] }
+      ]
+    },
+
+    town2: {
+      id: "town2", name: "ミドルタウン", kind: "town",
+      rows: TOWN_ROWS,
+      exit: { map: "world", x: 24, y: 10 },
+      events: [
+        { type: "npc", x: 3, y: 4, icon: "⚔️", shop: { kind: "weapon", items: ["w2", "w3", "a2"] },
+          text: ["東の川を越えるなら\nはがねの装備が欲しいところだね。"] },
+        { type: "npc", x: 10, y: 4, icon: "🧴", shop: { kind: "item", items: ["herb", "wing", "elixir"] },
+          text: ["けんじゃの雫は MPを回復するよ。"] },
+        { type: "npc", x: 17, y: 4, icon: "🛏️", inn: { price: 25 }, text: [] },
+        { type: "npc", x: 6, y: 6, icon: "🧔", text: ["南東の洞窟には リーディング将軍\nレクトスが 住みついている。\n『ほのおのつるぎ』を守っているらしい。"] },
+        { type: "npc", x: 14, y: 7, icon: "👩", text: ["レベルが上がると 魔法を覚えるよ。\n回復魔法『ヒール５００』は\n旅の必需品ね。"] }
+      ]
+    },
+
+    town3: {
+      id: "town3", name: "ハイスコアの街", kind: "town",
+      rows: TOWN_ROWS,
+      exit: { map: "world", x: 8, y: 28 },
+      events: [
+        { type: "npc", x: 3, y: 4, icon: "⚔️", shop: { kind: "weapon", items: ["w3", "w4", "a3", "a4"] },
+          text: ["魔王城へ行くつもりかい？\nなら 最高の装備を持っていきな。"] },
+        { type: "npc", x: 10, y: 4, icon: "🧴", shop: { kind: "item", items: ["herb", "wing", "elixir"] },
+          text: ["準備は 入念にね。"] },
+        { type: "npc", x: 17, y: 4, icon: "🛏️", inn: { price: 60 }, text: [] },
+        { type: "npc", x: 6, y: 6, icon: "🧙", text: ["南の塔の頂上に リスニング将軍\nヒアロスがいる。\n奴が『まりょくのカギ』を持っている。"] },
+        { type: "npc", x: 14, y: 7, icon: "👴", text: ["魔王ヴォキャブロスには\nTOEIC900点レベルの単語で\n挑むことになるじゃろう…。"] }
+      ]
+    },
+
+    cave: {
+      id: "cave", name: "リーディングの洞窟", kind: "dungeon", dark: true,
+      rows: CAVE_ROWS,
+      zone: 4,
+      exit: { map: "world", x: 33, y: 23 },
+      events: [
+        { type: "chest", x: 3, y: 3, id: "cave_c1", loot: { gold: 300 } },
+        { type: "chest", x: 4, y: 3, id: "cave_c2", loot: { item: "elixir", n: 1 } },
+        { type: "chest", x: 10, y: 9, id: "cave_c3", loot: { weapon: "w4" } },
+        { type: "boss", x: 17, y: 11, icon: "🦁", enemy: "gen_r", flag: "gen_r_down",
+          pre: ["リーディング将軍レクトス\n『我が書庫を荒らす者は誰だ！\n　長文の海に 沈めてくれよう！』"],
+          after: ["レクトスを倒した！\n洞窟に 静けさが戻った。"] }
+      ]
+    },
+
+    tower1: {
+      id: "tower1", name: "リスニングの塔", kind: "dungeon", dark: false,
+      rows: TOWER1_ROWS,
+      zone: 5,
+      exit: { map: "world", x: 20, y: 32 },
+      events: [
+        { type: "chest", x: 4, y: 8, id: "tw_c1", loot: { gold: 500 } },
+        { type: "chest", x: 10, y: 5, id: "tw_c2", loot: { item: "herb", n: 3 } },
+        { type: "stairs", x: 10, y: 6, map: "tower2", tx: 9, ty: 6 }
+      ]
+    },
+
+    tower2: {
+      id: "tower2", name: "リスニングの塔・最上階", kind: "dungeon", dark: false,
+      rows: TOWER2_ROWS,
+      zone: 5,
+      exit: { map: "tower1", x: 10, y: 6 },
+      events: [
+        { type: "chest", x: 9, y: 4, id: "tw_c3", loot: { armor: "a4" } },
+        { type: "boss", x: 9, y: 2, icon: "🐲", enemy: "gen_l", flag: "gen_l_down",
+          pre: ["リスニング将軍ヒアロス\n『ここまで来るとは…。\n　だが 我が早口の咆哮を\n　聞き取れるかな！？』"],
+          drops: { item: "key" },
+          after: ["ヒアロスを倒した！\n『まりょくのカギ』を手に入れた！"] }
+      ]
+    },
+
+    maou: {
+      id: "maou", name: "魔王城", kind: "dungeon", dark: false,
+      rows: MAOU_ROWS,
+      zone: 6,
+      exit: { map: "world", x: 33, y: 31 },
+      events: [
+        { type: "chest", x: 4, y: 4, id: "mc_c1", loot: { weapon: "w5" } },
+        { type: "chest", x: 5, y: 4, id: "mc_c2", loot: { gold: 1000 } },
+        { type: "chest", x: 14, y: 4, id: "mc_c3", loot: { armor: "a5" } },
+        { type: "chest", x: 15, y: 4, id: "mc_c4", loot: { item: "elixir", n: 2 } },
+        { type: "boss", x: 9, y: 2, icon: "👿", enemy: "maou", flag: "maou_down",
+          pre: ["魔王ヴォキャブロス\n『よくぞ来た 小さき勇者よ。\n　この世界の《言葉の力》は\n　すべて 私のものだ！\n　私を倒したくば――\n　900点の語彙で 語ってみせよ！』"],
+          after: [] }
+      ]
+    }
+  };
+
+  // sanity check: all rows in a map must share the same width
+  Object.keys(window.MAPS).forEach(function (k) {
+    var m = window.MAPS[k];
+    var w = m.rows[0].length;
+    m.rows.forEach(function (r, i) {
+      if (r.length !== w) throw new Error("map " + k + " row " + i + " width " + r.length + " != " + w);
+    });
+    m.w = w; m.h = m.rows.length;
+  });
+})();
+
+</script>
+<script>
+// TOEIC QUEST - quiz module
+// QUIZ.ask(level, {time}) -> Promise<{correct, elapsed, entry, timeout}>
+(function () {
+  "use strict";
+
+  var overlay, box, levelTag, wordEl, hintEl, timerBar, choicesEl, resultEl;
+
+  function $(id) { return document.getElementById(id); }
+
+  function initDom() {
+    overlay = $("quiz-overlay");
+    levelTag = $("quiz-level-tag");
+    wordEl = $("quiz-word");
+    hintEl = $("quiz-hint");
+    timerBar = $("timer-bar");
+    choicesEl = $("quiz-choices");
+    resultEl = $("quiz-result");
+  }
+
+  var POS_LABEL = { n: "名詞", v: "動詞", adj: "形容詞", adv: "副詞", phr: "熟語" };
+
+  function availableLevels() {
+    return Object.keys(window.VOCAB || {}).map(Number).sort(function (a, b) { return a - b; });
+  }
+
+  // fall back to nearest stocked level if requested one is missing
+  function resolveLevel(level) {
+    var ls = availableLevels();
+    if (!ls.length) return null;
+    var best = ls[0], bd = Infinity;
+    ls.forEach(function (l) {
+      var d = Math.abs(l - level);
+      if (d < bd) { bd = d; best = l; }
+    });
+    return best;
+  }
+
+  function studyRec(word) {
+    var G = window.G;
+    if (!G) return null;
+    G.study = G.study || { missed: {}, answered: 0, correct: 0 };
+    return G.study;
+  }
+
+  // weighted pick: words answered wrong recently appear ~4x more often
+  function pickEntry(level) {
+    var pool = window.VOCAB[level];
+    var st = studyRec();
+    var missed = st ? st.missed : {};
+    var weights = [], total = 0;
+    for (var i = 0; i < pool.length; i++) {
+      var m = missed[pool[i].w];
+      var w = (m && m.wrong > 0 && (m.correctStreak || 0) < 2) ? 4 : 1;
+      total += w; weights.push(total);
+    }
+    var r = Math.random() * total;
+    var lo = 0, hi = weights.length - 1;
+    while (lo < hi) { var mid = (lo + hi) >> 1; if (weights[mid] < r) lo = mid + 1; else hi = mid; }
+    return pool[lo];
+  }
+
+  function pickChoices(level, entry) {
+    var pool = window.VOCAB[level];
+    var used = { }; used[entry.m] = true;
+    var same = pool.filter(function (e) { return e.p === entry.p && e.w !== entry.w; });
+    var any = pool.filter(function (e) { return e.w !== entry.w; });
+    var src = same.length >= 8 ? same : any;
+    var wrong = [];
+    var guard = 0;
+    while (wrong.length < 3 && guard++ < 300) {
+      var c = src[(Math.random() * src.length) | 0];
+      if (!used[c.m]) { used[c.m] = true; wrong.push(c.m); }
+    }
+    var choices = wrong.concat([entry.m]);
+    // shuffle
+    for (var i = choices.length - 1; i > 0; i--) {
+      var j = (Math.random() * (i + 1)) | 0;
+      var t = choices[i]; choices[i] = choices[j]; choices[j] = t;
+    }
+    return choices;
+  }
+
+  function record(entry, correct) {
+    var st = studyRec();
+    if (!st) return;
+    st.answered++;
+    if (correct) st.correct++;
+    var m = st.missed[entry.w];
+    if (!correct) {
+      if (!m) m = st.missed[entry.w] = { m: entry.m, wrong: 0, correctStreak: 0 };
+      m.wrong++; m.correctStreak = 0;
+    } else if (m) {
+      m.correctStreak = (m.correctStreak || 0) + 1;
+    }
+  }
+
+  var keyHandler = null;
+
+  // level: requested TOEIC level. opts: {time: seconds}
+  function ask(level, opts) {
+    opts = opts || {};
+    if (!overlay) initDom();
+    var lv = resolveLevel(level);
+    return new Promise(function (resolve) {
+      if (lv == null) { resolve({ correct: true, elapsed: 0, entry: null }); return; }
+      var entry = pickEntry(lv);
+      var choices = pickChoices(lv, entry);
+      var time = (opts.time || 5) * 1000;
+      var done = false;
+      var t0 = performance.now();
+      var raf = 0, timeoutId = 0;
+
+      levelTag.textContent = "TOEIC " + lv + " レベル" + (lv !== level ? "（" + level + "の代替出題）" : "");
+      wordEl.textContent = entry.w;
+      hintEl.textContent = "【" + (POS_LABEL[entry.p] || "?") + "】 意味は？";
+      resultEl.textContent = ""; resultEl.className = "";
+      choicesEl.innerHTML = "";
+      var btns = choices.map(function (m, i) {
+        var b = document.createElement("button");
+        b.className = "quiz-choice";
+        b.innerHTML = '<span class="num">' + (i + 1) + '</span>' + m;
+        b.addEventListener("pointerdown", function (ev) { ev.preventDefault(); answer(i); });
+        choicesEl.appendChild(b);
+        return b;
+      });
+      overlay.style.display = "flex";
+      timerBar.style.transform = "scaleX(1)";
+
+      function tick(now) {
+        var left = 1 - (now - t0) / time;
+        if (left <= 0) { timeUp(); return; }
+        timerBar.style.transform = "scaleX(" + Math.max(0, left) + ")";
+        raf = requestAnimationFrame(tick);
+      }
+      raf = requestAnimationFrame(tick);
+
+      keyHandler = function (e) {
+        var n = parseInt(e.key, 10);
+        if (n >= 1 && n <= 4) answer(n - 1);
+      };
+      window.addEventListener("keydown", keyHandler);
+
+      function finish(correct, timeout) {
+        if (done) return;
+        done = true;
+        cancelAnimationFrame(raf);
+        window.removeEventListener("keydown", keyHandler);
+        record(entry, correct);
+        var elapsed = (performance.now() - t0) / 1000;
+        // reveal
+        btns.forEach(function (b, i) {
+          if (choices[i] === entry.m) b.classList.add("correct");
+        });
+        if (correct) {
+          resultEl.textContent = elapsed <= 2 ? "かいしん！ +" + entry.w + " = " + entry.m : "せいかい！";
+          resultEl.className = "ok";
+          if (window.SFX) SFX.play(correct && elapsed <= 2 ? "crit" : "ok");
+        } else {
+          resultEl.textContent = (timeout ? "じかんぎれ… " : "ミス… ") + entry.w + " = " + entry.m;
+          resultEl.className = "ng";
+          if (window.SFX) SFX.play("ng");
+        }
+        timeoutId = setTimeout(function () {
+          overlay.style.display = "none";
+          resolve({ correct: correct, elapsed: elapsed, entry: entry, timeout: !!timeout });
+        }, correct ? 650 : 1400);
+      }
+      function answer(i) {
+        if (done) return;
+        if (choices[i] !== entry.m) btns[i].classList.add("wrong");
+        finish(choices[i] === entry.m, false);
+      }
+      function timeUp() { timerBar.style.transform = "scaleX(0)"; finish(false, true); }
+    });
+  }
+
+  window.QUIZ = { ask: ask, availableLevels: availableLevels, resolveLevel: resolveLevel };
+})();
+
+</script>
+<script>
+// TOEIC QUEST - battle module
+// BATTLE.start(enemyId, {boss}) -> Promise<{result:"win"|"lose"|"flee"|"enemyfled", exp, gold}>
+(function () {
+  "use strict";
+
+  function $(id) { return document.getElementById(id); }
+  function rnd(n) { return (Math.random() * n) | 0; }
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  function pAtk() { var G = window.G; return G.player.str + window.WEAPONS[G.player.weapon].atk; }
+  function pDef() { var G = window.G; return G.player.vit + window.ARMORS[G.player.armor].def; }
+
+  function refreshStatus() {
+    var G = window.G, p = G.player;
+    $("battle-status").innerHTML =
+      '<div class="name">ゆうしゃ　Lv' + p.lv + "</div>" +
+      "ＨＰ " + p.hp + "/" + p.maxhp + "<br>ＭＰ " + p.mp + "/" + p.maxmp;
+  }
+
+  function setEnemyHp(e) {
+    $("enemy-hp-bar").firstElementChild.style.width = Math.max(0, 100 * e.hp / e.maxhp) + "%";
+  }
+
+  // battle message (typewriter, tap to continue handled by UI.say core)
+  function bsay(text) { return window.UI.say(text, $("battle-msg")); }
+
+  async function enemyAttack(e, kind) {
+    var G = window.G, p = G.player;
+    var dmg;
+    if (kind === "fire") {
+      await bsay(e.name + "は ほのおを はいた！");
+      dmg = Math.max(2, Math.round(e.atk * 0.55 - pDef() / 8) + rnd(4));
+    } else {
+      await bsay(e.name + "の こうげき！");
+      dmg = Math.max(1, Math.round(e.atk / 2 - pDef() / 4) + rnd(4));
+    }
+    p.hp = Math.max(0, p.hp - dmg);
+    $("battle-screen").classList.add("shake");
+    $("battle-bg").classList.add("flash-red");
+    if (window.SFX) SFX.play("hit");
+    setTimeout(function () {
+      $("battle-screen").classList.remove("shake");
+      $("battle-bg").classList.remove("flash-red");
+    }, 400);
+    refreshStatus();
+    await bsay("ゆうしゃは " + dmg + " の\nダメージを うけた！");
+  }
+
+  async function enemyTurn(e) {
+    var G = window.G;
+    if (e.traits.indexOf("flee") >= 0 && Math.random() < 0.45) {
+      await bsay(e.name + "は にげだした！");
+      return "fled";
+    }
+    if (e.traits.indexOf("heal") >= 0 && e.hp < e.maxhp * 0.3 && Math.random() < 0.6) {
+      var h = Math.round(e.maxhp * 0.25);
+      e.hp = Math.min(e.maxhp, e.hp + h);
+      setEnemyHp(e);
+      await bsay(e.name + "は じこさいせいした！\nＨＰが " + h + " かいふくした。");
+      return null;
+    }
+    var kind = (e.traits.indexOf("fire") >= 0 && Math.random() < 0.35) ? "fire" : "attack";
+    await enemyAttack(e, kind);
+    if (G.player.hp <= 0) return "dead";
+    if (e.traits.indexOf("double") >= 0 && Math.random() < 0.3 && kind !== "fire") {
+      await enemyAttack(e, "attack");
+      if (G.player.hp <= 0) return "dead";
+    }
+    return null;
+  }
+
+  async function playerHit(e, dmg, crit) {
+    var sp = $("enemy-sprite");
+    sp.classList.add("hit");
+    if (window.SFX) SFX.play(crit ? "crit" : "slash");
+    setTimeout(function () { sp.classList.remove("hit"); }, 120);
+    e.hp = Math.max(0, e.hp - dmg);
+    setEnemyHp(e);
+    if (crit) await bsay("かいしんの いちげき！！\n" + e.name + "に " + dmg + " のダメージ！");
+    else await bsay(e.name + "に " + dmg + " のダメージ！");
+  }
+
+  async function levelUpCheck() {
+    var G = window.G, p = G.player, T = window.LEVEL_TABLE;
+    while (p.lv < T.length && p.exp >= T[p.lv].exp) {
+      var prev = T[p.lv - 1], next = T[p.lv];
+      p.lv++;
+      p.maxhp = next.maxhp; p.maxmp = next.maxmp;
+      p.str = next.str; p.vit = next.vit;
+      p.hp = p.maxhp; p.mp = p.maxmp; // full heal on level up (kind for mobile play)
+      if (window.SFX) SFX.play("level");
+      await bsay("ゆうしゃは レベル " + p.lv + " に あがった！\nＨＰ+" + (next.maxhp - prev.maxhp) + "　ちから+" + (next.str - prev.str));
+      for (var i = 0; i < window.SPELLS.length; i++) {
+        var s = window.SPELLS[i];
+        if (s.learnLv === p.lv && p.spells.indexOf(s.id) < 0) {
+          p.spells.push(s.id);
+          await bsay("じゅもん『" + s.name + "』を おぼえた！\n（" + s.desc + "）");
+        }
+      }
+      refreshStatus();
+    }
+  }
+
+  async function start(enemyId, opts) {
+    opts = opts || {};
+    var G = window.G;
+    var def = window.ENEMY_BY_ID[enemyId];
+    var e = { id: def.id, name: def.name, icon: def.icon, lv: def.lv, hp: def.hp, maxhp: def.hp,
+              atk: def.atk, def: def.def, exp: def.exp, gold: def.gold, traits: def.traits };
+    var isBoss = e.traits.indexOf("boss") >= 0;
+    var quizTime = e.traits.indexOf("hasty") >= 0 ? 3.5 : 5;
+
+    var scr = $("battle-screen");
+    scr.style.display = "block";
+    var sp = $("enemy-sprite");
+    sp.textContent = e.icon;
+    sp.className = isBoss ? "boss" : "";
+    $("enemy-name-tag").textContent = e.name + "（TOEIC" + e.lv + "）";
+    setEnemyHp(e);
+    refreshStatus();
+    if (window.SFX) SFX.play(isBoss ? "boss" : "encounter");
+    await bsay(e.name + "が あらわれた！" + (quizTime < 5 ? "\n（せっかち：制限時間 " + quizTime + " 秒！）" : ""));
+
+    var result = null, gotExp = 0, gotGold = 0;
+
+    while (!result) {
+      var cmd = await window.UI.menu($("battle-cmd"), [
+        { label: "たたかう" }, { label: "じゅもん" }, { label: "どうぐ" }, { label: "にげる" }
+      ], "コマンド");
+
+      if (cmd === 0) {
+        // ---- attack: answer a word at the enemy's level ----
+        var q = await window.QUIZ.ask(e.lv, { time: quizTime });
+        if (q.correct) {
+          var crit = q.elapsed <= 2;
+          var dmg = Math.max(1, pAtk() - Math.round(e.def / 2) + rnd(5));
+          if (crit) dmg *= 2;
+          if (e.id === "metal" && !crit) dmg = 1; // metal body unless critical
+          await playerHit(e, dmg, crit);
+        } else {
+          await bsay("ゆうしゃの こうげきは\nくうぶりに おわった！");
+        }
+      } else if (cmd === 1) {
+        // ---- spells ----
+        var learned = window.SPELLS.filter(function (s) { return G.player.spells.indexOf(s.id) >= 0 && s.type !== "field"; });
+        if (!learned.length) { await bsay("まだ じゅもんを おぼえていない！"); continue; }
+        var items = learned.map(function (s) {
+          return { label: s.name + "　MP" + s.mp, disabled: G.player.mp < s.mp };
+        });
+        var si = await window.UI.menu($("battle-sub"), items, "じゅもん");
+        if (si < 0) continue;
+        var spell = learned[si];
+        if (G.player.mp < spell.mp) { await bsay("ＭＰが たりない！"); continue; }
+        G.player.mp -= spell.mp;
+        refreshStatus();
+        await bsay("ゆうしゃは『" + spell.name + "』を となえた！\n（TOEIC" + spell.quizLv + " の単語に こたえよ！）");
+        var qs = await window.QUIZ.ask(spell.quizLv, { time: quizTime });
+        if (!qs.correct) {
+          await bsay("じゅもんは ふはつに おわった…！");
+        } else if (spell.type === "heal") {
+          var h = spell.power;
+          G.player.hp = Math.min(G.player.maxhp, G.player.hp + h);
+          refreshStatus();
+          if (window.SFX) SFX.play("heal");
+          await bsay("ＨＰが " + h + " かいふくした！");
+        } else {
+          var sd = Math.round(spell.power * (0.85 + Math.random() * 0.3));
+          if (qs.elapsed <= 2) sd = Math.round(sd * 1.3);
+          await playerHit(e, sd, qs.elapsed <= 2);
+        }
+      } else if (cmd === 2) {
+        // ---- items ----
+        var inv = [];
+        if (G.player.items.herb > 0) inv.push({ key: "herb", label: "やくそう ×" + G.player.items.herb });
+        if (G.player.items.elixir > 0) inv.push({ key: "elixir", label: "けんじゃの雫 ×" + G.player.items.elixir });
+        if (!inv.length) { await bsay("つかえる どうぐを もっていない！"); continue; }
+        var ii = await window.UI.menu($("battle-sub"), inv, "どうぐ");
+        if (ii < 0) continue;
+        if (inv[ii].key === "herb") {
+          G.player.items.herb--;
+          G.player.hp = Math.min(G.player.maxhp, G.player.hp + 30);
+          await bsay("やくそうを つかった！\nＨＰが 30 かいふくした。");
+        } else {
+          G.player.items.elixir--;
+          G.player.mp = Math.min(G.player.maxmp, G.player.mp + 40);
+          await bsay("けんじゃの雫を つかった！\nＭＰが 40 かいふくした。");
+        }
+        refreshStatus();
+      } else {
+        // ---- flee ----
+        if (isBoss) { await bsay("にげられない！！"); }
+        else if (Math.random() < 0.55) {
+          await bsay("ゆうしゃは にげだした！");
+          result = { result: "flee" };
+          break;
+        } else {
+          await bsay("しかし まわりこまれてしまった！");
+        }
+      }
+
+      if (e.hp <= 0) {
+        $("enemy-sprite").classList.add("dead");
+        if (window.SFX) SFX.play("win");
+        await bsay(e.name + "を たおした！");
+        gotExp = e.exp; gotGold = e.gold;
+        if (gotExp || gotGold) {
+          G.player.exp += gotExp; G.player.gold += gotGold;
+          await bsay("けいけんち " + gotExp + " かくとく！\n" + gotGold + " ゴールドを てにいれた！");
+          await levelUpCheck();
+        }
+        result = { result: "win", exp: gotExp, gold: gotGold };
+        break;
+      }
+
+      // enemy turn (unless player already resolved battle)
+      var et = await enemyTurn(e);
+      if (et === "fled") { result = { result: "enemyfled" }; break; }
+      if (et === "dead") {
+        await bsay("ゆうしゃは しんでしまった…");
+        result = { result: "lose" };
+        break;
+      }
+    }
+
+    scr.style.display = "none";
+    return result;
+  }
+
+  window.BATTLE = { start: start };
+})();
+
+</script>
+<script>
+// TOEIC QUEST - main engine (field, UI, events, save)
+(function () {
+  "use strict";
+
+  function $(id) { return document.getElementById(id); }
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function rnd(n) { return (Math.random() * n) | 0; }
+
+  // =================== SFX (WebAudio, no files) ===================
+  var actx = null;
+  function beep(freq, dur, type, vol, slide) {
+    try {
+      if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+      var o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || "square";
+      o.frequency.setValueAtTime(freq, actx.currentTime);
+      if (slide) o.frequency.linearRampToValueAtTime(slide, actx.currentTime + dur);
+      g.gain.setValueAtTime(vol || 0.06, actx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
+      o.connect(g); g.connect(actx.destination);
+      o.start(); o.stop(actx.currentTime + dur);
+    } catch (e) {}
+  }
+  window.SFX = {
+    play: function (name) {
+      switch (name) {
+        case "ok": beep(880, 0.12, "square"); beep(1320, 0.15, "square"); break;
+        case "crit": beep(660, 0.08, "square"); beep(990, 0.1, "square"); beep(1560, 0.2, "square"); break;
+        case "ng": beep(200, 0.3, "sawtooth", 0.05, 90); break;
+        case "slash": beep(500, 0.08, "sawtooth", 0.05, 200); break;
+        case "hit": beep(140, 0.22, "sawtooth", 0.07, 60); break;
+        case "heal": beep(700, 0.12, "sine", 0.06, 1100); break;
+        case "level": [523, 659, 784, 1046].forEach(function (f, i) { setTimeout(function () { beep(f, 0.16, "square"); }, i * 110); }); break;
+        case "win": [784, 988, 1175].forEach(function (f, i) { setTimeout(function () { beep(f, 0.14, "square"); }, i * 100); }); break;
+        case "encounter": beep(220, 0.15, "sawtooth", 0.06, 440); break;
+        case "boss": beep(110, 0.5, "sawtooth", 0.08, 55); break;
+        case "chest": beep(587, 0.1, "square"); setTimeout(function () { beep(880, 0.18, "square"); }, 110); break;
+        case "stairs": beep(400, 0.12, "triangle", 0.06, 250); break;
+        case "cursor": beep(1100, 0.04, "square", 0.03); break;
+      }
+    }
+  };
+
+  // =================== INPUT ===================
+  var INPUT = window.INPUT = {
+    held: { up: false, down: false, left: false, right: false },
+    stack: [],
+    push: function (c) { this.stack.push(c); },
+    pop: function () { this.stack.pop(); },
+    top: function () { return this.stack[this.stack.length - 1] || null; },
+    uiActive: function () { return this.stack.length > 0; },
+    pressA: function () { var t = this.top(); if (t && t.onA) t.onA(); else fieldA(); },
+    pressB: function () { var t = this.top(); if (t && t.onB) t.onB(); else fieldB(); },
+    pressDir: function (d) { var t = this.top(); if (t && t.onDir) t.onDir(d); }
+  };
+
+  var KEYMAP = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right", w: "up", s: "down", a: "left", d: "right" };
+  window.addEventListener("keydown", function (e) {
+    if (e.repeat) { if (KEYMAP[e.key]) e.preventDefault(); return; }
+    var d = KEYMAP[e.key];
+    if (d) { e.preventDefault(); INPUT.held[d] = true; INPUT.pressDir(d); }
+    else if (e.key === "Enter" || e.key === " " || e.key === "z") INPUT.pressA();
+    else if (e.key === "Escape" || e.key === "x") INPUT.pressB();
+  });
+  window.addEventListener("keyup", function (e) {
+    var d = KEYMAP[e.key];
+    if (d) INPUT.held[d] = false;
+  });
+
+  function bindHold(id, dir) {
+    var el = $(id);
+    function down(e) { e.preventDefault(); INPUT.held[dir] = true; INPUT.pressDir(dir); }
+    function up(e) { e.preventDefault(); INPUT.held[dir] = false; }
+    el.addEventListener("pointerdown", down);
+    el.addEventListener("pointerup", up);
+    el.addEventListener("pointercancel", up);
+    el.addEventListener("pointerleave", up);
+  }
+
+  // =================== UI: message & menu ===================
+  var UI = window.UI = {};
+
+  UI.say = function (text, el) {
+    el = el || $("msg-win");
+    return new Promise(function (resolve) {
+      el.style.display = "block";
+      el.innerHTML = '<span class="body"></span><span class="arrow">▼</span>';
+      var body = el.querySelector(".body");
+      var i = 0, typing = true;
+      var iv = setInterval(function () {
+        if (i >= text.length) { clearInterval(iv); typing = false; return; }
+        body.textContent = text.slice(0, ++i);
+      }, 24);
+      INPUT.push({
+        onA: adv, onB: adv,
+        onDir: function () {}
+      });
+      el.onpointerdown = function (e) { e.preventDefault(); adv(); };
+      function adv() {
+        if (typing) { clearInterval(iv); body.textContent = text; typing = false; return; }
+        INPUT.pop();
+        el.onpointerdown = null;
+        el.style.display = "none";
+        resolve();
+      }
+    });
+  };
+
+  UI.menu = function (el, items, title) {
+    return new Promise(function (resolve) {
+      var sel = 0;
+      while (items[sel] && items[sel].disabled) sel++;
+      function render() {
+        var h = title ? '<div class="menu-title">' + title + "</div>" : "";
+        items.forEach(function (it, i) {
+          h += '<div class="menu-item' + (i === sel ? " sel" : "") + (it.disabled ? " disabled" : "") + '" data-i="' + i + '">' + it.label + "</div>";
+        });
+        el.innerHTML = h;
+        el.querySelectorAll(".menu-item").forEach(function (n) {
+          n.onpointerdown = function (e) {
+            e.preventDefault();
+            var i = +n.getAttribute("data-i");
+            if (items[i].disabled) return;
+            close(i);
+          };
+        });
+      }
+      function close(v) {
+        INPUT.pop();
+        el.style.display = "none";
+        resolve(v);
+      }
+      INPUT.push({
+        onA: function () { if (!items[sel].disabled) { SFX.play("cursor"); close(sel); } },
+        onB: function () { close(-1); },
+        onDir: function (d) {
+          if (d === "up" || d === "left") sel = (sel + items.length - 1) % items.length;
+          else if (d === "down" || d === "right") sel = (sel + 1) % items.length;
+          SFX.play("cursor");
+          render();
+        }
+      });
+      el.style.display = "block";
+      render();
+    });
+  };
+
+  function fade(on) {
+    var f = $("fade-layer");
+    f.classList.toggle("on", on);
+    return wait(380);
+  }
+
+  // =================== GAME STATE ===================
+  var SAVE_KEY = "tq_save_v1";
+  var G = null;
+
+  function newGame() {
+    var t = window.LEVEL_TABLE[0];
+    window.G = G = {
+      player: {
+        lv: 1, exp: 0, gold: 30,
+        maxhp: t.maxhp, hp: t.maxhp, maxmp: t.maxmp, mp: t.maxmp,
+        str: t.str, vit: t.vit,
+        weapon: 0, armor: 0,
+        items: { herb: 2, wing: 0, elixir: 0, key: 0 },
+        spells: []
+      },
+      pos: { map: "castle", x: 9, y: 4, dir: "up" },
+      flags: {},
+      chests: {},
+      study: { missed: {}, answered: 0, correct: 0 }
+    };
+  }
+
+  function saveGame() {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(G)); } catch (e) {}
+  }
+  function loadGame() {
+    try {
+      var s = localStorage.getItem(SAVE_KEY);
+      if (!s) return false;
+      window.G = G = JSON.parse(s);
+      return true;
+    } catch (e) { return false; }
+  }
+  function hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }
+
+  function curMap() { return window.MAPS[G.pos.map]; }
+  function tileAt(m, x, y) {
+    if (x < 0 || y < 0 || x >= m.w || y >= m.h) return "=";
+    return m.rows[y][x];
+  }
+  function eventAt(m, x, y) {
+    for (var i = 0; i < (m.events || []).length; i++) {
+      var ev = m.events[i];
+      if (ev.x === x && ev.y === y) return ev;
+    }
+    return null;
+  }
+
+  var SOLID = { w: 1, m: 1, "=": 1 };
+  function isBlocked(m, x, y) {
+    var t = tileAt(m, x, y);
+    if (SOLID[t]) return true;
+    var ev = eventAt(m, x, y);
+    if (ev && ev.type === "npc") return true;
+    if (ev && ev.type === "boss" && !G.flags[ev.flag]) return true;
+    return false;
+  }
+
+  // =================== ZONES / ENCOUNTERS ===================
+  var CASTLE_POS = { x: 7, y: 7 };
+  function zoneAt(m, x, y) {
+    if (m.id !== "world") return m.zone || 0;
+    var dx = x - CASTLE_POS.x, dy = y - CASTLE_POS.y;
+    var d = Math.sqrt(dx * dx + dy * dy);
+    if (d < 9) return 1;
+    if (d < 18) return 2;
+    if (d < 25) return 3;
+    if (d < 31) return 4;
+    if (d < 37) return 5;
+    return 6;
+  }
+  function pickEnemy(zone) {
+    var table = window.ZONE_TABLE[zone] || window.ZONE_TABLE[1];
+    var total = 0;
+    table.forEach(function (t) { total += t[1]; });
+    var r = Math.random() * total;
+    for (var i = 0; i < table.length; i++) {
+      r -= table[i][1];
+      if (r <= 0) return table[i][0];
+    }
+    return table[0][0];
+  }
+  var ENC_RATE = { ".": 0.09, t: 0.13, s: 0.11, "-": 0.11 };
+
+  // =================== RENDERING ===================
+  var TILE = 24, VW = 16, VH = 14;
+  var canvas, ctx, dpr = 1;
+  var anim = null; // {fx,fy,tx,ty,p}
+  var tick = 0;
+
+  function setupCanvas() {
+    canvas = $("field-canvas");
+    ctx = canvas.getContext("2d");
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = VW * TILE * dpr;
+    canvas.height = VH * TILE * dpr;
+    ctx.imageSmoothingEnabled = false;
+  }
+
+  var TILE_COLORS = {
+    ".": ["#2f9e44", "#268a3a"], t: ["#2f9e44", "#14591f"], m: ["#7a5c33", "#5c421f"],
+    w: ["#1b4fbf", "#1640a0"], s: ["#d9c06b", "#c4aa53"], b: ["#8a5a2b", "#6e4218"],
+    "=": ["#8d8d99", "#6d6d7a"], ",": ["#d9cba3", "#c8b98d"], "-": ["#5a5a6e", "#4a4a5c"],
+    "^": ["#d9cba3", "#333"], v: ["#5a5a6e", "#222"], c: ["#d9cba3", "#c8b98d"],
+    C: ["#2f9e44", "#268a3a"], T: ["#2f9e44", "#268a3a"], D: ["#7a5c33", "#5c421f"],
+    U: ["#2f9e44", "#268a3a"], X: ["#d9c06b", "#c4aa53"]
+  };
+  var GLYPH = { C: "🏰", T: "🏠", D: "🕳️", U: "🗼", X: "🚪" };
+
+  function drawTile(m, x, y, px, py) {
+    var t = tileAt(m, x, y);
+    var c = TILE_COLORS[t] || TILE_COLORS["."];
+    ctx.fillStyle = c[0];
+    ctx.fillRect(px, py, TILE, TILE);
+    ctx.fillStyle = c[1];
+    if (t === "." || t === "C" || t === "T" || t === "U") {
+      ctx.fillRect(px + 4, py + 6, 2, 2); ctx.fillRect(px + 16, py + 14, 2, 2); ctx.fillRect(px + 9, py + 19, 2, 2);
+    } else if (t === "t") {
+      ctx.beginPath(); ctx.moveTo(px + 12, py + 2); ctx.lineTo(px + 21, py + 20); ctx.lineTo(px + 3, py + 20); ctx.fill();
+      ctx.fillStyle = "#3d2b14"; ctx.fillRect(px + 10, py + 18, 4, 5);
+    } else if (t === "m" || t === "D") {
+      ctx.beginPath(); ctx.moveTo(px + 12, py + 3); ctx.lineTo(px + 22, py + 21); ctx.lineTo(px + 2, py + 21); ctx.fill();
+      ctx.fillStyle = "#a88b5c"; ctx.beginPath(); ctx.moveTo(px + 12, py + 3); ctx.lineTo(px + 16, py + 11); ctx.lineTo(px + 8, py + 11); ctx.fill();
+    } else if (t === "w") {
+      var off = (tick >> 4) % 2 ? 3 : 0;
+      ctx.fillRect(px + 2 + off, py + 7, 8, 2); ctx.fillRect(px + 12 - off, py + 16, 8, 2);
+    } else if (t === "s" || t === "X") {
+      ctx.fillRect(px + 5, py + 8, 3, 2); ctx.fillRect(px + 14, py + 15, 3, 2);
+    } else if (t === "b") {
+      for (var i = 0; i < 4; i++) ctx.fillRect(px, py + 2 + i * 6, TILE, 2);
+    } else if (t === "=") {
+      ctx.fillRect(px, py + 7, TILE, 2); ctx.fillRect(px, py + 16, TILE, 2);
+      ctx.fillRect(px + 8, py, 2, 7); ctx.fillRect(px + 16, py + 9, 2, 7); ctx.fillRect(px + 8, py + 18, 2, 6);
+    } else if (t === "," || t === "-" || t === "c") {
+      ctx.fillRect(px + 11, py + 11, 2, 2);
+    } else if (t === "^" || t === "v") {
+      ctx.fillRect(px + 4, py + 16, 16, 4); ctx.fillRect(px + 7, py + 10, 10, 4); ctx.fillRect(px + 10, py + 4, 4, 4);
+    }
+    if (GLYPH[t]) {
+      ctx.font = "18px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(GLYPH[t], px + TILE / 2, py + TILE / 2 + 1);
+    }
+    // chest
+    if (t === "c") {
+      var ev = eventAt(m, x, y);
+      var opened = ev && G.chests[ev.id];
+      ctx.fillStyle = opened ? "#7a5a30" : "#a8742f";
+      ctx.fillRect(px + 4, py + 8, 16, 12);
+      ctx.fillStyle = opened ? "#4a3418" : "#ffd54a";
+      ctx.fillRect(px + 4, py + 12, 16, 3);
+      ctx.fillStyle = "#4a3418";
+      ctx.fillRect(px + 4, py + 8, 16, 2);
+    }
+  }
+
+  function drawEmoji(icon, px, py, size) {
+    ctx.font = (size || 18) + "px serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(icon, px + TILE / 2, py + TILE / 2 + 1);
+  }
+
+  function draw() {
+    if (!G) return;
+    var m = curMap();
+    var px = G.pos.x, py = G.pos.y;
+    if (anim) {
+      px = anim.fx + (anim.tx - anim.fx) * anim.p;
+      py = anim.fy + (anim.ty - anim.fy) * anim.p;
+    }
+    var camx = Math.max(0, Math.min(m.w - VW, px - VW / 2 + 0.5));
+    var camy = Math.max(0, Math.min(m.h - VH, py - VH / 2 + 0.5));
+    if (m.w <= VW) camx = (m.w - VW) / 2;
+    if (m.h <= VH) camy = (m.h - VH) / 2;
+
+    ctx.save();
+    ctx.scale(dpr, dpr);
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, VW * TILE, VH * TILE);
+
+    var x0 = Math.floor(camx), y0 = Math.floor(camy);
+    for (var y = y0; y <= y0 + VH; y++) {
+      for (var x = x0; x <= x0 + VW; x++) {
+        if (x < 0 || y < 0 || x >= m.w || y >= m.h) continue;
+        drawTile(m, x, y, Math.round((x - camx) * TILE), Math.round((y - camy) * TILE));
+      }
+    }
+    // events (npc, boss)
+    (m.events || []).forEach(function (ev) {
+      if (ev.type === "npc" || (ev.type === "boss" && !G.flags[ev.flag])) {
+        drawEmoji(ev.icon, Math.round((ev.x - camx) * TILE), Math.round((ev.y - camy) * TILE), ev.type === "boss" ? 20 : 18);
+      }
+    });
+    // player
+    var hx = Math.round((px - camx) * TILE), hy = Math.round((py - camy) * TILE);
+    drawEmoji("🧝", hx, hy, 19);
+    // facing indicator
+    ctx.fillStyle = "rgba(255,255,255,.85)";
+    var d = G.pos.dir;
+    if (d === "up") ctx.fillRect(hx + 10, hy, 4, 3);
+    else if (d === "down") ctx.fillRect(hx + 10, hy + 21, 4, 3);
+    else if (d === "left") ctx.fillRect(hx, hy + 10, 3, 4);
+    else ctx.fillRect(hx + 21, hy + 10, 3, 4);
+
+    // darkness in dark dungeons
+    if (m.dark) {
+      var gx = hx + TILE / 2, gy = hy + TILE / 2;
+      var grad = ctx.createRadialGradient(gx, gy, TILE * 2.2, gx, gy, TILE * 4.5);
+      grad.addColorStop(0, "rgba(0,0,0,0)");
+      grad.addColorStop(1, "rgba(0,0,0,0.96)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, VW * TILE, VH * TILE);
+    }
+    ctx.restore();
+
+    // status
+    var p = G.player;
+    $("status-win").innerHTML =
+      '<div class="name">' + m.name + "</div>" +
+      "Lv" + p.lv + "　<span class='gold-text'>" + p.gold + "G</span><br>" +
+      "ＨＰ " + p.hp + "/" + p.maxhp + "<br>ＭＰ " + p.mp + "/" + p.maxmp;
+  }
+
+  // =================== FIELD LOGIC ===================
+  var moving = false, bumpLatch = false, busyEvent = false;
+
+  function dirDelta(d) {
+    return d === "up" ? [0, -1] : d === "down" ? [0, 1] : d === "left" ? [-1, 0] : [1, 0];
+  }
+
+  async function tryMove(d) {
+    var m = curMap();
+    G.pos.dir = d;
+    var dd = dirDelta(d);
+    var nx = G.pos.x + dd[0], ny = G.pos.y + dd[1];
+    if (isBlocked(m, nx, ny)) {
+      var ev = eventAt(m, nx, ny);
+      if (ev && !bumpLatch && (ev.type === "npc" || (ev.type === "boss" && !G.flags[ev.flag]))) {
+        bumpLatch = true;
+        interactWith(ev);
+      }
+      return;
+    }
+    moving = true;
+    anim = { fx: G.pos.x, fy: G.pos.y, tx: nx, ty: ny, p: 0 };
+    await new Promise(function (res) {
+      function step() {
+        anim.p += 0.18;
+        if (anim.p >= 1) { res(); return; }
+        requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    });
+    G.pos.x = nx; G.pos.y = ny;
+    anim = null;
+    moving = false;
+    await stepEvents();
+  }
+
+  async function transferTo(map, x, y) {
+    busyEvent = true;
+    SFX.play("stairs");
+    await fade(true);
+    G.pos.map = map; G.pos.x = x; G.pos.y = y;
+    saveGame();
+    await fade(false);
+    busyEvent = false;
+  }
+
+  async function stepEvents() {
+    var m = curMap();
+    var t = tileAt(m, G.pos.x, G.pos.y);
+    var ev = eventAt(m, G.pos.x, G.pos.y);
+
+    if (ev) {
+      if (ev.type === "enter") { await transferTo(ev.map, ev.tx, ev.ty); return; }
+      if (ev.type === "stairs") { await transferTo(ev.map, ev.tx, ev.ty); return; }
+      if (ev.type === "gate") {
+        busyEvent = true;
+        if (G.player.items.key) {
+          await UI.say("『まりょくのカギ』をつかった！\n扉が ゆっくりと ひらいていく…");
+          busyEvent = false;
+          await transferTo(ev.map, ev.tx, ev.ty);
+        } else {
+          await UI.say(ev.lockedMsg);
+          busyEvent = false;
+        }
+        return;
+      }
+      if (ev.type === "chest" && !G.chests[ev.id]) {
+        busyEvent = true;
+        G.chests[ev.id] = true;
+        SFX.play("chest");
+        await openChest(ev.loot);
+        saveGame();
+        busyEvent = false;
+        return;
+      }
+    }
+
+    if ((t === "^" || t === "v") && m.exit && !(ev && ev.type === "stairs")) {
+      await transferTo(m.exit.map, m.exit.x, m.exit.y);
+      return;
+    }
+
+    // random encounter
+    var rate = ENC_RATE[t];
+    if (rate && (m.kind === "world" || m.kind === "dungeon") && Math.random() < rate) {
+      var zone = zoneAt(m, G.pos.x, G.pos.y);
+      await runBattle(pickEnemy(zone), false);
+    }
+  }
+
+  async function openChest(loot) {
+    if (loot.gold) {
+      G.player.gold += loot.gold;
+      await UI.say("たからばこを あけた！\n" + loot.gold + " ゴールドを てにいれた！");
+    } else if (loot.item) {
+      var n = loot.n || 1;
+      G.player.items[loot.item] = (G.player.items[loot.item] || 0) + n;
+      await UI.say("たからばこを あけた！\n『" + window.ITEM_DEFS[loot.item].name + "』を " + n + "こ てにいれた！");
+    } else if (loot.weapon) {
+      var wi = window.WEAPONS.findIndex(function (w) { return w.id === loot.weapon; });
+      await UI.say("たからばこを あけた！\n『" + window.WEAPONS[wi].name + "』を てにいれた！");
+      if (wi > G.player.weapon) { G.player.weapon = wi; await UI.say("さっそく そうびした！"); }
+    } else if (loot.armor) {
+      var ai = window.ARMORS.findIndex(function (a) { return a.id === loot.armor; });
+      await UI.say("たからばこを あけた！\n『" + window.ARMORS[ai].name + "』を てにいれた！");
+      if (ai > G.player.armor) { G.player.armor = ai; await UI.say("さっそく そうびした！"); }
+    }
+  }
+
+  async function runBattle(enemyId, isEventBoss, bossEv) {
+    busyEvent = true;
+    var r = await window.BATTLE.start(enemyId);
+    if (r.result === "lose") {
+      await fade(true);
+      G.player.gold = Math.floor(G.player.gold / 2);
+      G.player.hp = G.player.maxhp;
+      G.player.mp = G.player.maxmp;
+      G.pos = { map: "castle", x: 9, y: 4, dir: "up" };
+      await fade(false);
+      await UI.say("おお ゆうしゃよ、\nしんでしまうとは なさけない…。\n（しょじきん が はんぶんに なった）");
+      saveGame();
+    } else if (r.result === "win" && isEventBoss && bossEv) {
+      G.flags[bossEv.flag] = true;
+      if (bossEv.drops && bossEv.drops.item) {
+        G.player.items[bossEv.drops.item] = (G.player.items[bossEv.drops.item] || 0) + 1;
+      }
+      for (var i = 0; i < (bossEv.after || []).length; i++) await UI.say(bossEv.after[i]);
+      if (bossEv.enemy === "maou") await ending();
+      saveGame();
+    } else {
+      saveGame();
+    }
+    busyEvent = false;
+  }
+
+  async function ending() {
+    await fade(true); await fade(false);
+    await UI.say("まおう ヴォキャブロスは\nことばにならない さけびをあげ\nくずれさった…！");
+    await UI.say("うばわれていた《言葉の力》が\nレキシア大陸に もどっていく…。");
+    var st = G.study;
+    var rate = st.answered ? Math.round(100 * st.correct / st.answered) : 0;
+    await UI.say("― ぼうけんのきろく ―\nこたえた単語： " + st.answered + " 問\nせいかいりつ： " + rate + "％");
+    await UI.say("だが、まなびの旅に\nおわりは ない。\n\n～ TOEIC QUEST ～\nTHANK YOU FOR PLAYING!");
+    G.pos = { map: "castle", x: 9, y: 4, dir: "up" };
+  }
+
+  // =================== INTERACTIONS ===================
+  async function interactWith(ev) {
+    busyEvent = true;
+    if (ev.type === "boss" && !G.flags[ev.flag]) {
+      for (var i = 0; i < (ev.pre || []).length; i++) await UI.say(ev.pre[i]);
+      busyEvent = false;
+      await runBattle(ev.enemy, true, ev);
+      return;
+    }
+    if (ev.type === "npc") {
+      if (ev.king) await kingTalk();
+      else if (ev.inn) await innTalk(ev);
+      else if (ev.shop) await shopTalk(ev);
+      else {
+        for (var j = 0; j < ev.text.length; j++) await UI.say(ev.text[j]);
+      }
+    }
+    busyEvent = false;
+  }
+
+  async function kingTalk() {
+    if (G.flags.maou_down) {
+      await UI.say("おお、ゆうしゃよ！\nよくぞ まおうを たおしてくれた！\nそなたこそ まことの英雄じゃ！");
+      await UI.say("じゃが 学びの旅は つづく。\nこれからも 単語をきたえるのじゃぞ！");
+    } else if (!G.flags.metKing) {
+      G.flags.metKing = true;
+      await UI.say("おお ゆうしゃよ、よくきた。\nまおう ヴォキャブロスが\n大陸の《言葉の力》を うばったのじゃ。");
+      await UI.say("やつを たおせるのは\n『英単語のちから』で たたかえる\nそなただけ じゃ。");
+      await UI.say("たたかいかたは かんたんじゃ。\nてきに こうげきするとき\n英単語の意味を ５秒いないに えらぶのじゃ。");
+      await UI.say("まちがえたり まにあわなければ\nこうげきは くうぶりとなり\nてきの はんげきを うける。きをつけよ。");
+      await UI.say("まずは 城のそばの\n『スタディの村』で そうびを ととのえよ。\nそなたの ぶうんを いのる！");
+    } else {
+      await UI.say("ゆうしゃよ、たびの じゅんびは\nよいか。むりは するでないぞ。");
+    }
+    await UI.say("ぼうけんのしょに きろくした！");
+    saveGame();
+  }
+
+  async function innTalk(ev) {
+    var price = ev.inn.price;
+    await UI.say("ここは やどや。\nひとばん " + price + "ゴールドですが\nおとまりに なりますか？");
+    var c = await UI.menu($("cmd-win"), [{ label: "はい" }, { label: "いいえ" }], "やどや");
+    if (c !== 0) { await UI.say("また どうぞ。"); return; }
+    if (G.player.gold < price) { await UI.say("おかねが たりないようですね…。"); return; }
+    G.player.gold -= price;
+    await fade(true);
+    G.player.hp = G.player.maxhp;
+    G.player.mp = G.player.maxmp;
+    SFX.play("heal");
+    await wait(400);
+    await fade(false);
+    await UI.say("おはようございます。\nゆうべは おたのしみでしたね。\n（ＨＰ・ＭＰが かいふくした！）");
+    saveGame();
+    // NOTE: リリース版ではここがインタースティシャル広告の表示ポイント
+  }
+
+  async function shopTalk(ev) {
+    if (ev.text && ev.text.length) await UI.say(ev.text[0]);
+    while (true) {
+      var goods = [];
+      ev.shop.items.forEach(function (id) {
+        if (ev.shop.kind === "weapon") {
+          var wi = window.WEAPONS.findIndex(function (w) { return w.id === id; });
+          if (wi >= 0) { goods.push({ kind: "weapon", idx: wi, label: window.WEAPONS[wi].name + "　" + window.WEAPONS[wi].price + "G" }); return; }
+          var ai = window.ARMORS.findIndex(function (a) { return a.id === id; });
+          if (ai >= 0) { goods.push({ kind: "armor", idx: ai, label: window.ARMORS[ai].name + "　" + window.ARMORS[ai].price + "G" }); }
+        } else {
+          var d = window.ITEM_DEFS[id];
+          goods.push({ kind: "item", id: id, label: d.name + "　" + d.price + "G" });
+        }
+      });
+      goods.push({ label: "やめる" });
+      var gi = await UI.menu($("cmd-win"), goods, "（しょじきん " + G.player.gold + "G）");
+      if (gi < 0 || gi === goods.length - 1) { await UI.say("まいどありがとう ございました！"); return; }
+      var g = goods[gi];
+      var price = g.kind === "weapon" ? window.WEAPONS[g.idx].price : g.kind === "armor" ? window.ARMORS[g.idx].price : window.ITEM_DEFS[g.id].price;
+      if (G.player.gold < price) { await UI.say("おかねが たりないよ。"); continue; }
+      if (g.kind === "weapon") {
+        if (g.idx <= G.player.weapon) { await UI.say("いまの ぶきのほうが つよいよ。"); continue; }
+        G.player.gold -= price; G.player.weapon = g.idx;
+        await UI.say(window.WEAPONS[g.idx].name + "を こうにゅうし\nさっそく そうびした！");
+      } else if (g.kind === "armor") {
+        if (g.idx <= G.player.armor) { await UI.say("いまの ぼうぐのほうが つよいよ。"); continue; }
+        G.player.gold -= price; G.player.armor = g.idx;
+        await UI.say(window.ARMORS[g.idx].name + "を こうにゅうし\nさっそく そうびした！");
+      } else {
+        G.player.gold -= price;
+        G.player.items[g.id] = (G.player.items[g.id] || 0) + 1;
+        await UI.say(window.ITEM_DEFS[g.id].name + "を こうにゅうした！");
+      }
+      saveGame();
+    }
+  }
+
+  // A button on field: talk to facing tile
+  function fieldA() {
+    if (busyEvent || moving || !G || screenMode !== "field") return;
+    var m = curMap();
+    var dd = dirDelta(G.pos.dir);
+    var ev = eventAt(m, G.pos.x + dd[0], G.pos.y + dd[1]);
+    if (ev && (ev.type === "npc" || (ev.type === "boss" && !G.flags[ev.flag]))) interactWith(ev);
+  }
+
+  // B button on field: menu
+  async function fieldB() {
+    if (busyEvent || moving || !G || screenMode !== "field") return;
+    busyEvent = true;
+    var c = await UI.menu($("cmd-win"), [
+      { label: "つよさ" }, { label: "どうぐ" }, { label: "じゅもん" },
+      { label: "たんごちょう" }, { label: "セーブ" }, { label: "とじる" }
+    ], "メニュー");
+    if (c === 0) {
+      var p = G.player, T = window.LEVEL_TABLE;
+      var next = p.lv < T.length ? (T[p.lv].exp - p.exp) : 0;
+      await UI.say(
+        "レベル： " + p.lv + "　　けいけんち： " + p.exp +
+        "\nつぎのレベルまで： " + next +
+        "\nこうげき： " + (p.str + window.WEAPONS[p.weapon].atk) + "（" + window.WEAPONS[p.weapon].name + "）" +
+        "\nしゅび： " + (p.vit + window.ARMORS[p.armor].def) + "（" + window.ARMORS[p.armor].name + "）" +
+        "\nしょじきん： " + p.gold + "G"
+      );
+    } else if (c === 1) {
+      await fieldItems();
+    } else if (c === 2) {
+      await fieldSpells();
+    } else if (c === 3) {
+      await wordBook();
+    } else if (c === 4) {
+      saveGame();
+      await UI.say("ぼうけんのしょに きろくした！");
+    }
+    busyEvent = false;
+  }
+
+  async function fieldItems() {
+    var inv = [];
+    if (G.player.items.herb > 0) inv.push({ key: "herb", label: "やくそう ×" + G.player.items.herb });
+    if (G.player.items.elixir > 0) inv.push({ key: "elixir", label: "けんじゃの雫 ×" + G.player.items.elixir });
+    if (G.player.items.wing > 0) inv.push({ key: "wing", label: "リターンの羽 ×" + G.player.items.wing });
+    if (G.player.items.key > 0) inv.push({ key: "key", label: "まりょくのカギ" });
+    if (!inv.length) { await UI.say("なにも もっていない。"); return; }
+    var i = await UI.menu($("cmd-win"), inv, "どうぐ");
+    if (i < 0) return;
+    var k = inv[i].key;
+    if (k === "herb") {
+      G.player.items.herb--;
+      G.player.hp = Math.min(G.player.maxhp, G.player.hp + 30);
+      SFX.play("heal");
+      await UI.say("やくそうを つかった！\nＨＰが 30 かいふくした。");
+    } else if (k === "elixir") {
+      G.player.items.elixir--;
+      G.player.mp = Math.min(G.player.maxmp, G.player.mp + 40);
+      SFX.play("heal");
+      await UI.say("けんじゃの雫を つかった！\nＭＰが 40 かいふくした。");
+    } else if (k === "wing") {
+      G.player.items.wing--;
+      await UI.say("リターンの羽を つかった！");
+      await transferTo("castle", 9, 4);
+    } else {
+      await UI.say("魔王城の とびらを ひらく カギだ。");
+    }
+  }
+
+  async function fieldSpells() {
+    var learned = window.SPELLS.filter(function (s) { return G.player.spells.indexOf(s.id) >= 0 && s.type !== "attack"; });
+    if (!learned.length) { await UI.say("いま つかえる じゅもんは ない。"); return; }
+    var items = learned.map(function (s) { return { label: s.name + "　MP" + s.mp, disabled: G.player.mp < s.mp }; });
+    var i = await UI.menu($("cmd-win"), items, "じゅもん");
+    if (i < 0) return;
+    var s = learned[i];
+    if (G.player.mp < s.mp) return;
+    G.player.mp -= s.mp;
+    if (s.type === "field") {
+      await UI.say("『リターン』！");
+      await transferTo("castle", 9, 4);
+      return;
+    }
+    await UI.say("『" + s.name + "』！\n（TOEIC" + s.quizLv + " の単語に こたえよ！）");
+    var q = await window.QUIZ.ask(s.quizLv, { time: 5 });
+    if (q.correct) {
+      G.player.hp = Math.min(G.player.maxhp, G.player.hp + s.power);
+      SFX.play("heal");
+      await UI.say("ＨＰが " + s.power + " かいふくした！");
+    } else {
+      await UI.say("じゅもんは ふはつに おわった…！");
+    }
+  }
+
+  async function wordBook() {
+    var st = G.study;
+    var rate = st.answered ? Math.round(100 * st.correct / st.answered) : 0;
+    var words = Object.keys(st.missed)
+      .map(function (w) { return { w: w, r: st.missed[w] }; })
+      .filter(function (e) { return e.r.wrong > 0; })
+      .sort(function (a, b) { return b.r.wrong - a.r.wrong; });
+    await UI.say("― たんごちょう ―\nこたえた単語： " + st.answered + " 問\nせいかいりつ： " + rate + "％\nにがて単語： " + words.length + " 語");
+    for (var i = 0; i < Math.min(words.length, 20); i += 5) {
+      var page = words.slice(i, i + 5).map(function (e) {
+        return e.w + " ＝ " + e.r.m + "（×" + e.r.wrong + "）";
+      }).join("\n");
+      await UI.say(page);
+    }
+    if (words.length) await UI.say("にがて単語は 戦闘で\nでやすくなっているぞ。\nくりかえして おぼえよう！");
+  }
+
+  // =================== MAIN LOOP ===================
+  var screenMode = "title";
+  var lastMove = 0;
+
+  function loop(ts) {
+    tick++;
+    if (screenMode === "field" && G && !busyEvent && !moving && !INPUT.uiActive()) {
+      var d = INPUT.held.up ? "up" : INPUT.held.down ? "down" : INPUT.held.left ? "left" : INPUT.held.right ? "right" : null;
+      if (d) {
+        if (ts - lastMove > 30) { lastMove = ts; tryMove(d); }
+      } else {
+        bumpLatch = false;
+      }
+    }
+    if (screenMode === "field") draw();
+    requestAnimationFrame(loop);
+  }
+
+  // =================== TITLE / BOOT ===================
+  async function startGame(isNew) {
+    $("title-screen").style.display = "none";
+    screenMode = "field";
+    if (isNew) {
+      newGame();
+      await fade(true); await fade(false);
+      await UI.say("レキシア大陸 ―\nかつて だれもが 英語をはなせた\nゆたかな くにが あった。");
+      await UI.say("しかし まおう ヴォキャブロスが\n《言葉の力》を うばい\n大陸は やみに つつまれた…。");
+      await UI.say("いま ひとりの ゆうしゃが\nラーニング王のまえに めしだされた。\n（王さまに はなしかけよう。Ａボタンだ！）");
+    } else {
+      loadGame();
+      await fade(true); await fade(false);
+      await UI.say("ぼうけんのしょを よみこんだ！\nおかえりなさい、ゆうしゃよ。");
+    }
+  }
+
+  function refreshAd() {
+    var premium = false;
+    try { premium = localStorage.getItem("tq_premium") === "1"; } catch (e) {}
+    $("ad-banner").classList.toggle("hidden", premium);
+  }
+
+  async function settings() {
+    var premium = false;
+    try { premium = localStorage.getItem("tq_premium") === "1"; } catch (e) {}
+    var c = await UI.menu($("cmd-win"), [
+      { label: "広告除去： " + (premium ? "ＯＮ（購入済み扱い）" : "ＯＦＦ") },
+      { label: "ぼうけんのしょを けす" },
+      { label: "とじる" }
+    ], "せってい");
+    if (c === 0) {
+      try { localStorage.setItem("tq_premium", premium ? "0" : "1"); } catch (e) {}
+      refreshAd();
+      await UI.say(premium ? "広告が ひょうじされます。" : "広告を けしました！\n（リリース版では ここが かきん となります）");
+    } else if (c === 1) {
+      var c2 = await UI.menu($("cmd-win"), [{ label: "やめておく" }, { label: "ほんとうに けす" }], "ほんとうに？");
+      if (c2 === 1) {
+        try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+        await UI.say("ぼうけんのしょを けした。");
+        location.reload();
+      }
+    }
+  }
+
+  function boot() {
+    setupCanvas();
+    refreshAd();
+    bindHold("dpad-up", "up"); bindHold("dpad-down", "down");
+    bindHold("dpad-left", "left"); bindHold("dpad-right", "right");
+    $("btn-a").addEventListener("pointerdown", function (e) { e.preventDefault(); INPUT.pressA(); });
+    $("btn-b").addEventListener("pointerdown", function (e) { e.preventDefault(); INPUT.pressB(); });
+
+    var canCont = hasSave();
+    $("btn-continue").style.display = canCont ? "block" : "none";
+    $("btn-continue").addEventListener("click", function () { startGame(false); });
+    // double-tap confirm when a save exists (no confirm() dialog: blocked in sandboxed webviews)
+    var newArmed = false;
+    $("btn-new").addEventListener("click", function () {
+      if (canCont && !newArmed) {
+        newArmed = true;
+        $("btn-new").textContent = "ほんとうに はじめから？";
+        setTimeout(function () {
+          newArmed = false;
+          $("btn-new").textContent = "はじめから";
+        }, 3000);
+        return;
+      }
+      startGame(true);
+    });
+    $("btn-settings").addEventListener("click", function () { settings(); });
+
+    requestAnimationFrame(loop);
+  }
+
+  window.addEventListener("DOMContentLoaded", boot);
+})();
+
+</script>
+</body>
+</html>
