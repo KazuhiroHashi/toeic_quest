@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>TOEIC QUEST - 英単語で魔王を倒せ</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+  <div id="game-wrap">
+    <div id="screen">
+      <canvas id="field-canvas"></canvas>
+      <div id="status-win" class="dq-window"></div>
+
+      <!-- battle -->
+      <div id="battle-screen">
+        <div id="battle-bg"></div>
+        <div id="battle-frame">
+          <div id="enemy-name-tag"></div>
+          <div id="enemy-sprite">👾</div>
+          <div id="enemy-hp-bar"><div></div></div>
+        </div>
+        <div id="battle-status" class="dq-window"></div>
+        <div id="battle-msg" class="dq-window"></div>
+        <div id="battle-cmd" class="dq-window menu-win"></div>
+        <div id="battle-sub" class="dq-window menu-win"></div>
+      </div>
+
+      <!-- field message / menus -->
+      <div id="msg-win" class="dq-window"></div>
+      <div id="cmd-win" class="dq-window menu-win"></div>
+      <div id="sub-win" class="dq-window menu-win"></div>
+
+      <!-- quiz overlay -->
+      <div id="quiz-overlay">
+        <div id="quiz-box" class="dq-window">
+          <div id="quiz-level-tag"></div>
+          <div id="quiz-word"></div>
+          <div id="quiz-hint"></div>
+          <div id="timer-bar-wrap"><div id="timer-bar"></div></div>
+          <div id="quiz-choices"></div>
+          <div id="quiz-result"></div>
+        </div>
+      </div>
+
+      <div id="fade-layer"></div>
+
+      <!-- title -->
+      <div id="title-screen">
+        <div id="title-logo">TOEIC<br>QUEST</div>
+        <div id="title-sub">～ 英単語で魔王を倒せ ～</div>
+        <button id="btn-continue" class="title-btn">つづきから</button>
+        <button id="btn-new" class="title-btn">はじめから</button>
+        <button id="btn-settings" class="title-btn">せってい</button>
+        <div id="title-copy">攻撃するには英単語に5秒以内に答えろ！<br>TOEIC400〜900・全3000語収録</div>
+      </div>
+    </div>
+
+    <!-- touch controls -->
+    <div id="controls">
+      <div id="dpad">
+        <div id="dpad-up" class="dpad-btn">▲</div>
+        <div id="dpad-down" class="dpad-btn">▼</div>
+        <div id="dpad-left" class="dpad-btn">◀</div>
+        <div id="dpad-right" class="dpad-btn">▶</div>
+      </div>
+      <div id="ab-btns">
+        <div>
+          <div id="btn-b" class="act-btn">Ｂ</div>
+          <div class="btn-label">メニュー/もどる</div>
+        </div>
+        <div>
+          <div id="btn-a" class="act-btn">Ａ</div>
+          <div class="btn-label">はなす/けってい</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ad placeholder (hidden when premium) -->
+    <div id="ad-banner">AD ─ 広告スペース（プレミアムで非表示）</div>
+  </div>
+</div>
+
+<script src="data/vocab_400.js"></script>
+<script src="data/vocab_500.js"></script>
+<script src="data/vocab_600.js"></script>
+<script src="data/vocab_700.js"></script>
+<script src="data/vocab_800.js"></script>
+<script src="data/vocab_900.js"></script>
+<script src="data/enemies.js"></script>
+<script src="data/maps.js"></script>
+<script src="js/quiz.js"></script>
+<script src="js/battle.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
