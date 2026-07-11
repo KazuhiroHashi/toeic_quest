@@ -184,7 +184,7 @@
         { type: "enter", x: 33, y: 22, map: "cave", tx: 1, ty: 13 },
         { type: "enter", x: 20, y: 31, map: "tower1", tx: 9, ty: 10 },
         { type: "gate", x: 33, y: 30, needs: "key", map: "maou", tx: 9, ty: 10,
-          lockedMsg: "扉は固く閉ざされている。\n『まりょくのカギ』が必要だ。" }
+          lockedMsg: "扉は固く閉ざされている。\n『ことばのカギ』が必要だ。" }
       ]
     },
 
@@ -225,11 +225,11 @@
       exit: { map: "world", x: 24, y: 10 },
       events: [
         { type: "npc", x: 3, y: 4, icon: "⚔️", shop: { kind: "weapon", items: ["w2", "w3", "a2"] },
-          text: ["東の川を越えるなら\nはがねの装備が欲しいところだね。"] },
+          text: ["東の川を越えるなら\nもっと強い剣が 欲しいところだね。"] },
         { type: "npc", x: 10, y: 4, icon: "🧴", shop: { kind: "item", items: ["herb", "wing", "elixir"] },
-          text: ["けんじゃの雫は MPを回復するよ。"] },
+          text: ["しゅうちゅうコーヒーは\nMPを回復するよ。"] },
         { type: "npc", x: 17, y: 4, icon: "🛏️", inn: { price: 25 }, text: [] },
-        { type: "npc", x: 6, y: 6, icon: "🧔", text: ["南東の洞窟には リーディング将軍\nレクトスが 住みついている。\n『ほのおのつるぎ』を守っているらしい。"] },
+        { type: "npc", x: 6, y: 6, icon: "🧔", text: ["南東の洞窟には リーディング将軍\nレクトスが 住みついている。\n『ハイライトセイバー』を\n守っているらしい。"] },
         { type: "npc", x: 14, y: 7, icon: "👩", text: ["レベルが上がると 魔法を覚えるよ。\n回復魔法『ヒール５００』は\n旅の必需品ね。"] }
       ]
     },
@@ -244,7 +244,7 @@
         { type: "npc", x: 10, y: 4, icon: "🧴", shop: { kind: "item", items: ["herb", "wing", "elixir"] },
           text: ["準備は 入念にね。"] },
         { type: "npc", x: 17, y: 4, icon: "🛏️", inn: { price: 60 }, text: [] },
-        { type: "npc", x: 6, y: 6, icon: "🧙", text: ["南の塔の頂上に リスニング将軍\nヒアロスがいる。\n奴が『まりょくのカギ』を持っている。"] },
+        { type: "npc", x: 6, y: 6, icon: "🧙", text: ["南の塔の頂上に リスニング将軍\nヒアロスがいる。\n奴が『ことばのカギ』を持っている。"] },
         { type: "npc", x: 14, y: 7, icon: "👴", text: ["魔王ヴォキャブロスには\nTOEIC900点レベルの単語で\n挑むことになるじゃろう…。"] }
       ]
     },
@@ -286,7 +286,7 @@
         { type: "boss", x: 9, y: 2, icon: "🐲", enemy: "gen_l", flag: "gen_l_down",
           pre: ["リスニング将軍ヒアロス\n『ここまで来るとは…。\n　だが 我が早口の咆哮を\n　聞き取れるかな！？』"],
           drops: { item: "key" },
-          after: ["ヒアロスを倒した！\n『まりょくのカギ』を手に入れた！"] }
+          after: ["ヒアロスを倒した！\n『ことばのカギ』を手に入れた！"] }
       ]
     },
 

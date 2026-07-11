@@ -430,7 +430,7 @@
       if (ev.type === "gate") {
         busyEvent = true;
         if (G.player.items.key) {
-          await UI.say("『まりょくのカギ』をつかった！\n扉が ゆっくりと ひらいていく…");
+          await UI.say("『ことばのカギ』をつかった！\n扉が ゆっくりと ひらいていく…");
           busyEvent = false;
           await transferTo(ev.map, ev.tx, ev.ty);
         } else {
@@ -492,7 +492,7 @@
       G.player.mp = G.player.maxmp;
       G.pos = { map: "castle", x: 9, y: 4, dir: "up" };
       await fade(false);
-      await UI.say("おお ゆうしゃよ、\nしんでしまうとは なさけない…。\n（しょじきん が はんぶんに なった）");
+      await UI.say("気を おとすでない、ゆうしゃよ。\nしっぱいは 学びの もとじゃ。\n（しょじきんが はんぶんに なった）");
       saveGame();
     } else if (r.result === "win" && isEventBoss && bossEv) {
       G.flags[bossEv.flag] = true;
@@ -548,12 +548,12 @@
       await UI.say("おお ゆうしゃよ、よくきた。\nまおう ヴォキャブロスが\n大陸の《言葉の力》を うばったのじゃ。");
       await UI.say("やつを たおせるのは\n『英単語のちから』で たたかえる\nそなただけ じゃ。");
       await UI.say("たたかいかたは かんたんじゃ。\nてきに こうげきするとき\n英単語の意味を ５秒いないに えらぶのじゃ。");
-      await UI.say("まちがえたり まにあわなければ\nこうげきは くうぶりとなり\nてきの はんげきを うける。きをつけよ。");
+      await UI.say("まちがえたり まにあわなければ\nこうげきは からぶりとなり\nてきの はんげきを うける。きをつけよ。");
       await UI.say("まずは 城のそばの\n『スタディの村』で そうびを ととのえよ。\nそなたの ぶうんを いのる！");
     } else {
       await UI.say("ゆうしゃよ、たびの じゅんびは\nよいか。むりは するでないぞ。");
     }
-    await UI.say("ぼうけんのしょに きろくした！");
+    await UI.say("がくしゅうきろくを セーブした！");
     saveGame();
   }
 
@@ -570,7 +570,7 @@
     SFX.play("heal");
     await wait(400);
     await fade(false);
-    await UI.say("おはようございます。\nゆうべは おたのしみでしたね。\n（ＨＰ・ＭＰが かいふくした！）");
+    await UI.say("おはようございます！\nあたまも すっきり！\n（ＨＰ・ＭＰが かいふくした！）");
     saveGame();
     // NOTE: リリース版ではここがインタースティシャル広告の表示ポイント
   }
@@ -648,17 +648,17 @@
       await wordBook();
     } else if (c === 4) {
       saveGame();
-      await UI.say("ぼうけんのしょに きろくした！");
+      await UI.say("がくしゅうきろくを セーブした！");
     }
     busyEvent = false;
   }
 
   async function fieldItems() {
     var inv = [];
-    if (G.player.items.herb > 0) inv.push({ key: "herb", label: "やくそう ×" + G.player.items.herb });
-    if (G.player.items.elixir > 0) inv.push({ key: "elixir", label: "けんじゃの雫 ×" + G.player.items.elixir });
-    if (G.player.items.wing > 0) inv.push({ key: "wing", label: "リターンの羽 ×" + G.player.items.wing });
-    if (G.player.items.key > 0) inv.push({ key: "key", label: "まりょくのカギ" });
+    if (G.player.items.herb > 0) inv.push({ key: "herb", label: "ハーブティー ×" + G.player.items.herb });
+    if (G.player.items.elixir > 0) inv.push({ key: "elixir", label: "しゅうちゅうコーヒー ×" + G.player.items.elixir });
+    if (G.player.items.wing > 0) inv.push({ key: "wing", label: "きかんチケット ×" + G.player.items.wing });
+    if (G.player.items.key > 0) inv.push({ key: "key", label: "ことばのカギ" });
     if (!inv.length) { await UI.say("なにも もっていない。"); return; }
     var i = await UI.menu($("cmd-win"), inv, "どうぐ");
     if (i < 0) return;
@@ -667,15 +667,15 @@
       G.player.items.herb--;
       G.player.hp = Math.min(G.player.maxhp, G.player.hp + 30);
       SFX.play("heal");
-      await UI.say("やくそうを つかった！\nＨＰが 30 かいふくした。");
+      await UI.say("ハーブティーを のんだ！\nＨＰが 30 かいふくした。");
     } else if (k === "elixir") {
       G.player.items.elixir--;
       G.player.mp = Math.min(G.player.maxmp, G.player.mp + 40);
       SFX.play("heal");
-      await UI.say("けんじゃの雫を つかった！\nＭＰが 40 かいふくした。");
+      await UI.say("しゅうちゅうコーヒーを のんだ！\nＭＰが 40 かいふくした。");
     } else if (k === "wing") {
       G.player.items.wing--;
-      await UI.say("リターンの羽を つかった！");
+      await UI.say("きかんチケットを つかった！");
       await transferTo("castle", 9, 4);
     } else {
       await UI.say("魔王城の とびらを ひらく カギだ。");
@@ -755,7 +755,7 @@
     } else {
       loadGame();
       await fade(true); await fade(false);
-      await UI.say("ぼうけんのしょを よみこんだ！\nおかえりなさい、ゆうしゃよ。");
+      await UI.say("がくしゅうきろくを よみこんだ！\nおかえりなさい、ゆうしゃよ。");
     }
   }
 
@@ -770,7 +770,7 @@
     try { premium = localStorage.getItem("tq_premium") === "1"; } catch (e) {}
     var c = await UI.menu($("cmd-win"), [
       { label: "広告除去： " + (premium ? "ＯＮ（購入済み扱い）" : "ＯＦＦ") },
-      { label: "ぼうけんのしょを けす" },
+      { label: "がくしゅうきろくを けす" },
       { label: "とじる" }
     ], "せってい");
     if (c === 0) {
@@ -781,7 +781,7 @@
       var c2 = await UI.menu($("cmd-win"), [{ label: "やめておく" }, { label: "ほんとうに けす" }], "ほんとうに？");
       if (c2 === 1) {
         try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
-        await UI.say("ぼうけんのしょを けした。");
+        await UI.say("がくしゅうきろくを けした。");
         location.reload();
       }
     }

@@ -138,7 +138,7 @@
           if (e.id === "metal" && !crit) dmg = 1; // metal body unless critical
           await playerHit(e, dmg, crit);
         } else {
-          await bsay("ゆうしゃの こうげきは\nくうぶりに おわった！");
+          await bsay("ゆうしゃの こうげきは\nからぶりに おわった！");
         }
       } else if (cmd === 1) {
         // ---- spells ----
@@ -171,19 +171,19 @@
       } else if (cmd === 2) {
         // ---- items ----
         var inv = [];
-        if (G.player.items.herb > 0) inv.push({ key: "herb", label: "やくそう ×" + G.player.items.herb });
-        if (G.player.items.elixir > 0) inv.push({ key: "elixir", label: "けんじゃの雫 ×" + G.player.items.elixir });
+        if (G.player.items.herb > 0) inv.push({ key: "herb", label: "ハーブティー ×" + G.player.items.herb });
+        if (G.player.items.elixir > 0) inv.push({ key: "elixir", label: "しゅうちゅうコーヒー ×" + G.player.items.elixir });
         if (!inv.length) { await bsay("つかえる どうぐを もっていない！"); continue; }
         var ii = await window.UI.menu($("battle-sub"), inv, "どうぐ");
         if (ii < 0) continue;
         if (inv[ii].key === "herb") {
           G.player.items.herb--;
           G.player.hp = Math.min(G.player.maxhp, G.player.hp + 30);
-          await bsay("やくそうを つかった！\nＨＰが 30 かいふくした。");
+          await bsay("ハーブティーを のんだ！\nＨＰが 30 かいふくした。");
         } else {
           G.player.items.elixir--;
           G.player.mp = Math.min(G.player.maxmp, G.player.mp + 40);
-          await bsay("けんじゃの雫を つかった！\nＭＰが 40 かいふくした。");
+          await bsay("しゅうちゅうコーヒーを のんだ！\nＭＰが 40 かいふくした。");
         }
         refreshStatus();
       } else {
@@ -194,7 +194,7 @@
           result = { result: "flee" };
           break;
         } else {
-          await bsay("しかし まわりこまれてしまった！");
+          await bsay("しかし にげられなかった！");
         }
       }
 
