@@ -9,7 +9,12 @@
 //   OPENAI_API_KEY=sk-... node tools/gen_art.mjs slime,rat     # specific ids
 //   node tools/gen_art.mjs --pilot --dry-run                   # print prompts, no API call
 //   ...optional: --quality=low|medium|high  (default medium)   --force (overwrite)
+//   ...optional: --model=<id>   (default gpt-image-1; set to your account's
+//                current image model id, e.g. gpt-image-2, or via env
+//                OPENAI_IMAGE_MODEL). The API needs the EXACT model id string.
 //
+// IMPORTANT: this calls the OpenAI *Images API*, which is pay-as-you-go and is
+// billed separately from ChatGPT Plus. Plus alone does NOT cover API calls.
 // Cost (one-time): ~$0.01 (low) / ~$0.04 (medium) / ~$0.17 (high) per image.
 "use strict";
 
@@ -29,6 +34,8 @@ const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
 const force = args.includes("--force");
 const qualityArg = (args.find((a) => a.startsWith("--quality=")) || "--quality=medium").split("=")[1];
+const model = (args.find((a) => a.startsWith("--model=")) || "").split("=")[1]
+  || process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
 let ids;
 if (args.includes("--pilot")) {
   ids = PILOT;
@@ -63,7 +70,7 @@ async function genOne(id) {
       Authorization: "Bearer " + process.env.OPENAI_API_KEY
     },
     body: JSON.stringify({
-      model: "gpt-image-1",
+      model,
       prompt,
       size: "1024x1024",
       quality: qualityArg,
@@ -89,7 +96,7 @@ if (!dryRun && !process.env.OPENAI_API_KEY) {
   process.exit(1);
 }
 
-console.log(`Generating ${ids.length} image(s) [quality=${qualityArg}${dryRun ? ", DRY-RUN" : ""}]`);
+console.log(`Generating ${ids.length} image(s) [model=${model} quality=${qualityArg}${dryRun ? ", DRY-RUN" : ""}]`);
 let ok = 0, fail = 0;
 for (const id of ids) {
   try {

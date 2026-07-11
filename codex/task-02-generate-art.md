@@ -4,15 +4,20 @@
 `tools/gen_art.mjs` を実行し、`tools/art_prompts.json` の全プロンプトから
 敵イラスト(PNG)を生成して `assets/enemies/<id>.png` に保存し、コミット＆プッシュする。
 
-## 前提
-- OpenAIの画像API(gpt-image-1)を使う。**APIキーが必要**（従量課金）。
-- キーは環境変数 `OPENAI_API_KEY` に設定して実行する。ソースにキーを書かない・コミットしない。
+## 前提（重要）
+- これは **OpenAIの画像API を呼ぶ**処理。**ChatGPT Plusの月額には含まれない従量課金**が発生する。
+  Plusだけでは実行できない。API残高（クレジット）が必要。
+- **APIキー**を環境変数 `OPENAI_API_KEY` に設定して実行する。ソースにキーを書かない・コミットしない。
+- **モデルID**は `--model=<id>`（または環境変数 `OPENAI_IMAGE_MODEL`）で指定する。
+  既定は `gpt-image-1`。アカウントで使える正確なモデルID（例: 新しい世代のID）に合わせること。
+  IDが違うとAPIがエラーを返す。
 
 ## 手順
 1. まず**パイロット4体だけ**生成して絵柄を確認する:
    ```bash
-   OPENAI_API_KEY=... node tools/gen_art.mjs --pilot --quality=medium
+   OPENAI_API_KEY=... node tools/gen_art.mjs --pilot --quality=medium --model=gpt-image-1
    ```
+   （`--model` はアカウントの正確な画像モデルIDに置き換える）
    → `assets/enemies/slime.png rat.png gen_r.png maou.png` ができる。
 2. 問題なければ**残り全部**:
    ```bash
