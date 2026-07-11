@@ -4124,6 +4124,30 @@ window.ITEM_DEFS = {
   // battle message (typewriter, tap to continue handled by UI.say core)
   function bsay(text) { return window.UI.say(text, $("battle-msg")); }
 
+  // Show a real illustration (assets/enemies/<id>.png) if it exists,
+  // otherwise fall back to the emoji placeholder. Drop a PNG in and it
+  // appears automatically — no code change needed.
+  var artCache = {};
+  function setEnemyArt(sp, id, icon) {
+    sp.textContent = icon;
+    sp.style.backgroundImage = "";
+    sp.dataset.enemy = id;
+    if (artCache[id] === "no") return;
+    var url = "assets/enemies/" + id + ".png";
+    var apply = function () {
+      sp.textContent = "";
+      sp.style.backgroundImage = "url('" + url + "')";
+      sp.style.backgroundSize = "contain";
+      sp.style.backgroundRepeat = "no-repeat";
+      sp.style.backgroundPosition = "center bottom";
+    };
+    if (artCache[id] === "ok") { apply(); return; }
+    var img = new Image();
+    img.onload = function () { artCache[id] = "ok"; if (sp.dataset.enemy === id) apply(); };
+    img.onerror = function () { artCache[id] = "no"; };
+    img.src = url;
+  }
+
   async function enemyAttack(e, kind) {
     var G = window.G, p = G.player;
     var dmg;
@@ -4213,8 +4237,8 @@ window.ITEM_DEFS = {
     var scr = $("battle-screen");
     scr.style.display = "block";
     var sp = $("enemy-sprite");
-    sp.textContent = e.icon;
     sp.className = isBoss ? "boss" : "";
+    setEnemyArt(sp, e.id, e.icon);
     $("enemy-name-tag").textContent = e.name + "（TOEIC" + e.lv + "）";
     setEnemyHp(e);
     refreshStatus();
