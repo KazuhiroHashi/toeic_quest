@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>WORD WIZ - 英単語と精霊のカードバトル</title>
+<link rel="stylesheet" href="css/wiz.css">
+</head>
+<body>
+<div id="app"><div id="frame">
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="logo-mini">WORD WIZ</div>
+    <div class="chips">
+      <div class="chip"><span class="ic">🔷</span><span id="hud-mana">0</span></div>
+      <div class="chip"><span class="ic">💎</span><span id="hud-gems">0</span></div>
+      <div class="chip"><span class="ic">🪨</span><span id="hud-stones">0</span></div>
+    </div>
+  </div>
+
+  <div id="main">
+    <!-- title -->
+    <div class="screen on" id="scr-title">
+      <div style="flex:1"></div>
+      <div id="title-art"></div>
+      <div id="title-logo">WORD WIZ</div>
+      <div id="title-sub">英単語と精霊のカードバトル</div>
+      <button class="big-btn" id="btn-start">ぼうけんを はじめる</button>
+      <div style="flex:1"></div>
+      <div class="rate-note" style="text-align:center;padding-bottom:20px">クイズに正解して精霊と戦おう ─ TOEIC 3000語収録</div>
+    </div>
+
+    <!-- home -->
+    <div class="screen" id="scr-home">
+      <div class="scroll">
+        <div id="tabpane-quest"></div>
+        <div id="tabpane-deck" style="display:none"></div>
+        <div id="tabpane-gacha" style="display:none"></div>
+        <div id="tabpane-etc" style="display:none"></div>
+      </div>
+      <div id="tabbar">
+        <button class="tab on" data-tab="quest"><span class="tic">📖</span>クエスト</button>
+        <button class="tab" data-tab="deck"><span class="tic">🃏</span>デッキ</button>
+        <button class="tab" data-tab="gacha"><span class="tic">🔮</span>召喚</button>
+        <button class="tab" data-tab="etc"><span class="tic">⚙️</span>その他</button>
+      </div>
+    </div>
+
+    <!-- battle -->
+    <div class="screen" id="scr-battle">
+      <div id="b-top"><div id="b-wave">WAVE 1</div><div id="b-quest-lv"></div></div>
+      <div id="enemy-zone"></div>
+      <div id="team-zone">
+        <div id="team-hp-wrap">
+          <div id="team-hp-bar"><div></div></div>
+          <div id="team-hp-num"></div>
+        </div>
+      </div>
+      <div id="chain-badge"><div class="cnum">0</div><div class="clbl">CHAIN</div></div>
+      <div id="b-deck"></div>
+      <div id="b-bottom">
+        <div id="b-msg"></div>
+        <div id="panel-zone"></div>
+        <div id="quiz-zone">
+          <div id="q-word"></div>
+          <div id="q-meta"></div>
+          <div id="q-timer"><div></div></div>
+          <div class="q-choices" id="q-choices"></div>
+        </div>
+      </div>
+      <div id="cutin"></div>
+      <div id="fx-layer"></div>
+      <div id="result-layer"><div id="result-box"></div></div>
+    </div>
+
+    <!-- modal -->
+    <div id="modal-layer"><div id="modal"></div></div>
+    <div id="toast"></div>
+  </div>
+
+  <div id="ad-bar">AD ─ 広告スペース（プレミアムで非表示）</div>
+</div></div>
+
+<script src="../data/vocab_400.js"></script>
+<script src="../data/vocab_500.js"></script>
+<script src="../data/vocab_600.js"></script>
+<script src="../data/vocab_700.js"></script>
+<script src="../data/vocab_800.js"></script>
+<script src="../data/vocab_900.js"></script>
+<script src="js/data.js"></script>
+<script src="js/art.js"></script>
+<script src="js/battle.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

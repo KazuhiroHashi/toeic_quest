@@ -1,6 +1,6 @@
-// Bundle the game into a single self-contained HTML file.
-// Usage: node tools/build_standalone.js [outfile] [--artifact]
-//   default outfile: dist/toeic_quest.html (full standalone page)
+// Bundle a game into a single self-contained HTML file.
+// Usage: node tools/build_standalone.js [outfile] [--artifact] [--src=<index.html>]
+//   default src: index.html (repo root), default outfile: dist/toeic_quest.html
 //   --artifact: emit body-content only (no doctype/html/head/body) for hosts
 //               that wrap the content in their own skeleton
 "use strict";
@@ -10,9 +10,14 @@ var root = path.join(__dirname, "..");
 
 var out = process.argv[2] || path.join(root, "dist", "toeic_quest.html");
 var artifactMode = process.argv.includes("--artifact");
+var srcArg = process.argv.find(function (a) { return a.indexOf("--src=") === 0; });
+var srcHtml = srcArg ? path.resolve(srcArg.slice(6)) : path.join(root, "index.html");
+var srcDir = path.dirname(srcHtml);
 
-var html = fs.readFileSync(path.join(root, "index.html"), "utf8");
-var css = fs.readFileSync(path.join(root, "css", "style.css"), "utf8");
+var html = fs.readFileSync(srcHtml, "utf8");
+var title = html.match(/<title>([^<]*)<\/title>/)[1];
+var cssPath = html.match(/<link rel="stylesheet" href="([^"]+)">/)[1];
+var css = fs.readFileSync(path.join(srcDir, cssPath), "utf8");
 
 // body content without the external script/link tags
 var body = html.match(/<body>([\s\S]*?)<script/)[1];
@@ -20,11 +25,11 @@ var body = html.match(/<body>([\s\S]*?)<script/)[1];
 var scripts = [];
 var re = /<script src="([^"]+)"><\/script>/g, m;
 while ((m = re.exec(html))) {
-  scripts.push('<script>\n' + fs.readFileSync(path.join(root, m[1]), "utf8") + "\n</script>");
+  scripts.push('<script>\n' + fs.readFileSync(path.join(srcDir, m[1]), "utf8") + "\n</script>");
 }
 
 var core =
-  "<title>TOEIC QUEST - 英単語で魔王を倒せ</title>\n" +
+  "<title>" + title + "</title>\n" +
   "<style>\n" + css + "\n</style>\n" +
   body + "\n" +
   scripts.join("\n");
