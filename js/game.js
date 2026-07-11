@@ -187,6 +187,12 @@
   function hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }
 
   function curMap() { return window.MAPS[G.pos.map]; }
+  function mapTrack(m) {
+    if (m.kind === "world") return "field";
+    if (m.kind === "dungeon") return m.id === "maou" ? "boss" : "dungeon";
+    return "town";
+  }
+  function playMapBgm() { if (window.BGM) BGM.play(mapTrack(curMap())); }
   function tileAt(m, x, y) {
     if (x < 0 || y < 0 || x >= m.w || y >= m.h) return "=";
     return m.rows[y][x];
@@ -415,6 +421,7 @@
     await fade(true);
     G.pos.map = map; G.pos.x = x; G.pos.y = y;
     saveGame();
+    playMapBgm();
     await fade(false);
     busyEvent = false;
   }
@@ -484,7 +491,12 @@
 
   async function runBattle(enemyId, isEventBoss, bossEv) {
     busyEvent = true;
-    var r = await window.BATTLE.start(enemyId);
+    var m = curMap();
+    var bgKey = m.id === "world" ? "zone" + zoneAt(m, G.pos.x, G.pos.y) : m.id;
+    var isBossFight = window.ENEMY_BY_ID[enemyId].traits.indexOf("boss") >= 0;
+    if (window.BGM) BGM.play(isBossFight ? "boss" : "battle");
+    var r = await window.BATTLE.start(enemyId, { bg: bgKey });
+    playMapBgm();
     if (r.result === "lose") {
       await fade(true);
       G.player.gold = Math.floor(G.player.gold / 2);
@@ -505,6 +517,7 @@
     } else {
       saveGame();
     }
+    await checkDaily();
     busyEvent = false;
   }
 
@@ -517,6 +530,42 @@
     await UI.say("― ぼうけんのきろく ―\nこたえた単語： " + st.answered + " 問\nせいかいりつ： " + rate + "％");
     await UI.say("だが、まなびの旅に\nおわりは ない。\n\n～ TOEIC QUEST ～\nTHANK YOU FOR PLAYING!");
     G.pos = { map: "castle", x: 9, y: 4, dir: "up" };
+  }
+
+  // =================== DAILY MISSION & STREAK ===================
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+  }
+  function ensureDaily() {
+    if (!G) return;
+    if (!G.daily || G.daily.date !== todayStr()) {
+      G.daily = { date: todayStr(), correct: 0, goal: 20, done: false };
+    }
+  }
+  async function checkDaily() {
+    ensureDaily();
+    if (!G.daily.done && G.daily.correct >= G.daily.goal) {
+      G.daily.done = true;
+      G.player.gold += 150;
+      SFX.play("level");
+      await UI.say("デイリーミッション たっせい！\n本日 " + G.daily.goal + " 問 せいかい！\nほうびに 150ゴールドを てにいれた！");
+      saveGame();
+    }
+  }
+  async function streakCheck() {
+    var t = todayStr();
+    if (G.lastPlay === t) return;
+    var y = new Date(); y.setDate(y.getDate() - 1);
+    var ys = y.getFullYear() + "-" + (y.getMonth() + 1) + "-" + y.getDate();
+    G.streakDays = (G.lastPlay === ys) ? (G.streakDays || 0) + 1 : 1;
+    G.lastPlay = t;
+    if (G.streakDays >= 2) {
+      var bonus = Math.min(G.streakDays, 7) * 20;
+      G.player.gold += bonus;
+      await UI.say("れんぞくログイン " + G.streakDays + " 日目！\nボーナス " + bonus + "ゴールドを てにいれた！");
+    }
+    saveGame();
   }
 
   // =================== INTERACTIONS ===================
@@ -613,6 +662,8 @@
     }
   }
 
+  window.onQuizCorrect = function () { ensureDaily(); G.daily.correct++; };
+
   // A button on field: talk to facing tile
   function fieldA() {
     if (busyEvent || moving || !G || screenMode !== "field") return;
@@ -638,7 +689,10 @@
         "\nつぎのレベルまで： " + next +
         "\nこうげき： " + (p.str + window.WEAPONS[p.weapon].atk) + "（" + window.WEAPONS[p.weapon].name + "）" +
         "\nしゅび： " + (p.vit + window.ARMORS[p.armor].def) + "（" + window.ARMORS[p.armor].name + "）" +
-        "\nしょじきん： " + p.gold + "G"
+        "\nしょじきん： " + p.gold + "G" +
+        "\n\nデイリー： " + (G.daily ? Math.min(G.daily.correct, G.daily.goal) : 0) + "／" + (G.daily ? G.daily.goal : 20) + " 問せいかい" +
+        (G.daily && G.daily.done ? "（たっせい！）" : "") +
+        "\nれんぞくログイン： " + (G.streakDays || 1) + " 日"
       );
     } else if (c === 1) {
       await fieldItems();
@@ -656,8 +710,8 @@
   async function fieldItems() {
     var inv = [];
     if (G.player.items.herb > 0) inv.push({ key: "herb", label: "ハーブティー ×" + G.player.items.herb });
-    if (G.player.items.elixir > 0) inv.push({ key: "elixir", label: "しゅうちゅうコーヒー ×" + G.player.items.elixir });
-    if (G.player.items.wing > 0) inv.push({ key: "wing", label: "きかんチケット ×" + G.player.items.wing });
+    if (G.player.items.elixir > 0) inv.push({ key: "elixir", label: "エナジーコーヒー ×" + G.player.items.elixir });
+    if (G.player.items.wing > 0) inv.push({ key: "wing", label: "ワープの羽根ペン ×" + G.player.items.wing });
     if (G.player.items.key > 0) inv.push({ key: "key", label: "ことばのカギ" });
     if (!inv.length) { await UI.say("なにも もっていない。"); return; }
     var i = await UI.menu($("cmd-win"), inv, "どうぐ");
@@ -672,10 +726,10 @@
       G.player.items.elixir--;
       G.player.mp = Math.min(G.player.maxmp, G.player.mp + 40);
       SFX.play("heal");
-      await UI.say("しゅうちゅうコーヒーを のんだ！\nＭＰが 40 かいふくした。");
+      await UI.say("エナジーコーヒーを のんだ！\nＭＰが 40 かいふくした。");
     } else if (k === "wing") {
       G.player.items.wing--;
-      await UI.say("きかんチケットを つかった！");
+      await UI.say("ワープの羽根ペンを つかった！");
       await transferTo("castle", 9, 4);
     } else {
       await UI.say("魔王城の とびらを ひらく カギだ。");
@@ -748,14 +802,19 @@
     screenMode = "field";
     if (isNew) {
       newGame();
+      ensureDaily();
+      playMapBgm();
       await fade(true); await fade(false);
       await UI.say("レキシア大陸 ―\nかつて だれもが 英語をはなせた\nゆたかな くにが あった。");
       await UI.say("しかし まおう ヴォキャブロスが\n《言葉の力》を うばい\n大陸は やみに つつまれた…。");
       await UI.say("いま ひとりの ゆうしゃが\nラーニング王のまえに めしだされた。\n（王さまに はなしかけよう。Ａボタンだ！）");
     } else {
       loadGame();
+      ensureDaily();
+      playMapBgm();
       await fade(true); await fade(false);
       await UI.say("がくしゅうきろくを よみこんだ！\nおかえりなさい、ゆうしゃよ。");
+      await streakCheck();
     }
   }
 
@@ -768,11 +827,19 @@
   async function settings() {
     var premium = false;
     try { premium = localStorage.getItem("tq_premium") === "1"; } catch (e) {}
+    var bgmOn = window.BGM ? BGM.isEnabled() : true;
     var c = await UI.menu($("cmd-win"), [
+      { label: "ＢＧＭ： " + (bgmOn ? "ＯＮ" : "ＯＦＦ") },
       { label: "広告除去： " + (premium ? "ＯＮ（購入済み扱い）" : "ＯＦＦ") },
       { label: "がくしゅうきろくを けす" },
       { label: "とじる" }
     ], "せってい");
+    if (c === 0) {
+      if (window.BGM) BGM.setEnabled(!bgmOn);
+      await UI.say("ＢＧＭを " + (!bgmOn ? "ＯＮ" : "ＯＦＦ") + " にした。");
+      return;
+    }
+    c = c - 1;
     if (c === 0) {
       try { localStorage.setItem("tq_premium", premium ? "0" : "1"); } catch (e) {}
       refreshAd();
@@ -790,6 +857,15 @@
   function boot() {
     setupCanvas();
     refreshAd();
+    // key visual (assets/ui/title.png) if present
+    (function () {
+      var img = new Image();
+      img.onload = function () {
+        $("title-screen").style.background =
+          "linear-gradient(rgba(2,4,20,.45), rgba(0,0,10,.82)), url('assets/ui/title.png') center/cover";
+      };
+      img.src = "assets/ui/title.png";
+    })();
     bindHold("dpad-up", "up"); bindHold("dpad-down", "down");
     bindHold("dpad-left", "left"); bindHold("dpad-right", "right");
     $("btn-a").addEventListener("pointerdown", function (e) { e.preventDefault(); INPUT.pressA(); });
@@ -814,6 +890,7 @@
     });
     $("btn-settings").addEventListener("click", function () { settings(); });
 
+    if (window.BGM) BGM.play("title");
     requestAnimationFrame(loop);
   }
 

@@ -55,8 +55,49 @@
     img.src = url;
   }
 
+  // damage/effect popup inside the battle frame
+  function bpop(text, cls) {
+    var frame = $("battle-frame");
+    var d = document.createElement("div");
+    d.className = "battle-pop " + (cls || "");
+    d.textContent = text;
+    d.style.left = (35 + rnd(30)) + "%";
+    frame.appendChild(d);
+    setTimeout(function () { d.remove(); }, 900);
+  }
+  function slashFx(color) {
+    var frame = $("battle-frame");
+    var s = document.createElement("div");
+    s.className = "slash-fx";
+    if (color) s.style.background = "linear-gradient(105deg, transparent 38%, " + color + " 50%, transparent 62%)";
+    frame.appendChild(s);
+    setTimeout(function () { s.remove(); }, 320);
+  }
+
+  // battle backdrop image (assets/bg/<key>.png) if present
+  var bgCache = {};
+  function setBattleBg(key) {
+    var frame = $("battle-frame");
+    frame.style.backgroundImage = "";
+    if (!key || bgCache[key] === "no") return;
+    var url = "assets/bg/" + key + ".png";
+    var apply = function () {
+      frame.style.backgroundImage = "url('" + url + "')";
+      frame.style.backgroundSize = "cover";
+      frame.style.backgroundPosition = "center";
+    };
+    if (bgCache[key] === "ok") { apply(); return; }
+    var img = new Image();
+    img.onload = function () { bgCache[key] = "ok"; apply(); };
+    img.onerror = function () { bgCache[key] = "no"; };
+    img.src = url;
+  }
+
   async function enemyAttack(e, kind) {
     var G = window.G, p = G.player;
+    var sp = $("enemy-sprite");
+    sp.classList.add("lunge");
+    setTimeout(function () { sp.classList.remove("lunge"); }, 380);
     var dmg;
     if (kind === "fire") {
       await bsay(e.name + "は ほのおを はいた！");
@@ -100,9 +141,11 @@
     return null;
   }
 
-  async function playerHit(e, dmg, crit) {
+  async function playerHit(e, dmg, crit, fxColor) {
     var sp = $("enemy-sprite");
     sp.classList.add("hit");
+    slashFx(fxColor);
+    bpop(String(dmg), crit ? "crit" : "");
     if (window.SFX) SFX.play(crit ? "crit" : "slash");
     setTimeout(function () { sp.classList.remove("hit"); }, 120);
     e.hp = Math.max(0, e.hp - dmg);
@@ -143,6 +186,7 @@
 
     var scr = $("battle-screen");
     scr.style.display = "block";
+    setBattleBg(opts.bg);
     var sp = $("enemy-sprite");
     sp.className = isBoss ? "boss" : "";
     setEnemyArt(sp, e.id, e.icon);
@@ -197,13 +241,20 @@
         } else {
           var sd = Math.round(spell.power * (0.85 + Math.random() * 0.3));
           if (qs.elapsed <= 2) sd = Math.round(sd * 1.3);
-          await playerHit(e, sd, qs.elapsed <= 2);
+          var weak = spell.elem && window.WEAK && window.WEAK[e.id] === spell.elem;
+          if (weak) {
+            sd = Math.round(sd * 1.5);
+            bpop("じゃくてん！", "weak");
+            await bsay("じゃくてんを ついた！");
+          }
+          var fxc = spell.elem === "fire" ? "rgba(255,150,60,.9)" : spell.elem === "thunder" ? "rgba(255,230,90,.9)" : "rgba(200,160,255,.9)";
+          await playerHit(e, sd, weak || qs.elapsed <= 2, fxc);
         }
       } else if (cmd === 2) {
         // ---- items ----
         var inv = [];
         if (G.player.items.herb > 0) inv.push({ key: "herb", label: "ハーブティー ×" + G.player.items.herb });
-        if (G.player.items.elixir > 0) inv.push({ key: "elixir", label: "しゅうちゅうコーヒー ×" + G.player.items.elixir });
+        if (G.player.items.elixir > 0) inv.push({ key: "elixir", label: "エナジーコーヒー ×" + G.player.items.elixir });
         if (!inv.length) { await bsay("つかえる どうぐを もっていない！"); continue; }
         var ii = await window.UI.menu($("battle-sub"), inv, "どうぐ");
         if (ii < 0) continue;
@@ -214,7 +265,7 @@
         } else {
           G.player.items.elixir--;
           G.player.mp = Math.min(G.player.maxmp, G.player.mp + 40);
-          await bsay("しゅうちゅうコーヒーを のんだ！\nＭＰが 40 かいふくした。");
+          await bsay("エナジーコーヒーを のんだ！\nＭＰが 40 かいふくした。");
         }
         refreshStatus();
       } else {

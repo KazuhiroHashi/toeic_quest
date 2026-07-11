@@ -227,7 +227,7 @@
         { type: "npc", x: 3, y: 4, icon: "⚔️", shop: { kind: "weapon", items: ["w2", "w3", "a2"] },
           text: ["東の川を越えるなら\nもっと強い剣が 欲しいところだね。"] },
         { type: "npc", x: 10, y: 4, icon: "🧴", shop: { kind: "item", items: ["herb", "wing", "elixir"] },
-          text: ["しゅうちゅうコーヒーは\nMPを回復するよ。"] },
+          text: ["エナジーコーヒーは\nMPを回復するよ。"] },
         { type: "npc", x: 17, y: 4, icon: "🛏️", inn: { price: 25 }, text: [] },
         { type: "npc", x: 6, y: 6, icon: "🧔", text: ["南東の洞窟には リーディング将軍\nレクトスが 住みついている。\n『ハイライトセイバー』を\n守っているらしい。"] },
         { type: "npc", x: 14, y: 7, icon: "👩", text: ["レベルが上がると 魔法を覚えるよ。\n回復魔法『ヒール５００』は\n旅の必需品ね。"] }

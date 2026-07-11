@@ -84,7 +84,10 @@
     var st = studyRec();
     if (!st) return;
     st.answered++;
-    if (correct) st.correct++;
+    if (correct) {
+      st.correct++;
+      if (window.onQuizCorrect) window.onQuizCorrect();
+    }
     var m = st.missed[entry.w];
     if (!correct) {
       if (!m) m = st.missed[entry.w] = { m: entry.m, wrong: 0, correctStreak: 0 };

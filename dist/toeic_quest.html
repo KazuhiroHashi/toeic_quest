@@ -364,6 +364,39 @@ canvas#field-canvas {
   .act-btn { width: 52px; height: 52px; }
 }
 
+/* ---------- battle juice ---------- */
+.battle-pop {
+  position: absolute; top: 30%;
+  font-size: 30px; font-weight: bold; color: #fff;
+  text-shadow: 2px 2px 0 #000, 0 0 12px rgba(0,0,0,.8);
+  animation: bpop .85s ease-out forwards;
+  pointer-events: none; z-index: 5;
+  font-family: "Courier New", monospace;
+}
+.battle-pop.crit { color: #ffd54a; font-size: 40px; }
+.battle-pop.weak { color: #7fe3ff; font-size: 22px; }
+@keyframes bpop {
+  0% { transform: translateY(0) scale(.5); opacity: 0; }
+  15% { transform: translateY(-8px) scale(1.2); opacity: 1; }
+  100% { transform: translateY(-44px) scale(1); opacity: 0; }
+}
+.slash-fx {
+  position: absolute; inset: 8%;
+  background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,.95) 50%, transparent 62%);
+  animation: slashmove .3s ease-out forwards;
+  pointer-events: none; z-index: 4;
+}
+@keyframes slashmove {
+  0% { transform: translateX(-60%) skewX(-12deg); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translateX(60%) skewX(-12deg); opacity: 0; }
+}
+#enemy-sprite.lunge { animation: lunge .38s ease-in-out; }
+@keyframes lunge {
+  0%,100% { transform: translateY(0); }
+  35% { transform: translateY(26px) scale(1.06); }
+}
+
 </style>
 
 <div id="app">
@@ -3494,7 +3527,7 @@ window.ENEMIES = [
   {id:"slime",    name:"ワードスライム",      icon:"💧", lv:400, hp:8,   atk:5,  def:2,  exp:2,   gold:3,   traits:[]},
   {id:"bat",      name:"アルファベットひよこ", icon:"🐣", lv:400, hp:10,  atk:6,  def:2,  exp:3,   gold:4,   traits:[]},
   {id:"rat",      name:"ペンシルラビット",    icon:"🐰", lv:400, hp:13,  atk:7,  def:3,  exp:4,   gold:6,   traits:[]},
-  {id:"mush",     name:"イレイザーだけ",      icon:"🍄", lv:400, hp:15,  atk:8,  def:6,  exp:6,   gold:7,   traits:[]},
+  {id:"mush",     name:"イレイザーマッシュ",      icon:"🍄", lv:400, hp:15,  atk:8,  def:6,  exp:6,   gold:7,   traits:[]},
   {id:"goblin",   name:"ノートリス",          icon:"🐿️", lv:400, hp:18,  atk:10, def:4,  exp:8,   gold:10,  traits:[]},
   // ---- zone2 : TOEIC500 ----
   {id:"bee",      name:"スペルバード",        icon:"🐤", lv:500, hp:20,  atk:12, def:5,  exp:10,  gold:12,  traits:["double"]},
@@ -3560,19 +3593,26 @@ window.LEVEL_TABLE = (function(){
   return t;
 })();
 
+// elemental weaknesses (spell elem matches -> x1.5 damage)
+window.WEAK = {
+  slime:"fire", mush:"fire", ghost:"fire", twins:"fire", mummy:"fire", shadow:"fire", mimic:"fire",
+  bee:"thunder", wolf:"thunder", owl:"thunder", lizard:"thunder", clock:"thunder", knight5:"thunder",
+  snight:"thunder", harpy:"thunder", reaper:"thunder", kraken:"thunder", gen_l:"thunder", golem:"fire"
+};
+
 // spells: quizLv = TOEIC level question required to cast
 window.SPELLS = [
   {id:"heal1",  name:"ヒール５００",   learnLv:4,  mp:4,  quizLv:500, type:"heal",   power:35,  desc:"HPを35回復"},
-  {id:"fire1",  name:"ファイア６００", learnLv:7,  mp:5,  quizLv:600, type:"attack", power:28,  desc:"炎で28前後のダメージ"},
+  {id:"fire1",  name:"ファイア６００", learnLv:7,  mp:5,  quizLv:600, type:"attack", elem:"fire", power:28,  desc:"炎で28前後のダメージ"},
   {id:"return", name:"リターン",       learnLv:10, mp:8,  quizLv:600, type:"field",  power:0,   desc:"城へ瞬間移動"},
   {id:"heal2",  name:"ヒールラ７００", learnLv:13, mp:8,  quizLv:700, type:"heal",   power:90,  desc:"HPを90回復"},
-  {id:"thun1",  name:"サンダー８００", learnLv:16, mp:10, quizLv:800, type:"attack", power:65,  desc:"雷で65前後のダメージ"},
+  {id:"thun1",  name:"サンダー８００", learnLv:16, mp:10, quizLv:800, type:"attack", elem:"thunder", power:65,  desc:"雷で65前後のダメージ"},
   {id:"meteo",  name:"メテオ９００",   learnLv:20, mp:15, quizLv:900, type:"attack", power:120, desc:"隕石で120前後のダメージ"}
 ];
 
 window.WEAPONS = [
   {id:"w0", name:"えんぴつ",           atk:1,  price:0},
-  {id:"w1", name:"あかペン",           atk:5,  price:60},
+  {id:"w1", name:"あかペンナイフ",     atk:5,  price:60},
   {id:"w2", name:"ワードソード",       atk:12, price:220},
   {id:"w3", name:"イディオムブレード", atk:22, price:700},
   {id:"w4", name:"ハイライトセイバー", atk:34, price:2200},
@@ -3588,9 +3628,9 @@ window.ARMORS = [
 ];
 window.ITEM_DEFS = {
   herb:  {name:"ハーブティー", price:12,  desc:"HPを30回復"},
-  wing:  {name:"きかんチケット", price:40, desc:"城へ瞬間移動"},
+  wing:  {name:"ワープの羽根ペン", price:40, desc:"城へ瞬間移動"},
   key:   {name:"ことばのカギ", price:0,   desc:"魔王城の扉を開く"},
-  elixir:{name:"しゅうちゅうコーヒー", price:200, desc:"MPを40回復"}
+  elixir:{name:"エナジーコーヒー", price:200, desc:"MPを40回復"}
 };
 
 </script>
@@ -3824,7 +3864,7 @@ window.ITEM_DEFS = {
         { type: "npc", x: 3, y: 4, icon: "⚔️", shop: { kind: "weapon", items: ["w2", "w3", "a2"] },
           text: ["東の川を越えるなら\nもっと強い剣が 欲しいところだね。"] },
         { type: "npc", x: 10, y: 4, icon: "🧴", shop: { kind: "item", items: ["herb", "wing", "elixir"] },
-          text: ["しゅうちゅうコーヒーは\nMPを回復するよ。"] },
+          text: ["エナジーコーヒーは\nMPを回復するよ。"] },
         { type: "npc", x: 17, y: 4, icon: "🛏️", inn: { price: 25 }, text: [] },
         { type: "npc", x: 6, y: 6, icon: "🧔", text: ["南東の洞窟には リーディング将軍\nレクトスが 住みついている。\n『ハイライトセイバー』を\n守っているらしい。"] },
         { type: "npc", x: 14, y: 7, icon: "👩", text: ["レベルが上がると 魔法を覚えるよ。\n回復魔法『ヒール５００』は\n旅の必需品ね。"] }
@@ -3917,6 +3957,190 @@ window.ITEM_DEFS = {
 
 </script>
 <script>
+// TOEIC QUEST - BGM engine (Web Audio chiptune, all-original compositions)
+// No audio files, no copyright risk, tiny footprint, works offline.
+// BGM.play("field" | "town" | "dungeon" | "battle" | "boss" | "title"), BGM.stop()
+(function () {
+  "use strict";
+
+  var ctx = null, master = null;
+  var enabled = true;
+  try { enabled = localStorage.getItem("tq_bgm") !== "0"; } catch (e) {}
+
+  function ensureCtx() {
+    if (ctx) { if (ctx.state === "suspended") ctx.resume(); return; }
+    try {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      master = ctx.createGain();
+      master.gain.value = 0.5;
+      master.connect(ctx.destination);
+    } catch (e) {}
+  }
+
+  // note name -> frequency ("A4" = 440). "-" = rest.
+  var SEMI = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  function freq(n) {
+    var m = /^([A-G])(#?)(\d)$/.exec(n);
+    if (!m) return 0;
+    var s = SEMI[m[1]] + (m[2] ? 1 : 0) + (parseInt(m[3], 10) + 1) * 12;
+    return 440 * Math.pow(2, (s - 69) / 12);
+  }
+  // "C4:1 E4:.5 -:.5" -> [[freq,beats],...]
+  function seq(str) {
+    return str.trim().split(/\s+/).map(function (t) {
+      var p = t.split(":");
+      return [p[0] === "-" ? 0 : freq(p[0]), parseFloat(p[1] || 1)];
+    });
+  }
+
+  // ---- original compositions (composed for this game; simple diatonic loops) ----
+  var TRACKS = {
+    title: {
+      bpm: 92, mtype: "triangle", btype: "sine", mvol: 0.055, bvol: 0.05,
+      mel: seq("F4:1 A4:1 C5:1.5 A4:.5 B4:1 A4:1 G4:2 " +
+               "E4:1 G4:1 B4:1.5 G4:.5 A4:1 G4:1 F4:2 " +
+               "F4:1 A4:1 C5:1 F5:1 E5:1 C5:1 D5:2 " +
+               "C5:1 B4:1 A4:1 G4:1 F4:3 -:1"),
+      bass: seq("F2:2 C3:2 G2:2 C3:2 C2:2 G2:2 F2:2 C3:2 " +
+                "F2:2 A2:2 B2:2 C3:2 F2:2 C3:2 F2:3 -:1")
+    },
+    field: {
+      bpm: 128, mtype: "square", btype: "triangle", mvol: 0.04, bvol: 0.05,
+      mel: seq("A4:.5 C5:.5 E5:1 E5:.5 D5:.5 C5:1 B4:.5 C5:.5 D5:1 E5:.5 D5:.5 C5:1 " +
+               "A4:.5 C5:.5 E5:1 G5:.5 F5:.5 E5:1 D5:.5 E5:.5 F5:1 E5:1 D5:1 " +
+               "C5:.5 D5:.5 E5:1 A5:1 G5:1 E5:1 F5:.5 E5:.5 D5:1 C5:.5 D5:.5 E5:1 " +
+               "D5:.5 C5:.5 B4:1 C5:.5 B4:.5 A4:1 G4:1 B4:1 A4:2"),
+      bass: seq("A2:1 E3:1 A2:1 E3:1 F2:1 C3:1 G2:1 D3:1 " +
+                "A2:1 E3:1 C3:1 G3:1 D3:1 A3:1 E3:1 E2:1 " +
+                "A2:1 E3:1 F2:1 C3:1 C3:1 G3:1 F2:1 C3:1 " +
+                "G2:1 D3:1 E2:1 E3:1 A2:1 E3:1 A2:2")
+    },
+    town: {
+      bpm: 100, mtype: "triangle", btype: "sine", mvol: 0.055, bvol: 0.045,
+      mel: seq("G4:1 C5:1 E5:1 D5:1 C5:1 B4:1 A4:1 B4:1 C5:1 " +
+               "G4:1 B4:1 D5:1 C5:1 B4:1 A4:1 G4:2 -:1 " +
+               "E5:1 D5:1 C5:1 D5:1 C5:1 B4:1 C5:1 D5:1 E5:1 " +
+               "D5:1 C5:1 B4:1 C5:2 -:1 G4:1 C5:1 E5:1"),
+      bass: seq("C3:3 G2:3 A2:3 F2:3 C3:3 G2:3 C3:3 C3:3 " +
+                "A2:3 F2:3 C3:3 G2:3 A2:3 F2:3 G2:3 C3:3")
+    },
+    dungeon: {
+      bpm: 84, mtype: "triangle", btype: "sine", mvol: 0.05, bvol: 0.055,
+      mel: seq("A3:2 C4:1 B3:2 -:1 E4:2 D4:1 C4:2 -:1 " +
+               "A3:2 C4:1 E4:2 -:1 F4:2 E4:1 D4:2 -:1 " +
+               "G#3:2 B3:1 E4:2 -:1 C4:2 B3:1 A3:2 -:1 " +
+               "F4:2 E4:1 D4:2 C4:1 B3:2 -:1 A3:3"),
+      bass: seq("A1:3 A1:3 E2:3 E2:3 A1:3 A1:3 F2:3 D2:3 " +
+                "E2:3 E2:3 A1:3 A1:3 D2:3 E2:3 A1:3 A1:3")
+    },
+    battle: {
+      bpm: 152, mtype: "square", btype: "triangle", mvol: 0.038, bvol: 0.05,
+      mel: seq("E5:.5 E5:.5 B4:.5 E5:.5 G5:.5 F#5:.5 E5:.5 B4:.5 " +
+               "C5:.5 C5:.5 G4:.5 C5:.5 E5:.5 D5:.5 C5:.5 G4:.5 " +
+               "A4:.5 A4:.5 E4:.5 A4:.5 C5:.5 B4:.5 A4:.5 E4:.5 " +
+               "B4:.5 C5:.5 D5:.5 E5:.5 F#5:.5 G5:.5 A5:.5 B5:.5 " +
+               "E5:.5 E5:.5 B4:.5 E5:.5 G5:.5 F#5:.5 E5:.5 D5:.5 " +
+               "C5:.5 E5:.5 G5:.5 C6:.5 B5:.5 G5:.5 E5:.5 C5:.5 " +
+               "A4:.5 C5:.5 E5:.5 A5:.5 G5:.5 E5:.5 C5:.5 A4:.5 " +
+               "B4:1 B4:.5 A#4:.5 B4:1 D5:.5 F#5:.5"),
+      bass: seq("E2:.5 E3:.5 E2:.5 E3:.5 E2:.5 E3:.5 E2:.5 E3:.5 " +
+                "C2:.5 C3:.5 C2:.5 C3:.5 C2:.5 C3:.5 C2:.5 C3:.5 " +
+                "A1:.5 A2:.5 A1:.5 A2:.5 A1:.5 A2:.5 A1:.5 A2:.5 " +
+                "B1:.5 B2:.5 B1:.5 B2:.5 B1:.5 B2:.5 B1:.5 B2:.5 " +
+                "E2:.5 E3:.5 E2:.5 E3:.5 E2:.5 E3:.5 D2:.5 D3:.5 " +
+                "C2:.5 C3:.5 C2:.5 C3:.5 C2:.5 C3:.5 C2:.5 C3:.5 " +
+                "A1:.5 A2:.5 A1:.5 A2:.5 A1:.5 A2:.5 A1:.5 A2:.5 " +
+                "B1:.5 B2:.5 B1:.5 B2:.5 B1:1 B1:1")
+    },
+    boss: {
+      bpm: 138, mtype: "square", btype: "sawtooth", mvol: 0.036, bvol: 0.03,
+      mel: seq("D5:.75 D5:.75 D5:.5 F5:1 E5:.5 D5:.5 C#5:1 " +
+               "D5:.75 D5:.75 D5:.5 A5:1 G5:.5 F5:.5 E5:1 " +
+               "F5:.75 F5:.75 F5:.5 G5:1 A5:.5 G5:.5 F5:1 " +
+               "E5:.75 E5:.75 E5:.5 C#5:1 D5:.5 E5:.5 A4:1 " +
+               "D5:.5 F5:.5 A5:.5 D6:1 C6:.5 A5:.5 F5:1 " +
+               "B4:.5 D5:.5 G5:.5 B5:1 A5:.5 G5:.5 E5:1 " +
+               "F5:.5 A5:.5 C6:.5 F6:.5 E6:.5 C6:.5 A5:.5 F5:.5 " +
+               "E5:1 C#5:1 D5:2"),
+      bass: seq("D2:.5 D2:.5 A2:.5 D2:.5 D2:.5 A2:.5 D2:.5 A2:.5 " +
+                "D2:.5 D2:.5 A2:.5 D2:.5 D2:.5 A2:.5 D2:.5 A2:.5 " +
+                "A#1:.5 A#1:.5 F2:.5 A#1:.5 A#1:.5 F2:.5 A#1:.5 F2:.5 " +
+                "A1:.5 A1:.5 E2:.5 A1:.5 A1:.5 E2:.5 A1:.5 E2:.5 " +
+                "D2:.5 D2:.5 A2:.5 D2:.5 G1:.5 G1:.5 D2:.5 G1:.5 " +
+                "G1:.5 G1:.5 D2:.5 G1:.5 C2:.5 C2:.5 G2:.5 C2:.5 " +
+                "A#1:.5 A#1:.5 F2:.5 A#1:.5 A1:.5 A1:.5 E2:.5 A1:.5 " +
+                "A1:1 A1:1 D2:2")
+    }
+  };
+
+  var cur = null, timer = null;
+  var state = { name: null, mi: 0, bi: 0, mAt: 0, bAt: 0 };
+
+  function schedVoice(track, list, idxKey, atKey, type, vol) {
+    var ahead = ctx.currentTime + 0.15;
+    var spb = 60 / track.bpm;
+    while (state[atKey] < ahead) {
+      var note = list[state[idxKey] % list.length];
+      var t = state[atKey];
+      var dur = note[1] * spb;
+      if (note[0] > 0) {
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = type;
+        o.frequency.value = note[0];
+        g.gain.setValueAtTime(vol, t);
+        g.gain.setValueAtTime(vol, t + Math.max(0.02, dur - 0.06));
+        g.gain.linearRampToValueAtTime(0.0001, t + dur - 0.01);
+        o.connect(g); g.connect(master);
+        o.start(t); o.stop(t + dur);
+      }
+      state[atKey] = t + dur;
+      state[idxKey]++;
+    }
+  }
+
+  function tick() {
+    if (!ctx || !cur) return;
+    var track = TRACKS[cur];
+    schedVoice(track, track.mel, "mi", "mAt", track.mtype, track.mvol);
+    schedVoice(track, track.bass, "bi", "bAt", track.btype, track.bvol);
+  }
+
+  function play(name) {
+    if (!TRACKS[name]) return;
+    if (cur === name && timer) return;
+    stop();
+    if (!enabled) { cur = name; return; } // remember; starts on enable
+    ensureCtx();
+    if (!ctx) return;
+    cur = name;
+    state = { name: name, mi: 0, bi: 0, mAt: ctx.currentTime + 0.05, bAt: ctx.currentTime + 0.05 };
+    timer = setInterval(tick, 50);
+    tick();
+  }
+  function stop() {
+    if (timer) { clearInterval(timer); timer = null; }
+    // scheduled notes just play out (short); next track takes over
+  }
+  function setEnabled(v) {
+    enabled = v;
+    try { localStorage.setItem("tq_bgm", v ? "1" : "0"); } catch (e) {}
+    if (!v) { var was = cur; stop(); cur = was; }
+    else if (cur) { var n = cur; cur = null; play(n); }
+  }
+
+  // iOS: audio must start from a user gesture — resume on any press
+  ["pointerdown", "keydown", "touchstart"].forEach(function (ev) {
+    window.addEventListener(ev, function once() {
+      ensureCtx();
+      if (cur && enabled && !timer) { var n = cur; cur = null; play(n); }
+    }, { passive: true });
+  });
+
+  window.BGM = { play: play, stop: stop, setEnabled: setEnabled, isEnabled: function () { return enabled; } };
+})();
+
+</script>
+<script>
 // TOEIC QUEST - quiz module
 // QUIZ.ask(level, {time}) -> Promise<{correct, elapsed, entry, timeout}>
 (function () {
@@ -4003,7 +4227,10 @@ window.ITEM_DEFS = {
     var st = studyRec();
     if (!st) return;
     st.answered++;
-    if (correct) st.correct++;
+    if (correct) {
+      st.correct++;
+      if (window.onQuizCorrect) window.onQuizCorrect();
+    }
     var m = st.missed[entry.w];
     if (!correct) {
       if (!m) m = st.missed[entry.w] = { m: entry.m, wrong: 0, correctStreak: 0 };
@@ -4131,11 +4358,18 @@ window.ITEM_DEFS = {
   function setEnemyArt(sp, id, icon) {
     sp.textContent = icon;
     sp.style.backgroundImage = "";
+    sp.style.width = "";
+    sp.style.height = "";
     sp.dataset.enemy = id;
     if (artCache[id] === "no") return;
     var url = "assets/enemies/" + id + ".png";
     var apply = function () {
       sp.textContent = "";
+      var boss = sp.classList.contains("boss");
+      sp.style.width = boss ? "58vw" : "44vw";
+      sp.style.maxWidth = boss ? "230px" : "180px";
+      sp.style.height = sp.style.width;
+      sp.style.maxHeight = sp.style.maxWidth;
       sp.style.backgroundImage = "url('" + url + "')";
       sp.style.backgroundSize = "contain";
       sp.style.backgroundRepeat = "no-repeat";
@@ -4148,8 +4382,49 @@ window.ITEM_DEFS = {
     img.src = url;
   }
 
+  // damage/effect popup inside the battle frame
+  function bpop(text, cls) {
+    var frame = $("battle-frame");
+    var d = document.createElement("div");
+    d.className = "battle-pop " + (cls || "");
+    d.textContent = text;
+    d.style.left = (35 + rnd(30)) + "%";
+    frame.appendChild(d);
+    setTimeout(function () { d.remove(); }, 900);
+  }
+  function slashFx(color) {
+    var frame = $("battle-frame");
+    var s = document.createElement("div");
+    s.className = "slash-fx";
+    if (color) s.style.background = "linear-gradient(105deg, transparent 38%, " + color + " 50%, transparent 62%)";
+    frame.appendChild(s);
+    setTimeout(function () { s.remove(); }, 320);
+  }
+
+  // battle backdrop image (assets/bg/<key>.png) if present
+  var bgCache = {};
+  function setBattleBg(key) {
+    var frame = $("battle-frame");
+    frame.style.backgroundImage = "";
+    if (!key || bgCache[key] === "no") return;
+    var url = "assets/bg/" + key + ".png";
+    var apply = function () {
+      frame.style.backgroundImage = "url('" + url + "')";
+      frame.style.backgroundSize = "cover";
+      frame.style.backgroundPosition = "center";
+    };
+    if (bgCache[key] === "ok") { apply(); return; }
+    var img = new Image();
+    img.onload = function () { bgCache[key] = "ok"; apply(); };
+    img.onerror = function () { bgCache[key] = "no"; };
+    img.src = url;
+  }
+
   async function enemyAttack(e, kind) {
     var G = window.G, p = G.player;
+    var sp = $("enemy-sprite");
+    sp.classList.add("lunge");
+    setTimeout(function () { sp.classList.remove("lunge"); }, 380);
     var dmg;
     if (kind === "fire") {
       await bsay(e.name + "は ほのおを はいた！");
@@ -4193,9 +4468,11 @@ window.ITEM_DEFS = {
     return null;
   }
 
-  async function playerHit(e, dmg, crit) {
+  async function playerHit(e, dmg, crit, fxColor) {
     var sp = $("enemy-sprite");
     sp.classList.add("hit");
+    slashFx(fxColor);
+    bpop(String(dmg), crit ? "crit" : "");
     if (window.SFX) SFX.play(crit ? "crit" : "slash");
     setTimeout(function () { sp.classList.remove("hit"); }, 120);
     e.hp = Math.max(0, e.hp - dmg);
@@ -4236,6 +4513,7 @@ window.ITEM_DEFS = {
 
     var scr = $("battle-screen");
     scr.style.display = "block";
+    setBattleBg(opts.bg);
     var sp = $("enemy-sprite");
     sp.className = isBoss ? "boss" : "";
     setEnemyArt(sp, e.id, e.icon);
@@ -4290,13 +4568,20 @@ window.ITEM_DEFS = {
         } else {
           var sd = Math.round(spell.power * (0.85 + Math.random() * 0.3));
           if (qs.elapsed <= 2) sd = Math.round(sd * 1.3);
-          await playerHit(e, sd, qs.elapsed <= 2);
+          var weak = spell.elem && window.WEAK && window.WEAK[e.id] === spell.elem;
+          if (weak) {
+            sd = Math.round(sd * 1.5);
+            bpop("じゃくてん！", "weak");
+            await bsay("じゃくてんを ついた！");
+          }
+          var fxc = spell.elem === "fire" ? "rgba(255,150,60,.9)" : spell.elem === "thunder" ? "rgba(255,230,90,.9)" : "rgba(200,160,255,.9)";
+          await playerHit(e, sd, weak || qs.elapsed <= 2, fxc);
         }
       } else if (cmd === 2) {
         // ---- items ----
         var inv = [];
         if (G.player.items.herb > 0) inv.push({ key: "herb", label: "ハーブティー ×" + G.player.items.herb });
-        if (G.player.items.elixir > 0) inv.push({ key: "elixir", label: "しゅうちゅうコーヒー ×" + G.player.items.elixir });
+        if (G.player.items.elixir > 0) inv.push({ key: "elixir", label: "エナジーコーヒー ×" + G.player.items.elixir });
         if (!inv.length) { await bsay("つかえる どうぐを もっていない！"); continue; }
         var ii = await window.UI.menu($("battle-sub"), inv, "どうぐ");
         if (ii < 0) continue;
@@ -4307,7 +4592,7 @@ window.ITEM_DEFS = {
         } else {
           G.player.items.elixir--;
           G.player.mp = Math.min(G.player.maxmp, G.player.mp + 40);
-          await bsay("しゅうちゅうコーヒーを のんだ！\nＭＰが 40 かいふくした。");
+          await bsay("エナジーコーヒーを のんだ！\nＭＰが 40 かいふくした。");
         }
         refreshStatus();
       } else {
@@ -4544,6 +4829,12 @@ window.ITEM_DEFS = {
   function hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }
 
   function curMap() { return window.MAPS[G.pos.map]; }
+  function mapTrack(m) {
+    if (m.kind === "world") return "field";
+    if (m.kind === "dungeon") return m.id === "maou" ? "boss" : "dungeon";
+    return "town";
+  }
+  function playMapBgm() { if (window.BGM) BGM.play(mapTrack(curMap())); }
   function tileAt(m, x, y) {
     if (x < 0 || y < 0 || x >= m.w || y >= m.h) return "=";
     return m.rows[y][x];
@@ -4772,6 +5063,7 @@ window.ITEM_DEFS = {
     await fade(true);
     G.pos.map = map; G.pos.x = x; G.pos.y = y;
     saveGame();
+    playMapBgm();
     await fade(false);
     busyEvent = false;
   }
@@ -4841,7 +5133,12 @@ window.ITEM_DEFS = {
 
   async function runBattle(enemyId, isEventBoss, bossEv) {
     busyEvent = true;
-    var r = await window.BATTLE.start(enemyId);
+    var m = curMap();
+    var bgKey = m.id === "world" ? "zone" + zoneAt(m, G.pos.x, G.pos.y) : m.id;
+    var isBossFight = window.ENEMY_BY_ID[enemyId].traits.indexOf("boss") >= 0;
+    if (window.BGM) BGM.play(isBossFight ? "boss" : "battle");
+    var r = await window.BATTLE.start(enemyId, { bg: bgKey });
+    playMapBgm();
     if (r.result === "lose") {
       await fade(true);
       G.player.gold = Math.floor(G.player.gold / 2);
@@ -4862,6 +5159,7 @@ window.ITEM_DEFS = {
     } else {
       saveGame();
     }
+    await checkDaily();
     busyEvent = false;
   }
 
@@ -4874,6 +5172,42 @@ window.ITEM_DEFS = {
     await UI.say("― ぼうけんのきろく ―\nこたえた単語： " + st.answered + " 問\nせいかいりつ： " + rate + "％");
     await UI.say("だが、まなびの旅に\nおわりは ない。\n\n～ TOEIC QUEST ～\nTHANK YOU FOR PLAYING!");
     G.pos = { map: "castle", x: 9, y: 4, dir: "up" };
+  }
+
+  // =================== DAILY MISSION & STREAK ===================
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+  }
+  function ensureDaily() {
+    if (!G) return;
+    if (!G.daily || G.daily.date !== todayStr()) {
+      G.daily = { date: todayStr(), correct: 0, goal: 20, done: false };
+    }
+  }
+  async function checkDaily() {
+    ensureDaily();
+    if (!G.daily.done && G.daily.correct >= G.daily.goal) {
+      G.daily.done = true;
+      G.player.gold += 150;
+      SFX.play("level");
+      await UI.say("デイリーミッション たっせい！\n本日 " + G.daily.goal + " 問 せいかい！\nほうびに 150ゴールドを てにいれた！");
+      saveGame();
+    }
+  }
+  async function streakCheck() {
+    var t = todayStr();
+    if (G.lastPlay === t) return;
+    var y = new Date(); y.setDate(y.getDate() - 1);
+    var ys = y.getFullYear() + "-" + (y.getMonth() + 1) + "-" + y.getDate();
+    G.streakDays = (G.lastPlay === ys) ? (G.streakDays || 0) + 1 : 1;
+    G.lastPlay = t;
+    if (G.streakDays >= 2) {
+      var bonus = Math.min(G.streakDays, 7) * 20;
+      G.player.gold += bonus;
+      await UI.say("れんぞくログイン " + G.streakDays + " 日目！\nボーナス " + bonus + "ゴールドを てにいれた！");
+    }
+    saveGame();
   }
 
   // =================== INTERACTIONS ===================
@@ -4970,6 +5304,8 @@ window.ITEM_DEFS = {
     }
   }
 
+  window.onQuizCorrect = function () { ensureDaily(); G.daily.correct++; };
+
   // A button on field: talk to facing tile
   function fieldA() {
     if (busyEvent || moving || !G || screenMode !== "field") return;
@@ -4995,7 +5331,10 @@ window.ITEM_DEFS = {
         "\nつぎのレベルまで： " + next +
         "\nこうげき： " + (p.str + window.WEAPONS[p.weapon].atk) + "（" + window.WEAPONS[p.weapon].name + "）" +
         "\nしゅび： " + (p.vit + window.ARMORS[p.armor].def) + "（" + window.ARMORS[p.armor].name + "）" +
-        "\nしょじきん： " + p.gold + "G"
+        "\nしょじきん： " + p.gold + "G" +
+        "\n\nデイリー： " + (G.daily ? Math.min(G.daily.correct, G.daily.goal) : 0) + "／" + (G.daily ? G.daily.goal : 20) + " 問せいかい" +
+        (G.daily && G.daily.done ? "（たっせい！）" : "") +
+        "\nれんぞくログイン： " + (G.streakDays || 1) + " 日"
       );
     } else if (c === 1) {
       await fieldItems();
@@ -5013,8 +5352,8 @@ window.ITEM_DEFS = {
   async function fieldItems() {
     var inv = [];
     if (G.player.items.herb > 0) inv.push({ key: "herb", label: "ハーブティー ×" + G.player.items.herb });
-    if (G.player.items.elixir > 0) inv.push({ key: "elixir", label: "しゅうちゅうコーヒー ×" + G.player.items.elixir });
-    if (G.player.items.wing > 0) inv.push({ key: "wing", label: "きかんチケット ×" + G.player.items.wing });
+    if (G.player.items.elixir > 0) inv.push({ key: "elixir", label: "エナジーコーヒー ×" + G.player.items.elixir });
+    if (G.player.items.wing > 0) inv.push({ key: "wing", label: "ワープの羽根ペン ×" + G.player.items.wing });
     if (G.player.items.key > 0) inv.push({ key: "key", label: "ことばのカギ" });
     if (!inv.length) { await UI.say("なにも もっていない。"); return; }
     var i = await UI.menu($("cmd-win"), inv, "どうぐ");
@@ -5029,10 +5368,10 @@ window.ITEM_DEFS = {
       G.player.items.elixir--;
       G.player.mp = Math.min(G.player.maxmp, G.player.mp + 40);
       SFX.play("heal");
-      await UI.say("しゅうちゅうコーヒーを のんだ！\nＭＰが 40 かいふくした。");
+      await UI.say("エナジーコーヒーを のんだ！\nＭＰが 40 かいふくした。");
     } else if (k === "wing") {
       G.player.items.wing--;
-      await UI.say("きかんチケットを つかった！");
+      await UI.say("ワープの羽根ペンを つかった！");
       await transferTo("castle", 9, 4);
     } else {
       await UI.say("魔王城の とびらを ひらく カギだ。");
@@ -5105,14 +5444,19 @@ window.ITEM_DEFS = {
     screenMode = "field";
     if (isNew) {
       newGame();
+      ensureDaily();
+      playMapBgm();
       await fade(true); await fade(false);
       await UI.say("レキシア大陸 ―\nかつて だれもが 英語をはなせた\nゆたかな くにが あった。");
       await UI.say("しかし まおう ヴォキャブロスが\n《言葉の力》を うばい\n大陸は やみに つつまれた…。");
       await UI.say("いま ひとりの ゆうしゃが\nラーニング王のまえに めしだされた。\n（王さまに はなしかけよう。Ａボタンだ！）");
     } else {
       loadGame();
+      ensureDaily();
+      playMapBgm();
       await fade(true); await fade(false);
       await UI.say("がくしゅうきろくを よみこんだ！\nおかえりなさい、ゆうしゃよ。");
+      await streakCheck();
     }
   }
 
@@ -5125,11 +5469,19 @@ window.ITEM_DEFS = {
   async function settings() {
     var premium = false;
     try { premium = localStorage.getItem("tq_premium") === "1"; } catch (e) {}
+    var bgmOn = window.BGM ? BGM.isEnabled() : true;
     var c = await UI.menu($("cmd-win"), [
+      { label: "ＢＧＭ： " + (bgmOn ? "ＯＮ" : "ＯＦＦ") },
       { label: "広告除去： " + (premium ? "ＯＮ（購入済み扱い）" : "ＯＦＦ") },
       { label: "がくしゅうきろくを けす" },
       { label: "とじる" }
     ], "せってい");
+    if (c === 0) {
+      if (window.BGM) BGM.setEnabled(!bgmOn);
+      await UI.say("ＢＧＭを " + (!bgmOn ? "ＯＮ" : "ＯＦＦ") + " にした。");
+      return;
+    }
+    c = c - 1;
     if (c === 0) {
       try { localStorage.setItem("tq_premium", premium ? "0" : "1"); } catch (e) {}
       refreshAd();
@@ -5147,6 +5499,15 @@ window.ITEM_DEFS = {
   function boot() {
     setupCanvas();
     refreshAd();
+    // key visual (assets/ui/title.png) if present
+    (function () {
+      var img = new Image();
+      img.onload = function () {
+        $("title-screen").style.background =
+          "linear-gradient(rgba(2,4,20,.45), rgba(0,0,10,.82)), url('assets/ui/title.png') center/cover";
+      };
+      img.src = "assets/ui/title.png";
+    })();
     bindHold("dpad-up", "up"); bindHold("dpad-down", "down");
     bindHold("dpad-left", "left"); bindHold("dpad-right", "right");
     $("btn-a").addEventListener("pointerdown", function (e) { e.preventDefault(); INPUT.pressA(); });
@@ -5171,6 +5532,7 @@ window.ITEM_DEFS = {
     });
     $("btn-settings").addEventListener("click", function () { settings(); });
 
+    if (window.BGM) BGM.play("title");
     requestAnimationFrame(loop);
   }
 

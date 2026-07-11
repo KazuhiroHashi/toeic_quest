@@ -353,3 +353,36 @@ canvas#field-canvas {
   #dpad-left { top: 38px; } #dpad-right { top: 38px; }
   .act-btn { width: 52px; height: 52px; }
 }
+
+/* ---------- battle juice ---------- */
+.battle-pop {
+  position: absolute; top: 30%;
+  font-size: 30px; font-weight: bold; color: #fff;
+  text-shadow: 2px 2px 0 #000, 0 0 12px rgba(0,0,0,.8);
+  animation: bpop .85s ease-out forwards;
+  pointer-events: none; z-index: 5;
+  font-family: "Courier New", monospace;
+}
+.battle-pop.crit { color: #ffd54a; font-size: 40px; }
+.battle-pop.weak { color: #7fe3ff; font-size: 22px; }
+@keyframes bpop {
+  0% { transform: translateY(0) scale(.5); opacity: 0; }
+  15% { transform: translateY(-8px) scale(1.2); opacity: 1; }
+  100% { transform: translateY(-44px) scale(1); opacity: 0; }
+}
+.slash-fx {
+  position: absolute; inset: 8%;
+  background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,.95) 50%, transparent 62%);
+  animation: slashmove .3s ease-out forwards;
+  pointer-events: none; z-index: 4;
+}
+@keyframes slashmove {
+  0% { transform: translateX(-60%) skewX(-12deg); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translateX(60%) skewX(-12deg); opacity: 0; }
+}
+#enemy-sprite.lunge { animation: lunge .38s ease-in-out; }
+@keyframes lunge {
+  0%,100% { transform: translateY(0); }
+  35% { transform: translateY(26px) scale(1.06); }
+}

@@ -7,7 +7,7 @@ window.ENEMIES = [
   {id:"slime",    name:"ワードスライム",      icon:"💧", lv:400, hp:8,   atk:5,  def:2,  exp:2,   gold:3,   traits:[]},
   {id:"bat",      name:"アルファベットひよこ", icon:"🐣", lv:400, hp:10,  atk:6,  def:2,  exp:3,   gold:4,   traits:[]},
   {id:"rat",      name:"ペンシルラビット",    icon:"🐰", lv:400, hp:13,  atk:7,  def:3,  exp:4,   gold:6,   traits:[]},
-  {id:"mush",     name:"イレイザーだけ",      icon:"🍄", lv:400, hp:15,  atk:8,  def:6,  exp:6,   gold:7,   traits:[]},
+  {id:"mush",     name:"イレイザーマッシュ",      icon:"🍄", lv:400, hp:15,  atk:8,  def:6,  exp:6,   gold:7,   traits:[]},
   {id:"goblin",   name:"ノートリス",          icon:"🐿️", lv:400, hp:18,  atk:10, def:4,  exp:8,   gold:10,  traits:[]},
   // ---- zone2 : TOEIC500 ----
   {id:"bee",      name:"スペルバード",        icon:"🐤", lv:500, hp:20,  atk:12, def:5,  exp:10,  gold:12,  traits:["double"]},
@@ -73,19 +73,26 @@ window.LEVEL_TABLE = (function(){
   return t;
 })();
 
+// elemental weaknesses (spell elem matches -> x1.5 damage)
+window.WEAK = {
+  slime:"fire", mush:"fire", ghost:"fire", twins:"fire", mummy:"fire", shadow:"fire", mimic:"fire",
+  bee:"thunder", wolf:"thunder", owl:"thunder", lizard:"thunder", clock:"thunder", knight5:"thunder",
+  snight:"thunder", harpy:"thunder", reaper:"thunder", kraken:"thunder", gen_l:"thunder", golem:"fire"
+};
+
 // spells: quizLv = TOEIC level question required to cast
 window.SPELLS = [
   {id:"heal1",  name:"ヒール５００",   learnLv:4,  mp:4,  quizLv:500, type:"heal",   power:35,  desc:"HPを35回復"},
-  {id:"fire1",  name:"ファイア６００", learnLv:7,  mp:5,  quizLv:600, type:"attack", power:28,  desc:"炎で28前後のダメージ"},
+  {id:"fire1",  name:"ファイア６００", learnLv:7,  mp:5,  quizLv:600, type:"attack", elem:"fire", power:28,  desc:"炎で28前後のダメージ"},
   {id:"return", name:"リターン",       learnLv:10, mp:8,  quizLv:600, type:"field",  power:0,   desc:"城へ瞬間移動"},
   {id:"heal2",  name:"ヒールラ７００", learnLv:13, mp:8,  quizLv:700, type:"heal",   power:90,  desc:"HPを90回復"},
-  {id:"thun1",  name:"サンダー８００", learnLv:16, mp:10, quizLv:800, type:"attack", power:65,  desc:"雷で65前後のダメージ"},
+  {id:"thun1",  name:"サンダー８００", learnLv:16, mp:10, quizLv:800, type:"attack", elem:"thunder", power:65,  desc:"雷で65前後のダメージ"},
   {id:"meteo",  name:"メテオ９００",   learnLv:20, mp:15, quizLv:900, type:"attack", power:120, desc:"隕石で120前後のダメージ"}
 ];
 
 window.WEAPONS = [
   {id:"w0", name:"えんぴつ",           atk:1,  price:0},
-  {id:"w1", name:"あかペン",           atk:5,  price:60},
+  {id:"w1", name:"あかペンナイフ",     atk:5,  price:60},
   {id:"w2", name:"ワードソード",       atk:12, price:220},
   {id:"w3", name:"イディオムブレード", atk:22, price:700},
   {id:"w4", name:"ハイライトセイバー", atk:34, price:2200},
@@ -101,7 +108,7 @@ window.ARMORS = [
 ];
 window.ITEM_DEFS = {
   herb:  {name:"ハーブティー", price:12,  desc:"HPを30回復"},
-  wing:  {name:"きかんチケット", price:40, desc:"城へ瞬間移動"},
+  wing:  {name:"ワープの羽根ペン", price:40, desc:"城へ瞬間移動"},
   key:   {name:"ことばのカギ", price:0,   desc:"魔王城の扉を開く"},
-  elixir:{name:"しゅうちゅうコーヒー", price:200, desc:"MPを40回復"}
+  elixir:{name:"エナジーコーヒー", price:200, desc:"MPを40回復"}
 };
