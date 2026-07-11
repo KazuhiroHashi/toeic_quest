@@ -677,10 +677,18 @@
   async function fieldB() {
     if (busyEvent || moving || !G || screenMode !== "field") return;
     busyEvent = true;
+    var bgmOn = window.BGM ? BGM.isEnabled() : false;
     var c = await UI.menu($("cmd-win"), [
       { label: "つよさ" }, { label: "どうぐ" }, { label: "じゅもん" },
-      { label: "たんごちょう" }, { label: "セーブ" }, { label: "とじる" }
+      { label: "たんごちょう" }, { label: "セーブ" },
+      { label: "ＢＧＭ：" + (bgmOn ? "ＯＮ" : "ＯＦＦ") }, { label: "とじる" }
     ], "メニュー");
+    if (c === 5) {
+      if (window.BGM) BGM.setEnabled(!bgmOn);
+      await UI.say("ＢＧＭを " + (!bgmOn ? "ＯＮ" : "ＯＦＦ") + " にした。");
+      busyEvent = false;
+      return;
+    }
     if (c === 0) {
       var p = G.player, T = window.LEVEL_TABLE;
       var next = p.lv < T.length ? (T[p.lv].exp - p.exp) : 0;

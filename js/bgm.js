@@ -5,8 +5,8 @@
   "use strict";
 
   var ctx = null, master = null;
-  var enabled = true;
-  try { enabled = localStorage.getItem("tq_bgm") !== "0"; } catch (e) {}
+  var enabled = false; // opt-in: silent by default
+  try { enabled = localStorage.getItem("tq_bgm") === "1"; } catch (e) {}
 
   function ensureCtx() {
     if (ctx) { if (ctx.state === "suspended") ctx.resume(); return; }
