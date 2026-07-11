@@ -31,11 +31,18 @@
   function setEnemyArt(sp, id, icon) {
     sp.textContent = icon;
     sp.style.backgroundImage = "";
+    sp.style.width = "";
+    sp.style.height = "";
     sp.dataset.enemy = id;
     if (artCache[id] === "no") return;
     var url = "assets/enemies/" + id + ".png";
     var apply = function () {
       sp.textContent = "";
+      var boss = sp.classList.contains("boss");
+      sp.style.width = boss ? "58vw" : "44vw";
+      sp.style.maxWidth = boss ? "230px" : "180px";
+      sp.style.height = sp.style.width;
+      sp.style.maxHeight = sp.style.maxWidth;
       sp.style.backgroundImage = "url('" + url + "')";
       sp.style.backgroundSize = "contain";
       sp.style.backgroundRepeat = "no-repeat";
