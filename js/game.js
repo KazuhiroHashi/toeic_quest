@@ -183,7 +183,8 @@
       pos: { map: "castle", x: 9, y: 4, dir: "up" },
       flags: {},
       chests: {},
-      study: { missed: {}, answered: 0, correct: 0 }
+      combo: 0,
+      study: { missed: {}, answered: 0, correct: 0, words: {} }
     };
   }
 
@@ -721,7 +722,7 @@
     } else if (c === 2) {
       await fieldSpells();
     } else if (c === 3) {
-      await wordBook();
+      await openZukan();
     } else if (c === 4) {
       saveGame();
       await UI.say("がくしゅうきろくを セーブした！");
@@ -798,6 +799,75 @@
       await UI.say(page);
     }
     if (words.length) await UI.say("にがて単語は 戦闘で\nでやすくなっているぞ。\nくりかえして おぼえよう！");
+  }
+
+  // =================== WORD ENCYCLOPEDIA (zukan) ===================
+  var zukanBand = 400;
+  function starOf(r) {
+    if (!r || !r.c) return "none";
+    if (r.g) return "gold";
+    if (r.f) return "silver";
+    return "bronze";
+  }
+  function renderZukan() {
+    var words = (G.study && G.study.words) || {};
+    var tabs = $("zukan-tabs");
+    tabs.innerHTML = "";
+    [400, 500, 600, 700, 800, 900].forEach(function (b) {
+      var t = document.createElement("div");
+      t.className = "ztab" + (b === zukanBand ? " on" : "");
+      t.textContent = b;
+      t.onpointerdown = function (e) { e.preventDefault(); zukanBand = b; renderZukan(); };
+      tabs.appendChild(t);
+    });
+    var pool = (window.VOCAB[zukanBand] || []).slice().sort(function (a, b) { return a.w < b.w ? -1 : 1; });
+    var nB = 0, nS = 0, nG = 0, weakN = 0;
+    var rows = pool.map(function (e) {
+      var r = words[e.w];
+      var st = starOf(r);
+      if (st !== "none") nB++;
+      if (st === "silver" || st === "gold") nS++;
+      if (st === "gold") nG++;
+      var weak = r && r.wr > 0 && r.s < 2;
+      if (weak) weakN++;
+      var known = r && r.c > 0;
+      return '<div class="zrow"><div class="zstar ' + st + '">★</div>' +
+        '<div class="zw">' + e.w + "</div>" +
+        '<div class="zm' + (known ? "" : " hidden-m") + '">' + (known ? e.m : "？？？") + "</div>" +
+        (weak ? '<div class="zweak">！</div>' : "") + "</div>";
+    });
+    $("zukan-summary").innerHTML =
+      "はっけん " + nB + "／" + pool.length +
+      '　<span style="color:#cfd8e6">★' + nS + "</span>" +
+      '　<span style="color:#ffd54a">★' + nG + "</span>" +
+      (weakN ? '　<span style="color:#ff5a5a">にがて ' + weakN + "</span>" : "") +
+      '<div style="font-size:10.5px;color:#667;margin-top:2px">★＝正解ずみ／銀★＝2秒以内で正解／金★＝3連続正解</div>';
+    $("zukan-list").innerHTML = rows.join("");
+    $("zukan-list").scrollTop = 0;
+  }
+  function openZukan() {
+    return new Promise(function (resolve) {
+      renderZukan();
+      $("zukan").classList.add("on");
+      function close() {
+        INPUT.pop();
+        $("zukan").classList.remove("on");
+        $("zukan-close").onpointerdown = null;
+        resolve();
+      }
+      INPUT.push({
+        onA: close, onB: close,
+        onDir: function (d) {
+          var bands = [400, 500, 600, 700, 800, 900];
+          var i = bands.indexOf(zukanBand);
+          if (d === "left") zukanBand = bands[(i + 5) % 6];
+          else if (d === "right") zukanBand = bands[(i + 1) % 6];
+          else return;
+          renderZukan();
+        }
+      });
+      $("zukan-close").onpointerdown = function (e) { e.preventDefault(); close(); };
+    });
   }
 
   // =================== MAIN LOOP ===================

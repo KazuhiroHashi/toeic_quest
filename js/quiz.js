@@ -80,7 +80,7 @@
     return choices;
   }
 
-  function record(entry, correct) {
+  function record(entry, correct, elapsed, lv) {
     var st = studyRec();
     if (!st) return;
     st.answered++;
@@ -95,6 +95,20 @@
     } else if (m) {
       m.correctStreak = (m.correctStreak || 0) + 1;
     }
+    // ---- word book stars (bronze=correct once, silver=<=2s, gold=3 in a row) ----
+    st.words = st.words || {};
+    var r = st.words[entry.w];
+    if (!r) r = st.words[entry.w] = { l: lv, m: entry.m, p: entry.p, c: 0, wr: 0, s: 0, f: 0, g: 0 };
+    if (correct) {
+      r.c++; r.s++;
+      if (elapsed <= 2) r.f = 1;
+      if (r.s >= 3) r.g = 1;
+    } else {
+      r.wr++; r.s = 0;
+    }
+    // ---- combo chain (persists across battles, reset on miss) ----
+    var G = window.G;
+    if (G) G.combo = correct ? (G.combo || 0) + 1 : 0;
   }
 
   var keyHandler = null;
@@ -106,7 +120,7 @@
     var lv = resolveLevel(level);
     return new Promise(function (resolve) {
       if (lv == null) { resolve({ correct: true, elapsed: 0, entry: null }); return; }
-      var entry = pickEntry(lv);
+      var entry = opts.entry || pickEntry(lv);
       var choices = pickChoices(lv, entry);
       var time = (opts.time || 5) * 1000;
       var done = false;
@@ -148,8 +162,8 @@
         done = true;
         cancelAnimationFrame(raf);
         window.removeEventListener("keydown", keyHandler);
-        record(entry, correct);
         var elapsed = (performance.now() - t0) / 1000;
+        record(entry, correct, elapsed, lv);
         // reveal
         btns.forEach(function (b, i) {
           if (choices[i] === entry.m) b.classList.add("correct");
@@ -165,7 +179,7 @@
         }
         timeoutId = setTimeout(function () {
           overlay.style.display = "none";
-          resolve({ correct: correct, elapsed: elapsed, entry: entry, timeout: !!timeout });
+          resolve({ correct: correct, elapsed: elapsed, entry: entry, timeout: !!timeout, lv: lv });
         }, correct ? 650 : 1400);
       }
       function answer(i) {

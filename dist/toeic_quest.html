@@ -397,6 +397,55 @@ canvas#field-canvas {
   35% { transform: translateY(26px) scale(1.06); }
 }
 
+/* ---------- word encyclopedia (zukan) ---------- */
+#zukan {
+  position: absolute; inset: 0; z-index: 55;
+  background: #05060f;
+  display: none; flex-direction: column;
+}
+#zukan.on { display: flex; }
+#zukan-head {
+  flex: none; display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 14px; border-bottom: 2px solid #223;
+}
+#zukan-title { font-size: 17px; font-weight: bold; color: var(--accent); letter-spacing: 2px; }
+#zukan-close { font-size: 13px; color: #9ab; padding: 6px 10px; border: 1px solid #445; border-radius: 8px; cursor: pointer; }
+#zukan-close:active { background: #234; }
+#zukan-tabs { flex: none; display: flex; gap: 6px; padding: 8px 10px; overflow-x: auto; }
+.ztab {
+  flex: none; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: bold;
+  border: 1px solid #445; color: #9ab; cursor: pointer; white-space: nowrap;
+}
+.ztab.on { background: #234; color: #fff; border-color: var(--accent); }
+#zukan-summary { flex: none; padding: 4px 14px 8px; font-size: 12.5px; color: #cde; letter-spacing: 1px; }
+#zukan-list { flex: 1; overflow-y: auto; padding: 0 10px 20px; -webkit-overflow-scrolling: touch; }
+.zrow {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 6px; border-bottom: 1px solid #16182a; font-size: 14px;
+}
+.zrow .zstar { flex: none; width: 20px; text-align: center; }
+.zstar.gold { color: #ffd54a; text-shadow: 0 0 6px rgba(255,213,74,.8); }
+.zstar.silver { color: #cfd8e6; }
+.zstar.bronze { color: #d08a4a; }
+.zstar.none { color: #333952; }
+.zrow .zw { flex: none; width: 42%; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zrow .zm { flex: 1; color: #9ab; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zrow .zm.hidden-m { color: #444a66; letter-spacing: 2px; }
+.zrow .zweak { flex: none; color: var(--danger); font-weight: bold; font-size: 12px; }
+
+/* combo badge in battle */
+#combo-badge {
+  position: absolute; top: 8px; right: 10px; z-index: 6;
+  display: none; text-align: center;
+  color: var(--accent); font-weight: bold; font-size: 26px; line-height: 1;
+  text-shadow: 2px 2px 0 #000, 0 0 14px rgba(255,180,60,.5);
+  pointer-events: none;
+}
+#combo-badge .cl { display: block; font-size: 9px; letter-spacing: 3px; margin-top: 2px; }
+#combo-badge .cm { display: block; font-size: 11px; color: #ffab5c; margin-top: 1px; }
+#combo-badge.bump { animation: combobump .3s; }
+@keyframes combobump { 40% { transform: scale(1.35); } }
+
 </style>
 
 <div id="app">
@@ -415,6 +464,7 @@ canvas#field-canvas {
         </div>
         <div id="battle-status" class="dq-window"></div>
         <div id="battle-msg" class="dq-window"></div>
+        <div id="combo-badge"></div>
         <div id="battle-cmd" class="dq-window menu-win"></div>
         <div id="battle-sub" class="dq-window menu-win"></div>
       </div>
@@ -434,6 +484,17 @@ canvas#field-canvas {
           <div id="quiz-choices"></div>
           <div id="quiz-result"></div>
         </div>
+      </div>
+
+      <!-- word encyclopedia -->
+      <div id="zukan">
+        <div id="zukan-head">
+          <div id="zukan-title">たんごずかん</div>
+          <div id="zukan-close">✕ とじる</div>
+        </div>
+        <div id="zukan-tabs"></div>
+        <div id="zukan-summary"></div>
+        <div id="zukan-list"></div>
       </div>
 
       <div id="fade-layer"></div>
@@ -4122,7 +4183,7 @@ window.ITEM_DEFS = {
     return choices;
   }
 
-  function record(entry, correct) {
+  function record(entry, correct, elapsed, lv) {
     var st = studyRec();
     if (!st) return;
     st.answered++;
@@ -4137,6 +4198,20 @@ window.ITEM_DEFS = {
     } else if (m) {
       m.correctStreak = (m.correctStreak || 0) + 1;
     }
+    // ---- word book stars (bronze=correct once, silver=<=2s, gold=3 in a row) ----
+    st.words = st.words || {};
+    var r = st.words[entry.w];
+    if (!r) r = st.words[entry.w] = { l: lv, m: entry.m, p: entry.p, c: 0, wr: 0, s: 0, f: 0, g: 0 };
+    if (correct) {
+      r.c++; r.s++;
+      if (elapsed <= 2) r.f = 1;
+      if (r.s >= 3) r.g = 1;
+    } else {
+      r.wr++; r.s = 0;
+    }
+    // ---- combo chain (persists across battles, reset on miss) ----
+    var G = window.G;
+    if (G) G.combo = correct ? (G.combo || 0) + 1 : 0;
   }
 
   var keyHandler = null;
@@ -4148,7 +4223,7 @@ window.ITEM_DEFS = {
     var lv = resolveLevel(level);
     return new Promise(function (resolve) {
       if (lv == null) { resolve({ correct: true, elapsed: 0, entry: null }); return; }
-      var entry = pickEntry(lv);
+      var entry = opts.entry || pickEntry(lv);
       var choices = pickChoices(lv, entry);
       var time = (opts.time || 5) * 1000;
       var done = false;
@@ -4190,8 +4265,8 @@ window.ITEM_DEFS = {
         done = true;
         cancelAnimationFrame(raf);
         window.removeEventListener("keydown", keyHandler);
-        record(entry, correct);
         var elapsed = (performance.now() - t0) / 1000;
+        record(entry, correct, elapsed, lv);
         // reveal
         btns.forEach(function (b, i) {
           if (choices[i] === entry.m) b.classList.add("correct");
@@ -4207,7 +4282,7 @@ window.ITEM_DEFS = {
         }
         timeoutId = setTimeout(function () {
           overlay.style.display = "none";
-          resolve({ correct: correct, elapsed: elapsed, entry: entry, timeout: !!timeout });
+          resolve({ correct: correct, elapsed: elapsed, entry: entry, timeout: !!timeout, lv: lv });
         }, correct ? 650 : 1400);
       }
       function answer(i) {
@@ -4236,11 +4311,22 @@ window.ITEM_DEFS = {
   function pAtk() { var G = window.G; return G.player.str + window.WEAPONS[G.player.weapon].atk; }
   function pDef() { var G = window.G; return G.player.vit + window.ARMORS[G.player.armor].def; }
 
+  function comboMult() {
+    var c = (window.G && window.G.combo) || 0;
+    return 1 + Math.min(c * 0.05, 0.5); // up to x1.5 at 10 chain
+  }
   function refreshStatus() {
     var G = window.G, p = G.player;
     $("battle-status").innerHTML =
       '<div class="name">ゆうしゃ　Lv' + p.lv + "</div>" +
       "ＨＰ " + p.hp + "/" + p.maxhp + "<br>ＭＰ " + p.mp + "/" + p.maxmp;
+    var cb = $("combo-badge");
+    if (cb) {
+      var c = G.combo || 0;
+      cb.style.display = c >= 2 ? "block" : "none";
+      cb.innerHTML = c + '<span class="cl">COMBO</span>' + (c >= 10 ? '<span class="cm">MAX x1.5</span>' : '<span class="cm">x' + (1 + Math.min(c * 0.05, 0.5)).toFixed(2) + "</span>");
+      cb.classList.remove("bump"); void cb.offsetWidth; cb.classList.add("bump");
+    }
   }
 
   function setEnemyHp(e) {
@@ -4319,7 +4405,7 @@ window.ITEM_DEFS = {
     img.src = url;
   }
 
-  async function enemyAttack(e, kind) {
+  async function enemyAttack(e, kind, mult) {
     var G = window.G, p = G.player;
     var sp = $("enemy-sprite");
     sp.classList.add("lunge");
@@ -4332,6 +4418,7 @@ window.ITEM_DEFS = {
       await bsay(e.name + "の こうげき！");
       dmg = Math.max(1, Math.round(e.atk / 2 - pDef() / 4) + rnd(4));
     }
+    if (mult) dmg = Math.round(dmg * mult);
     p.hp = Math.max(0, p.hp - dmg);
     $("battle-screen").classList.add("shake");
     $("battle-bg").classList.add("flash-red");
@@ -4344,8 +4431,34 @@ window.ITEM_DEFS = {
     await bsay("ゆうしゃは " + dmg + " の\nダメージを うけた！");
   }
 
+  function weakWordList() {
+    var st = window.G && window.G.study;
+    if (!st || !st.words) return [];
+    return Object.keys(st.words).map(function (w) {
+      var r = st.words[w];
+      return { w: w, r: r };
+    }).filter(function (o) { return o.r.wr > 0 && o.r.s < 2; });
+  }
+
   async function enemyTurn(e) {
     var G = window.G;
+    // revenge word curse: the enemy strikes with a word YOU missed before
+    var weak = weakWordList();
+    if (weak.length && Math.random() < 0.25) {
+      var pick = weak[rnd(weak.length)];
+      await bsay(e.name + "は のろいのことば\n『" + pick.w + "』を はなった！\n（正解すれば むこうか＋反撃！）");
+      var cq = await window.QUIZ.ask(pick.r.l || e.lv, { entry: { w: pick.w, m: pick.r.m, p: pick.r.p || "n" }, time: 5 });
+      if (cq.correct) {
+        var cd = Math.max(1, Math.round(pAtk() * 0.8 * comboMult()));
+        await bsay("のろいを うちけした！");
+        await playerHit(e, cd, true, "rgba(160,220,255,.9)");
+        refreshStatus();
+        return e.hp <= 0 ? null : null;
+      }
+      await enemyAttack(e, "attack", 1.3);
+      refreshStatus();
+      return G.player.hp <= 0 ? "dead" : null;
+    }
     if (e.traits.indexOf("flee") >= 0 && Math.random() < 0.45) {
       await bsay(e.name + "は にげだした！");
       return "fled";
@@ -4423,6 +4536,7 @@ window.ITEM_DEFS = {
     await bsay(e.name + "が あらわれた！" + (quizTime < 5 ? "\n（せっかち：制限時間 " + quizTime + " 秒！）" : ""));
 
     var result = null, gotExp = 0, gotGold = 0;
+    var revenge = []; // words missed in this battle, re-asked after 2 turns
 
     while (!result) {
       var cmd = await window.UI.menu($("battle-cmd"), [
@@ -4431,16 +4545,26 @@ window.ITEM_DEFS = {
 
       if (cmd === 0) {
         // ---- attack: answer a word at the enemy's level ----
-        var q = await window.QUIZ.ask(e.lv, { time: quizTime });
+        // in-battle revenge: a word missed earlier in this battle comes back
+        var forced = null;
+        for (var ri = 0; ri < revenge.length; ri++) {
+          if (revenge[ri].t <= 0) { forced = revenge.splice(ri, 1)[0]; break; }
+        }
+        if (forced) await bsay("さっき ミスした単語だ！\nリベンジのチャンス！");
+        var q = await window.QUIZ.ask(forced ? forced.lv : e.lv, forced ? { entry: forced.entry, time: quizTime } : { time: quizTime });
+        refreshStatus();
         if (q.correct) {
           var crit = q.elapsed <= 2;
-          var dmg = Math.max(1, pAtk() - Math.round(e.def / 2) + rnd(5));
+          var dmg = Math.max(1, Math.round((pAtk() - e.def / 2 + rnd(5)) * comboMult()));
+          if (forced) { dmg = Math.round(dmg * 1.2); bpop("リベンジ！", "weak"); }
           if (crit) dmg *= 2;
           if (e.id === "metal" && !crit) dmg = 1; // metal body unless critical
           await playerHit(e, dmg, crit);
         } else {
+          revenge.push({ entry: q.entry, lv: q.lv, t: 2 });
           await bsay("ゆうしゃの こうげきは\nからぶりに おわった！");
         }
+        revenge.forEach(function (r) { r.t--; });
       } else if (cmd === 1) {
         // ---- spells ----
         var learned = window.SPELLS.filter(function (s) { return G.player.spells.indexOf(s.id) >= 0 && s.type !== "field"; });
@@ -4456,7 +4580,9 @@ window.ITEM_DEFS = {
         refreshStatus();
         await bsay("ゆうしゃは『" + spell.name + "』を となえた！\n（TOEIC" + spell.quizLv + " の単語に こたえよ！）");
         var qs = await window.QUIZ.ask(spell.quizLv, { time: quizTime });
+        refreshStatus();
         if (!qs.correct) {
+          revenge.push({ entry: qs.entry, lv: qs.lv, t: 2 });
           await bsay("じゅもんは ふはつに おわった…！");
         } else if (spell.type === "heal") {
           var h = spell.power;
@@ -4465,7 +4591,7 @@ window.ITEM_DEFS = {
           if (window.SFX) SFX.play("heal");
           await bsay("ＨＰが " + h + " かいふくした！");
         } else {
-          var sd = Math.round(spell.power * (0.85 + Math.random() * 0.3));
+          var sd = Math.round(spell.power * (0.85 + Math.random() * 0.3) * comboMult());
           if (qs.elapsed <= 2) sd = Math.round(sd * 1.3);
           var weak = spell.elem && window.WEAK && window.WEAK[e.id] === spell.elem;
           if (weak) {
@@ -4724,7 +4850,8 @@ window.ITEM_DEFS = {
       pos: { map: "castle", x: 9, y: 4, dir: "up" },
       flags: {},
       chests: {},
-      study: { missed: {}, answered: 0, correct: 0 }
+      combo: 0,
+      study: { missed: {}, answered: 0, correct: 0, words: {} }
     };
   }
 
@@ -5262,7 +5389,7 @@ window.ITEM_DEFS = {
     } else if (c === 2) {
       await fieldSpells();
     } else if (c === 3) {
-      await wordBook();
+      await openZukan();
     } else if (c === 4) {
       saveGame();
       await UI.say("がくしゅうきろくを セーブした！");
@@ -5339,6 +5466,75 @@ window.ITEM_DEFS = {
       await UI.say(page);
     }
     if (words.length) await UI.say("にがて単語は 戦闘で\nでやすくなっているぞ。\nくりかえして おぼえよう！");
+  }
+
+  // =================== WORD ENCYCLOPEDIA (zukan) ===================
+  var zukanBand = 400;
+  function starOf(r) {
+    if (!r || !r.c) return "none";
+    if (r.g) return "gold";
+    if (r.f) return "silver";
+    return "bronze";
+  }
+  function renderZukan() {
+    var words = (G.study && G.study.words) || {};
+    var tabs = $("zukan-tabs");
+    tabs.innerHTML = "";
+    [400, 500, 600, 700, 800, 900].forEach(function (b) {
+      var t = document.createElement("div");
+      t.className = "ztab" + (b === zukanBand ? " on" : "");
+      t.textContent = b;
+      t.onpointerdown = function (e) { e.preventDefault(); zukanBand = b; renderZukan(); };
+      tabs.appendChild(t);
+    });
+    var pool = (window.VOCAB[zukanBand] || []).slice().sort(function (a, b) { return a.w < b.w ? -1 : 1; });
+    var nB = 0, nS = 0, nG = 0, weakN = 0;
+    var rows = pool.map(function (e) {
+      var r = words[e.w];
+      var st = starOf(r);
+      if (st !== "none") nB++;
+      if (st === "silver" || st === "gold") nS++;
+      if (st === "gold") nG++;
+      var weak = r && r.wr > 0 && r.s < 2;
+      if (weak) weakN++;
+      var known = r && r.c > 0;
+      return '<div class="zrow"><div class="zstar ' + st + '">★</div>' +
+        '<div class="zw">' + e.w + "</div>" +
+        '<div class="zm' + (known ? "" : " hidden-m") + '">' + (known ? e.m : "？？？") + "</div>" +
+        (weak ? '<div class="zweak">！</div>' : "") + "</div>";
+    });
+    $("zukan-summary").innerHTML =
+      "はっけん " + nB + "／" + pool.length +
+      '　<span style="color:#cfd8e6">★' + nS + "</span>" +
+      '　<span style="color:#ffd54a">★' + nG + "</span>" +
+      (weakN ? '　<span style="color:#ff5a5a">にがて ' + weakN + "</span>" : "") +
+      '<div style="font-size:10.5px;color:#667;margin-top:2px">★＝正解ずみ／銀★＝2秒以内で正解／金★＝3連続正解</div>';
+    $("zukan-list").innerHTML = rows.join("");
+    $("zukan-list").scrollTop = 0;
+  }
+  function openZukan() {
+    return new Promise(function (resolve) {
+      renderZukan();
+      $("zukan").classList.add("on");
+      function close() {
+        INPUT.pop();
+        $("zukan").classList.remove("on");
+        $("zukan-close").onpointerdown = null;
+        resolve();
+      }
+      INPUT.push({
+        onA: close, onB: close,
+        onDir: function (d) {
+          var bands = [400, 500, 600, 700, 800, 900];
+          var i = bands.indexOf(zukanBand);
+          if (d === "left") zukanBand = bands[(i + 5) % 6];
+          else if (d === "right") zukanBand = bands[(i + 1) % 6];
+          else return;
+          renderZukan();
+        }
+      });
+      $("zukan-close").onpointerdown = function (e) { e.preventDefault(); close(); };
+    });
   }
 
   // =================== MAIN LOOP ===================

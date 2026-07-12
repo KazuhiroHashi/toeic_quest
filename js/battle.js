@@ -10,11 +10,22 @@
   function pAtk() { var G = window.G; return G.player.str + window.WEAPONS[G.player.weapon].atk; }
   function pDef() { var G = window.G; return G.player.vit + window.ARMORS[G.player.armor].def; }
 
+  function comboMult() {
+    var c = (window.G && window.G.combo) || 0;
+    return 1 + Math.min(c * 0.05, 0.5); // up to x1.5 at 10 chain
+  }
   function refreshStatus() {
     var G = window.G, p = G.player;
     $("battle-status").innerHTML =
       '<div class="name">ゆうしゃ　Lv' + p.lv + "</div>" +
       "ＨＰ " + p.hp + "/" + p.maxhp + "<br>ＭＰ " + p.mp + "/" + p.maxmp;
+    var cb = $("combo-badge");
+    if (cb) {
+      var c = G.combo || 0;
+      cb.style.display = c >= 2 ? "block" : "none";
+      cb.innerHTML = c + '<span class="cl">COMBO</span>' + (c >= 10 ? '<span class="cm">MAX x1.5</span>' : '<span class="cm">x' + (1 + Math.min(c * 0.05, 0.5)).toFixed(2) + "</span>");
+      cb.classList.remove("bump"); void cb.offsetWidth; cb.classList.add("bump");
+    }
   }
 
   function setEnemyHp(e) {
@@ -93,7 +104,7 @@
     img.src = url;
   }
 
-  async function enemyAttack(e, kind) {
+  async function enemyAttack(e, kind, mult) {
     var G = window.G, p = G.player;
     var sp = $("enemy-sprite");
     sp.classList.add("lunge");
@@ -106,6 +117,7 @@
       await bsay(e.name + "の こうげき！");
       dmg = Math.max(1, Math.round(e.atk / 2 - pDef() / 4) + rnd(4));
     }
+    if (mult) dmg = Math.round(dmg * mult);
     p.hp = Math.max(0, p.hp - dmg);
     $("battle-screen").classList.add("shake");
     $("battle-bg").classList.add("flash-red");
@@ -118,8 +130,34 @@
     await bsay("ゆうしゃは " + dmg + " の\nダメージを うけた！");
   }
 
+  function weakWordList() {
+    var st = window.G && window.G.study;
+    if (!st || !st.words) return [];
+    return Object.keys(st.words).map(function (w) {
+      var r = st.words[w];
+      return { w: w, r: r };
+    }).filter(function (o) { return o.r.wr > 0 && o.r.s < 2; });
+  }
+
   async function enemyTurn(e) {
     var G = window.G;
+    // revenge word curse: the enemy strikes with a word YOU missed before
+    var weak = weakWordList();
+    if (weak.length && Math.random() < 0.25) {
+      var pick = weak[rnd(weak.length)];
+      await bsay(e.name + "は のろいのことば\n『" + pick.w + "』を はなった！\n（正解すれば むこうか＋反撃！）");
+      var cq = await window.QUIZ.ask(pick.r.l || e.lv, { entry: { w: pick.w, m: pick.r.m, p: pick.r.p || "n" }, time: 5 });
+      if (cq.correct) {
+        var cd = Math.max(1, Math.round(pAtk() * 0.8 * comboMult()));
+        await bsay("のろいを うちけした！");
+        await playerHit(e, cd, true, "rgba(160,220,255,.9)");
+        refreshStatus();
+        return e.hp <= 0 ? null : null;
+      }
+      await enemyAttack(e, "attack", 1.3);
+      refreshStatus();
+      return G.player.hp <= 0 ? "dead" : null;
+    }
     if (e.traits.indexOf("flee") >= 0 && Math.random() < 0.45) {
       await bsay(e.name + "は にげだした！");
       return "fled";
@@ -197,6 +235,7 @@
     await bsay(e.name + "が あらわれた！" + (quizTime < 5 ? "\n（せっかち：制限時間 " + quizTime + " 秒！）" : ""));
 
     var result = null, gotExp = 0, gotGold = 0;
+    var revenge = []; // words missed in this battle, re-asked after 2 turns
 
     while (!result) {
       var cmd = await window.UI.menu($("battle-cmd"), [
@@ -205,16 +244,26 @@
 
       if (cmd === 0) {
         // ---- attack: answer a word at the enemy's level ----
-        var q = await window.QUIZ.ask(e.lv, { time: quizTime });
+        // in-battle revenge: a word missed earlier in this battle comes back
+        var forced = null;
+        for (var ri = 0; ri < revenge.length; ri++) {
+          if (revenge[ri].t <= 0) { forced = revenge.splice(ri, 1)[0]; break; }
+        }
+        if (forced) await bsay("さっき ミスした単語だ！\nリベンジのチャンス！");
+        var q = await window.QUIZ.ask(forced ? forced.lv : e.lv, forced ? { entry: forced.entry, time: quizTime } : { time: quizTime });
+        refreshStatus();
         if (q.correct) {
           var crit = q.elapsed <= 2;
-          var dmg = Math.max(1, pAtk() - Math.round(e.def / 2) + rnd(5));
+          var dmg = Math.max(1, Math.round((pAtk() - e.def / 2 + rnd(5)) * comboMult()));
+          if (forced) { dmg = Math.round(dmg * 1.2); bpop("リベンジ！", "weak"); }
           if (crit) dmg *= 2;
           if (e.id === "metal" && !crit) dmg = 1; // metal body unless critical
           await playerHit(e, dmg, crit);
         } else {
+          revenge.push({ entry: q.entry, lv: q.lv, t: 2 });
           await bsay("ゆうしゃの こうげきは\nからぶりに おわった！");
         }
+        revenge.forEach(function (r) { r.t--; });
       } else if (cmd === 1) {
         // ---- spells ----
         var learned = window.SPELLS.filter(function (s) { return G.player.spells.indexOf(s.id) >= 0 && s.type !== "field"; });
@@ -230,7 +279,9 @@
         refreshStatus();
         await bsay("ゆうしゃは『" + spell.name + "』を となえた！\n（TOEIC" + spell.quizLv + " の単語に こたえよ！）");
         var qs = await window.QUIZ.ask(spell.quizLv, { time: quizTime });
+        refreshStatus();
         if (!qs.correct) {
+          revenge.push({ entry: qs.entry, lv: qs.lv, t: 2 });
           await bsay("じゅもんは ふはつに おわった…！");
         } else if (spell.type === "heal") {
           var h = spell.power;
@@ -239,7 +290,7 @@
           if (window.SFX) SFX.play("heal");
           await bsay("ＨＰが " + h + " かいふくした！");
         } else {
-          var sd = Math.round(spell.power * (0.85 + Math.random() * 0.3));
+          var sd = Math.round(spell.power * (0.85 + Math.random() * 0.3) * comboMult());
           if (qs.elapsed <= 2) sd = Math.round(sd * 1.3);
           var weak = spell.elem && window.WEAK && window.WEAK[e.id] === spell.elem;
           if (weak) {
