@@ -21,8 +21,22 @@
       o.start(); o.stop(actx.currentTime + dur);
     } catch (e) {}
   }
+  // uploaded files (assets/sfx/<name>.mp3) replace synth beeps automatically
+  var sfxFiles = {};
+  function sfxFile(name) {
+    var f = sfxFiles[name];
+    if (f === "no") return false;
+    if (f) { var c = f.cloneNode(); c.volume = 0.5; c.play().catch(function () {}); return true; }
+    var a = new Audio();
+    a.preload = "auto";
+    a.oncanplaythrough = function () { a.oncanplaythrough = null; sfxFiles[name] = a; };
+    a.onerror = function () { sfxFiles[name] = "no"; };
+    a.src = "assets/sfx/" + name + ".mp3";
+    return false; // beep this once; file takes over when cached
+  }
   window.SFX = {
     play: function (name) {
+      if (sfxFile(name)) return;
       switch (name) {
         case "ok": beep(880, 0.12, "square"); beep(1320, 0.15, "square"); break;
         case "crit": beep(660, 0.08, "square"); beep(990, 0.1, "square"); beep(1560, 0.2, "square"); break;
