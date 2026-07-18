@@ -46,7 +46,8 @@
     sp.style.height = "";
     sp.dataset.enemy = id;
     if (artCache[id] === "no") return;
-    var url = "assets/enemies/" + id + ".png";
+    // standalone/artifact builds embed downscaled art as data URIs
+    var url = (window.ENEMY_ART && window.ENEMY_ART[id]) || "assets/enemies/" + id + ".png";
     var apply = function () {
       sp.textContent = "";
       var boss = sp.classList.contains("boss");

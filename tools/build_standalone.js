@@ -10,6 +10,7 @@ var root = path.join(__dirname, "..");
 
 var out = process.argv[2] || path.join(root, "dist", "toeic_quest.html");
 var artifactMode = process.argv.includes("--artifact");
+var embedArg = process.argv.find(function (a) { return a.indexOf("--embed=") === 0; });
 var srcArg = process.argv.find(function (a) { return a.indexOf("--src=") === 0; });
 var srcHtml = srcArg ? path.resolve(srcArg.slice(6)) : path.join(root, "index.html");
 var srcDir = path.dirname(srcHtml);
@@ -26,6 +27,9 @@ var scripts = [];
 var re = /<script src="([^"]+)"><\/script>/g, m;
 while ((m = re.exec(html))) {
   scripts.push('<script>\n' + fs.readFileSync(path.join(srcDir, m[1]), "utf8") + "\n</script>");
+}
+if (embedArg) {
+  scripts.push('<script>\n' + fs.readFileSync(path.resolve(embedArg.slice(8)), "utf8") + "\n</script>");
 }
 
 var core =
