@@ -92,7 +92,7 @@
     var frame = $("battle-frame");
     frame.style.backgroundImage = "";
     if (!key || bgCache[key] === "no") return;
-    var url = "assets/bg/" + key + ".png";
+    var url = (window.BG_ART && window.BG_ART[key]) || "assets/bg/" + key + ".png";
     var apply = function () {
       frame.style.backgroundImage = "url('" + url + "')";
       frame.style.backgroundSize = "cover";

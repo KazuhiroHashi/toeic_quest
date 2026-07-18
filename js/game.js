@@ -31,7 +31,7 @@
     a.preload = "auto";
     a.oncanplaythrough = function () { a.oncanplaythrough = null; sfxFiles[name] = a; };
     a.onerror = function () { sfxFiles[name] = "no"; };
-    a.src = "assets/sfx/" + name + ".mp3";
+    a.src = (window.SFX_ART && window.SFX_ART[name]) || "assets/sfx/" + name + ".mp3";
     return false; // beep this once; file takes over when cached
   }
   window.SFX = {
@@ -951,12 +951,13 @@
     refreshAd();
     // key visual (assets/ui/title.png) if present
     (function () {
+      var src = (window.UI_ART && window.UI_ART.title) || "assets/ui/title.png";
       var img = new Image();
       img.onload = function () {
         $("title-screen").style.background =
-          "linear-gradient(rgba(2,4,20,.45), rgba(0,0,10,.82)), url('assets/ui/title.png') center/cover";
+          "linear-gradient(rgba(2,4,20,.3), rgba(0,0,10,.75)), url('" + src + "') center/cover";
       };
-      img.src = "assets/ui/title.png";
+      img.src = src;
     })();
     bindHold("dpad-up", "up"); bindHold("dpad-down", "down");
     bindHold("dpad-left", "left"); bindHold("dpad-right", "right");
