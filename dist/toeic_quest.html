@@ -4049,13 +4049,17 @@ window.ITEM_DEFS = {
 </script>
 <script>
 // TOEIC QUEST - BGM player (file-based)
-// Plays assets/bgm/<track>.mp3 (title/field/town/dungeon/battle/boss),
-// looped with a short crossfade. If a file is missing: silence (no fallback).
-// Drop high-quality tracks in and they play automatically.
+// Plays assets/bgm/<track>.mp3, looped, with a short fade on switch.
+// - field/town/dungeon/title resume from where they last stopped
+// - battle-type tracks (battle/battle2/battle_dungeon/midboss/boss) restart from 0
+// - playAny([..]) plays the first track that actually exists (missing files skip)
+// If a file is missing: silence (no fallback beeps).
 (function () {
   "use strict";
 
-  var TRACKS = ["title", "field", "town", "dungeon", "battle", "boss"];
+  var TRACKS = ["title", "field", "town", "dungeon",
+                "battle", "battle2", "battle_dungeon", "midboss", "boss", "ending"];
+  var NO_RESUME = { battle: 1, battle2: 1, battle_dungeon: 1, midboss: 1, boss: 1, ending: 1 };
   var VOLUME = 0.55;
 
   var enabled = true;
@@ -4093,6 +4097,7 @@ window.ITEM_DEFS = {
       if (playing && playing !== a) fadeOut(playing);
       playing = a;
       a.volume = VOLUME;
+      if (NO_RESUME[name]) { try { a.currentTime = 0; } catch (e) {} }
       var p = a.play();
       if (p && p.catch) p.catch(function () { /* needs user gesture; retried on unlock */ });
     });
@@ -4100,7 +4105,7 @@ window.ITEM_DEFS = {
 
   function play(name) {
     if (TRACKS.indexOf(name) < 0) return;
-    if (cur === name) {
+    if (cur === name && !NO_RESUME[name]) {
       if (enabled && unlocked && playing && playing.paused) startTrack(name);
       return;
     }
@@ -4110,8 +4115,23 @@ window.ITEM_DEFS = {
     // if not unlocked yet, the gesture handler below starts it
   }
 
+  // Play the first available track in the list (missing files are skipped).
+  function playAny(list) {
+    var i = 0;
+    (function tryNext() {
+      if (i >= list.length) return;
+      var name = list[i++];
+      if (TRACKS.indexOf(name) < 0) { tryNext(); return; }
+      probe(name, function (a) {
+        if (a === "no") { tryNext(); return; }
+        play(name);
+      });
+    })();
+  }
+
   function stop() {
     if (playing) { fadeOut(playing); playing = null; }
+    cur = null;
   }
 
   function setEnabled(v) {
@@ -4129,7 +4149,7 @@ window.ITEM_DEFS = {
     }, { passive: true });
   });
 
-  window.BGM = { play: play, stop: stop, setEnabled: setEnabled, isEnabled: function () { return enabled; } };
+  window.BGM = { play: play, playAny: playAny, stop: stop, setEnabled: setEnabled, isEnabled: function () { return enabled; } };
 })();
 
 </script>
@@ -4305,9 +4325,10 @@ window.ITEM_DEFS = {
           if (choices[i] === entry.m) b.classList.add("correct");
         });
         if (correct) {
-          resultEl.textContent = elapsed <= 2 ? "かいしん！ +" + entry.w + " = " + entry.m : "せいかい！";
+          var fast = elapsed <= 2 && !opts.noCrit;
+          resultEl.textContent = fast ? "かいしん！ +" + entry.w + " = " + entry.m : "せいかい！";
           resultEl.className = "ok";
-          if (window.SFX) SFX.play(correct && elapsed <= 2 ? "crit" : "ok");
+          if (window.SFX) SFX.play(fast ? "crit" : "ok");
         } else {
           resultEl.textContent = (timeout ? "じかんぎれ… " : "ミス… ") + entry.w + " = " + entry.m;
           resultEl.className = "ng";
@@ -4465,34 +4486,8 @@ window.ITEM_DEFS = {
     await bsay("ゆうしゃは " + dmg + " の\nダメージを うけた！");
   }
 
-  function weakWordList() {
-    var st = window.G && window.G.study;
-    if (!st || !st.words) return [];
-    return Object.keys(st.words).map(function (w) {
-      var r = st.words[w];
-      return { w: w, r: r };
-    }).filter(function (o) { return o.r.wr > 0 && o.r.s < 2; });
-  }
-
   async function enemyTurn(e) {
     var G = window.G;
-    // revenge word curse: the enemy strikes with a word YOU missed before
-    var weak = weakWordList();
-    if (weak.length && Math.random() < 0.25) {
-      var pick = weak[rnd(weak.length)];
-      await bsay(e.name + "は のろいのことば\n『" + pick.w + "』を はなった！\n（正解すれば むこうか＋反撃！）");
-      var cq = await window.QUIZ.ask(pick.r.l || e.lv, { entry: { w: pick.w, m: pick.r.m, p: pick.r.p || "n" }, time: 5 });
-      if (cq.correct) {
-        var cd = Math.max(1, Math.round(pAtk() * 0.8 * comboMult()));
-        await bsay("のろいを うちけした！");
-        await playerHit(e, cd, true, "rgba(160,220,255,.9)");
-        refreshStatus();
-        return e.hp <= 0 ? null : null;
-      }
-      await enemyAttack(e, "attack", 1.3);
-      refreshStatus();
-      return G.player.hp <= 0 ? "dead" : null;
-    }
     if (e.traits.indexOf("flee") >= 0 && Math.random() < 0.45) {
       await bsay(e.name + "は にげだした！");
       return "fled";
@@ -4613,7 +4608,7 @@ window.ITEM_DEFS = {
         G.player.mp -= spell.mp;
         refreshStatus();
         await bsay("ゆうしゃは『" + spell.name + "』を となえた！\n（TOEIC" + spell.quizLv + " の単語に こたえよ！）");
-        var qs = await window.QUIZ.ask(spell.quizLv, { time: quizTime });
+        var qs = await window.QUIZ.ask(spell.quizLv, { time: quizTime, noCrit: true });
         refreshStatus();
         if (!qs.correct) {
           revenge.push({ entry: qs.entry, lv: qs.lv, t: 2 });
@@ -4634,7 +4629,8 @@ window.ITEM_DEFS = {
             await bsay("じゃくてんを ついた！");
           }
           var fxc = spell.elem === "fire" ? "rgba(255,150,60,.9)" : spell.elem === "thunder" ? "rgba(255,230,90,.9)" : "rgba(200,160,255,.9)";
-          await playerHit(e, sd, weak || qs.elapsed <= 2, fxc);
+          // spells never show かいしん — speed/weakness only affect damage numbers
+          await playerHit(e, sd, false, fxc);
         }
       } else if (cmd === 2) {
         // ---- items ----
@@ -4668,6 +4664,7 @@ window.ITEM_DEFS = {
 
       if (e.hp <= 0) {
         $("enemy-sprite").classList.add("dead");
+        if (window.BGM) BGM.stop(); // cut battle music, let the victory jingle breathe
         if (window.SFX) SFX.play("win");
         await bsay(e.name + "を たおした！");
         gotExp = e.exp; gotGold = e.gold;
@@ -5218,10 +5215,21 @@ window.ITEM_DEFS = {
     if (window.BGM) {
       BGM.stop();
       var stingMs = Math.min(Math.max(SFX.duration(isBossFight ? "boss" : "encounter") * 1000 + 150, 900), 4000);
-      setTimeout(function () { BGM.play(isBossFight ? "boss" : "battle"); }, stingMs);
+      setTimeout(function () {
+        if ($("battle-screen").style.display === "none") return; // battle already over
+        if (enemyId === "maou") BGM.playAny(["boss"]);
+        else if (isBossFight) BGM.playAny(["midboss", "boss"]);
+        else {
+          // normal fights: dungeon variant in caves/towers, otherwise random pick
+          var c = Math.random() < 0.5 ? ["battle", "battle2"] : ["battle2", "battle"];
+          if (m.kind === "dungeon") c.unshift("battle_dungeon");
+          BGM.playAny(c);
+        }
+      }, stingMs);
     }
     var r = await window.BATTLE.start(enemyId, { bg: bgKey });
-    playMapBgm();
+    var maouWin = r.result === "win" && isEventBoss && bossEv && bossEv.enemy === "maou";
+    if (!maouWin) playMapBgm(); // after maou, ending() handles music
     if (r.result === "lose") {
       await fade(true);
       G.player.gold = Math.floor(G.player.gold / 2);
@@ -5247,14 +5255,22 @@ window.ITEM_DEFS = {
   }
 
   async function ending() {
+    if (window.BGM) { BGM.stop(); BGM.playAny(["ending", "title"]); }
     await fade(true); await fade(false);
     await UI.say("まおう ヴォキャブロスは\nことばにならない さけびをあげ\nくずれさった…！");
     await UI.say("うばわれていた《言葉の力》が\nレキシア大陸に もどっていく…。");
+    await UI.say("草原に ことばが めばえ\n町に うたが あふれ\n人々は ふたたび かたりはじめた。");
     var st = G.study;
     var rate = st.answered ? Math.round(100 * st.correct / st.answered) : 0;
-    await UI.say("― ぼうけんのきろく ―\nこたえた単語： " + st.answered + " 問\nせいかいりつ： " + rate + "％");
+    await UI.say("― ぼうけんのきろく ―\nとうたつレベル： " + G.player.lv +
+      "\nこたえた単語： " + st.answered + " 問\nせいかいりつ： " + rate + "％");
     await UI.say("だが、まなびの旅に\nおわりは ない。\n\n～ TOEIC QUEST ～\nTHANK YOU FOR PLAYING!");
     G.pos = { map: "castle", x: 9, y: 4, dir: "up" };
+    G.player.hp = G.player.maxhp; G.player.mp = G.player.maxmp;
+    saveGame();
+    await fade(true);
+    // back to the title screen (continue keeps the cleared save)
+    location.reload();
   }
 
   // =================== DAILY MISSION & STREAK ===================

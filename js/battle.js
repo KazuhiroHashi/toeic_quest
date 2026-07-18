@@ -131,34 +131,8 @@
     await bsay("ゆうしゃは " + dmg + " の\nダメージを うけた！");
   }
 
-  function weakWordList() {
-    var st = window.G && window.G.study;
-    if (!st || !st.words) return [];
-    return Object.keys(st.words).map(function (w) {
-      var r = st.words[w];
-      return { w: w, r: r };
-    }).filter(function (o) { return o.r.wr > 0 && o.r.s < 2; });
-  }
-
   async function enemyTurn(e) {
     var G = window.G;
-    // revenge word curse: the enemy strikes with a word YOU missed before
-    var weak = weakWordList();
-    if (weak.length && Math.random() < 0.25) {
-      var pick = weak[rnd(weak.length)];
-      await bsay(e.name + "は のろいのことば\n『" + pick.w + "』を はなった！\n（正解すれば むこうか＋反撃！）");
-      var cq = await window.QUIZ.ask(pick.r.l || e.lv, { entry: { w: pick.w, m: pick.r.m, p: pick.r.p || "n" }, time: 5 });
-      if (cq.correct) {
-        var cd = Math.max(1, Math.round(pAtk() * 0.8 * comboMult()));
-        await bsay("のろいを うちけした！");
-        await playerHit(e, cd, true, "rgba(160,220,255,.9)");
-        refreshStatus();
-        return e.hp <= 0 ? null : null;
-      }
-      await enemyAttack(e, "attack", 1.3);
-      refreshStatus();
-      return G.player.hp <= 0 ? "dead" : null;
-    }
     if (e.traits.indexOf("flee") >= 0 && Math.random() < 0.45) {
       await bsay(e.name + "は にげだした！");
       return "fled";
@@ -279,7 +253,7 @@
         G.player.mp -= spell.mp;
         refreshStatus();
         await bsay("ゆうしゃは『" + spell.name + "』を となえた！\n（TOEIC" + spell.quizLv + " の単語に こたえよ！）");
-        var qs = await window.QUIZ.ask(spell.quizLv, { time: quizTime });
+        var qs = await window.QUIZ.ask(spell.quizLv, { time: quizTime, noCrit: true });
         refreshStatus();
         if (!qs.correct) {
           revenge.push({ entry: qs.entry, lv: qs.lv, t: 2 });
@@ -300,7 +274,8 @@
             await bsay("じゃくてんを ついた！");
           }
           var fxc = spell.elem === "fire" ? "rgba(255,150,60,.9)" : spell.elem === "thunder" ? "rgba(255,230,90,.9)" : "rgba(200,160,255,.9)";
-          await playerHit(e, sd, weak || qs.elapsed <= 2, fxc);
+          // spells never show かいしん — speed/weakness only affect damage numbers
+          await playerHit(e, sd, false, fxc);
         }
       } else if (cmd === 2) {
         // ---- items ----
@@ -334,6 +309,7 @@
 
       if (e.hp <= 0) {
         $("enemy-sprite").classList.add("dead");
+        if (window.BGM) BGM.stop(); // cut battle music, let the victory jingle breathe
         if (window.SFX) SFX.play("win");
         await bsay(e.name + "を たおした！");
         gotExp = e.exp; gotGold = e.gold;

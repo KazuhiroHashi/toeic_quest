@@ -1,11 +1,15 @@
 // TOEIC QUEST - BGM player (file-based)
-// Plays assets/bgm/<track>.mp3 (title/field/town/dungeon/battle/boss),
-// looped with a short crossfade. If a file is missing: silence (no fallback).
-// Drop high-quality tracks in and they play automatically.
+// Plays assets/bgm/<track>.mp3, looped, with a short fade on switch.
+// - field/town/dungeon/title resume from where they last stopped
+// - battle-type tracks (battle/battle2/battle_dungeon/midboss/boss) restart from 0
+// - playAny([..]) plays the first track that actually exists (missing files skip)
+// If a file is missing: silence (no fallback beeps).
 (function () {
   "use strict";
 
-  var TRACKS = ["title", "field", "town", "dungeon", "battle", "boss"];
+  var TRACKS = ["title", "field", "town", "dungeon",
+                "battle", "battle2", "battle_dungeon", "midboss", "boss", "ending"];
+  var NO_RESUME = { battle: 1, battle2: 1, battle_dungeon: 1, midboss: 1, boss: 1, ending: 1 };
   var VOLUME = 0.55;
 
   var enabled = true;
@@ -43,6 +47,7 @@
       if (playing && playing !== a) fadeOut(playing);
       playing = a;
       a.volume = VOLUME;
+      if (NO_RESUME[name]) { try { a.currentTime = 0; } catch (e) {} }
       var p = a.play();
       if (p && p.catch) p.catch(function () { /* needs user gesture; retried on unlock */ });
     });
@@ -50,7 +55,7 @@
 
   function play(name) {
     if (TRACKS.indexOf(name) < 0) return;
-    if (cur === name) {
+    if (cur === name && !NO_RESUME[name]) {
       if (enabled && unlocked && playing && playing.paused) startTrack(name);
       return;
     }
@@ -60,8 +65,23 @@
     // if not unlocked yet, the gesture handler below starts it
   }
 
+  // Play the first available track in the list (missing files are skipped).
+  function playAny(list) {
+    var i = 0;
+    (function tryNext() {
+      if (i >= list.length) return;
+      var name = list[i++];
+      if (TRACKS.indexOf(name) < 0) { tryNext(); return; }
+      probe(name, function (a) {
+        if (a === "no") { tryNext(); return; }
+        play(name);
+      });
+    })();
+  }
+
   function stop() {
     if (playing) { fadeOut(playing); playing = null; }
+    cur = null;
   }
 
   function setEnabled(v) {
@@ -79,5 +99,5 @@
     }, { passive: true });
   });
 
-  window.BGM = { play: play, stop: stop, setEnabled: setEnabled, isEnabled: function () { return enabled; } };
+  window.BGM = { play: play, playAny: playAny, stop: stop, setEnabled: setEnabled, isEnabled: function () { return enabled; } };
 })();

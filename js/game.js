@@ -517,10 +517,21 @@
     if (window.BGM) {
       BGM.stop();
       var stingMs = Math.min(Math.max(SFX.duration(isBossFight ? "boss" : "encounter") * 1000 + 150, 900), 4000);
-      setTimeout(function () { BGM.play(isBossFight ? "boss" : "battle"); }, stingMs);
+      setTimeout(function () {
+        if ($("battle-screen").style.display === "none") return; // battle already over
+        if (enemyId === "maou") BGM.playAny(["boss"]);
+        else if (isBossFight) BGM.playAny(["midboss", "boss"]);
+        else {
+          // normal fights: dungeon variant in caves/towers, otherwise random pick
+          var c = Math.random() < 0.5 ? ["battle", "battle2"] : ["battle2", "battle"];
+          if (m.kind === "dungeon") c.unshift("battle_dungeon");
+          BGM.playAny(c);
+        }
+      }, stingMs);
     }
     var r = await window.BATTLE.start(enemyId, { bg: bgKey });
-    playMapBgm();
+    var maouWin = r.result === "win" && isEventBoss && bossEv && bossEv.enemy === "maou";
+    if (!maouWin) playMapBgm(); // after maou, ending() handles music
     if (r.result === "lose") {
       await fade(true);
       G.player.gold = Math.floor(G.player.gold / 2);
@@ -546,14 +557,22 @@
   }
 
   async function ending() {
+    if (window.BGM) { BGM.stop(); BGM.playAny(["ending", "title"]); }
     await fade(true); await fade(false);
     await UI.say("まおう ヴォキャブロスは\nことばにならない さけびをあげ\nくずれさった…！");
     await UI.say("うばわれていた《言葉の力》が\nレキシア大陸に もどっていく…。");
+    await UI.say("草原に ことばが めばえ\n町に うたが あふれ\n人々は ふたたび かたりはじめた。");
     var st = G.study;
     var rate = st.answered ? Math.round(100 * st.correct / st.answered) : 0;
-    await UI.say("― ぼうけんのきろく ―\nこたえた単語： " + st.answered + " 問\nせいかいりつ： " + rate + "％");
+    await UI.say("― ぼうけんのきろく ―\nとうたつレベル： " + G.player.lv +
+      "\nこたえた単語： " + st.answered + " 問\nせいかいりつ： " + rate + "％");
     await UI.say("だが、まなびの旅に\nおわりは ない。\n\n～ TOEIC QUEST ～\nTHANK YOU FOR PLAYING!");
     G.pos = { map: "castle", x: 9, y: 4, dir: "up" };
+    G.player.hp = G.player.maxhp; G.player.mp = G.player.maxmp;
+    saveGame();
+    await fade(true);
+    // back to the title screen (continue keeps the cleared save)
+    location.reload();
   }
 
   // =================== DAILY MISSION & STREAK ===================

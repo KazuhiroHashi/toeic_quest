@@ -169,9 +169,10 @@
           if (choices[i] === entry.m) b.classList.add("correct");
         });
         if (correct) {
-          resultEl.textContent = elapsed <= 2 ? "かいしん！ +" + entry.w + " = " + entry.m : "せいかい！";
+          var fast = elapsed <= 2 && !opts.noCrit;
+          resultEl.textContent = fast ? "かいしん！ +" + entry.w + " = " + entry.m : "せいかい！";
           resultEl.className = "ok";
-          if (window.SFX) SFX.play(correct && elapsed <= 2 ? "crit" : "ok");
+          if (window.SFX) SFX.play(fast ? "crit" : "ok");
         } else {
           resultEl.textContent = (timeout ? "じかんぎれ… " : "ミス… ") + entry.w + " = " + entry.m;
           resultEl.className = "ng";
