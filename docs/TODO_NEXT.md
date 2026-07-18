@@ -28,19 +28,21 @@
 9. **フィールド用テクスチャ・スプライト・アイコンはユーザーが生成中**（docs/ART_PROMPTS_FIELD.md 参照）。
    届いたら assets/field/ を確認して新フィールド描画エンジンを実装する。
 
-## 実装状態
+## 実装状態（2026-07-18 全項目実装済み・commit 74c935a）
 
-- [ ] bgm.js: battle系（battle/battle2/battle_dungeon/midboss/boss）は currentTime=0 から再生
-- [ ] bgm.js: 論理名→候補リスト解決（battle→ランダム、無いファイルはフォールバック）
-- [ ] game.js runBattle: マップ種別（cave/tower）で battle_dungeon、ボスid=maou→boss、他ボス→midboss
-- [ ] battle.js: 呪い削除
-- [ ] battle.js: 呪文・ヒールのかいしん除去
-- [ ] game.js: エンディングシーン実装（魔王撃破フラグで分岐）
-- [ ] battle.js/game.js: 勝利時 BGM即stop→winジングル→フィールドBGM
-- [ ] docs/AUDIO_PROMPTS_2.md（Suno: battle_dungeon / midboss / ending）
-- [ ] docs/VIDEO_PROMPTS.md（Sora: op / midboss_cutscene / finalboss_cutscene / ending 4本）
-- [ ] ElevenLabs エンカウント音の新プロンプト（AUDIO_PROMPTS_2.md に含める)
-- [ ] リビルド（inline assets→artifact/dist）・アーティファクト再公開・commit/push
+残タスク: battle2.mp3ほか新BGM・新encounter.mp3・動画4本・フィールド画像30枚のアップ待ち → 届いたら inline assets再生成+動画再生機能+新フィールド描画エンジンを実装
+
+- [x] bgm.js: battle系（battle/battle2/battle_dungeon/midboss/boss）は currentTime=0 から再生
+- [x] bgm.js: 論理名→候補リスト解決（battle→ランダム、無いファイルはフォールバック）
+- [x] game.js runBattle: マップ種別（cave/tower）で battle_dungeon、ボスid=maou→boss、他ボス→midboss
+- [x] battle.js: 呪い削除
+- [x] battle.js: 呪文・ヒールのかいしん除去
+- [x] game.js: エンディングシーン実装（魔王撃破フラグで分岐）
+- [x] battle.js/game.js: 勝利時 BGM即stop→winジングル→フィールドBGM
+- [x] docs/AUDIO_PROMPTS_2.md（Suno: battle_dungeon / midboss / ending）
+- [x] docs/VIDEO_PROMPTS.md（Sora: op / midboss_cutscene / finalboss_cutscene / ending 4本）
+- [x] ElevenLabs エンカウント音の新プロンプト（AUDIO_PROMPTS_2.md に含める)
+- [x] リビルド（inline assets→artifact/dist）・アーティファクト再公開・commit/push
 
 ## 資産の置き場所ルール（再掲）
 
