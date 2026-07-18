@@ -32,7 +32,7 @@
     var v = a.volume;
     var iv = setInterval(function () {
       v -= 0.08;
-      if (v <= 0) { clearInterval(iv); a.pause(); a.currentTime = 0; a.volume = VOLUME; }
+      if (v <= 0) { clearInterval(iv); a.pause(); a.volume = VOLUME; }
       else a.volume = v;
     }, 40);
   }
@@ -50,7 +50,10 @@
 
   function play(name) {
     if (TRACKS.indexOf(name) < 0) return;
-    if (cur === name) return;
+    if (cur === name) {
+      if (enabled && unlocked && playing && playing.paused) startTrack(name);
+      return;
+    }
     cur = name;
     if (!enabled) return;
     if (unlocked) startTrack(name);

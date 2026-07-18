@@ -35,6 +35,10 @@
     return false; // beep this once; file takes over when cached
   }
   window.SFX = {
+    duration: function (name) {
+      var f = sfxFiles[name];
+      return (f && f !== "no" && f.duration && isFinite(f.duration)) ? f.duration : 1.2;
+    },
     play: function (name) {
       if (sfxFile(name)) return;
       switch (name) {
@@ -254,7 +258,7 @@
     }
     return table[0][0];
   }
-  var ENC_RATE = { ".": 0.09, t: 0.13, s: 0.11, "-": 0.11 };
+  var ENC_RATE = { ".": 0.06, t: 0.09, s: 0.08, "-": 0.08 };
 
   // =================== RENDERING ===================
   var TILE = 24, VW = 16, VH = 14;
@@ -509,7 +513,12 @@
     var m = curMap();
     var bgKey = m.id === "world" ? "zone" + zoneAt(m, G.pos.x, G.pos.y) : m.id;
     var isBossFight = window.ENEMY_BY_ID[enemyId].traits.indexOf("boss") >= 0;
-    if (window.BGM) BGM.play(isBossFight ? "boss" : "battle");
+    // let the encounter sting finish before battle music starts
+    if (window.BGM) {
+      BGM.stop();
+      var stingMs = Math.min(Math.max(SFX.duration(isBossFight ? "boss" : "encounter") * 1000 + 150, 900), 4000);
+      setTimeout(function () { BGM.play(isBossFight ? "boss" : "battle"); }, stingMs);
+    }
     var r = await window.BATTLE.start(enemyId, { bg: bgKey });
     playMapBgm();
     if (r.result === "lose") {
@@ -855,15 +864,17 @@
         $("zukan-close").onpointerdown = null;
         resolve();
       }
+      var list = $("zukan-list");
       INPUT.push({
-        onA: close, onB: close,
+        onA: function () { list.scrollTop += 240; },
+        onB: close,
         onDir: function (d) {
           var bands = [400, 500, 600, 700, 800, 900];
           var i = bands.indexOf(zukanBand);
-          if (d === "left") zukanBand = bands[(i + 5) % 6];
-          else if (d === "right") zukanBand = bands[(i + 1) % 6];
-          else return;
-          renderZukan();
+          if (d === "left") { zukanBand = bands[(i + 5) % 6]; renderZukan(); }
+          else if (d === "right") { zukanBand = bands[(i + 1) % 6]; renderZukan(); }
+          else if (d === "down") list.scrollTop += 240;
+          else if (d === "up") list.scrollTop -= 240;
         }
       });
       $("zukan-close").onpointerdown = function (e) { e.preventDefault(); close(); };
@@ -910,6 +921,27 @@
     }
   }
 
+  // debug: boss-ready save for playtesting the whole game quickly
+  async function debugStart() {
+    newGame();
+    var t = window.LEVEL_TABLE[24]; // Lv25
+    var p = G.player;
+    p.lv = 25; p.exp = t.exp;
+    p.maxhp = t.maxhp; p.hp = t.maxhp; p.maxmp = t.maxmp; p.mp = t.maxmp;
+    p.str = t.str; p.vit = t.vit;
+    p.weapon = 4; p.armor = 4; p.gold = 5000;
+    p.items = { herb: 9, wing: 3, elixir: 5, key: 1 };
+    p.spells = window.SPELLS.filter(function (s) { return s.learnLv <= 25; }).map(function (s) { return s.id; });
+    G.flags.metKing = true; G.flags.gen_r_down = true; G.flags.gen_l_down = true;
+    ensureDaily();
+    saveGame();
+    $("title-screen").style.display = "none";
+    screenMode = "field";
+    playMapBgm();
+    await fade(true); await fade(false);
+    await UI.say("【デバッグモード】\nＬｖ２５・最強一歩手前の装備・\n『ことばのカギ』所持ではじめます。\n南東の魔王城へ どうぞ！");
+  }
+
   function refreshAd() {
     var premium = false;
     try { premium = localStorage.getItem("tq_premium") === "1"; } catch (e) {}
@@ -924,6 +956,7 @@
       { label: "ＢＧＭ： " + (bgmOn ? "ＯＮ" : "ＯＦＦ") },
       { label: "広告除去： " + (premium ? "ＯＮ（購入済み扱い）" : "ＯＦＦ") },
       { label: "がくしゅうきろくを けす" },
+      { label: "デバッグ開始（Ｌｖ２５）" },
       { label: "とじる" }
     ], "せってい");
     if (c === 0) {
@@ -931,6 +964,7 @@
       await UI.say("ＢＧＭを " + (!bgmOn ? "ＯＮ" : "ＯＦＦ") + " にした。");
       return;
     }
+    if (c === 3) { await debugStart(); return; }
     c = c - 1;
     if (c === 0) {
       try { localStorage.setItem("tq_premium", premium ? "0" : "1"); } catch (e) {}
