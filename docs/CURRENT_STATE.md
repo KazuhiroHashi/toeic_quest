@@ -15,7 +15,9 @@
 
 ## 重要な決定・制約
 - **TOEIC は ETS の商標。公開前にアプリ名と「TOEIC600」表記を変更必須**（例：スコア600 / Lv600）。ゲーム内はレベル数字に差し替え可能な設計。
-- アプリ化は Capacitor→Xcode→App Store（**Mac必須**。ユーザーがMac所持か未確認）。
+- アプリ化は Capacitor→iOS/Android 両対応。ユーザーは MacBook Pro M3 Pro / iPhone 17 Pro Max /
+  Pixel 8 / Windows を所持＝**iOS/Android両方ビルド可・実機テスト可**。土台一式は用意済み
+  （capacitor.config.json / package.json / tools/sync_www.js、手順は docs/ANDROID.md）。
 - 画像/音はユーザーが外部AI（ChatGPTのGPT-image / Suno / ElevenLabs / Gemini Veo）で生成→GitHubへアップ→自動反映。API課金はしない方針。
 - 表記は普通の漢字かな交じり（ひらがな縛りは廃止）。
 

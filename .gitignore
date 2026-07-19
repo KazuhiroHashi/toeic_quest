@@ -2,3 +2,10 @@
 **/.env
 .env
 *.key
+
+# Capacitor native app wrapper (generated locally; not committed)
+node_modules/
+/www/
+/android/
+/ios/
+.DS_Store

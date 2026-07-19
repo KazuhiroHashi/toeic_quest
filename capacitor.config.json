@@ -1,0 +1,12 @@
+{
+  "appId": "com.example.wordquest2",
+  "appName": "ことばクエスト",
+  "webDir": "www",
+  "backgroundColor": "#05060f",
+  "android": {
+    "allowMixedContent": false
+  },
+  "ios": {
+    "contentInset": "always"
+  }
+}
