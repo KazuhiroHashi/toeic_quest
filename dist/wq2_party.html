@@ -215,15 +215,23 @@ canvas#field-canvas {
   position: absolute; inset: 0;
   z-index: 60;
   display: none;
-  background: rgba(0,0,10,.82);
+  /* keep the battle scene faintly visible behind the quiz */
+  background: linear-gradient(180deg, rgba(2,4,16,.28) 0%, rgba(2,4,16,.5) 45%, rgba(2,4,16,.72) 100%);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 12px;
+  justify-content: flex-end;
+  padding: 12px 12px 5%;
 }
 #quiz-box {
   width: 96%; max-width: 430px;
   text-align: center;
+  background: linear-gradient(180deg, rgba(10,13,30,.9), rgba(5,7,18,.94));
+  border: 2px solid #cfd8ee;
+  border-radius: 14px;
+  padding: 12px 12px 14px;
+  box-shadow: 0 8px 26px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.1);
 }
 #quiz-level-tag {
   color: var(--accent); font-size: 13px; margin-bottom: 4px; letter-spacing: 2px;
@@ -667,6 +675,17 @@ canvas#field-canvas {
           <div id="quiz-choices"></div>
           <div id="quiz-result"></div>
         </div>
+      </div>
+
+      <!-- word encyclopedia -->
+      <div id="zukan">
+        <div id="zukan-head">
+          <div id="zukan-title">たんごちょう</div>
+          <div id="zukan-close">✕ とじる</div>
+        </div>
+        <div id="zukan-tabs"></div>
+        <div id="zukan-summary"></div>
+        <div id="zukan-list"></div>
       </div>
 
       <div id="fade-layer"></div>
@@ -3964,26 +3983,106 @@ window.ITEM_DEFS = {
     var g = newGrid(OW_W, OW_H, "w");
     var rnd = makeRng(20260719);
 
-    // continent (leaves a water margin for an irregular coastline)
-    rect(g, 6, 5, 209, 170, ".");
+    // ---- organic-edge noise (deterministic layered sines) ----
+    function fbm(x, y, s) {
+      return 1.00 * Math.sin(x * 0.11 + y * 0.07 + s * 1.3)
+           + 0.55 * Math.sin(x * 0.23 - y * 0.17 + s * 2.7)
+           + 0.70 * Math.sin(x * 0.05 + y * 0.31 + s * 4.1)
+           + 0.35 * Math.sin(x * 0.37 + y * 0.09 + s * 0.9);
+    }
+    function edge(t, s) {
+      return 5.0 * Math.sin(t * 0.055 + s)
+           + 3.0 * Math.sin(t * 0.140 + s * 2.3)
+           + 2.0 * Math.sin(t * 0.310 + s * 5.1)
+           + 2.5 * Math.sin(t * 0.041 + s * 0.7);
+    }
 
-    // coastline shaping (bays + trimmed corners so the outline is irregular)
-    rect(g, 6, 5, 34, 12, "w");  rect(g, 6, 5, 16, 24, "w");        // NW corner
-    rect(g, 184, 5, 209, 11, "w"); rect(g, 198, 5, 209, 28, "w");   // NE corner
-    rect(g, 6, 158, 24, 170, "w"); rect(g, 6, 148, 13, 170, "w");   // SW corner
-    rect(g, 190, 158, 209, 170, "w"); rect(g, 198, 140, 209, 170, "w"); // SE corner
-    rect(g, 6, 46, 12, 74, "w");                                    // west bay
-    rect(g, 203, 62, 209, 104, "w");                               // east bay
-    rect(g, 92, 165, 130, 170, "w");                              // south bay
-    rect(g, 40, 30, 46, 44, "w"); rect(g, 150, 118, 158, 132, "w"); // inland lakes
+    // ---- irregular continent: wobbly coast with bays, inlets & peninsulas ----
+    // Each map edge is inset by BASE + noise; the inset is clamped in the spans
+    // that carry the four entrances / roads so bays never swallow a route.
+    var BASE = 9;
+    function insTop(x) {
+      var v = BASE + edge(x, 6.2) + 3 * Math.sin(x * 0.02 + 1);
+      if (x >= 28 && x <= 162) v = Math.min(v, 16);   // protect 鋼の村 + N road
+      return v;
+    }
+    function insBot(x) {
+      var v = BASE + edge(x, 9.4) + 3 * Math.sin(x * 0.03 + 4);
+      if (x >= 32 && x <= 82) v = Math.min(v, 12);     // protect 洞窟 + SW road
+      if (x >= 100 && x <= 138) v = Math.min(v, 16);   // protect S road end
+      return v;
+    }
+    function insLeft(y) { return BASE + edge(y, 1.0) + 3 * Math.sin(y * 0.02); }
+    function insRight(y) {
+      var v = BASE + edge(y, 3.7) + 3 * Math.sin(y * 0.025 + 2);
+      if (y >= 56 && y <= 96) v = Math.min(v, 12);     // protect 音の塔 + road
+      return v;
+    }
+    for (var y = 0; y < OW_H; y++) {
+      var lf = insLeft(y), rt = OW_W - 1 - insRight(y);
+      for (var x = 0; x < OW_W; x++) {
+        var tp = insTop(x), bt = OW_H - 1 - insBot(x);
+        if (x > lf && x < rt && y > tp && y < bt) g[y][x] = ".";
+      }
+    }
+
+    // ---- central sea: wobbly blob (not a clean ellipse) with bays/peninsulas ----
+    for (var sy = 50; sy <= 126; sy++)
+      for (var sx = 58; sx <= 158; sx++) {
+        var ddx = (sx - OW_CX) / 42, ddy = (sy - OW_CY) / 30;
+        var rr = Math.sqrt(ddx * ddx + ddy * ddy);
+        var wob = 1 + 0.17 * fbm(sx, sy, 7)
+                    + 0.07 * Math.sin(Math.atan2(ddy, ddx) * 5 + 0.6);
+        if (rr <= wob) g[sy][sx] = "w";
+      }
+
+    // ---- four meandering rivers (1 tile wide, pinned straight at each bridge) ----
+    function riverH(y0, x0, x1, pinX, pinHalf, amp) {
+      var step = x1 >= x0 ? 1 : -1, prev = null;
+      for (var x = x0; x !== x1 + step; x += step) {
+        var yy = Math.round(y0 + amp * Math.sin(x * 0.20 + y0 * 0.3)
+                               + amp * 0.55 * Math.sin(x * 0.37 + 1.3));
+        if (Math.abs(x - pinX) <= pinHalf) yy = y0;
+        if (x < 0 || x >= OW_W) { prev = yy; continue; }
+        if (prev !== null && Math.abs(yy - prev) >= 1) {
+          for (var t = Math.min(yy, prev); t <= Math.max(yy, prev); t++)
+            if (t >= 0 && t < OW_H) g[t][x] = "w";
+        } else if (yy >= 0 && yy < OW_H) g[yy][x] = "w";
+        prev = yy;
+      }
+    }
+    function riverV(x0, y0, y1, pinY, pinHalf, amp) {
+      var step = y1 >= y0 ? 1 : -1, prev = null;
+      for (var y = y0; y !== y1 + step; y += step) {
+        var xx = Math.round(x0 + amp * Math.sin(y * 0.20 + x0 * 0.3)
+                               + amp * 0.55 * Math.sin(y * 0.37 + 1.3));
+        if (Math.abs(y - pinY) <= pinHalf) xx = x0;
+        if (y < 0 || y >= OW_H) { prev = xx; continue; }
+        if (prev !== null && Math.abs(xx - prev) >= 1) {
+          for (var t = Math.min(xx, prev); t <= Math.max(xx, prev); t++)
+            if (t >= 0 && t < OW_W) g[y][t] = "w";
+        } else if (xx >= 0 && xx < OW_W) g[y][xx] = "w";
+        prev = xx;
+      }
+    }
+    riverH(OW_CY, 6, 74, 35, 5, 2.6);      // west river  (coast -> sea)
+    riverH(OW_CY, 209, 142, 175, 5, 2.6);  // east river  (sea -> coast)
+    riverV(OW_CX, 5, 66, 30, 5, 2.6);      // north river (coast -> sea)
+    riverV(OW_CX, 170, 110, 145, 5, 2.6);  // south river (sea -> coast)
+
+    // bridges = the only crossings between the 4 regions (on the pinned tiles)
+    put(g, 35, OW_CY, "b");    // NW <-> SW  (west river)
+    put(g, 175, OW_CY, "b");   // NE <-> SE  (east river)
+    put(g, OW_CX, 30, "b");    // NW <-> NE  (north river)
+    put(g, OW_CX, 145, "b");   // SW <-> SE  (south river)
 
     // region terrain (seeded scatter; only decorates base grass)
     function scatter(x0, y0, x1, y1, fn) {
-      for (var y = y0; y <= y1; y++)
-        for (var x = x0; x <= x1; x++) {
-          if (g[y][x] !== ".") continue;
+      for (var yy = y0; yy <= y1; yy++)
+        for (var xx = x0; xx <= x1; xx++) {
+          if (g[yy][xx] !== ".") continue;
           var ch = fn(rnd());
-          if (ch) g[y][x] = ch;
+          if (ch) g[yy][xx] = ch;
         }
     }
     // NW: snowfield (s) + rock (m) + sparse dead trees
@@ -3998,52 +4097,73 @@ window.ITEM_DEFS = {
     scatter(6, 89, 107, 170, function (r) {
       return r < 0.13 ? "t" : r < 0.17 ? "s" : null;
     });
-    // SE: desert - sand base with dunes and rare oases
-    rect(g, 109, 89, 209, 170, "s");
-    for (var y = 89; y <= 170; y++)
-      for (var x = 109; x <= 209; x++) {
-        if (g[y][x] !== "s") continue;
-        var r = rnd();
-        if (r < 0.06) g[y][x] = ".";
-        else if (r < 0.12) g[y][x] = "m";
+    // SE: desert - sand base with dunes and rare oases (land tiles only, so the
+    // irregular coast / rivers stay water)
+    for (var dy = 89; dy <= 170; dy++)
+      for (var dx = 109; dx <= 209; dx++) {
+        if (g[dy][dx] !== ".") continue;
+        var rr2 = rnd();
+        g[dy][dx] = rr2 < 0.10 ? "." : rr2 < 0.16 ? "m" : "s";
       }
 
-    // mountain ridges shaping routes (roads cut passes where they cross)
+    // mountain ridges shaping routes (roads cut passes; never fill water/bridges)
+    function ridge(x0, y0, x1, y1) {
+      for (var yy = y0; yy <= y1; yy++)
+        for (var xx = x0; xx <= x1; xx++)
+          if (g[yy] && g[yy][xx] && g[yy][xx] !== "w" && g[yy][xx] !== "b")
+            g[yy][xx] = "m";
+    }
     // NW
-    rect(g, 22, 40, 62, 41, "m");                       // ridge (road pass @ x35)
-    rect(g, 60, 55, 92, 56, "m");                       // south ridge
-    rect(g, 30, 16, 58, 17, "m");                       // north ridge
-    rect(g, 14, 55, 15, 82, "m");                       // west spur
+    ridge(22, 40, 62, 41);                       // ridge (road pass @ x35)
+    ridge(60, 55, 92, 56);                        // south ridge
+    ridge(30, 16, 58, 17);                        // north ridge
+    ridge(14, 55, 15, 82);                        // west spur
     // NE
-    rect(g, 120, 44, 162, 45, "m");                     // ridge (road pass @ x150)
-    rect(g, 132, 14, 152, 15, "m");                     // north ridge above village
-    rect(g, 184, 44, 206, 45, "m");                     // ridge north of tower
-    rect(g, 168, 22, 169, 58, "m");                     // massif spur
-    // SW
-    rect(g, 30, 110, 70, 111, "m");                     // plains divider
-    rect(g, 85, 118, 86, 158, "m");                     // east spur near the cave road
-    rect(g, 18, 128, 42, 129, "m");
+    ridge(120, 44, 162, 45);                      // ridge (road pass @ x150)
+    ridge(132, 14, 152, 15);                      // north ridge above village
+    ridge(184, 44, 206, 45);                      // ridge north of tower
+    ridge(168, 22, 169, 58);                      // massif spur
+    // SW (dropped the ridge that used to hem the castle in)
+    ridge(30, 110, 70, 111);                      // plains divider (north of castle)
+    ridge(85, 118, 86, 158);                      // east spur near the cave road
     // SE
-    rect(g, 140, 108, 182, 109, "m");                   // dune ridge
-    rect(g, 120, 148, 160, 149, "m");                   // dune ridge
-    rect(g, 176, 120, 177, 150, "m");
+    ridge(140, 108, 182, 109);                    // dune ridge
+    ridge(120, 148, 160, 149);                    // dune ridge
+    ridge(176, 120, 177, 150);
 
-    // central sea (ellipse, center OW_CX/OW_CY) + four rivers (1 tile wide)
-    for (var ey = 60; ey <= 116; ey++)
-      for (var ex = 68; ex <= 148; ex++) {
-        var dx = (ex - OW_CX) / 40, dy = (ey - OW_CY) / 28;
-        if (dx * dx + dy * dy <= 1) g[ey][ex] = "w";
+    // a couple of small wobbly inland lakes (flavour; away from roads)
+    function lake(cx, cy, r) {
+      for (var yy = cy - r; yy <= cy + r; yy++)
+        for (var xx = cx - r; xx <= cx + r; xx++) {
+          if (yy < 0 || yy >= OW_H || xx < 0 || xx >= OW_W) continue;
+          var d = (xx - cx) * (xx - cx) / (r * r) +
+                  (yy - cy) * (yy - cy) / ((r * 0.7) * (r * 0.7));
+          if (d <= 1 + 0.35 * fbm(xx, yy, 11) && g[yy][xx] !== "b") g[yy][xx] = "w";
+        }
+    }
+    lake(48, 34, 4);      // NW tarn
+    lake(150, 123, 5);    // SE oasis pool
+
+    // small rocky islets (survive seal() because 'm' is non-walkable) -> islands
+    [[92, 70], [128, 104], [84, 98], [134, 72], [100, 112],
+     [70, 66], [146, 96], [66, 108]].forEach(function (p) {
+      for (var oy = -1; oy <= 1; oy++)
+        for (var ox = -1; ox <= 1; ox++) {
+          var xx = p[0] + ox, yy = p[1] + oy;
+          if (yy >= 0 && yy < OW_H && xx >= 0 && xx < OW_W &&
+              g[yy][xx] === "w" && rnd() < 0.7) g[yy][xx] = "m";
+        }
+    });
+
+    // ---- open grass plain around 王都グロッサ (player complaint #1) ----
+    // Clear a generous disc (r=14) to plain: no mountains/water near the castle.
+    var CQX = 40, CQY = 128, CQR = 14;
+    for (var py = CQY - CQR; py <= CQY + CQR; py++)
+      for (var px = CQX - CQR; px <= CQX + CQR; px++) {
+        if (py < 0 || py >= OW_H || px < 0 || px >= OW_W) continue;
+        var qx = px - CQX, qy = py - CQY;
+        if (qx * qx + qy * qy <= CQR * CQR) g[py][px] = ".";
       }
-    rect(g, 6, OW_CY, 68, OW_CY, "w");        // west river  (coast -> sea)
-    rect(g, 148, OW_CY, 209, OW_CY, "w");     // east river  (sea -> coast)
-    rect(g, OW_CX, 5, OW_CX, 60, "w");        // north river (coast -> sea)
-    rect(g, OW_CX, 116, OW_CX, 170, "w");     // south river (sea -> coast)
-
-    // bridges = the only crossings between the 4 regions
-    put(g, 35, OW_CY, "b");    // NW <-> SW  (west river)
-    put(g, 175, OW_CY, "b");   // NE <-> SE  (east river)
-    put(g, OW_CX, 30, "b");    // NW <-> NE  (north river)
-    put(g, OW_CX, 145, "b");   // SW <-> SE  (south river)
 
     // winding roads connecting castle / village / cave / tower through bridges.
     // River crossings run perpendicular through the bridge tile (road() leaves
@@ -4993,17 +5113,17 @@ window.ITEM_DEFS = {
 
   // ================= spell / character registry =================
   var SPELLS = {
-    heal:      { name: "ヒール",        mp: 4,  type: "heal",  power: 34 },
-    healmore:  { name: "ヒールモア",     mp: 8,  type: "heal",  power: 80 },
-    partyheal: { name: "パーティヒール",  mp: 14, type: "heal",  power: 42, all: true },
-    revive:    { name: "リカバー",       mp: 18, type: "raise", power: 0.6 },
-    spark:     { name: "スパーク",       mp: 4,  type: "atk",   power: 26, elem: "thunder" },
-    fireball:  { name: "ファイアボール",  mp: 7,  type: "atk",   power: 42, elem: "fire" },
-    fire:      { name: "ファイア",       mp: 4,  type: "atk",   power: 30, elem: "fire" },
-    frost:     { name: "フロスト",       mp: 5,  type: "atk",   power: 34, elem: "ice" },
-    fira:      { name: "ファイラ",       mp: 9,  type: "atk",   power: 38, elem: "fire", all: true },
-    thunder:   { name: "サンダー",       mp: 13, type: "atk",   power: 44, elem: "thunder", all: true },
-    holy:      { name: "ホーリー",       mp: 8,  type: "atk",   power: 54, elem: "holy" }
+    heal:      { name: "ヒール",        mp: 4,  type: "heal",  power: 34, desc: "味方1人のHPを34ほど回復する" },
+    healmore:  { name: "ヒールモア",     mp: 8,  type: "heal",  power: 80, desc: "味方1人のHPを80ほど回復する" },
+    partyheal: { name: "パーティヒール",  mp: 14, type: "heal",  power: 42, all: true, desc: "味方全員のHPを42ほど回復する" },
+    revive:    { name: "リカバー",       mp: 18, type: "raise", power: 0.6, desc: "倒れた味方をHP6割で復活させる" },
+    spark:     { name: "スパーク",       mp: 4,  type: "atk",   power: 26, elem: "thunder", desc: "敵1体に雷のダメージ" },
+    fireball:  { name: "ファイアボール",  mp: 7,  type: "atk",   power: 42, elem: "fire", desc: "敵1体に強い炎のダメージ" },
+    fire:      { name: "ファイア",       mp: 4,  type: "atk",   power: 30, elem: "fire", desc: "敵1体に炎のダメージ" },
+    frost:     { name: "フロスト",       mp: 5,  type: "atk",   power: 34, elem: "ice", desc: "敵1体に氷のダメージ" },
+    fira:      { name: "ファイラ",       mp: 9,  type: "atk",   power: 38, elem: "fire", all: true, desc: "敵全体に炎のダメージ" },
+    thunder:   { name: "サンダー",       mp: 13, type: "atk",   power: 44, elem: "thunder", all: true, desc: "敵全体に雷のダメージ" },
+    holy:      { name: "ホーリー",       mp: 8,  type: "atk",   power: 54, elem: "holy", desc: "敵1体に聖なるダメージ（不死・悪魔に特効）" }
   };
 
   // learn: { level: spellId | [spellId,...] }
@@ -5056,6 +5176,7 @@ window.ITEM_DEFS = {
       hp: s.hp, maxhp: s.hp, mp: s.mp, maxmp: s.mp,
       atk: s.atk, def: s.def, agi: s.agi,
       gearAtk: 0, gearDef: 0, weapon: null, armor: null,
+      bag: [], // per-member item ids, max 8
       spellIds: spellsAt(id, lv)
     };
   }
@@ -5239,11 +5360,13 @@ window.ITEM_DEFS = {
       } else if (c === 2) {
         acts.push({ who: i, kind: "guard" });
       } else {
+        var counts = {};
+        p.bag.forEach(function (k) { if (k === "herb" || k === "elixir") counts[k] = (counts[k] || 0) + 1; });
         var inv = [];
-        if (items.herb > 0) inv.push({ key: "herb", label: "ハーブティー ×" + items.herb });
-        if (items.elixir > 0) inv.push({ key: "elixir", label: "エナジーコーヒー ×" + items.elixir });
-        if (!inv.length) { await say("使える道具がない！"); continue; }
-        var ii = await menu($("pbattle-sub"), inv, "どうぐ");
+        if (counts.herb) inv.push({ key: "herb", label: "ハーブティー ×" + counts.herb });
+        if (counts.elixir) inv.push({ key: "elixir", label: "エナジーコーヒー ×" + counts.elixir });
+        if (!inv.length) { await say(p.name + "は 使える道具を持っていない！"); continue; }
+        var ii = await menu($("pbattle-sub"), inv, p.name + "の どうぐ");
         if (ii === -1) continue;
         var at = await pickAlly(false);
         if (at === -1) continue;
@@ -5287,8 +5410,11 @@ window.ITEM_DEFS = {
     }
     if (a.kind === "item") {
       var t = party[a.target];
-      if (a.item === "herb") { items.herb--; t.hp = Math.min(t.maxhp, t.hp + 40); await say(p.name + "は ハーブティーを使った！\n" + t.name + "のＨＰが 40 回復！"); }
-      else { items.elixir--; t.mp = Math.min(t.maxmp, t.mp + 30); await say(p.name + "は エナジーコーヒーを使った！\n" + t.name + "のＭＰが 30 回復！"); }
+      var bi = p.bag.indexOf(a.item);
+      if (bi < 0) { await say("道具が見つからない…"); return; }
+      p.bag.splice(bi, 1); // consume from the acting member's bag
+      if (a.item === "herb") { t.hp = Math.min(t.maxhp, t.hp + 40); await say(p.name + "は ハーブティーを使った！\n" + t.name + "のＨＰが 40 回復！"); }
+      else { t.mp = Math.min(t.maxmp, t.mp + 30); await say(p.name + "は エナジーコーヒーを使った！\n" + t.name + "のＭＰが 30 回復！"); }
       sfx("heal"); renderParty(-1);
       return;
     }
@@ -5352,18 +5478,21 @@ window.ITEM_DEFS = {
       var fxc = sp.elem === "fire" ? "rgba(255,150,60,.9)" : sp.elem === "thunder" ? "rgba(255,230,90,.9)" : sp.elem === "ice" ? "rgba(150,220,255,.9)" : sp.elem === "holy" ? "rgba(255,250,200,.95)" : "rgba(200,160,255,.9)";
       var targets = sp.all ? foes.map(function (f, i) { return i; }).filter(function (i) { return foes[i].hp > 0; })
                            : [foes[a.target] && foes[a.target].hp > 0 ? a.target : firstAliveFoe()];
+      var lines = [], anyWeak = false;
       for (var k = 0; k < targets.length; k++) {
         var fi = targets[k], foe = foes[fi];
         if (fi < 0 || foe.hp <= 0) continue;
         var sd = Math.round(sp.power * (0.85 + Math.random() * 0.3) * chainMult());
         if (qs.elapsed <= 2) sd = Math.round(sd * 1.3);
         var weak = sp.elem && window.WEAK && window.WEAK[foe.base] === sp.elem;
-        if (weak) { sd = Math.round(sd * 1.5); bpop("弱点！", "weak", $("penemy-" + fi)); }
+        if (weak) { sd = Math.round(sd * 1.5); anyWeak = true; bpop("弱点！", "weak", $("penemy-" + fi)); }
         hitEnemy(fi, sd, false, fxc);
-        await say(foe.name + "に " + sd + " のダメージ！" + (weak ? "\n弱点を突いた！" : ""));
-        await checkFoeDown(fi);
-        if (firstAliveFoe() < 0) break;
+        lines.push(foe.name + "に " + sd + (weak ? "（弱点！）" : ""));
       }
+      // one message listing each target's damage
+      await say(lines.join("\n") + " のダメージ！" + (anyWeak ? "\n弱点を突いた！" : ""));
+      for (var d2 = 0; d2 < targets.length; d2++) { if (foes[targets[d2]] && foes[targets[d2]].hp <= 0) await say(foes[targets[d2]].name + "を たおした！"); }
+      if (aliveFoes().length) { var bossF = foes.filter(function (f) { return f.boss && f.hp > 0; })[0]; if (bossF && bossF.phases) await checkPhase(bossF); }
     }
   }
   function defOf2(f) { return f.def; }
@@ -5402,13 +5531,15 @@ window.ITEM_DEFS = {
     if (f.charging) {
       f.charging = false;
       await say(f.name + "の ためていた力が 解き放たれた！！");
-      aliveMembers().forEach(function () {});
+      var cl = [];
       for (var i = 0; i < party.length; i++) {
         var mm = party[i]; if (mm.hp <= 0) continue;
         var dm = Math.max(1, Math.round((f.atk * 1.5 - defOf(mm) / 2 + rnd(8)) * (mm.guard ? 0.45 : 1)));
         hitMember(i, dm);
+        cl.push(mm.name + "に " + dm);
       }
-      await say("すさまじい衝撃が パーティ全体を襲う！");
+      await say(cl.join("\n") + " のダメージ！");
+      for (var cz = 0; cz < party.length; cz++) { if (party[cz].hp <= 0 && party[cz].maxhp > 0) {} }
       return;
     }
     // boss charge windup
@@ -5429,12 +5560,14 @@ window.ITEM_DEFS = {
       var bossAoe = phase && phase.aoe && Math.random() < phase.aoe;
       if (bossAoe && (!f.skills || Math.random() < 0.5)) {
         await say(f.name + "は「静まれ！」と叫んだ！\n言葉の嵐が吹き荒れる！");
+        var al = [];
         for (var j = 0; j < living.length; j++) {
           var mi = living[j], mm2 = party[mi];
           var ad = Math.max(1, Math.round((f.atk * 0.8 - defOf(mm2) / 2 + rnd(6)) * (mm2.guard ? 0.5 : 1)));
           hitMember(mi, ad);
+          al.push(mm2.name + "に " + ad);
         }
-        await say("パーティ全体が ダメージを受けた！");
+        await say(al.join("\n") + " のダメージ！");
         continue;
       }
       if (useSkill) {
@@ -5442,11 +5575,15 @@ window.ITEM_DEFS = {
         await say(f.name + "は『" + sk.name + "』を放った！");
         sfx("ng");
         if (sk.all) {
+          var sl = [];
           for (var a2 = 0; a2 < living.length; a2++) {
             var mi2 = living[a2], mt = party[mi2];
-            hitMember(mi2, magDmg(f, mt, sk.power, mt.guard));
+            var sd2 = magDmg(f, mt, sk.power, mt.guard);
+            hitMember(mi2, sd2);
+            sl.push(mt.name + "に " + sd2);
           }
-          await say("パーティ全体が ダメージを受けた！");
+          await say(sl.join("\n") + " のダメージ！");
+          for (var dz = 0; dz < living.length; dz++) { if (party[living[dz]].hp <= 0) await say(party[living[dz]].name + "は 倒れてしまった！"); }
         } else {
           var ti2 = living[rnd(living.length)], tg = party[ti2];
           var d2 = magDmg(f, tg, sk.power, tg.guard);
@@ -5574,11 +5711,19 @@ window.ITEM_DEFS = {
     start: start,
     _party: null,
     makeMember: makeMember,
-    resetParty: function () { window.PBATTLE._party = [makeMember("yu", 1)]; items = { herb: 6, elixir: 2 }; return window.PBATTLE._party; },
+    resetParty: function () {
+      var yu = makeMember("yu", 1);
+      yu.bag = ["herb", "herb", "herb", "elixir", "wing"];
+      window.PBATTLE._party = [yu];
+      return window.PBATTLE._party;
+    },
     demoParty: function (lv) {
       lv = lv || 6;
-      window.PBATTLE._party = ["yu", "gai", "rina", "mia"].map(function (id) { return makeMember(id, lv); });
-      items = { herb: 8, elixir: 4 };
+      window.PBATTLE._party = ["yu", "gai", "rina", "mia"].map(function (id) {
+        var m = makeMember(id, lv);
+        m.bag = ["herb", "herb", "elixir"];
+        return m;
+      });
       return window.PBATTLE._party;
     },
     getParty: function () { return window.PBATTLE._party || window.PBATTLE.resetParty(); },
@@ -5593,6 +5738,11 @@ window.ITEM_DEFS = {
     },
     getItems: function () { return items; },
     setItems: function (o) { items = o; },
+    // exp remaining to the member's next level (0 if maxed)
+    expToNext: function (m) { return m.lv >= 50 ? 0 : Math.max(0, (EXP_FOR[m.lv + 1] || 0) - m.exp); },
+    // learned spells with descriptions, for the inspect command
+    spellInfo: function (m) { return (m.spellIds || []).map(function (sid) { return { name: SPELLS[sid].name, mp: SPELLS[sid].mp, desc: SPELLS[sid].desc }; }); },
+    SPELLS: SPELLS,
     pressA: function () { var t = INPUT.top(); if (t && t.onA) t.onA(); },
     pressB: function () { var t = INPUT.top(); if (t && t.onB) t.onB(); },
     pressDir: function (d) { var t = INPUT.top(); if (t && t.onDir) t.onDir(d === "left" ? "up" : d === "right" ? "down" : d); }
@@ -5938,11 +6088,18 @@ window.ITEM_DEFS = {
       }
       drawEdges(m, x, y, px, py, t);
       if (t === "^" || t === "v") {
-        ctx.fillStyle = "rgba(20,16,10,.6)";
-        var u = TILE / 24;
-        ctx.fillRect(px + 4 * u, py + 16 * u, 16 * u, 4 * u);
-        ctx.fillRect(px + 7 * u, py + 10 * u, 10 * u, 4 * u);
-        ctx.fillRect(px + 10 * u, py + 4 * u, 4 * u, 4 * u);
+        var stair = fieldImg(t === "^" ? "stairs_up" : "stairs_down");
+        if (stair) drawSprite(stair, px, py, 1.0);
+        else {
+          // cleaner procedural stairs: stepped blocks with shading
+          var u = TILE / 24;
+          for (var si = 0; si < 4; si++) {
+            var sw = (TILE - si * 4 * u), sy = py + si * 5 * u;
+            ctx.fillStyle = "#b9c2d0"; ctx.fillRect(px + si * 2 * u, sy, sw, 4 * u);
+            ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.fillRect(px + si * 2 * u, sy + 4 * u, sw, 1 * u);
+          }
+          if (t === "^") { ctx.fillStyle = "#ffe08a"; ctx.font = Math.round(10 * u) + "px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("▲", px + TILE / 2, py + 4 * u); }
+        }
       }
       if (GLYPH[t]) {
         var icon = fieldImg(TILE_ICON[t]);
@@ -6093,7 +6250,7 @@ window.ITEM_DEFS = {
     var ev = eventAt(m, nx, ny);
 
     if (ev && ev.type === "gate" && !S.flags["gate_" + ev.x + "_" + ev.y + "_" + m.id]) {
-      if (S.items[ev.needs] > 0) {
+      if ((S.keys[ev.needs] || 0) > 0) {
         S.flags["gate_" + ev.x + "_" + ev.y + "_" + m.id] = true;
         await say("『" + ITEM_NAMES[ev.needs] + "』を使った！\n扉が開いた。");
       } else {
@@ -6150,8 +6307,9 @@ window.ITEM_DEFS = {
       await say("宝箱を開けた！\n" + loot.gold + " ゴールドを手に入れた！");
     } else if (loot.item) {
       var n = loot.n || 1;
-      addItem(loot.item, n);
-      await say("宝箱を開けた！\n『" + ITEM_NAMES[loot.item] + "』を " + n + "個 手に入れた！");
+      var got = addItem(loot.item, n);
+      await say("宝箱を開けた！\n『" + ITEM_NAMES[loot.item] + "』を " + n + "個 手に入れた！" +
+        (got < n ? "\n（持ちきれず " + (n - got) + "個 あきらめた）" : ""));
     } else if (loot.weapon) {
       addOwned(loot.weapon, 1);
       await say("宝箱を開けた！\n『" + GEAR[loot.weapon].name + "』を手に入れた！\n（メニューの「そうび」で装備できる）");
@@ -6160,24 +6318,30 @@ window.ITEM_DEFS = {
       await say("宝箱を開けた！\n『" + GEAR[loot.armor].name + "』を手に入れた！\n（メニューの「そうび」で装備できる）");
     }
   }
+  var KEY_ITEMS = { cave_key: 1, tower_key: 1 };
+  var BAG_MAX = 8;
+  // add n items: key items go to the key pouch; consumables fill members' bags
+  // (each member holds up to 8). returns how many were actually taken.
   function addItem(key, n) {
-    S.items[key] = (S.items[key] || 0) + n;
-    // battle items share the same pool
-    var bi = window.PBATTLE.getItems();
-    if (key === "herb" || key === "elixir") bi[key] = S.items[key];
+    n = n || 1;
+    if (KEY_ITEMS[key]) { S.keys[key] = (S.keys[key] || 0) + n; return n; }
+    var got = 0;
+    for (var i = 0; i < n; i++) { if (giveItem(key)) got++; else break; }
+    return got;
   }
-  function syncItemsFromBattle() {
-    var bi = window.PBATTLE.getItems();
-    S.items.herb = bi.herb; S.items.elixir = bi.elixir;
+  function giveItem(key, prefer) {
+    var party = window.PBATTLE.getParty();
+    if (prefer && prefer.bag.length < BAG_MAX) { prefer.bag.push(key); return true; }
+    for (var i = 0; i < party.length; i++) {
+      if (party[i].bag.length < BAG_MAX) { party[i].bag.push(key); return true; }
+    }
+    return false;
   }
 
   // ---------- battle glue ----------
   async function runEncounter(enc, bossEv) {
     busy = true;
-    var bi = window.PBATTLE.getItems();
-    bi.herb = S.items.herb || 0; bi.elixir = S.items.elixir || 0;
     var r = await window.PBATTLE.start(enc);
-    syncItemsFromBattle();
     playMapBgm();
     if (r.result === "lose") {
       await fade(true);
@@ -6215,7 +6379,7 @@ window.ITEM_DEFS = {
       var boss;
       if (ev.enemy === "gen_r") {
         boss = { bg: "tower1", enemies: [{
-          base: "gen_r", name: "四天王ハウル", lv: 600, hp: 760, atk: 24, def: 20, agi: 20, mag: 28, exp: 600, boss: true,
+          base: "gen_r", name: "四天王ハウル", lv: 600, hp: 2300, atk: 24, def: 22, agi: 20, mag: 28, exp: 1400, boss: true,
           skills: [{ name: "轟音の叫び", power: 0.85, all: true }], skillRate: 0.3,
           phases: [
             { at: 1.0, acts: 1, aoe: 0, charge: 0 },
@@ -6277,8 +6441,8 @@ window.ITEM_DEFS = {
         addOwned(k, 1);
         await say("『" + GEAR[k].name + "』を買った！\n（メニューの「そうび」で装備しよう）");
       } else {
-        addItem(k, 1);
-        await say("『" + ITEM_NAMES[k] + "』を買った！");
+        if (addItem(k, 1) > 0) await say("『" + ITEM_NAMES[k] + "』を買った！");
+        else { S.gold += price; await say("みんな 道具袋がいっぱいだ！\n（1人8個まで）"); }
       }
       save();
     }
@@ -6290,7 +6454,8 @@ window.ITEM_DEFS = {
     busy = true;
     var bgmOn = window.BGM ? BGM.isEnabled() : false;
     var c = await menu($("cmd-win"), [
-      { label: "つよさ" }, { label: "そうび" }, { label: "どうぐ" }, { label: "セーブ" },
+      { label: "つよさ" }, { label: "そうび" }, { label: "どうぐ" }, { label: "じゅもん" },
+      { label: "たんごちょう" }, { label: "セーブ" },
       { label: "ＢＧＭ：" + (bgmOn ? "ＯＮ" : "ＯＦＦ") },
       { label: "タイトルへ" }, { label: "とじる" }
     ], "メニュー");
@@ -6298,50 +6463,28 @@ window.ITEM_DEFS = {
       var lines = window.PBATTLE.getParty().map(function (p) {
         var wn = p.weapon && GEAR[p.weapon] ? GEAR[p.weapon].name : "なし";
         var an = p.armor && GEAR[p.armor] ? GEAR[p.armor].name : "なし";
+        var toNext = window.PBATTLE.expToNext(p);
         return p.name + "（Ｌｖ" + p.lv + " " + p.role + "）\n　ＨＰ" + p.hp + "/" + p.maxhp + "　ＭＰ" + p.mp + "/" + p.maxmp +
           "　攻" + (p.atk + (p.gearAtk || 0)) + " 守" + (p.def + (p.gearDef || 0)) +
-          "\n　武器：" + wn + "／防具：" + an;
+          "\n　武器：" + wn + "／防具：" + an +
+          "\n　次のＬｖまで：" + (toNext > 0 ? toNext : "ＭＡＸ");
       });
       await say(lines.join("\n\n") + "\n\n所持金 " + S.gold + "G");
     } else if (c === 1) {
       await equipMenu();
     } else if (c === 2) {
-      var inv = [];
-      Object.keys(S.items).forEach(function (k) {
-        if (S.items[k] > 0) inv.push({ label: (ITEM_NAMES[k] || k) + " ×" + S.items[k], k: k });
-      });
-      if (!inv.length) await say("道具を持っていない。");
-      else {
-        var ii = await menu($("sub-win"), inv, "どうぐ");
-        if (ii >= 0) {
-          var k = inv[ii].k;
-          if (k === "herb") {
-            var p0 = lowestHpMember();
-            p0.hp = Math.min(p0.maxhp, p0.hp + 40);
-            S.items.herb--; syncToBattle();
-            await say(p0.name + "のＨＰが 40 回復した！");
-          } else if (k === "elixir") {
-            var p1 = lowestMpMember();
-            p1.mp = Math.min(p1.maxmp, p1.mp + 30);
-            S.items.elixir--; syncToBattle();
-            await say(p1.name + "のＭＰが 30 回復した！");
-          } else if (k === "wing") {
-            S.items.wing--;
-            await transferTo("castle", 20, 26);
-            await say("帰還の羽根ペンで\n王都グロッサに戻った！");
-          } else {
-            await say("ここでは使えない。");
-          }
-          save();
-        }
-      }
+      await itemMenu();
     } else if (c === 3) {
+      await spellMenu();
+    } else if (c === 4) {
+      await openZukan();
+    } else if (c === 5) {
       save();
       await say("冒険の記録を保存した！");
-    } else if (c === 4) {
+    } else if (c === 6) {
       if (window.BGM) BGM.setEnabled(!bgmOn);
       await say("ＢＧＭを " + (!bgmOn ? "ＯＮ" : "ＯＦＦ") + " にした。");
-    } else if (c === 5) {
+    } else if (c === 7) {
       mode = "off";
       if (window.BGM) BGM.stop();
       $("pfield-wrap").style.display = "none";
@@ -6349,6 +6492,104 @@ window.ITEM_DEFS = {
       if (window.BGM) BGM.playAny(["title"]);
     }
     busy = false;
+  }
+
+  // ---------- どうぐ: per-member bag, つかう / わたす / すてる ----------
+  function bagCounts(p) {
+    var cnt = {}, order = [];
+    p.bag.forEach(function (k) { if (cnt[k] === undefined) { cnt[k] = 0; order.push(k); } cnt[k]++; });
+    return order.map(function (k) { return { k: k, n: cnt[k] }; });
+  }
+  async function itemMenu() {
+    while (true) {
+      var party = window.PBATTLE.getParty();
+      var mem = party.map(function (p) { return { label: p.name + "（" + p.bag.length + "/8）", p: p }; });
+      var keyList = Object.keys(S.keys || {}).filter(function (k) { return S.keys[k] > 0; });
+      if (keyList.length) mem.push({ label: "だいじなもの", keys: keyList });
+      mem.push({ label: "やめる" });
+      var mi = await menu($("cmd-win"), mem, "だれのどうぐ？");
+      if (mi < 0 || mi === mem.length - 1) break;
+      if (mem[mi].keys) {
+        await say("だいじなもの：\n" + mem[mi].keys.map(function (k) { return "・" + (ITEM_NAMES[k] || k); }).join("\n"));
+        continue;
+      }
+      var p = mem[mi].p;
+      while (true) {
+        var its = bagCounts(p).map(function (o) { return { label: (ITEM_NAMES[o.k] || o.k) + " ×" + o.n, k: o.k }; });
+        its.push({ label: "もどる" });
+        var ii = await menu($("sub-win"), its, p.name + "のどうぐ");
+        if (ii < 0 || ii === its.length - 1) break;
+        var k = its[ii].k;
+        var act = await menu($("sub-win"), [
+          { label: "つかう" }, { label: "わたす" }, { label: "すてる" }, { label: "やめる" }
+        ], ITEM_NAMES[k] || k);
+        if (act < 0 || act === 3) continue;
+        if (act === 0) await useItem(p, k);
+        else if (act === 1) await giveTo(p, k);
+        else if (act === 2) { removeFromBag(p, k); await say(p.name + "は『" + (ITEM_NAMES[k] || k) + "』を すてた。"); }
+        save();
+        if (!p.bag.length) break;
+      }
+    }
+  }
+  function removeFromBag(p, k) { var i = p.bag.indexOf(k); if (i >= 0) { p.bag.splice(i, 1); return true; } return false; }
+  async function useItem(p, k) {
+    if (k === "herb") {
+      var t = await pickAllyForItem(); if (!t) return;
+      removeFromBag(p, "herb"); t.hp = Math.min(t.maxhp, t.hp + 40);
+      await say(t.name + "のＨＰが 40 回復した！");
+    } else if (k === "elixir") {
+      var t2 = await pickAllyForItem(); if (!t2) return;
+      removeFromBag(p, "elixir"); t2.mp = Math.min(t2.maxmp, t2.mp + 30);
+      await say(t2.name + "のＭＰが 30 回復した！");
+    } else if (k === "wing") {
+      removeFromBag(p, "wing");
+      await transferTo("castle", 20, 26);
+      await say("帰還の羽根ペンで\n王都グロッサに戻った！");
+    } else {
+      await say("ここでは使えない。");
+    }
+  }
+  async function pickAllyForItem() {
+    var opts = window.PBATTLE.getParty().map(function (m) {
+      return { label: m.name + "　ＨＰ" + m.hp + "/" + m.maxhp + " ＭＰ" + m.mp + "/" + m.maxmp, m: m };
+    });
+    opts.push({ label: "やめる" });
+    var i = await menu($("sub-win"), opts, "だれに？");
+    if (i < 0 || i === opts.length - 1) return null;
+    return opts[i].m;
+  }
+  async function giveTo(p, k) {
+    var others = window.PBATTLE.getParty().filter(function (m) { return m !== p; });
+    if (!others.length) { await say("わたす相手がいない。"); return; }
+    var opts = others.map(function (m) {
+      return { label: m.name + "（" + m.bag.length + "/8）", m: m, disabled: m.bag.length >= BAG_MAX };
+    });
+    opts.push({ label: "やめる" });
+    var i = await menu($("sub-win"), opts, "だれにわたす？");
+    if (i < 0 || i === opts.length - 1 || opts[i].disabled) return;
+    removeFromBag(p, k);
+    opts[i].m.bag.push(k);
+    await say(p.name + "は " + opts[i].m.name + "に『" + (ITEM_NAMES[k] || k) + "』をわたした。");
+  }
+
+  // ---------- じゅもん: inspect owned spells (learned only) ----------
+  async function spellMenu() {
+    var party = window.PBATTLE.getParty();
+    var mem = party.map(function (p) { return { label: p.name, p: p }; });
+    mem.push({ label: "やめる" });
+    var mi = await menu($("cmd-win"), mem, "だれの じゅもん？");
+    if (mi < 0 || mi === mem.length - 1) return;
+    var p = mem[mi].p;
+    var spells = window.PBATTLE.spellInfo(p);
+    if (!spells.length) { await say(p.name + "は まだ 魔法を覚えていない。"); return; }
+    while (true) {
+      var opts = spells.map(function (s) { return { label: s.name + "　ＭＰ" + s.mp, s: s }; });
+      opts.push({ label: "もどる" });
+      var si = await menu($("sub-win"), opts, p.name + "の じゅもん");
+      if (si < 0 || si === opts.length - 1) break;
+      await say("『" + opts[si].s.name + "』（ＭＰ" + opts[si].s.mp + "）\n" + opts[si].s.desc);
+    }
   }
 
   // equip / hand gear between members (shared bag = handing items to allies)
@@ -6393,26 +6634,12 @@ window.ITEM_DEFS = {
       }
     }
   }
-  function lowestHpMember() {
-    var ps = window.PBATTLE.getParty().filter(function (p) { return p.hp > 0; });
-    ps.sort(function (a, b) { return a.hp / a.maxhp - b.hp / b.maxhp; });
-    return ps[0];
-  }
-  function lowestMpMember() {
-    var ps = window.PBATTLE.getParty().slice();
-    ps.sort(function (a, b) { return (a.maxmp - a.mp) < (b.maxmp - b.mp) ? 1 : -1; });
-    return ps[0];
-  }
-  function syncToBattle() {
-    var bi = window.PBATTLE.getItems();
-    bi.herb = S.items.herb || 0; bi.elixir = S.items.elixir || 0;
-  }
 
   // ---------- save / load ----------
   function save() {
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify({
-        pos: S.pos, gold: S.gold, chests: S.chests, flags: S.flags, items: S.items,
+        pos: S.pos, gold: S.gold, chests: S.chests, flags: S.flags, keys: S.keys,
         owned: S.owned, party: window.PBATTLE.getParty()
       }));
     } catch (e) {}
@@ -6451,20 +6678,17 @@ window.ITEM_DEFS = {
       if (ctx.imageSmoothingQuality) ctx.imageSmoothingQuality = "high";
     }
     var sv = !isNew && load();
-    if (sv) {
-      S = { pos: sv.pos, gold: sv.gold, chests: sv.chests || {}, flags: sv.flags || {}, items: sv.items || {}, owned: sv.owned || {} };
-      if (sv.party) {
-        window.PBATTLE.setParty(sv.party);
-        window.PBATTLE.getParty().forEach(recalcGear); // rebuild gear bonuses from equipped ids
-      }
+    if (sv && sv.party && sv.party[0] && sv.party[0].bag) {
+      S = { pos: sv.pos, gold: sv.gold, chests: sv.chests || {}, flags: sv.flags || {}, keys: sv.keys || {}, owned: sv.owned || {} };
+      window.PBATTLE.setParty(sv.party);
+      window.PBATTLE.getParty().forEach(recalcGear); // rebuild gear bonuses from equipped ids
     } else {
-      window.PBATTLE.resetParty();
+      window.PBATTLE.resetParty(); // Yu only, starter items in his bag
       S = { pos: { map: "castle", x: 20, y: 26, dir: "up" }, gold: 120,
-            chests: {}, flags: {}, items: { herb: 6, elixir: 2, wing: 1 }, owned: { w1: 1, a1: 1 } };
+            chests: {}, flags: {}, keys: {}, owned: { w1: 1, a1: 1 } };
       var yu = window.PBATTLE.getParty()[0];
       equipGear(yu, "w1"); equipGear(yu, "a1"); // hero starts with basic gear equipped
     }
-    syncToBattle();
     mode = "field";
     playMapBgm();
     if (!rafStarted) { rafStarted = true; requestAnimationFrame(loop); }
@@ -6474,6 +6698,78 @@ window.ITEM_DEFS = {
       await say("まずは王様に話を聞こう。\n（Ａボタン：話す／調べる\n　Ｂボタン：メニュー）");
     }
     save();
+  }
+
+  // ---------- 単語帳 (word encyclopedia, ported from game 1) ----------
+  var zukanBand = 400;
+  function starOf(r) {
+    if (!r || !r.c) return "none";
+    if (r.g) return "gold";
+    if (r.f) return "silver";
+    return "bronze";
+  }
+  function renderZukan() {
+    var study = (window.G && window.G.study) || {};
+    var words = study.words || {};
+    var tabs = $("zukan-tabs");
+    tabs.innerHTML = "";
+    [400, 500, 600, 700, 800, 900].forEach(function (b) {
+      var t = document.createElement("div");
+      t.className = "ztab" + (b === zukanBand ? " on" : "");
+      t.textContent = b;
+      t.onpointerdown = function (e) { e.preventDefault(); zukanBand = b; renderZukan(); };
+      tabs.appendChild(t);
+    });
+    var pool = (window.VOCAB[zukanBand] || []).slice().sort(function (a, b) { return a.w < b.w ? -1 : 1; });
+    var nB = 0, nS = 0, nG = 0, weakN = 0;
+    var rows = pool.map(function (e) {
+      var r = words[e.w];
+      var st = starOf(r);
+      if (st !== "none") nB++;
+      if (st === "silver" || st === "gold") nS++;
+      if (st === "gold") nG++;
+      var weak = r && r.wr > 0 && r.s < 2;
+      if (weak) weakN++;
+      var known = r && r.c > 0;
+      return '<div class="zrow"><div class="zstar ' + st + '">★</div>' +
+        '<div class="zw">' + e.w + "</div>" +
+        '<div class="zm' + (known ? "" : " hidden-m") + '">' + (known ? e.m : "？？？") + "</div>" +
+        (weak ? '<div class="zweak">！</div>' : "") + "</div>";
+    });
+    $("zukan-summary").innerHTML =
+      "はっけん " + nB + "／" + pool.length +
+      '　<span style="color:#cfd8e6">★' + nS + "</span>" +
+      '　<span style="color:#ffd54a">★' + nG + "</span>" +
+      (weakN ? '　<span style="color:#ff5a5a">にがて ' + weakN + "</span>" : "") +
+      '<div style="font-size:10.5px;color:#889;margin-top:2px">★＝正解ずみ／銀★＝2秒以内で正解／金★＝3連続正解</div>';
+    $("zukan-list").innerHTML = rows.join("");
+    $("zukan-list").scrollTop = 0;
+  }
+  function openZukan() {
+    return new Promise(function (resolve) {
+      renderZukan();
+      $("zukan").classList.add("on");
+      function close() {
+        INPUT.stack.pop();
+        $("zukan").classList.remove("on");
+        $("zukan-close").onpointerdown = null;
+        resolve();
+      }
+      var list = $("zukan-list");
+      INPUT.stack.push({
+        onA: function () { list.scrollTop += 260; },
+        onB: close,
+        onDir: function (d) {
+          var bands = [400, 500, 600, 700, 800, 900];
+          var i = bands.indexOf(zukanBand);
+          if (d === "left") { zukanBand = bands[(i + 5) % 6]; renderZukan(); }
+          else if (d === "right") { zukanBand = bands[(i + 1) % 6]; renderZukan(); }
+          else if (d === "down") list.scrollTop += 260;
+          else if (d === "up") list.scrollTop -= 260;
+        }
+      });
+      $("zukan-close").onpointerdown = function (e) { e.preventDefault(); close(); };
+    });
   }
 
   window.PFIELD = { start: start, hasSave: function () { return !!load(); } };
@@ -6532,7 +6828,7 @@ window.ITEM_DEFS = {
       ],
       enemies: [{
         base: "gen_r", name: "四天王ハウル", lv: 600,
-        hp: 760, atk: 24, def: 20, agi: 20, mag: 28, exp: 600,
+        hp: 2300, atk: 24, def: 22, agi: 20, mag: 28, exp: 1400,
         boss: true,
         skills: [{ name: "轟音の叫び", power: 0.85, all: true }], skillRate: 0.3,
         phases: [
@@ -6567,7 +6863,7 @@ window.ITEM_DEFS = {
     var pack = ZAKO_PACKS[Math.floor(Math.random() * ZAKO_PACKS.length)];
     run({ bg: pack.bg, enemies: pack.enemies.map(function (id) { return scaledFoe(id); }) }, 5);
   });
-  $("pbtn-boss").addEventListener("click", function () { run(bossHowl(), 8); });
+  $("pbtn-boss").addEventListener("click", function () { run(bossHowl(), 13); });
   $("pbtn-bgm").addEventListener("click", function () {
     if (window.BGM) BGM.setEnabled(!BGM.isEnabled());
     refreshBgmBtn();

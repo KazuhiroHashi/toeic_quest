@@ -335,11 +335,18 @@
       }
       drawEdges(m, x, y, px, py, t);
       if (t === "^" || t === "v") {
-        ctx.fillStyle = "rgba(20,16,10,.6)";
-        var u = TILE / 24;
-        ctx.fillRect(px + 4 * u, py + 16 * u, 16 * u, 4 * u);
-        ctx.fillRect(px + 7 * u, py + 10 * u, 10 * u, 4 * u);
-        ctx.fillRect(px + 10 * u, py + 4 * u, 4 * u, 4 * u);
+        var stair = fieldImg(t === "^" ? "stairs_up" : "stairs_down");
+        if (stair) drawSprite(stair, px, py, 1.0);
+        else {
+          // cleaner procedural stairs: stepped blocks with shading
+          var u = TILE / 24;
+          for (var si = 0; si < 4; si++) {
+            var sw = (TILE - si * 4 * u), sy = py + si * 5 * u;
+            ctx.fillStyle = "#b9c2d0"; ctx.fillRect(px + si * 2 * u, sy, sw, 4 * u);
+            ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.fillRect(px + si * 2 * u, sy + 4 * u, sw, 1 * u);
+          }
+          if (t === "^") { ctx.fillStyle = "#ffe08a"; ctx.font = Math.round(10 * u) + "px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("▲", px + TILE / 2, py + 4 * u); }
+        }
       }
       if (GLYPH[t]) {
         var icon = fieldImg(TILE_ICON[t]);
@@ -490,7 +497,7 @@
     var ev = eventAt(m, nx, ny);
 
     if (ev && ev.type === "gate" && !S.flags["gate_" + ev.x + "_" + ev.y + "_" + m.id]) {
-      if (S.items[ev.needs] > 0) {
+      if ((S.keys[ev.needs] || 0) > 0) {
         S.flags["gate_" + ev.x + "_" + ev.y + "_" + m.id] = true;
         await say("『" + ITEM_NAMES[ev.needs] + "』を使った！\n扉が開いた。");
       } else {
@@ -547,8 +554,9 @@
       await say("宝箱を開けた！\n" + loot.gold + " ゴールドを手に入れた！");
     } else if (loot.item) {
       var n = loot.n || 1;
-      addItem(loot.item, n);
-      await say("宝箱を開けた！\n『" + ITEM_NAMES[loot.item] + "』を " + n + "個 手に入れた！");
+      var got = addItem(loot.item, n);
+      await say("宝箱を開けた！\n『" + ITEM_NAMES[loot.item] + "』を " + n + "個 手に入れた！" +
+        (got < n ? "\n（持ちきれず " + (n - got) + "個 あきらめた）" : ""));
     } else if (loot.weapon) {
       addOwned(loot.weapon, 1);
       await say("宝箱を開けた！\n『" + GEAR[loot.weapon].name + "』を手に入れた！\n（メニューの「そうび」で装備できる）");
@@ -557,24 +565,30 @@
       await say("宝箱を開けた！\n『" + GEAR[loot.armor].name + "』を手に入れた！\n（メニューの「そうび」で装備できる）");
     }
   }
+  var KEY_ITEMS = { cave_key: 1, tower_key: 1 };
+  var BAG_MAX = 8;
+  // add n items: key items go to the key pouch; consumables fill members' bags
+  // (each member holds up to 8). returns how many were actually taken.
   function addItem(key, n) {
-    S.items[key] = (S.items[key] || 0) + n;
-    // battle items share the same pool
-    var bi = window.PBATTLE.getItems();
-    if (key === "herb" || key === "elixir") bi[key] = S.items[key];
+    n = n || 1;
+    if (KEY_ITEMS[key]) { S.keys[key] = (S.keys[key] || 0) + n; return n; }
+    var got = 0;
+    for (var i = 0; i < n; i++) { if (giveItem(key)) got++; else break; }
+    return got;
   }
-  function syncItemsFromBattle() {
-    var bi = window.PBATTLE.getItems();
-    S.items.herb = bi.herb; S.items.elixir = bi.elixir;
+  function giveItem(key, prefer) {
+    var party = window.PBATTLE.getParty();
+    if (prefer && prefer.bag.length < BAG_MAX) { prefer.bag.push(key); return true; }
+    for (var i = 0; i < party.length; i++) {
+      if (party[i].bag.length < BAG_MAX) { party[i].bag.push(key); return true; }
+    }
+    return false;
   }
 
   // ---------- battle glue ----------
   async function runEncounter(enc, bossEv) {
     busy = true;
-    var bi = window.PBATTLE.getItems();
-    bi.herb = S.items.herb || 0; bi.elixir = S.items.elixir || 0;
     var r = await window.PBATTLE.start(enc);
-    syncItemsFromBattle();
     playMapBgm();
     if (r.result === "lose") {
       await fade(true);
@@ -612,7 +626,7 @@
       var boss;
       if (ev.enemy === "gen_r") {
         boss = { bg: "tower1", enemies: [{
-          base: "gen_r", name: "四天王ハウル", lv: 600, hp: 760, atk: 24, def: 20, agi: 20, mag: 28, exp: 600, boss: true,
+          base: "gen_r", name: "四天王ハウル", lv: 600, hp: 2300, atk: 24, def: 22, agi: 20, mag: 28, exp: 1400, boss: true,
           skills: [{ name: "轟音の叫び", power: 0.85, all: true }], skillRate: 0.3,
           phases: [
             { at: 1.0, acts: 1, aoe: 0, charge: 0 },
@@ -674,8 +688,8 @@
         addOwned(k, 1);
         await say("『" + GEAR[k].name + "』を買った！\n（メニューの「そうび」で装備しよう）");
       } else {
-        addItem(k, 1);
-        await say("『" + ITEM_NAMES[k] + "』を買った！");
+        if (addItem(k, 1) > 0) await say("『" + ITEM_NAMES[k] + "』を買った！");
+        else { S.gold += price; await say("みんな 道具袋がいっぱいだ！\n（1人8個まで）"); }
       }
       save();
     }
@@ -687,7 +701,8 @@
     busy = true;
     var bgmOn = window.BGM ? BGM.isEnabled() : false;
     var c = await menu($("cmd-win"), [
-      { label: "つよさ" }, { label: "そうび" }, { label: "どうぐ" }, { label: "セーブ" },
+      { label: "つよさ" }, { label: "そうび" }, { label: "どうぐ" }, { label: "じゅもん" },
+      { label: "たんごちょう" }, { label: "セーブ" },
       { label: "ＢＧＭ：" + (bgmOn ? "ＯＮ" : "ＯＦＦ") },
       { label: "タイトルへ" }, { label: "とじる" }
     ], "メニュー");
@@ -695,50 +710,28 @@
       var lines = window.PBATTLE.getParty().map(function (p) {
         var wn = p.weapon && GEAR[p.weapon] ? GEAR[p.weapon].name : "なし";
         var an = p.armor && GEAR[p.armor] ? GEAR[p.armor].name : "なし";
+        var toNext = window.PBATTLE.expToNext(p);
         return p.name + "（Ｌｖ" + p.lv + " " + p.role + "）\n　ＨＰ" + p.hp + "/" + p.maxhp + "　ＭＰ" + p.mp + "/" + p.maxmp +
           "　攻" + (p.atk + (p.gearAtk || 0)) + " 守" + (p.def + (p.gearDef || 0)) +
-          "\n　武器：" + wn + "／防具：" + an;
+          "\n　武器：" + wn + "／防具：" + an +
+          "\n　次のＬｖまで：" + (toNext > 0 ? toNext : "ＭＡＸ");
       });
       await say(lines.join("\n\n") + "\n\n所持金 " + S.gold + "G");
     } else if (c === 1) {
       await equipMenu();
     } else if (c === 2) {
-      var inv = [];
-      Object.keys(S.items).forEach(function (k) {
-        if (S.items[k] > 0) inv.push({ label: (ITEM_NAMES[k] || k) + " ×" + S.items[k], k: k });
-      });
-      if (!inv.length) await say("道具を持っていない。");
-      else {
-        var ii = await menu($("sub-win"), inv, "どうぐ");
-        if (ii >= 0) {
-          var k = inv[ii].k;
-          if (k === "herb") {
-            var p0 = lowestHpMember();
-            p0.hp = Math.min(p0.maxhp, p0.hp + 40);
-            S.items.herb--; syncToBattle();
-            await say(p0.name + "のＨＰが 40 回復した！");
-          } else if (k === "elixir") {
-            var p1 = lowestMpMember();
-            p1.mp = Math.min(p1.maxmp, p1.mp + 30);
-            S.items.elixir--; syncToBattle();
-            await say(p1.name + "のＭＰが 30 回復した！");
-          } else if (k === "wing") {
-            S.items.wing--;
-            await transferTo("castle", 20, 26);
-            await say("帰還の羽根ペンで\n王都グロッサに戻った！");
-          } else {
-            await say("ここでは使えない。");
-          }
-          save();
-        }
-      }
+      await itemMenu();
     } else if (c === 3) {
+      await spellMenu();
+    } else if (c === 4) {
+      await openZukan();
+    } else if (c === 5) {
       save();
       await say("冒険の記録を保存した！");
-    } else if (c === 4) {
+    } else if (c === 6) {
       if (window.BGM) BGM.setEnabled(!bgmOn);
       await say("ＢＧＭを " + (!bgmOn ? "ＯＮ" : "ＯＦＦ") + " にした。");
-    } else if (c === 5) {
+    } else if (c === 7) {
       mode = "off";
       if (window.BGM) BGM.stop();
       $("pfield-wrap").style.display = "none";
@@ -746,6 +739,104 @@
       if (window.BGM) BGM.playAny(["title"]);
     }
     busy = false;
+  }
+
+  // ---------- どうぐ: per-member bag, つかう / わたす / すてる ----------
+  function bagCounts(p) {
+    var cnt = {}, order = [];
+    p.bag.forEach(function (k) { if (cnt[k] === undefined) { cnt[k] = 0; order.push(k); } cnt[k]++; });
+    return order.map(function (k) { return { k: k, n: cnt[k] }; });
+  }
+  async function itemMenu() {
+    while (true) {
+      var party = window.PBATTLE.getParty();
+      var mem = party.map(function (p) { return { label: p.name + "（" + p.bag.length + "/8）", p: p }; });
+      var keyList = Object.keys(S.keys || {}).filter(function (k) { return S.keys[k] > 0; });
+      if (keyList.length) mem.push({ label: "だいじなもの", keys: keyList });
+      mem.push({ label: "やめる" });
+      var mi = await menu($("cmd-win"), mem, "だれのどうぐ？");
+      if (mi < 0 || mi === mem.length - 1) break;
+      if (mem[mi].keys) {
+        await say("だいじなもの：\n" + mem[mi].keys.map(function (k) { return "・" + (ITEM_NAMES[k] || k); }).join("\n"));
+        continue;
+      }
+      var p = mem[mi].p;
+      while (true) {
+        var its = bagCounts(p).map(function (o) { return { label: (ITEM_NAMES[o.k] || o.k) + " ×" + o.n, k: o.k }; });
+        its.push({ label: "もどる" });
+        var ii = await menu($("sub-win"), its, p.name + "のどうぐ");
+        if (ii < 0 || ii === its.length - 1) break;
+        var k = its[ii].k;
+        var act = await menu($("sub-win"), [
+          { label: "つかう" }, { label: "わたす" }, { label: "すてる" }, { label: "やめる" }
+        ], ITEM_NAMES[k] || k);
+        if (act < 0 || act === 3) continue;
+        if (act === 0) await useItem(p, k);
+        else if (act === 1) await giveTo(p, k);
+        else if (act === 2) { removeFromBag(p, k); await say(p.name + "は『" + (ITEM_NAMES[k] || k) + "』を すてた。"); }
+        save();
+        if (!p.bag.length) break;
+      }
+    }
+  }
+  function removeFromBag(p, k) { var i = p.bag.indexOf(k); if (i >= 0) { p.bag.splice(i, 1); return true; } return false; }
+  async function useItem(p, k) {
+    if (k === "herb") {
+      var t = await pickAllyForItem(); if (!t) return;
+      removeFromBag(p, "herb"); t.hp = Math.min(t.maxhp, t.hp + 40);
+      await say(t.name + "のＨＰが 40 回復した！");
+    } else if (k === "elixir") {
+      var t2 = await pickAllyForItem(); if (!t2) return;
+      removeFromBag(p, "elixir"); t2.mp = Math.min(t2.maxmp, t2.mp + 30);
+      await say(t2.name + "のＭＰが 30 回復した！");
+    } else if (k === "wing") {
+      removeFromBag(p, "wing");
+      await transferTo("castle", 20, 26);
+      await say("帰還の羽根ペンで\n王都グロッサに戻った！");
+    } else {
+      await say("ここでは使えない。");
+    }
+  }
+  async function pickAllyForItem() {
+    var opts = window.PBATTLE.getParty().map(function (m) {
+      return { label: m.name + "　ＨＰ" + m.hp + "/" + m.maxhp + " ＭＰ" + m.mp + "/" + m.maxmp, m: m };
+    });
+    opts.push({ label: "やめる" });
+    var i = await menu($("sub-win"), opts, "だれに？");
+    if (i < 0 || i === opts.length - 1) return null;
+    return opts[i].m;
+  }
+  async function giveTo(p, k) {
+    var others = window.PBATTLE.getParty().filter(function (m) { return m !== p; });
+    if (!others.length) { await say("わたす相手がいない。"); return; }
+    var opts = others.map(function (m) {
+      return { label: m.name + "（" + m.bag.length + "/8）", m: m, disabled: m.bag.length >= BAG_MAX };
+    });
+    opts.push({ label: "やめる" });
+    var i = await menu($("sub-win"), opts, "だれにわたす？");
+    if (i < 0 || i === opts.length - 1 || opts[i].disabled) return;
+    removeFromBag(p, k);
+    opts[i].m.bag.push(k);
+    await say(p.name + "は " + opts[i].m.name + "に『" + (ITEM_NAMES[k] || k) + "』をわたした。");
+  }
+
+  // ---------- じゅもん: inspect owned spells (learned only) ----------
+  async function spellMenu() {
+    var party = window.PBATTLE.getParty();
+    var mem = party.map(function (p) { return { label: p.name, p: p }; });
+    mem.push({ label: "やめる" });
+    var mi = await menu($("cmd-win"), mem, "だれの じゅもん？");
+    if (mi < 0 || mi === mem.length - 1) return;
+    var p = mem[mi].p;
+    var spells = window.PBATTLE.spellInfo(p);
+    if (!spells.length) { await say(p.name + "は まだ 魔法を覚えていない。"); return; }
+    while (true) {
+      var opts = spells.map(function (s) { return { label: s.name + "　ＭＰ" + s.mp, s: s }; });
+      opts.push({ label: "もどる" });
+      var si = await menu($("sub-win"), opts, p.name + "の じゅもん");
+      if (si < 0 || si === opts.length - 1) break;
+      await say("『" + opts[si].s.name + "』（ＭＰ" + opts[si].s.mp + "）\n" + opts[si].s.desc);
+    }
   }
 
   // equip / hand gear between members (shared bag = handing items to allies)
@@ -790,26 +881,12 @@
       }
     }
   }
-  function lowestHpMember() {
-    var ps = window.PBATTLE.getParty().filter(function (p) { return p.hp > 0; });
-    ps.sort(function (a, b) { return a.hp / a.maxhp - b.hp / b.maxhp; });
-    return ps[0];
-  }
-  function lowestMpMember() {
-    var ps = window.PBATTLE.getParty().slice();
-    ps.sort(function (a, b) { return (a.maxmp - a.mp) < (b.maxmp - b.mp) ? 1 : -1; });
-    return ps[0];
-  }
-  function syncToBattle() {
-    var bi = window.PBATTLE.getItems();
-    bi.herb = S.items.herb || 0; bi.elixir = S.items.elixir || 0;
-  }
 
   // ---------- save / load ----------
   function save() {
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify({
-        pos: S.pos, gold: S.gold, chests: S.chests, flags: S.flags, items: S.items,
+        pos: S.pos, gold: S.gold, chests: S.chests, flags: S.flags, keys: S.keys,
         owned: S.owned, party: window.PBATTLE.getParty()
       }));
     } catch (e) {}
@@ -848,20 +925,17 @@
       if (ctx.imageSmoothingQuality) ctx.imageSmoothingQuality = "high";
     }
     var sv = !isNew && load();
-    if (sv) {
-      S = { pos: sv.pos, gold: sv.gold, chests: sv.chests || {}, flags: sv.flags || {}, items: sv.items || {}, owned: sv.owned || {} };
-      if (sv.party) {
-        window.PBATTLE.setParty(sv.party);
-        window.PBATTLE.getParty().forEach(recalcGear); // rebuild gear bonuses from equipped ids
-      }
+    if (sv && sv.party && sv.party[0] && sv.party[0].bag) {
+      S = { pos: sv.pos, gold: sv.gold, chests: sv.chests || {}, flags: sv.flags || {}, keys: sv.keys || {}, owned: sv.owned || {} };
+      window.PBATTLE.setParty(sv.party);
+      window.PBATTLE.getParty().forEach(recalcGear); // rebuild gear bonuses from equipped ids
     } else {
-      window.PBATTLE.resetParty();
+      window.PBATTLE.resetParty(); // Yu only, starter items in his bag
       S = { pos: { map: "castle", x: 20, y: 26, dir: "up" }, gold: 120,
-            chests: {}, flags: {}, items: { herb: 6, elixir: 2, wing: 1 }, owned: { w1: 1, a1: 1 } };
+            chests: {}, flags: {}, keys: {}, owned: { w1: 1, a1: 1 } };
       var yu = window.PBATTLE.getParty()[0];
       equipGear(yu, "w1"); equipGear(yu, "a1"); // hero starts with basic gear equipped
     }
-    syncToBattle();
     mode = "field";
     playMapBgm();
     if (!rafStarted) { rafStarted = true; requestAnimationFrame(loop); }
@@ -871,6 +945,78 @@
       await say("まずは王様に話を聞こう。\n（Ａボタン：話す／調べる\n　Ｂボタン：メニュー）");
     }
     save();
+  }
+
+  // ---------- 単語帳 (word encyclopedia, ported from game 1) ----------
+  var zukanBand = 400;
+  function starOf(r) {
+    if (!r || !r.c) return "none";
+    if (r.g) return "gold";
+    if (r.f) return "silver";
+    return "bronze";
+  }
+  function renderZukan() {
+    var study = (window.G && window.G.study) || {};
+    var words = study.words || {};
+    var tabs = $("zukan-tabs");
+    tabs.innerHTML = "";
+    [400, 500, 600, 700, 800, 900].forEach(function (b) {
+      var t = document.createElement("div");
+      t.className = "ztab" + (b === zukanBand ? " on" : "");
+      t.textContent = b;
+      t.onpointerdown = function (e) { e.preventDefault(); zukanBand = b; renderZukan(); };
+      tabs.appendChild(t);
+    });
+    var pool = (window.VOCAB[zukanBand] || []).slice().sort(function (a, b) { return a.w < b.w ? -1 : 1; });
+    var nB = 0, nS = 0, nG = 0, weakN = 0;
+    var rows = pool.map(function (e) {
+      var r = words[e.w];
+      var st = starOf(r);
+      if (st !== "none") nB++;
+      if (st === "silver" || st === "gold") nS++;
+      if (st === "gold") nG++;
+      var weak = r && r.wr > 0 && r.s < 2;
+      if (weak) weakN++;
+      var known = r && r.c > 0;
+      return '<div class="zrow"><div class="zstar ' + st + '">★</div>' +
+        '<div class="zw">' + e.w + "</div>" +
+        '<div class="zm' + (known ? "" : " hidden-m") + '">' + (known ? e.m : "？？？") + "</div>" +
+        (weak ? '<div class="zweak">！</div>' : "") + "</div>";
+    });
+    $("zukan-summary").innerHTML =
+      "はっけん " + nB + "／" + pool.length +
+      '　<span style="color:#cfd8e6">★' + nS + "</span>" +
+      '　<span style="color:#ffd54a">★' + nG + "</span>" +
+      (weakN ? '　<span style="color:#ff5a5a">にがて ' + weakN + "</span>" : "") +
+      '<div style="font-size:10.5px;color:#889;margin-top:2px">★＝正解ずみ／銀★＝2秒以内で正解／金★＝3連続正解</div>';
+    $("zukan-list").innerHTML = rows.join("");
+    $("zukan-list").scrollTop = 0;
+  }
+  function openZukan() {
+    return new Promise(function (resolve) {
+      renderZukan();
+      $("zukan").classList.add("on");
+      function close() {
+        INPUT.stack.pop();
+        $("zukan").classList.remove("on");
+        $("zukan-close").onpointerdown = null;
+        resolve();
+      }
+      var list = $("zukan-list");
+      INPUT.stack.push({
+        onA: function () { list.scrollTop += 260; },
+        onB: close,
+        onDir: function (d) {
+          var bands = [400, 500, 600, 700, 800, 900];
+          var i = bands.indexOf(zukanBand);
+          if (d === "left") { zukanBand = bands[(i + 5) % 6]; renderZukan(); }
+          else if (d === "right") { zukanBand = bands[(i + 1) % 6]; renderZukan(); }
+          else if (d === "down") list.scrollTop += 260;
+          else if (d === "up") list.scrollTop -= 260;
+        }
+      });
+      $("zukan-close").onpointerdown = function (e) { e.preventDefault(); close(); };
+    });
   }
 
   window.PFIELD = { start: start, hasSave: function () { return !!load(); } };

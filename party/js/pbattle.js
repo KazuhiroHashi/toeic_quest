@@ -97,17 +97,17 @@
 
   // ================= spell / character registry =================
   var SPELLS = {
-    heal:      { name: "ヒール",        mp: 4,  type: "heal",  power: 34 },
-    healmore:  { name: "ヒールモア",     mp: 8,  type: "heal",  power: 80 },
-    partyheal: { name: "パーティヒール",  mp: 14, type: "heal",  power: 42, all: true },
-    revive:    { name: "リカバー",       mp: 18, type: "raise", power: 0.6 },
-    spark:     { name: "スパーク",       mp: 4,  type: "atk",   power: 26, elem: "thunder" },
-    fireball:  { name: "ファイアボール",  mp: 7,  type: "atk",   power: 42, elem: "fire" },
-    fire:      { name: "ファイア",       mp: 4,  type: "atk",   power: 30, elem: "fire" },
-    frost:     { name: "フロスト",       mp: 5,  type: "atk",   power: 34, elem: "ice" },
-    fira:      { name: "ファイラ",       mp: 9,  type: "atk",   power: 38, elem: "fire", all: true },
-    thunder:   { name: "サンダー",       mp: 13, type: "atk",   power: 44, elem: "thunder", all: true },
-    holy:      { name: "ホーリー",       mp: 8,  type: "atk",   power: 54, elem: "holy" }
+    heal:      { name: "ヒール",        mp: 4,  type: "heal",  power: 34, desc: "味方1人のHPを34ほど回復する" },
+    healmore:  { name: "ヒールモア",     mp: 8,  type: "heal",  power: 80, desc: "味方1人のHPを80ほど回復する" },
+    partyheal: { name: "パーティヒール",  mp: 14, type: "heal",  power: 42, all: true, desc: "味方全員のHPを42ほど回復する" },
+    revive:    { name: "リカバー",       mp: 18, type: "raise", power: 0.6, desc: "倒れた味方をHP6割で復活させる" },
+    spark:     { name: "スパーク",       mp: 4,  type: "atk",   power: 26, elem: "thunder", desc: "敵1体に雷のダメージ" },
+    fireball:  { name: "ファイアボール",  mp: 7,  type: "atk",   power: 42, elem: "fire", desc: "敵1体に強い炎のダメージ" },
+    fire:      { name: "ファイア",       mp: 4,  type: "atk",   power: 30, elem: "fire", desc: "敵1体に炎のダメージ" },
+    frost:     { name: "フロスト",       mp: 5,  type: "atk",   power: 34, elem: "ice", desc: "敵1体に氷のダメージ" },
+    fira:      { name: "ファイラ",       mp: 9,  type: "atk",   power: 38, elem: "fire", all: true, desc: "敵全体に炎のダメージ" },
+    thunder:   { name: "サンダー",       mp: 13, type: "atk",   power: 44, elem: "thunder", all: true, desc: "敵全体に雷のダメージ" },
+    holy:      { name: "ホーリー",       mp: 8,  type: "atk",   power: 54, elem: "holy", desc: "敵1体に聖なるダメージ（不死・悪魔に特効）" }
   };
 
   // learn: { level: spellId | [spellId,...] }
@@ -160,6 +160,7 @@
       hp: s.hp, maxhp: s.hp, mp: s.mp, maxmp: s.mp,
       atk: s.atk, def: s.def, agi: s.agi,
       gearAtk: 0, gearDef: 0, weapon: null, armor: null,
+      bag: [], // per-member item ids, max 8
       spellIds: spellsAt(id, lv)
     };
   }
@@ -343,11 +344,13 @@
       } else if (c === 2) {
         acts.push({ who: i, kind: "guard" });
       } else {
+        var counts = {};
+        p.bag.forEach(function (k) { if (k === "herb" || k === "elixir") counts[k] = (counts[k] || 0) + 1; });
         var inv = [];
-        if (items.herb > 0) inv.push({ key: "herb", label: "ハーブティー ×" + items.herb });
-        if (items.elixir > 0) inv.push({ key: "elixir", label: "エナジーコーヒー ×" + items.elixir });
-        if (!inv.length) { await say("使える道具がない！"); continue; }
-        var ii = await menu($("pbattle-sub"), inv, "どうぐ");
+        if (counts.herb) inv.push({ key: "herb", label: "ハーブティー ×" + counts.herb });
+        if (counts.elixir) inv.push({ key: "elixir", label: "エナジーコーヒー ×" + counts.elixir });
+        if (!inv.length) { await say(p.name + "は 使える道具を持っていない！"); continue; }
+        var ii = await menu($("pbattle-sub"), inv, p.name + "の どうぐ");
         if (ii === -1) continue;
         var at = await pickAlly(false);
         if (at === -1) continue;
@@ -391,8 +394,11 @@
     }
     if (a.kind === "item") {
       var t = party[a.target];
-      if (a.item === "herb") { items.herb--; t.hp = Math.min(t.maxhp, t.hp + 40); await say(p.name + "は ハーブティーを使った！\n" + t.name + "のＨＰが 40 回復！"); }
-      else { items.elixir--; t.mp = Math.min(t.maxmp, t.mp + 30); await say(p.name + "は エナジーコーヒーを使った！\n" + t.name + "のＭＰが 30 回復！"); }
+      var bi = p.bag.indexOf(a.item);
+      if (bi < 0) { await say("道具が見つからない…"); return; }
+      p.bag.splice(bi, 1); // consume from the acting member's bag
+      if (a.item === "herb") { t.hp = Math.min(t.maxhp, t.hp + 40); await say(p.name + "は ハーブティーを使った！\n" + t.name + "のＨＰが 40 回復！"); }
+      else { t.mp = Math.min(t.maxmp, t.mp + 30); await say(p.name + "は エナジーコーヒーを使った！\n" + t.name + "のＭＰが 30 回復！"); }
       sfx("heal"); renderParty(-1);
       return;
     }
@@ -456,18 +462,21 @@
       var fxc = sp.elem === "fire" ? "rgba(255,150,60,.9)" : sp.elem === "thunder" ? "rgba(255,230,90,.9)" : sp.elem === "ice" ? "rgba(150,220,255,.9)" : sp.elem === "holy" ? "rgba(255,250,200,.95)" : "rgba(200,160,255,.9)";
       var targets = sp.all ? foes.map(function (f, i) { return i; }).filter(function (i) { return foes[i].hp > 0; })
                            : [foes[a.target] && foes[a.target].hp > 0 ? a.target : firstAliveFoe()];
+      var lines = [], anyWeak = false;
       for (var k = 0; k < targets.length; k++) {
         var fi = targets[k], foe = foes[fi];
         if (fi < 0 || foe.hp <= 0) continue;
         var sd = Math.round(sp.power * (0.85 + Math.random() * 0.3) * chainMult());
         if (qs.elapsed <= 2) sd = Math.round(sd * 1.3);
         var weak = sp.elem && window.WEAK && window.WEAK[foe.base] === sp.elem;
-        if (weak) { sd = Math.round(sd * 1.5); bpop("弱点！", "weak", $("penemy-" + fi)); }
+        if (weak) { sd = Math.round(sd * 1.5); anyWeak = true; bpop("弱点！", "weak", $("penemy-" + fi)); }
         hitEnemy(fi, sd, false, fxc);
-        await say(foe.name + "に " + sd + " のダメージ！" + (weak ? "\n弱点を突いた！" : ""));
-        await checkFoeDown(fi);
-        if (firstAliveFoe() < 0) break;
+        lines.push(foe.name + "に " + sd + (weak ? "（弱点！）" : ""));
       }
+      // one message listing each target's damage
+      await say(lines.join("\n") + " のダメージ！" + (anyWeak ? "\n弱点を突いた！" : ""));
+      for (var d2 = 0; d2 < targets.length; d2++) { if (foes[targets[d2]] && foes[targets[d2]].hp <= 0) await say(foes[targets[d2]].name + "を たおした！"); }
+      if (aliveFoes().length) { var bossF = foes.filter(function (f) { return f.boss && f.hp > 0; })[0]; if (bossF && bossF.phases) await checkPhase(bossF); }
     }
   }
   function defOf2(f) { return f.def; }
@@ -506,13 +515,15 @@
     if (f.charging) {
       f.charging = false;
       await say(f.name + "の ためていた力が 解き放たれた！！");
-      aliveMembers().forEach(function () {});
+      var cl = [];
       for (var i = 0; i < party.length; i++) {
         var mm = party[i]; if (mm.hp <= 0) continue;
         var dm = Math.max(1, Math.round((f.atk * 1.5 - defOf(mm) / 2 + rnd(8)) * (mm.guard ? 0.45 : 1)));
         hitMember(i, dm);
+        cl.push(mm.name + "に " + dm);
       }
-      await say("すさまじい衝撃が パーティ全体を襲う！");
+      await say(cl.join("\n") + " のダメージ！");
+      for (var cz = 0; cz < party.length; cz++) { if (party[cz].hp <= 0 && party[cz].maxhp > 0) {} }
       return;
     }
     // boss charge windup
@@ -533,12 +544,14 @@
       var bossAoe = phase && phase.aoe && Math.random() < phase.aoe;
       if (bossAoe && (!f.skills || Math.random() < 0.5)) {
         await say(f.name + "は「静まれ！」と叫んだ！\n言葉の嵐が吹き荒れる！");
+        var al = [];
         for (var j = 0; j < living.length; j++) {
           var mi = living[j], mm2 = party[mi];
           var ad = Math.max(1, Math.round((f.atk * 0.8 - defOf(mm2) / 2 + rnd(6)) * (mm2.guard ? 0.5 : 1)));
           hitMember(mi, ad);
+          al.push(mm2.name + "に " + ad);
         }
-        await say("パーティ全体が ダメージを受けた！");
+        await say(al.join("\n") + " のダメージ！");
         continue;
       }
       if (useSkill) {
@@ -546,11 +559,15 @@
         await say(f.name + "は『" + sk.name + "』を放った！");
         sfx("ng");
         if (sk.all) {
+          var sl = [];
           for (var a2 = 0; a2 < living.length; a2++) {
             var mi2 = living[a2], mt = party[mi2];
-            hitMember(mi2, magDmg(f, mt, sk.power, mt.guard));
+            var sd2 = magDmg(f, mt, sk.power, mt.guard);
+            hitMember(mi2, sd2);
+            sl.push(mt.name + "に " + sd2);
           }
-          await say("パーティ全体が ダメージを受けた！");
+          await say(sl.join("\n") + " のダメージ！");
+          for (var dz = 0; dz < living.length; dz++) { if (party[living[dz]].hp <= 0) await say(party[living[dz]].name + "は 倒れてしまった！"); }
         } else {
           var ti2 = living[rnd(living.length)], tg = party[ti2];
           var d2 = magDmg(f, tg, sk.power, tg.guard);
@@ -678,11 +695,19 @@
     start: start,
     _party: null,
     makeMember: makeMember,
-    resetParty: function () { window.PBATTLE._party = [makeMember("yu", 1)]; items = { herb: 6, elixir: 2 }; return window.PBATTLE._party; },
+    resetParty: function () {
+      var yu = makeMember("yu", 1);
+      yu.bag = ["herb", "herb", "herb", "elixir", "wing"];
+      window.PBATTLE._party = [yu];
+      return window.PBATTLE._party;
+    },
     demoParty: function (lv) {
       lv = lv || 6;
-      window.PBATTLE._party = ["yu", "gai", "rina", "mia"].map(function (id) { return makeMember(id, lv); });
-      items = { herb: 8, elixir: 4 };
+      window.PBATTLE._party = ["yu", "gai", "rina", "mia"].map(function (id) {
+        var m = makeMember(id, lv);
+        m.bag = ["herb", "herb", "elixir"];
+        return m;
+      });
       return window.PBATTLE._party;
     },
     getParty: function () { return window.PBATTLE._party || window.PBATTLE.resetParty(); },
@@ -697,6 +722,11 @@
     },
     getItems: function () { return items; },
     setItems: function (o) { items = o; },
+    // exp remaining to the member's next level (0 if maxed)
+    expToNext: function (m) { return m.lv >= 50 ? 0 : Math.max(0, (EXP_FOR[m.lv + 1] || 0) - m.exp); },
+    // learned spells with descriptions, for the inspect command
+    spellInfo: function (m) { return (m.spellIds || []).map(function (sid) { return { name: SPELLS[sid].name, mp: SPELLS[sid].mp, desc: SPELLS[sid].desc }; }); },
+    SPELLS: SPELLS,
     pressA: function () { var t = INPUT.top(); if (t && t.onA) t.onA(); },
     pressB: function () { var t = INPUT.top(); if (t && t.onB) t.onB(); },
     pressDir: function (d) { var t = INPUT.top(); if (t && t.onDir) t.onDir(d === "left" ? "up" : d === "right" ? "down" : d); }

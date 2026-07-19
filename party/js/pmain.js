@@ -49,7 +49,7 @@
       ],
       enemies: [{
         base: "gen_r", name: "四天王ハウル", lv: 600,
-        hp: 760, atk: 24, def: 20, agi: 20, mag: 28, exp: 600,
+        hp: 2300, atk: 24, def: 22, agi: 20, mag: 28, exp: 1400,
         boss: true,
         skills: [{ name: "轟音の叫び", power: 0.85, all: true }], skillRate: 0.3,
         phases: [
@@ -84,7 +84,7 @@
     var pack = ZAKO_PACKS[Math.floor(Math.random() * ZAKO_PACKS.length)];
     run({ bg: pack.bg, enemies: pack.enemies.map(function (id) { return scaledFoe(id); }) }, 5);
   });
-  $("pbtn-boss").addEventListener("click", function () { run(bossHowl(), 8); });
+  $("pbtn-boss").addEventListener("click", function () { run(bossHowl(), 13); });
   $("pbtn-bgm").addEventListener("click", function () {
     if (window.BGM) BGM.setEnabled(!BGM.isEnabled());
     refreshBgmBtn();

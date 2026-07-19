@@ -96,26 +96,106 @@
     var g = newGrid(OW_W, OW_H, "w");
     var rnd = makeRng(20260719);
 
-    // continent (leaves a water margin for an irregular coastline)
-    rect(g, 6, 5, 209, 170, ".");
+    // ---- organic-edge noise (deterministic layered sines) ----
+    function fbm(x, y, s) {
+      return 1.00 * Math.sin(x * 0.11 + y * 0.07 + s * 1.3)
+           + 0.55 * Math.sin(x * 0.23 - y * 0.17 + s * 2.7)
+           + 0.70 * Math.sin(x * 0.05 + y * 0.31 + s * 4.1)
+           + 0.35 * Math.sin(x * 0.37 + y * 0.09 + s * 0.9);
+    }
+    function edge(t, s) {
+      return 5.0 * Math.sin(t * 0.055 + s)
+           + 3.0 * Math.sin(t * 0.140 + s * 2.3)
+           + 2.0 * Math.sin(t * 0.310 + s * 5.1)
+           + 2.5 * Math.sin(t * 0.041 + s * 0.7);
+    }
 
-    // coastline shaping (bays + trimmed corners so the outline is irregular)
-    rect(g, 6, 5, 34, 12, "w");  rect(g, 6, 5, 16, 24, "w");        // NW corner
-    rect(g, 184, 5, 209, 11, "w"); rect(g, 198, 5, 209, 28, "w");   // NE corner
-    rect(g, 6, 158, 24, 170, "w"); rect(g, 6, 148, 13, 170, "w");   // SW corner
-    rect(g, 190, 158, 209, 170, "w"); rect(g, 198, 140, 209, 170, "w"); // SE corner
-    rect(g, 6, 46, 12, 74, "w");                                    // west bay
-    rect(g, 203, 62, 209, 104, "w");                               // east bay
-    rect(g, 92, 165, 130, 170, "w");                              // south bay
-    rect(g, 40, 30, 46, 44, "w"); rect(g, 150, 118, 158, 132, "w"); // inland lakes
+    // ---- irregular continent: wobbly coast with bays, inlets & peninsulas ----
+    // Each map edge is inset by BASE + noise; the inset is clamped in the spans
+    // that carry the four entrances / roads so bays never swallow a route.
+    var BASE = 9;
+    function insTop(x) {
+      var v = BASE + edge(x, 6.2) + 3 * Math.sin(x * 0.02 + 1);
+      if (x >= 28 && x <= 162) v = Math.min(v, 16);   // protect 鋼の村 + N road
+      return v;
+    }
+    function insBot(x) {
+      var v = BASE + edge(x, 9.4) + 3 * Math.sin(x * 0.03 + 4);
+      if (x >= 32 && x <= 82) v = Math.min(v, 12);     // protect 洞窟 + SW road
+      if (x >= 100 && x <= 138) v = Math.min(v, 16);   // protect S road end
+      return v;
+    }
+    function insLeft(y) { return BASE + edge(y, 1.0) + 3 * Math.sin(y * 0.02); }
+    function insRight(y) {
+      var v = BASE + edge(y, 3.7) + 3 * Math.sin(y * 0.025 + 2);
+      if (y >= 56 && y <= 96) v = Math.min(v, 12);     // protect 音の塔 + road
+      return v;
+    }
+    for (var y = 0; y < OW_H; y++) {
+      var lf = insLeft(y), rt = OW_W - 1 - insRight(y);
+      for (var x = 0; x < OW_W; x++) {
+        var tp = insTop(x), bt = OW_H - 1 - insBot(x);
+        if (x > lf && x < rt && y > tp && y < bt) g[y][x] = ".";
+      }
+    }
+
+    // ---- central sea: wobbly blob (not a clean ellipse) with bays/peninsulas ----
+    for (var sy = 50; sy <= 126; sy++)
+      for (var sx = 58; sx <= 158; sx++) {
+        var ddx = (sx - OW_CX) / 42, ddy = (sy - OW_CY) / 30;
+        var rr = Math.sqrt(ddx * ddx + ddy * ddy);
+        var wob = 1 + 0.17 * fbm(sx, sy, 7)
+                    + 0.07 * Math.sin(Math.atan2(ddy, ddx) * 5 + 0.6);
+        if (rr <= wob) g[sy][sx] = "w";
+      }
+
+    // ---- four meandering rivers (1 tile wide, pinned straight at each bridge) ----
+    function riverH(y0, x0, x1, pinX, pinHalf, amp) {
+      var step = x1 >= x0 ? 1 : -1, prev = null;
+      for (var x = x0; x !== x1 + step; x += step) {
+        var yy = Math.round(y0 + amp * Math.sin(x * 0.20 + y0 * 0.3)
+                               + amp * 0.55 * Math.sin(x * 0.37 + 1.3));
+        if (Math.abs(x - pinX) <= pinHalf) yy = y0;
+        if (x < 0 || x >= OW_W) { prev = yy; continue; }
+        if (prev !== null && Math.abs(yy - prev) >= 1) {
+          for (var t = Math.min(yy, prev); t <= Math.max(yy, prev); t++)
+            if (t >= 0 && t < OW_H) g[t][x] = "w";
+        } else if (yy >= 0 && yy < OW_H) g[yy][x] = "w";
+        prev = yy;
+      }
+    }
+    function riverV(x0, y0, y1, pinY, pinHalf, amp) {
+      var step = y1 >= y0 ? 1 : -1, prev = null;
+      for (var y = y0; y !== y1 + step; y += step) {
+        var xx = Math.round(x0 + amp * Math.sin(y * 0.20 + x0 * 0.3)
+                               + amp * 0.55 * Math.sin(y * 0.37 + 1.3));
+        if (Math.abs(y - pinY) <= pinHalf) xx = x0;
+        if (y < 0 || y >= OW_H) { prev = xx; continue; }
+        if (prev !== null && Math.abs(xx - prev) >= 1) {
+          for (var t = Math.min(xx, prev); t <= Math.max(xx, prev); t++)
+            if (t >= 0 && t < OW_W) g[y][t] = "w";
+        } else if (xx >= 0 && xx < OW_W) g[y][xx] = "w";
+        prev = xx;
+      }
+    }
+    riverH(OW_CY, 6, 74, 35, 5, 2.6);      // west river  (coast -> sea)
+    riverH(OW_CY, 209, 142, 175, 5, 2.6);  // east river  (sea -> coast)
+    riverV(OW_CX, 5, 66, 30, 5, 2.6);      // north river (coast -> sea)
+    riverV(OW_CX, 170, 110, 145, 5, 2.6);  // south river (sea -> coast)
+
+    // bridges = the only crossings between the 4 regions (on the pinned tiles)
+    put(g, 35, OW_CY, "b");    // NW <-> SW  (west river)
+    put(g, 175, OW_CY, "b");   // NE <-> SE  (east river)
+    put(g, OW_CX, 30, "b");    // NW <-> NE  (north river)
+    put(g, OW_CX, 145, "b");   // SW <-> SE  (south river)
 
     // region terrain (seeded scatter; only decorates base grass)
     function scatter(x0, y0, x1, y1, fn) {
-      for (var y = y0; y <= y1; y++)
-        for (var x = x0; x <= x1; x++) {
-          if (g[y][x] !== ".") continue;
+      for (var yy = y0; yy <= y1; yy++)
+        for (var xx = x0; xx <= x1; xx++) {
+          if (g[yy][xx] !== ".") continue;
           var ch = fn(rnd());
-          if (ch) g[y][x] = ch;
+          if (ch) g[yy][xx] = ch;
         }
     }
     // NW: snowfield (s) + rock (m) + sparse dead trees
@@ -130,52 +210,73 @@
     scatter(6, 89, 107, 170, function (r) {
       return r < 0.13 ? "t" : r < 0.17 ? "s" : null;
     });
-    // SE: desert - sand base with dunes and rare oases
-    rect(g, 109, 89, 209, 170, "s");
-    for (var y = 89; y <= 170; y++)
-      for (var x = 109; x <= 209; x++) {
-        if (g[y][x] !== "s") continue;
-        var r = rnd();
-        if (r < 0.06) g[y][x] = ".";
-        else if (r < 0.12) g[y][x] = "m";
+    // SE: desert - sand base with dunes and rare oases (land tiles only, so the
+    // irregular coast / rivers stay water)
+    for (var dy = 89; dy <= 170; dy++)
+      for (var dx = 109; dx <= 209; dx++) {
+        if (g[dy][dx] !== ".") continue;
+        var rr2 = rnd();
+        g[dy][dx] = rr2 < 0.10 ? "." : rr2 < 0.16 ? "m" : "s";
       }
 
-    // mountain ridges shaping routes (roads cut passes where they cross)
+    // mountain ridges shaping routes (roads cut passes; never fill water/bridges)
+    function ridge(x0, y0, x1, y1) {
+      for (var yy = y0; yy <= y1; yy++)
+        for (var xx = x0; xx <= x1; xx++)
+          if (g[yy] && g[yy][xx] && g[yy][xx] !== "w" && g[yy][xx] !== "b")
+            g[yy][xx] = "m";
+    }
     // NW
-    rect(g, 22, 40, 62, 41, "m");                       // ridge (road pass @ x35)
-    rect(g, 60, 55, 92, 56, "m");                       // south ridge
-    rect(g, 30, 16, 58, 17, "m");                       // north ridge
-    rect(g, 14, 55, 15, 82, "m");                       // west spur
+    ridge(22, 40, 62, 41);                       // ridge (road pass @ x35)
+    ridge(60, 55, 92, 56);                        // south ridge
+    ridge(30, 16, 58, 17);                        // north ridge
+    ridge(14, 55, 15, 82);                        // west spur
     // NE
-    rect(g, 120, 44, 162, 45, "m");                     // ridge (road pass @ x150)
-    rect(g, 132, 14, 152, 15, "m");                     // north ridge above village
-    rect(g, 184, 44, 206, 45, "m");                     // ridge north of tower
-    rect(g, 168, 22, 169, 58, "m");                     // massif spur
-    // SW
-    rect(g, 30, 110, 70, 111, "m");                     // plains divider
-    rect(g, 85, 118, 86, 158, "m");                     // east spur near the cave road
-    rect(g, 18, 128, 42, 129, "m");
+    ridge(120, 44, 162, 45);                      // ridge (road pass @ x150)
+    ridge(132, 14, 152, 15);                      // north ridge above village
+    ridge(184, 44, 206, 45);                      // ridge north of tower
+    ridge(168, 22, 169, 58);                      // massif spur
+    // SW (dropped the ridge that used to hem the castle in)
+    ridge(30, 110, 70, 111);                      // plains divider (north of castle)
+    ridge(85, 118, 86, 158);                      // east spur near the cave road
     // SE
-    rect(g, 140, 108, 182, 109, "m");                   // dune ridge
-    rect(g, 120, 148, 160, 149, "m");                   // dune ridge
-    rect(g, 176, 120, 177, 150, "m");
+    ridge(140, 108, 182, 109);                    // dune ridge
+    ridge(120, 148, 160, 149);                    // dune ridge
+    ridge(176, 120, 177, 150);
 
-    // central sea (ellipse, center OW_CX/OW_CY) + four rivers (1 tile wide)
-    for (var ey = 60; ey <= 116; ey++)
-      for (var ex = 68; ex <= 148; ex++) {
-        var dx = (ex - OW_CX) / 40, dy = (ey - OW_CY) / 28;
-        if (dx * dx + dy * dy <= 1) g[ey][ex] = "w";
+    // a couple of small wobbly inland lakes (flavour; away from roads)
+    function lake(cx, cy, r) {
+      for (var yy = cy - r; yy <= cy + r; yy++)
+        for (var xx = cx - r; xx <= cx + r; xx++) {
+          if (yy < 0 || yy >= OW_H || xx < 0 || xx >= OW_W) continue;
+          var d = (xx - cx) * (xx - cx) / (r * r) +
+                  (yy - cy) * (yy - cy) / ((r * 0.7) * (r * 0.7));
+          if (d <= 1 + 0.35 * fbm(xx, yy, 11) && g[yy][xx] !== "b") g[yy][xx] = "w";
+        }
+    }
+    lake(48, 34, 4);      // NW tarn
+    lake(150, 123, 5);    // SE oasis pool
+
+    // small rocky islets (survive seal() because 'm' is non-walkable) -> islands
+    [[92, 70], [128, 104], [84, 98], [134, 72], [100, 112],
+     [70, 66], [146, 96], [66, 108]].forEach(function (p) {
+      for (var oy = -1; oy <= 1; oy++)
+        for (var ox = -1; ox <= 1; ox++) {
+          var xx = p[0] + ox, yy = p[1] + oy;
+          if (yy >= 0 && yy < OW_H && xx >= 0 && xx < OW_W &&
+              g[yy][xx] === "w" && rnd() < 0.7) g[yy][xx] = "m";
+        }
+    });
+
+    // ---- open grass plain around 王都グロッサ (player complaint #1) ----
+    // Clear a generous disc (r=14) to plain: no mountains/water near the castle.
+    var CQX = 40, CQY = 128, CQR = 14;
+    for (var py = CQY - CQR; py <= CQY + CQR; py++)
+      for (var px = CQX - CQR; px <= CQX + CQR; px++) {
+        if (py < 0 || py >= OW_H || px < 0 || px >= OW_W) continue;
+        var qx = px - CQX, qy = py - CQY;
+        if (qx * qx + qy * qy <= CQR * CQR) g[py][px] = ".";
       }
-    rect(g, 6, OW_CY, 68, OW_CY, "w");        // west river  (coast -> sea)
-    rect(g, 148, OW_CY, 209, OW_CY, "w");     // east river  (sea -> coast)
-    rect(g, OW_CX, 5, OW_CX, 60, "w");        // north river (coast -> sea)
-    rect(g, OW_CX, 116, OW_CX, 170, "w");     // south river (sea -> coast)
-
-    // bridges = the only crossings between the 4 regions
-    put(g, 35, OW_CY, "b");    // NW <-> SW  (west river)
-    put(g, 175, OW_CY, "b");   // NE <-> SE  (east river)
-    put(g, OW_CX, 30, "b");    // NW <-> NE  (north river)
-    put(g, OW_CX, 145, "b");   // SW <-> SE  (south river)
 
     // winding roads connecting castle / village / cave / tower through bridges.
     // River crossings run perpendicular through the bridge tile (road() leaves
