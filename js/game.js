@@ -332,9 +332,26 @@
     var t = tileAt(m, x, y);
     var tex = fieldImg(TERRAIN_TEX[t]);
     if (tex) {
-      // sample one quadrant so the texture spans a seamless 2x2-tile pattern
-      var hw = tex.width / 2, hh = tex.height / 2;
-      ctx.drawImage(tex, (x & 1) * hw, (y & 1) * hh, hw, hh, px, py, TILE, TILE);
+      if (t === "t" || t === "m" || t === "D") {
+        // feature terrain: prefer grass base + single tree/peak prop if provided
+        var prop = fieldImg(t === "t" ? "tree" : "peak");
+        var gbase = prop && fieldImg("grass");
+        if (prop && gbase) {
+          var gw = gbase.width / 2, gh = gbase.height / 2;
+          ctx.drawImage(gbase, (x & 1) * gw, (y & 1) * gh, gw, gh, px, py, TILE, TILE);
+          drawSprite(prop, px, py, 1.1);
+        } else {
+          // fallback: zoom into a crop so canopy/rock detail fills the tile
+          var fw = tex.width * 0.28, fh = tex.height * 0.28;
+          var fx = tex.width * (0.08 + 0.28 * (x & 1) + 0.14 * (y & 1));
+          var fy = tex.height * (0.08 + 0.28 * (y & 1) + 0.14 * (x & 1));
+          ctx.drawImage(tex, fx, fy, fw, fh, px, py, TILE, TILE);
+        }
+      } else {
+        // sample one quadrant so the texture spans a seamless 2x2-tile pattern
+        var hw = tex.width / 2, hh = tex.height / 2;
+        ctx.drawImage(tex, (x & 1) * hw, (y & 1) * hh, hw, hh, px, py, TILE, TILE);
+      }
       if (t === "^" || t === "v") {
         ctx.fillStyle = "rgba(20,16,10,.6)";
         ctx.fillRect(px + 4, py + 16, 16, 4); ctx.fillRect(px + 7, py + 10, 10, 4); ctx.fillRect(px + 10, py + 4, 4, 4);
