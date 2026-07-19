@@ -67,6 +67,10 @@
     $("pbtn-bgm").textContent = "ＢＧＭ：" + (window.BGM && BGM.isEnabled() ? "ＯＮ" : "ＯＦＦ");
   }
 
+  $("pbtn-field").addEventListener("click", function () {
+    $("pbtn-field").blur();
+    window.PFIELD.start(false); // continues the save if one exists
+  });
   $("pbtn-zako").addEventListener("click", function () {
     var pack = ZAKO_PACKS[Math.floor(Math.random() * ZAKO_PACKS.length)];
     run({ bg: pack.bg, enemies: pack.enemies.map(function (id) { return scaledFoe(id); }) });

@@ -550,5 +550,14 @@
     return { result: result };
   }
 
-  window.PBATTLE = { start: start, resetParty: function () { window.PBATTLE._party = null; items = { herb: 6, elixir: 2 }; } };
+  window.PBATTLE = {
+    start: start,
+    resetParty: function () { window.PBATTLE._party = null; items = { herb: 6, elixir: 2 }; },
+    getParty: function () { return window.PBATTLE._party || (window.PBATTLE._party = makeParty()); },
+    setParty: function (p) { window.PBATTLE._party = p; },
+    getItems: function () { return items; },
+    setItems: function (o) { items = o; },
+    pressA: function () { var t = INPUT.top(); if (t && t.onA) t.onA(); },
+    pressB: function () { var t = INPUT.top(); if (t && t.onB) t.onB(); }
+  };
 })();

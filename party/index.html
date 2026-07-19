@@ -13,6 +13,15 @@
 <div id="app">
   <div id="game-wrap">
     <div id="screen">
+      <!-- field explore -->
+      <div id="pfield-wrap">
+        <canvas id="field-canvas"></canvas>
+        <div id="status-win" class="dq-window"></div>
+      </div>
+      <div id="msg-win" class="dq-window"></div>
+      <div id="cmd-win" class="dq-window menu-win"></div>
+      <div id="sub-win" class="dq-window menu-win"></div>
+
       <!-- party battle -->
       <div id="pbattle-screen">
         <div id="pbattle-bg"></div>
@@ -42,10 +51,31 @@
       <div id="ptitle-screen">
         <div id="ptitle-logo">WORD<br>QUEST II</div>
         <div id="ptitle-sub">〜 沈黙の四天王（戦闘プロトタイプ）〜</div>
+        <button id="pbtn-field" class="title-btn">フィールド探索（第１章）</button>
         <button id="pbtn-zako" class="title-btn">ザコせん デモ</button>
         <button id="pbtn-boss" class="title-btn">死闘デモ：四天王ハウル</button>
         <button id="pbtn-bgm" class="title-btn">ＢＧＭ：ＯＦＦ</button>
         <div id="title-copy">パーティ4人で戦え！　役割ごとに単語レベルがちがう。<br>連続正解で チェインボーナス！</div>
+      </div>
+    </div>
+
+    <!-- touch controls -->
+    <div id="controls">
+      <div id="dpad">
+        <div id="dpad-up" class="dpad-btn">▲</div>
+        <div id="dpad-down" class="dpad-btn">▼</div>
+        <div id="dpad-left" class="dpad-btn">◀</div>
+        <div id="dpad-right" class="dpad-btn">▶</div>
+      </div>
+      <div id="ab-btns">
+        <div>
+          <div id="btn-b" class="act-btn">Ｂ</div>
+          <div class="btn-label">メニュー/もどる</div>
+        </div>
+        <div>
+          <div id="btn-a" class="act-btn">Ａ</div>
+          <div class="btn-label">はなす/けってい</div>
+        </div>
       </div>
     </div>
   </div>
@@ -58,9 +88,11 @@
 <script src="../data/vocab_800.js"></script>
 <script src="../data/vocab_900.js"></script>
 <script src="../data/enemies.js"></script>
+<script src="data/maps_wq2.js"></script>
 <script src="../js/bgm.js"></script>
 <script src="../js/quiz.js"></script>
 <script src="js/pbattle.js"></script>
+<script src="js/pfield.js"></script>
 <script src="js/pmain.js"></script>
 </body>
 </html>
