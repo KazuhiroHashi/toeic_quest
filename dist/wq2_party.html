@@ -4103,46 +4103,118 @@ window.ITEM_DEFS = {
     return g;
   }
 
-  // ---------- dungeon builder (maze + loops + rooms) ----------
-  // Carves a perfect maze on odd tiles (1..2*cw-1), then punches `loops` extra
-  // openings and stamps open `rooms`. Everything outside stays wall.
-  function mazeFloor(w, h, seed, opts) {
+  // ---------- dungeon builder (wide corridors + open rooms + loops) ----------
+  // Player feedback was that the old 1-tile recursive-backtracker maze felt like
+  // an endless single-file tunnel. Instead we place OPEN ROOMS (4x4..8x8) on a
+  // coarse slot grid, link neighbouring rooms with 3-tile-wide L-corridors
+  // (spanning tree + extra loop edges => multiple routes, not a pure tree), then
+  // poke a few narrow dead-end nooks that hold the chests. Fixed feature tiles
+  // (entries / stairs / gates / boss / treasure) are wired into the network with
+  // linkPoint() so they always stay walkable and reachable through seal().
+
+  // Carve an L-path of the given (odd) width. Keeps the 1-tile map border as
+  // wall and never overwrites water/bridge tiles.
+  function wideCarve(g, x0, y0, x1, y1, width) {
+    var W = g[0].length, H = g.length, r = (width - 1) >> 1;
+    function cell(x, y) {
+      if (x >= 1 && x < W - 1 && y >= 1 && y < H - 1 &&
+          g[y][x] !== "w" && g[y][x] !== "b") g[y][x] = "-";
+    }
+    var lo, hi, i, d;
+    lo = Math.min(x0, x1); hi = Math.max(x0, x1);
+    for (i = lo; i <= hi; i++) for (d = -r; d <= r; d++) cell(i, y0 + d);   // horizontal @ y0
+    lo = Math.min(y0, y1); hi = Math.max(y0, y1);
+    for (i = lo; i <= hi; i++) for (d = -r; d <= r; d++) cell(x1 + d, i);   // vertical @ x1
+    return g;
+  }
+
+  // Build one dungeon floor: a grid of open rooms joined by wide corridors.
+  function dungeonFloor(w, h, seed, opts) {
     var g = newGrid(w, h, "=");
     var rnd = makeRng(seed);
-    var cw = opts.cw, chh = opts.ch;
-    var visited = newGrid(cw, chh, 0);
-    function cx(i) { return 2 * i + 1; }
-    var stack = [[0, chh - 1]];
-    visited[chh - 1][0] = 1;
-    g[cx(chh - 1)][cx(0)] = "-";
-    var DIRS = [[0, -1], [0, 1], [-1, 0], [1, 0]];
-    while (stack.length) {
-      var cur = stack[stack.length - 1];
-      var nbrs = [];
-      for (var d = 0; d < 4; d++) {
-        var nx = cur[0] + DIRS[d][0], ny = cur[1] + DIRS[d][1];
-        if (nx >= 0 && ny >= 0 && nx < cw && ny < chh && !visited[ny][nx]) nbrs.push([nx, ny]);
+    var cols = opts.cols, rows = opts.rows;
+    var cellW = Math.floor((w - 2) / cols), cellH = Math.floor((h - 2) / rows);
+    var grid = [], roomList = [];
+    for (var ry = 0; ry < rows; ry++) {
+      grid.push([]);
+      for (var rx = 0; rx < cols; rx++) {
+        var ox = 1 + rx * cellW, oy = 1 + ry * cellH;
+        var maxW = Math.max(4, Math.min(8, cellW - 1));
+        var maxH = Math.max(4, Math.min(8, cellH - 1));
+        var rw = Math.min(cellW - 1, 4 + Math.floor(rnd() * (maxW - 3)));
+        var rh = Math.min(cellH - 1, 4 + Math.floor(rnd() * (maxH - 3)));
+        var rx0 = ox + Math.floor(rnd() * Math.max(1, cellW - rw));
+        var ry0 = oy + Math.floor(rnd() * Math.max(1, cellH - rh));
+        rect(g, rx0, ry0, rx0 + rw - 1, ry0 + rh - 1, "-");
+        var c = [rx0 + (rw >> 1), ry0 + (rh >> 1)];
+        grid[ry].push(c); roomList.push(c);
       }
-      if (!nbrs.length) { stack.pop(); continue; }
-      var n = nbrs[Math.floor(rnd() * nbrs.length)];
-      visited[n[1]][n[0]] = 1;
-      g[cx(n[1])][cx(n[0])] = "-";
-      g[(cx(cur[1]) + cx(n[1])) / 2][(cx(cur[0]) + cx(n[0])) / 2] = "-"; // wall between
-      stack.push(n);
     }
-    // extra loops (so it is not a pure tree - multiple routes)
+    // spanning tree over the slot grid (randomised DFS) => every room connected
+    var DIRS = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+    var seen = { "0,0": 1 }, stack = [[0, 0]];
+    while (stack.length) {
+      var cur = stack[stack.length - 1], cand = [];
+      for (var di = 0; di < 4; di++) {
+        var nx = cur[0] + DIRS[di][0], ny = cur[1] + DIRS[di][1];
+        if (nx >= 0 && ny >= 0 && nx < cols && ny < rows && !seen[nx + "," + ny]) cand.push([nx, ny]);
+      }
+      if (!cand.length) { stack.pop(); continue; }
+      var nb = cand[Math.floor(rnd() * cand.length)];
+      seen[nb[0] + "," + nb[1]] = 1;
+      var a = grid[cur[1]][cur[0]], b = grid[nb[1]][nb[0]];
+      wideCarve(g, a[0], a[1], b[0], b[1], 3);
+      stack.push(nb);
+    }
+    // extra loop corridors so there are multiple routes (not a tree)
+    for (var li = 0; li < (opts.loops || 0); li++) {
+      var arx = Math.floor(rnd() * cols), ary = Math.floor(rnd() * rows);
+      var dd = DIRS[Math.floor(rnd() * 4)];
+      var brx = arx + dd[0], bry = ary + dd[1];
+      if (brx < 0 || bry < 0 || brx >= cols || bry >= rows) continue;
+      var ea = grid[ary][arx], eb = grid[bry][brx];
+      wideCarve(g, ea[0], ea[1], eb[0], eb[1], 3);
+    }
+    return { g: g, rooms: roomList, grid: grid, rnd: rnd };
+  }
+
+  function nearestRoom(rooms, x, y) {
+    var best = rooms[0], bd = Infinity;
+    for (var i = 0; i < rooms.length; i++) {
+      var dx = rooms[i][0] - x, dy = rooms[i][1] - y, d = dx * dx + dy * dy;
+      if (d < bd) { bd = d; best = rooms[i]; }
+    }
+    return best;
+  }
+  // Wire a fixed tile into the room network with a 3-wide corridor.
+  function linkPoint(g, rooms, x, y) {
+    var c = nearestRoom(rooms, x, y);
+    wideCarve(g, x, y, c[0], c[1], 3);
+  }
+  function linkPoints(g, rooms, pts) {
+    pts.forEach(function (p) { linkPoint(g, rooms, p[0], p[1]); });
+  }
+
+  // Poke narrow (1-wide) dead-end nooks off rooms so chests have real hiding spots.
+  function addNooks(g, rooms, n, rnd) {
+    var W = g[0].length, H = g.length;
+    var DIRS = [[0, -1], [0, 1], [-1, 0], [1, 0]];
     var made = 0, tries = 0;
-    while (made < (opts.loops || 0) && tries < 500) {
+    while (made < n && tries < 600) {
       tries++;
-      var lx = Math.floor(rnd() * (cw - 1)), ly = Math.floor(rnd() * (chh - 1));
-      var horiz = rnd() < 0.5;
-      var wx = horiz ? cx(lx) + 1 : cx(lx);
-      var wy = horiz ? cx(ly) : cx(ly) + 1;
-      if (g[wy][wx] === "=") { g[wy][wx] = "-"; made++; }
+      var c = rooms[Math.floor(rnd() * rooms.length)];
+      var dir = DIRS[Math.floor(rnd() * 4)];
+      var x = c[0], y = c[1], steps = 0;
+      while (steps < 12 && g[y] && g[y][x] === "-") { x += dir[0]; y += dir[1]; steps++; } // walk to first wall
+      var len = 2 + Math.floor(rnd() * 2), cells = [], ok = true, cx = x, cy = y;
+      for (var i = 0; i < len; i++) {
+        if (cx < 1 || cy < 1 || cx >= W - 1 || cy >= H - 1 || g[cy][cx] !== "=") { ok = false; break; }
+        cells.push([cx, cy]); cx += dir[0]; cy += dir[1];
+      }
+      if (!ok || !cells.length) continue;
+      cells.forEach(function (p) { g[p[1]][p[0]] = "-"; });
+      made++;
     }
-    // rooms
-    (opts.rooms || []).forEach(function (r) { rect(g, r[0], r[1], r[2], r[3], "-"); });
-    return g;
   }
 
   // dead ends = '-' tiles with exactly one open neighbour (chest spots)
@@ -4187,114 +4259,108 @@ window.ITEM_DEFS = {
   }
 
   // ---------- cave1: 旅立ちの洞窟 (3 floors, 40x40) ----------
-  // Maze cells 18x18 -> tiles 1..35. Floor 1 has a locked shortcut ring
-  // (row/col 37, gate needs cave_key found on B2) from the entrance to the
-  // down-stairs. Boss (placeholder wolf) waits in a room on floor 3.
+  // 4x4 grid of open rooms joined by 3-wide corridors + loop edges. Floor 1 has
+  // a locked shortcut ring (row/col 37, gate needs cave_key found on B2) from the
+  // entrance to the down-stairs. Boss (placeholder wolf) waits in an open chamber
+  // on floor 3. Chests live in the dead-end nooks.
   var CAVE_W = 40, CAVE_H = 40;
-  var CAVE_OPTS = { cw: 18, ch: 18 };
 
   function buildCaveF1() {
-    var g = mazeFloor(CAVE_W, CAVE_H, 11001, {
-      cw: 18, ch: 18, loops: 16,
-      rooms: [[5, 15, 9, 19], [23, 23, 29, 27]]
-    });
-    put(g, 1, 35, "^");                 // exit -> world
-    put(g, 1, 34, "-");                 // entry landing
-    put(g, 35, 1, "v");                 // down -> B2
-    put(g, 34, 1, "-");                 // landing
-    // locked shortcut ring: bottom row 37 + east col 37
+    var d = dungeonFloor(CAVE_W, CAVE_H, 11001, { cols: 4, rows: 4, loops: 7 });
+    var g = d.g, rooms = d.rooms;
+    linkPoints(g, rooms, [[1, 34], [34, 1], [35, 1]]);
+    put(g, 1, 35, "^");  put(g, 1, 34, "-");   // exit -> world / entry landing
+    put(g, 35, 1, "v");  put(g, 34, 1, "-");   // down -> B2 / landing
+    // locked shortcut ring: bottom row 37 + east col 37, corner-linked (1-wide,
+    // so the gate at (19,37) really does bar the shortcut).
     rect(g, 1, 37, 37, 37, "-");
     rect(g, 37, 1, 37, 37, "-");
-    put(g, 1, 36, "-");                 // connect near entrance
-    put(g, 36, 1, "-");                 // connect near down-stairs
-    var chests = placeChests(g, 3, avoidSet([[1, 34], [34, 1], [1, 36], [36, 1]]));
+    put(g, 1, 36, "-");  put(g, 36, 1, "-");   // (1,37)-(1,36)-(1,35^)-(1,34) & (37,1)-(36,1)-(35,1v)
+    addNooks(g, rooms, 8, makeRng(11091));
+    var chests = placeChests(g, 3, avoidSet([[1, 34], [34, 1], [35, 1], [1, 36], [36, 1]]));
     return { g: g, chests: chests };
   }
 
   function buildCaveF2() {
-    var g = mazeFloor(CAVE_W, CAVE_H, 11002, {
-      cw: 18, ch: 18, loops: 16,
-      rooms: [[15, 15, 21, 21], [29, 27, 34, 33]]
-    });
-    put(g, 35, 1, "^");                 // up -> B1
-    put(g, 34, 1, "-");
-    put(g, 1, 35, "v");                 // down -> B3
-    put(g, 1, 34, "-");
-    var chests = placeChests(g, 3, avoidSet([[34, 1], [1, 34]]));
+    var d = dungeonFloor(CAVE_W, CAVE_H, 11002, { cols: 4, rows: 4, loops: 7 });
+    var g = d.g, rooms = d.rooms;
+    linkPoints(g, rooms, [[35, 1], [34, 1], [1, 35], [1, 34]]);
+    put(g, 35, 1, "^");  put(g, 34, 1, "-");   // up -> B1
+    put(g, 1, 35, "v");  put(g, 1, 34, "-");   // down -> B3
+    addNooks(g, rooms, 8, makeRng(11092));
+    var chests = placeChests(g, 3, avoidSet([[34, 1], [1, 34], [35, 1], [1, 35]]));
     return { g: g, chests: chests };
   }
 
   function buildCaveF3() {
-    var g = mazeFloor(CAVE_W, CAVE_H, 11003, {
-      cw: 18, ch: 18, loops: 12,
-      rooms: [[27, 2, 34, 8], [7, 21, 12, 25]]   // boss room top-right
-    });
-    put(g, 1, 35, "^");                 // up -> B2
-    put(g, 1, 34, "-");
-    put(g, 33, 3, "c");                 // treasure in the boss room
-    var chests = placeChests(g, 2, avoidSet([[1, 34], [30, 5]]));
+    var d = dungeonFloor(CAVE_W, CAVE_H, 11003, { cols: 4, rows: 4, loops: 6 });
+    var g = d.g, rooms = d.rooms;
+    rect(g, 26, 2, 34, 8, "-");                 // boss chamber (open, top-right)
+    linkPoint(g, rooms, 30, 5);                 // wire chamber to the network
+    rooms.push([30, 5]);
+    linkPoints(g, rooms, [[1, 35], [1, 34]]);
+    put(g, 1, 35, "^");  put(g, 1, 34, "-");   // up -> B2
+    put(g, 33, 3, "c");                         // treasure in the boss chamber
+    addNooks(g, rooms, 8, makeRng(11093));
+    var chests = placeChests(g, 2, avoidSet([[1, 34], [1, 35], [30, 5], [33, 3]]));
     chests.push([33, 3]);
     return { g: g, chests: chests };
   }
 
   // ---------- tower_sound: 音の塔 (4 floors, 36x36) ----------
-  // Maze cells 16x16 -> tiles 1..31. Floor 1 has a locked shortcut ring
-  // (row/col 33, gate needs tower_key found on 3F). 四天王ハウル on 4F.
+  // Same wide-room generator (4x4 grid). Floor 1 has a locked shortcut ring
+  // (row/col 33, gate needs tower_key found on 3F). 四天王ハウル waits in an open
+  // chamber on 4F.
   var TW_W = 36, TW_H = 36;
 
   function buildTowerF1() {
-    var g = mazeFloor(TW_W, TW_H, 22001, {
-      cw: 16, ch: 16, loops: 14,
-      rooms: [[13, 13, 19, 17]]
-    });
-    put(g, 1, 31, "v");                 // exit -> world
-    put(g, 1, 30, "-");                 // entry landing
-    put(g, 31, 1, "^");                 // up -> 2F
-    put(g, 30, 1, "-");
-    // locked shortcut ring
+    var d = dungeonFloor(TW_W, TW_H, 22001, { cols: 4, rows: 4, loops: 6 });
+    var g = d.g, rooms = d.rooms;
+    linkPoints(g, rooms, [[1, 30], [31, 1], [30, 1]]);
+    put(g, 1, 31, "v");  put(g, 1, 30, "-");   // exit -> world / entry landing
+    put(g, 31, 1, "^");  put(g, 30, 1, "-");   // up -> 2F / landing
+    // locked shortcut ring: row 33 + col 33, corner-linked (gate at (17,33))
     rect(g, 1, 33, 33, 33, "-");
     rect(g, 33, 1, 33, 33, "-");
-    put(g, 1, 32, "-");
-    put(g, 32, 1, "-");
-    var chests = placeChests(g, 2, avoidSet([[1, 30], [30, 1], [1, 32], [32, 1]]));
+    put(g, 1, 32, "-");  put(g, 32, 1, "-");   // (1,33)-(1,32)-(1,31v)-(1,30) & (33,1)-(32,1)-(31,1^)
+    addNooks(g, rooms, 6, makeRng(22091));
+    var chests = placeChests(g, 2, avoidSet([[1, 30], [31, 1], [30, 1], [1, 32], [32, 1]]));
     return { g: g, chests: chests };
   }
 
   function buildTowerF2() {
-    var g = mazeFloor(TW_W, TW_H, 22002, {
-      cw: 16, ch: 16, loops: 14,
-      rooms: [[21, 5, 27, 9]]
-    });
-    put(g, 31, 1, "v");                 // down -> 1F
-    put(g, 30, 1, "-");
-    put(g, 1, 31, "^");                 // up -> 3F
-    put(g, 1, 30, "-");
-    var chests = placeChests(g, 2, avoidSet([[30, 1], [1, 30]]));
+    var d = dungeonFloor(TW_W, TW_H, 22002, { cols: 4, rows: 4, loops: 6 });
+    var g = d.g, rooms = d.rooms;
+    linkPoints(g, rooms, [[31, 1], [30, 1], [1, 31], [1, 30]]);
+    put(g, 31, 1, "v");  put(g, 30, 1, "-");   // down -> 1F
+    put(g, 1, 31, "^");  put(g, 1, 30, "-");   // up -> 3F
+    addNooks(g, rooms, 6, makeRng(22092));
+    var chests = placeChests(g, 2, avoidSet([[30, 1], [1, 30], [31, 1], [1, 31]]));
     return { g: g, chests: chests };
   }
 
   function buildTowerF3() {
-    var g = mazeFloor(TW_W, TW_H, 22003, {
-      cw: 16, ch: 16, loops: 14,
-      rooms: [[5, 5, 11, 9], [21, 21, 27, 25]]
-    });
-    put(g, 1, 31, "v");                 // down -> 2F
-    put(g, 1, 30, "-");
-    put(g, 31, 1, "^");                 // up -> 4F
-    put(g, 30, 1, "-");
-    var chests = placeChests(g, 2, avoidSet([[1, 30], [30, 1]]));
+    var d = dungeonFloor(TW_W, TW_H, 22003, { cols: 4, rows: 4, loops: 6 });
+    var g = d.g, rooms = d.rooms;
+    linkPoints(g, rooms, [[1, 31], [1, 30], [31, 1], [30, 1]]);
+    put(g, 1, 31, "v");  put(g, 1, 30, "-");   // down -> 2F
+    put(g, 31, 1, "^");  put(g, 30, 1, "-");   // up -> 4F
+    addNooks(g, rooms, 6, makeRng(22093));
+    var chests = placeChests(g, 2, avoidSet([[1, 30], [31, 1], [1, 31], [30, 1]]));
     return { g: g, chests: chests };
   }
 
   function buildTowerF4() {
-    var g = mazeFloor(TW_W, TW_H, 22004, {
-      cw: 16, ch: 16, loops: 10,
-      rooms: [[12, 2, 20, 8]]            // boss room, top center
-    });
-    put(g, 31, 1, "v");                 // down -> 3F
-    put(g, 30, 1, "-");
-    put(g, 19, 3, "c");                 // treasure behind Howl
-    var chests = placeChests(g, 1, avoidSet([[30, 1], [16, 5]]));
+    var d = dungeonFloor(TW_W, TW_H, 22004, { cols: 4, rows: 4, loops: 5 });
+    var g = d.g, rooms = d.rooms;
+    rect(g, 12, 2, 20, 8, "-");                 // boss chamber (open, top center)
+    linkPoint(g, rooms, 16, 5);                 // wire chamber to the network
+    rooms.push([16, 5]);
+    linkPoints(g, rooms, [[31, 1], [30, 1]]);
+    put(g, 31, 1, "v");  put(g, 30, 1, "-");   // down -> 3F
+    put(g, 19, 3, "c");                         // treasure behind Howl
+    addNooks(g, rooms, 6, makeRng(22094));
+    var chests = placeChests(g, 1, avoidSet([[30, 1], [31, 1], [16, 5], [19, 3]]));
     chests.push([19, 3]);
     return { g: g, chests: chests };
   }
