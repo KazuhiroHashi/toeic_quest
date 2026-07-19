@@ -106,17 +106,17 @@
                            { id: "heal", name: "ヒール", mp: 5, type: "heal", power: 40 }] },
       { id: "gai", name: "ガイ", role: "せんし", hp: 170, maxhp: 170, mp: 12, maxmp: 12, atk: 58, def: 40, agi: 20,
         lvOff: -100, spells: [{ id: "smash", name: "かいしんぎり", mp: 6, type: "atk", power: 70, phys: true }] },
-      { id: "rina", name: "リナ", role: "まほうつかい", hp: 85, maxhp: 85, mp: 62, maxmp: 62, atk: 20, def: 22, agi: 26,
+      { id: "rina", name: "リナ", role: "まほうつかい", hp: 100, maxhp: 100, mp: 62, maxmp: 62, atk: 20, def: 22, agi: 26,
         lvOff: 100, spells: [{ id: "fira", name: "ファイラ", mp: 6, type: "atk", power: 55, elem: "fire" },
                              { id: "thunder", name: "サンダー", mp: 9, type: "atk", power: 38, elem: "thunder", all: true }] },
-      { id: "mia", name: "ミア", role: "そうりょ", hp: 100, maxhp: 100, mp: 58, maxmp: 58, atk: 24, def: 26, agi: 28,
-        lvOff: 0, spells: [{ id: "heal2", name: "ヒール", mp: 4, type: "heal", power: 48 },
+      { id: "mia", name: "ミア", role: "そうりょ", hp: 110, maxhp: 110, mp: 58, maxmp: 58, atk: 24, def: 26, agi: 28,
+        lvOff: 0, spells: [{ id: "heal2", name: "ヒール", mp: 4, type: "heal", power: 62 },
                            { id: "healall", name: "いやしのは", mp: 10, type: "heal", power: 26, all: true },
                            { id: "raise", name: "リカバー", mp: 12, type: "raise", power: 60 }] }
     ];
   }
 
-  var items = { herb: 4, elixir: 2 };
+  var items = { herb: 6, elixir: 2 };
 
   // ---------- rendering ----------
   var party, foes, chain, screenEl;
@@ -550,5 +550,5 @@
     return { result: result };
   }
 
-  window.PBATTLE = { start: start, resetParty: function () { window.PBATTLE._party = null; items = { herb: 4, elixir: 2 }; } };
+  window.PBATTLE = { start: start, resetParty: function () { window.PBATTLE._party = null; items = { herb: 6, elixir: 2 }; } };
 })();

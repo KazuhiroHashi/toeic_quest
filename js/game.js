@@ -261,7 +261,8 @@
   var ENC_RATE = { ".": 0.06, t: 0.09, s: 0.08, "-": 0.08 };
 
   // =================== RENDERING ===================
-  var TILE = 24, VW = 16, VH = 14;
+  // remaster-scale view: fewer, larger tiles on screen (12x10) so art can breathe
+  var TILE = 32, VW = 12, VH = 10;
   var canvas, ctx, dpr = 1;
   var anim = null; // {fx,fy,tx,ty,p}
   var tick = 0;
@@ -272,7 +273,8 @@
     dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = VW * TILE * dpr;
     canvas.height = VH * TILE * dpr;
-    ctx.imageSmoothingEnabled = false;
+    ctx.imageSmoothingEnabled = true;
+    if (ctx.imageSmoothingQuality) ctx.imageSmoothingQuality = "high";
   }
 
   var TILE_COLORS = {
@@ -320,12 +322,49 @@
   function drawSprite(img, px, py, hMul, mirror) {
     var h = TILE * hMul, w = h * img.width / img.height;
     var dx = px + (TILE - w) / 2, dy = py + TILE - h;
+    // contact shadow grounds the sprite (remaster-style depth)
+    ctx.fillStyle = "rgba(0,0,0,.28)";
+    ctx.beginPath();
+    ctx.ellipse(px + TILE / 2, py + TILE - 2, w * 0.32, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
     if (mirror) {
       ctx.save();
       ctx.translate(dx + w / 2, 0); ctx.scale(-1, 1);
       ctx.drawImage(img, -w / 2, dy, w, h);
       ctx.restore();
     } else ctx.drawImage(img, dx, dy, w, h);
+  }
+
+  // terrain family for border shading (which tile "wins" the edge)
+  function terrainOf(m, x, y) {
+    var tt = tileAt(m, x, y);
+    return TERRAIN_TEX[tt] || null;
+  }
+  // subtle edge treatment where terrain regions meet: coastline foam on water,
+  // soft shading elsewhere — kills the "flat patchwork" look of raw tiles
+  function drawEdges(m, x, y, px, py, t) {
+    var mine = TERRAIN_TEX[t];
+    if (!mine) return;
+    var E = 3;
+    var dirs = [[0, -1, "t"], [0, 1, "b"], [-1, 0, "l"], [1, 0, "r"]];
+    for (var i = 0; i < dirs.length; i++) {
+      var other = terrainOf(m, x + dirs[i][0], y + dirs[i][1]);
+      if (other === mine || other === null) continue;
+      var side = dirs[i][2];
+      if (mine === "water") {
+        // animated shoreline foam
+        var pulse = 0.28 + 0.14 * Math.sin(tick / 24 + x + y);
+        ctx.fillStyle = "rgba(255,255,255," + pulse.toFixed(2) + ")";
+      } else if (other === "water") {
+        ctx.fillStyle = "rgba(20,40,80,.28)"; // damp bank
+      } else {
+        ctx.fillStyle = "rgba(0,0,0,.14)"; // soft region border
+      }
+      if (side === "t") ctx.fillRect(px, py, TILE, E);
+      else if (side === "b") ctx.fillRect(px, py + TILE - E, TILE, E);
+      else if (side === "l") ctx.fillRect(px, py, E, TILE);
+      else ctx.fillRect(px + TILE - E, py, E, TILE);
+    }
   }
 
   function drawTile(m, x, y, px, py) {
@@ -352,9 +391,13 @@
         var hw = tex.width / 2, hh = tex.height / 2;
         ctx.drawImage(tex, (x & 1) * hw, (y & 1) * hh, hw, hh, px, py, TILE, TILE);
       }
+      drawEdges(m, x, y, px, py, t);
       if (t === "^" || t === "v") {
         ctx.fillStyle = "rgba(20,16,10,.6)";
-        ctx.fillRect(px + 4, py + 16, 16, 4); ctx.fillRect(px + 7, py + 10, 10, 4); ctx.fillRect(px + 10, py + 4, 4, 4);
+        var u = TILE / 24;
+        ctx.fillRect(px + 4 * u, py + 16 * u, 16 * u, 4 * u);
+        ctx.fillRect(px + 7 * u, py + 10 * u, 10 * u, 4 * u);
+        ctx.fillRect(px + 10 * u, py + 4 * u, 4 * u, 4 * u);
       }
       if (GLYPH[t]) {
         var icon = fieldImg(TILE_ICON[t]);
@@ -1107,6 +1150,16 @@
   function boot() {
     setupCanvas();
     refreshAd();
+    // ornate UI frame auto-detection (assets/ui/frame.png)
+    (function () {
+      var src = (window.UI_ART && window.UI_ART.frame) || "assets/ui/frame.png";
+      var img = new Image();
+      img.onload = function () {
+        document.documentElement.style.setProperty("--frame-src", "url('" + src + "')");
+        document.documentElement.classList.add("ui-frame");
+      };
+      img.src = src;
+    })();
     // key visual (assets/ui/title.png) if present
     (function () {
       var src = (window.UI_ART && window.UI_ART.title) || "assets/ui/title.png";

@@ -63,15 +63,29 @@ canvas#field-canvas {
 
 /* ---------- DQ-style windows ---------- */
 .dq-window {
-  background: var(--win-bg);
-  border: 3px solid var(--win-border);
-  border-radius: 8px;
-  box-shadow: 0 0 0 3px #000, inset 0 0 0 1px #000;
+  background:
+    linear-gradient(160deg, rgba(90, 110, 200, 0.10), rgba(0, 0, 0, 0) 45%),
+    linear-gradient(180deg, #101528 0%, #0a0d1c 60%, #070912 100%);
+  border: 2px solid #cfd8ee;
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 3px #000,
+    0 6px 16px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 0 24px rgba(70, 100, 200, 0.08);
   color: #fff;
   padding: 10px 12px;
   font-size: 15px;
   line-height: 1.7;
   letter-spacing: 1px;
+}
+/* ornate frame texture applies automatically once assets/ui/frame.png exists */
+.ui-frame .dq-window {
+  border: 14px solid transparent;
+  border-image: var(--frame-src) 96 fill / 14px stretch;
+  border-radius: 0;
+  background: none;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
 }
 
 /* status window top-left on field */
@@ -4222,17 +4236,17 @@ window.ITEM_DEFS = {
                            { id: "heal", name: "ヒール", mp: 5, type: "heal", power: 40 }] },
       { id: "gai", name: "ガイ", role: "せんし", hp: 170, maxhp: 170, mp: 12, maxmp: 12, atk: 58, def: 40, agi: 20,
         lvOff: -100, spells: [{ id: "smash", name: "かいしんぎり", mp: 6, type: "atk", power: 70, phys: true }] },
-      { id: "rina", name: "リナ", role: "まほうつかい", hp: 85, maxhp: 85, mp: 62, maxmp: 62, atk: 20, def: 22, agi: 26,
+      { id: "rina", name: "リナ", role: "まほうつかい", hp: 100, maxhp: 100, mp: 62, maxmp: 62, atk: 20, def: 22, agi: 26,
         lvOff: 100, spells: [{ id: "fira", name: "ファイラ", mp: 6, type: "atk", power: 55, elem: "fire" },
                              { id: "thunder", name: "サンダー", mp: 9, type: "atk", power: 38, elem: "thunder", all: true }] },
-      { id: "mia", name: "ミア", role: "そうりょ", hp: 100, maxhp: 100, mp: 58, maxmp: 58, atk: 24, def: 26, agi: 28,
-        lvOff: 0, spells: [{ id: "heal2", name: "ヒール", mp: 4, type: "heal", power: 48 },
+      { id: "mia", name: "ミア", role: "そうりょ", hp: 110, maxhp: 110, mp: 58, maxmp: 58, atk: 24, def: 26, agi: 28,
+        lvOff: 0, spells: [{ id: "heal2", name: "ヒール", mp: 4, type: "heal", power: 62 },
                            { id: "healall", name: "いやしのは", mp: 10, type: "heal", power: 26, all: true },
                            { id: "raise", name: "リカバー", mp: 12, type: "raise", power: 60 }] }
     ];
   }
 
-  var items = { herb: 4, elixir: 2 };
+  var items = { herb: 6, elixir: 2 };
 
   // ---------- rendering ----------
   var party, foes, chain, screenEl;
@@ -4666,7 +4680,7 @@ window.ITEM_DEFS = {
     return { result: result };
   }
 
-  window.PBATTLE = { start: start, resetParty: function () { window.PBATTLE._party = null; items = { herb: 4, elixir: 2 }; } };
+  window.PBATTLE = { start: start, resetParty: function () { window.PBATTLE._party = null; items = { herb: 6, elixir: 2 }; } };
 })();
 
 </script>
@@ -4693,7 +4707,7 @@ window.ITEM_DEFS = {
     // prototype party is mid-game strength: scale zako up to match
     return Object.assign({
       base: d.id, name: d.name, lv: d.lv,
-      hp: d.hp * 3, atk: Math.round(d.atk * 2.2), def: Math.round(d.def * 1.5), exp: d.exp,
+      hp: Math.round(d.hp * 3.5), atk: Math.round(d.atk * 2.2), def: Math.round(d.def * 1.5), exp: d.exp,
       agi: Math.round(d.lv / 25),
       hasty: d.traits && d.traits.indexOf("hasty") >= 0
     }, over || {});
@@ -4714,11 +4728,11 @@ window.ITEM_DEFS = {
       ],
       enemies: [{
         base: "gen_r", name: "四天王ハウル", lv: 600,
-        hp: 1900, atk: 46, def: 30, agi: 26, exp: 1200,
+        hp: 1850, atk: 42, def: 30, agi: 26, exp: 1200,
         boss: true,
         phases: [
           { at: 1.0, acts: 1, aoe: 0, charge: 0 },
-          { at: 0.66, acts: 2, aoe: 0.35, charge: 0,
+          { at: 0.66, acts: 2, aoe: 0.3, charge: 0,
             msg: ["ハウルの ようすが かわった！\n『ほう… やるではないか！』", "ハウルの こうどうが\n２かいに ふえた！"] },
           { at: 0.33, acts: 2, aoe: 0.3, charge: 0.4,
             msg: ["ハウルが ほんきを だした！！\n『この さけびで おわらせる！』", "（ちからを ためたら ぼうぎょだ！）"] }
@@ -4749,6 +4763,17 @@ window.ITEM_DEFS = {
     if (window.BGM) BGM.setEnabled(!BGM.isEnabled());
     refreshBgmBtn();
   });
+
+  // ornate UI frame auto-detection (shared with game 1)
+  (function () {
+    var src = (window.UI_ART && window.UI_ART.frame) || "../assets/ui/frame.png";
+    var img = new Image();
+    img.onload = function () {
+      document.documentElement.style.setProperty("--frame-src", "url('" + src + "')");
+      document.documentElement.classList.add("ui-frame");
+    };
+    img.src = src;
+  })();
 
   refreshBgmBtn();
   if (window.BGM) BGM.playAny(["title"]);

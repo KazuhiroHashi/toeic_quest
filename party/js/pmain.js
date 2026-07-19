@@ -20,7 +20,7 @@
     // prototype party is mid-game strength: scale zako up to match
     return Object.assign({
       base: d.id, name: d.name, lv: d.lv,
-      hp: d.hp * 3, atk: Math.round(d.atk * 2.2), def: Math.round(d.def * 1.5), exp: d.exp,
+      hp: Math.round(d.hp * 3.5), atk: Math.round(d.atk * 2.2), def: Math.round(d.def * 1.5), exp: d.exp,
       agi: Math.round(d.lv / 25),
       hasty: d.traits && d.traits.indexOf("hasty") >= 0
     }, over || {});
@@ -41,11 +41,11 @@
       ],
       enemies: [{
         base: "gen_r", name: "四天王ハウル", lv: 600,
-        hp: 1900, atk: 46, def: 30, agi: 26, exp: 1200,
+        hp: 1850, atk: 42, def: 30, agi: 26, exp: 1200,
         boss: true,
         phases: [
           { at: 1.0, acts: 1, aoe: 0, charge: 0 },
-          { at: 0.66, acts: 2, aoe: 0.35, charge: 0,
+          { at: 0.66, acts: 2, aoe: 0.3, charge: 0,
             msg: ["ハウルの ようすが かわった！\n『ほう… やるではないか！』", "ハウルの こうどうが\n２かいに ふえた！"] },
           { at: 0.33, acts: 2, aoe: 0.3, charge: 0.4,
             msg: ["ハウルが ほんきを だした！！\n『この さけびで おわらせる！』", "（ちからを ためたら ぼうぎょだ！）"] }
@@ -76,6 +76,17 @@
     if (window.BGM) BGM.setEnabled(!BGM.isEnabled());
     refreshBgmBtn();
   });
+
+  // ornate UI frame auto-detection (shared with game 1)
+  (function () {
+    var src = (window.UI_ART && window.UI_ART.frame) || "../assets/ui/frame.png";
+    var img = new Image();
+    img.onload = function () {
+      document.documentElement.style.setProperty("--frame-src", "url('" + src + "')");
+      document.documentElement.classList.add("ui-frame");
+    };
+    img.src = src;
+  })();
 
   refreshBgmBtn();
   if (window.BGM) BGM.playAny(["title"]);

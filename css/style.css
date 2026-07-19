@@ -53,15 +53,29 @@ canvas#field-canvas {
 
 /* ---------- DQ-style windows ---------- */
 .dq-window {
-  background: var(--win-bg);
-  border: 3px solid var(--win-border);
-  border-radius: 8px;
-  box-shadow: 0 0 0 3px #000, inset 0 0 0 1px #000;
+  background:
+    linear-gradient(160deg, rgba(90, 110, 200, 0.10), rgba(0, 0, 0, 0) 45%),
+    linear-gradient(180deg, #101528 0%, #0a0d1c 60%, #070912 100%);
+  border: 2px solid #cfd8ee;
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 3px #000,
+    0 6px 16px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 0 24px rgba(70, 100, 200, 0.08);
   color: #fff;
   padding: 10px 12px;
   font-size: 15px;
   line-height: 1.7;
   letter-spacing: 1px;
+}
+/* ornate frame texture applies automatically once assets/ui/frame.png exists */
+.ui-frame .dq-window {
+  border: 14px solid transparent;
+  border-image: var(--frame-src) 96 fill / 14px stretch;
+  border-radius: 0;
+  background: none;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
 }
 
 /* status window top-left on field */
