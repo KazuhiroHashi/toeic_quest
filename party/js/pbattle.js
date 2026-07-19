@@ -1,14 +1,14 @@
-// WORD QUEST II - party battle engine (prototype)
-// PBATTLE.start(encounter) -> Promise<{result:"win"|"lose"|"flee"}>
-// encounter: { enemies: [{base, name, lv, hp, atk, def, agi, boss, phases}], bg, bgm }
+// WORD QUEST II - party battle engine
+// PBATTLE.start(encounter) -> Promise<{result:"win"|"lose"|"flee", exp}>
+// encounter: { enemies:[{base,name,lv,hp,atk,def,agi,exp,boss,phases,skills,mag}], bg, intro }
 (function () {
   "use strict";
 
   function $(id) { return document.getElementById(id); }
   function rnd(n) { return Math.floor(Math.random() * n); }
-  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
-  // ---------- tiny SFX (file-based, ../assets/sfx) ----------
+  // ================= SFX =================
   var sfxCache = {};
   function sfx(name) {
     try {
@@ -20,19 +20,24 @@
     } catch (e) {}
   }
 
-  // ---------- minimal input + UI (say/menu), tap & keyboard ----------
+  // ================= input + UI =================
   var INPUT = { stack: [] };
   INPUT.top = function () { return this.stack[this.stack.length - 1] || null; };
   window.addEventListener("keydown", function (e) {
+    if (!battleVisible()) return;
     var t = INPUT.top(); if (!t) return;
     if (e.key === "ArrowUp" || e.key === "ArrowLeft") { if (t.onDir) t.onDir("up"); }
     else if (e.key === "ArrowDown" || e.key === "ArrowRight") { if (t.onDir) t.onDir("down"); }
     else if (e.key === "Enter" || e.key === " " || e.key === "z") { if (t.onA) t.onA(); }
     else if (e.key === "Escape" || e.key === "x") { if (t.onB) t.onB(); }
   });
+  function battleVisible() {
+    var el = $("pbattle-screen");
+    return el && el.style.display === "block";
+  }
 
-  function say(text, el) {
-    el = el || $("pbattle-msg");
+  function say(text) {
+    var el = $("pbattle-msg");
     return new Promise(function (resolve) {
       el.style.display = "block";
       el.innerHTML = '<span class="body"></span><span class="arrow">▼</span>';
@@ -41,14 +46,13 @@
       var iv = setInterval(function () {
         if (i >= text.length) { clearInterval(iv); typing = false; return; }
         body.textContent = text.slice(0, ++i);
-      }, 18);
+      }, 16);
       INPUT.stack.push({ onA: adv, onB: adv });
       el.onpointerdown = function (e) { e.preventDefault(); adv(); };
       function adv() {
         if (typing) { clearInterval(iv); body.textContent = text; typing = false; return; }
         INPUT.stack.pop();
         el.onpointerdown = null;
-        el.style.display = "none";
         resolve();
       }
     });
@@ -72,15 +76,8 @@
             close(i);
           };
         });
-        if (items[sel] && items[sel].onSel) items[sel].onSel();
       }
-      function close(v) {
-        INPUT.stack.pop();
-        el.style.display = "none";
-        if (typeof onCloseSel === "function") onCloseSel();
-        resolve(v);
-      }
-      var onCloseSel = items.clearSel;
+      function close(v) { INPUT.stack.pop(); el.style.display = "none"; resolve(v); }
       INPUT.stack.push({
         onA: function () { if (!items[sel].disabled) { sfx("cursor"); close(sel); } },
         onB: function () { close(-1); },
@@ -98,34 +95,110 @@
     });
   }
 
-  // ---------- party definition (prototype fixed party) ----------
-  function makeParty() {
-    return [
-      { id: "yu",  name: "ユウ", role: "ゆうしゃ", hp: 130, maxhp: 130, mp: 30, maxmp: 30, atk: 44, def: 30, agi: 30,
-        lvOff: 0, spells: [{ id: "fire", name: "ファイア", mp: 5, type: "atk", power: 42, elem: "fire" },
-                           { id: "heal", name: "ヒール", mp: 5, type: "heal", power: 40 }] },
-      { id: "gai", name: "ガイ", role: "せんし", hp: 170, maxhp: 170, mp: 12, maxmp: 12, atk: 58, def: 40, agi: 20,
-        lvOff: -100, spells: [{ id: "smash", name: "かいしんぎり", mp: 6, type: "atk", power: 70, phys: true }] },
-      { id: "rina", name: "リナ", role: "まほうつかい", hp: 100, maxhp: 100, mp: 62, maxmp: 62, atk: 20, def: 22, agi: 26,
-        lvOff: 100, spells: [{ id: "fira", name: "ファイラ", mp: 6, type: "atk", power: 55, elem: "fire" },
-                             { id: "thunder", name: "サンダー", mp: 9, type: "atk", power: 38, elem: "thunder", all: true }] },
-      { id: "mia", name: "ミア", role: "そうりょ", hp: 110, maxhp: 110, mp: 58, maxmp: 58, atk: 24, def: 26, agi: 28,
-        lvOff: 0, spells: [{ id: "heal2", name: "ヒール", mp: 4, type: "heal", power: 62 },
-                           { id: "healall", name: "いやしのは", mp: 10, type: "heal", power: 26, all: true },
-                           { id: "raise", name: "リカバー", mp: 12, type: "raise", power: 60 }] }
-    ];
+  // ================= spell / character registry =================
+  var SPELLS = {
+    heal:      { name: "ヒール",        mp: 4,  type: "heal",  power: 34 },
+    healmore:  { name: "ヒールモア",     mp: 8,  type: "heal",  power: 80 },
+    partyheal: { name: "パーティヒール",  mp: 14, type: "heal",  power: 42, all: true },
+    revive:    { name: "リカバー",       mp: 18, type: "raise", power: 0.6 },
+    spark:     { name: "スパーク",       mp: 4,  type: "atk",   power: 26, elem: "thunder" },
+    fireball:  { name: "ファイアボール",  mp: 7,  type: "atk",   power: 42, elem: "fire" },
+    fire:      { name: "ファイア",       mp: 4,  type: "atk",   power: 30, elem: "fire" },
+    frost:     { name: "フロスト",       mp: 5,  type: "atk",   power: 34, elem: "ice" },
+    fira:      { name: "ファイラ",       mp: 9,  type: "atk",   power: 38, elem: "fire", all: true },
+    thunder:   { name: "サンダー",       mp: 13, type: "atk",   power: 44, elem: "thunder", all: true },
+    holy:      { name: "ホーリー",       mp: 8,  type: "atk",   power: 54, elem: "holy" }
+  };
+
+  // learn: { level: spellId | [spellId,...] }
+  var CHARS = {
+    yu:   { name: "ユウ", role: "ゆうしゃ", quizOff: 0,
+            base: { hp: 36, mp: 10, atk: 12, def: 9, agi: 9 },
+            grow: { hp: 9,  mp: 3,  atk: 3,  def: 2, agi: 2 },
+            learn: { 3: "heal", 6: "spark", 10: "fireball", 14: "healmore" } },
+    gai:  { name: "ガイ", role: "せんし", quizOff: -100,
+            base: { hp: 48, mp: 0,  atk: 16, def: 12, agi: 6 },
+            grow: { hp: 12, mp: 0,  atk: 4,  def: 3,  agi: 1 },
+            learn: {} },
+    rina: { name: "リナ", role: "まほうつかい", quizOff: 100,
+            base: { hp: 26, mp: 18, atk: 7,  def: 6, agi: 8 },
+            grow: { hp: 6,  mp: 6,  atk: 2,  def: 1, agi: 2 },
+            learn: { 1: ["fire", "frost"], 6: "fira", 11: "thunder" } },
+    mia:  { name: "ミア", role: "そうりょ", quizOff: 0,
+            base: { hp: 32, mp: 16, atk: 8,  def: 8, agi: 8 },
+            grow: { hp: 7,  mp: 6,  atk: 2,  def: 2, agi: 2 },
+            learn: { 1: "heal", 5: "partyheal", 9: "holy", 12: "revive" } }
+  };
+
+  // cumulative EXP needed to REACH level n (index = level)
+  var EXP_FOR = [0, 0];
+  for (var _lv = 2; _lv <= 50; _lv++) EXP_FOR[_lv] = EXP_FOR[_lv - 1] + Math.round(7 * Math.pow(_lv, 1.75));
+
+  function spellsAt(id, lv) {
+    var learn = CHARS[id].learn, out = [];
+    for (var L in learn) {
+      if (+L <= lv) {
+        var v = learn[L];
+        (Array.isArray(v) ? v : [v]).forEach(function (sid) { if (out.indexOf(sid) < 0) out.push(sid); });
+      }
+    }
+    return out;
+  }
+  function statAt(id, lv) {
+    var c = CHARS[id], s = {};
+    ["hp", "mp", "atk", "def", "agi"].forEach(function (k) {
+      s[k] = Math.round(c.base[k] + c.grow[k] * (lv - 1));
+    });
+    return s;
+  }
+  function makeMember(id, lv) {
+    lv = lv || 1;
+    var c = CHARS[id], s = statAt(id, lv);
+    return {
+      id: id, name: c.name, role: c.role, quizOff: c.quizOff,
+      lv: lv, exp: EXP_FOR[lv] || 0,
+      hp: s.hp, maxhp: s.hp, mp: s.mp, maxmp: s.mp,
+      atk: s.atk, def: s.def, agi: s.agi,
+      gearAtk: 0, gearDef: 0,
+      spellIds: spellsAt(id, lv)
+    };
+  }
+  function memberSpells(m) {
+    return m.spellIds.map(function (sid) { return Object.assign({ id: sid }, SPELLS[sid]); });
+  }
+  function atkOf(m) { return m.atk + (m.gearAtk || 0); }
+  function defOf(m) { return m.def + (m.gearDef || 0); }
+
+  // grant exp to one member, return {gained, ups:[{lv, learned:[names]}]}
+  function gainExp(m, amount) {
+    m.exp += amount;
+    var ups = [];
+    while (m.lv < 50 && m.exp >= EXP_FOR[m.lv + 1]) {
+      m.lv++;
+      var before = { hp: m.maxhp, mp: m.maxmp, atk: m.atk, def: m.def };
+      var s = statAt(m.id, m.lv);
+      m.maxhp = s.hp; m.maxmp = s.mp; m.atk = s.atk; m.def = s.def; m.agi = s.agi;
+      m.hp = Math.min(m.maxhp, m.hp + (m.maxhp - before.hp)); // level heals the gained HP
+      m.mp = Math.min(m.maxmp, m.mp + (m.maxmp - before.mp));
+      var learnedNames = [];
+      var newSpells = spellsAt(m.id, m.lv);
+      newSpells.forEach(function (sid) {
+        if (m.spellIds.indexOf(sid) < 0) { m.spellIds.push(sid); learnedNames.push(SPELLS[sid].name); }
+      });
+      ups.push({ lv: m.lv, learned: learnedNames });
+    }
+    return { gained: amount, ups: ups };
   }
 
   var items = { herb: 6, elixir: 2 };
 
-  // ---------- rendering ----------
+  // ================= state =================
   var party, foes, chain, screenEl;
 
   function quizLvFor(member, foe) {
-    var lv = (foe ? foe.lv : 500) + member.lvOff;
-    return Math.max(400, Math.min(900, lv));
+    var lv = (foe ? foe.lv : 500) + (member.quizOff || 0);
+    return clamp(lv, 400, 900);
   }
-
   function enemyImg(id) {
     return (window.ENEMY_ART && window.ENEMY_ART[id]) || "../assets/enemies/" + id + ".png";
   }
@@ -137,10 +210,10 @@
       var d = document.createElement("div");
       d.className = "penemy" + (f.hp <= 0 ? " dead" : "");
       d.id = "penemy-" + i;
-      var w = f.boss ? 46 : Math.max(24, 40 - foes.length * 4);
+      var w = f.boss ? 46 : clamp(40 - foes.length * 4, 22, 40);
       d.style.width = w + "%";
       d.innerHTML =
-        '<div class="ptag">' + f.name + "（TOEIC" + f.lv + "）</div>" +
+        '<div class="ptag">' + f.name + "</div>" +
         '<img src="' + enemyImg(f.base) + '" alt="">' +
         '<div class="phpbar"><div style="width:' + Math.max(0, 100 * f.hp / f.maxhp) + '%"></div></div>';
       row.appendChild(d);
@@ -167,9 +240,9 @@
       d.className = cls;
       d.id = "pmember-" + i;
       d.innerHTML =
-        '<div class="pname">' + p.name + '<span class="prole">' + p.role + "</span></div>" +
-        '<div class="phv">ＨＰ <b>' + Math.max(0, p.hp) + "</b>/" + p.maxhp + "</div>" +
-        '<div class="pmv">ＭＰ ' + p.mp + "/" + p.maxmp + "</div>" +
+        '<div class="pname">' + p.name + '<span class="plv">L' + p.lv + "</span></div>" +
+        '<div class="phv">HP <b>' + Math.max(0, p.hp) + "</b>/" + p.maxhp + "</div>" +
+        '<div class="pmv">MP ' + p.mp + "/" + p.maxmp + "</div>" +
         '<div class="php"><div style="width:' + Math.max(0, 100 * p.hp / p.maxhp) + '%"></div></div>';
       strip.appendChild(d);
     });
@@ -193,7 +266,7 @@
     if (r) {
       d.style.left = (r.left - s.left + r.width * 0.3 + rnd(20)) + "px";
       d.style.top = (r.top - s.top + r.height * 0.35) + "px";
-    } else { d.style.left = "40%"; }
+    } else { d.style.left = "40%"; d.style.top = "40%"; }
     screenEl.appendChild(d);
     setTimeout(function () { d.remove(); }, 900);
   }
@@ -205,7 +278,6 @@
     setTimeout(function () { d.remove(); }, 320);
   }
 
-  // ---------- damage helpers ----------
   function hitEnemy(i, dmg, crit, fxColor) {
     var f = foes[i], el = $("penemy-" + i);
     f.hp = Math.max(0, f.hp - dmg);
@@ -227,8 +299,9 @@
   function aliveFoes() { return foes.filter(function (f) { return f.hp > 0; }); }
   function aliveMembers() { return party.filter(function (p) { return p.hp > 0; }); }
   function firstAliveFoe() { for (var i = 0; i < foes.length; i++) if (foes[i].hp > 0) return i; return -1; }
+  function anyBoss() { return foes.some(function (f) { return f.boss; }); }
 
-  // ---------- command phase ----------
+  // ================= command phase =================
   async function pickCommands() {
     var acts = [];
     var i = 0;
@@ -236,25 +309,32 @@
       var p = party[i];
       if (p.hp <= 0) { i++; continue; }
       renderParty(i);
+      var spells = memberSpells(p);
       var c = await menu($("pbattle-cmd"), [
-        { label: "こうげき" }, { label: "じゅもん", disabled: !p.spells.length },
-        { label: "ぼうぎょ" }, { label: "どうぐ" }
-      ], p.name + "　ＨＰ" + p.hp);
-      if (c === -1) { // back to previous member
-        while (i > 0) { i--; acts.pop(); if (party[i].hp > 0) break; }
+        { label: "こうげき" },
+        { label: "まほう", disabled: !spells.length },
+        { label: "ぼうぎょ" },
+        { label: "どうぐ" },
+        { label: "にげる" }
+      ], p.name + "（Ｌｖ" + p.lv + "）");
+      if (c === -1) {
+        if (i === 0) continue;
+        i--; acts.pop();
+        while (i > 0 && party[i].hp <= 0) { i--; acts.pop(); }
         continue;
       }
+      if (c === 4) { return { flee: true }; }
       if (c === 0) {
         var t = await pickTarget();
         if (t === -1) continue;
         acts.push({ who: i, kind: "atk", target: t });
       } else if (c === 1) {
-        var opts = p.spells.map(function (s) {
-          return { label: s.name + "　MP" + s.mp, disabled: p.mp < s.mp };
+        var opts = spells.map(function (s) {
+          return { label: s.name + "　ＭＰ" + s.mp, disabled: p.mp < s.mp };
         });
-        var si = await menu($("pbattle-sub"), opts, "じゅもん");
+        var si = await menu($("pbattle-sub"), opts, "まほう");
         if (si === -1) continue;
-        var sp = p.spells[si];
+        var sp = spells[si];
         var tgt = -1;
         if (sp.type === "atk" && !sp.all) { tgt = await pickTarget(); if (tgt === -1) continue; }
         if (sp.type === "heal" && !sp.all) { tgt = await pickAlly(false); if (tgt === -1) continue; }
@@ -266,7 +346,7 @@
         var inv = [];
         if (items.herb > 0) inv.push({ key: "herb", label: "ハーブティー ×" + items.herb });
         if (items.elixir > 0) inv.push({ key: "elixir", label: "エナジーコーヒー ×" + items.elixir });
-        if (!inv.length) { await say("つかえる どうぐが ない！"); continue; }
+        if (!inv.length) { await say("使える道具がない！"); continue; }
         var ii = await menu($("pbattle-sub"), inv, "どうぐ");
         if (ii === -1) continue;
         var at = await pickAlly(false);
@@ -276,23 +356,17 @@
       i++;
     }
     renderParty(-1);
-    return acts;
+    return { acts: acts };
   }
 
   function pickTarget() {
     var alive = [];
     foes.forEach(function (f, i) { if (f.hp > 0) alive.push(i); });
     if (alive.length === 1) return Promise.resolve(alive[0]);
-    var opts = alive.map(function (i) {
-      return { label: foes[i].name, fi: i };
-    });
+    var opts = alive.map(function (i) { return { label: foes[i].name, fi: i }; });
     return menu($("pbattle-sub"), opts, "どの敵？").then(function (v) {
-      clearTargets();
       return v === -1 ? -1 : opts[v].fi;
     });
-  }
-  function clearTargets() {
-    document.querySelectorAll(".penemy.target").forEach(function (n) { n.classList.remove("target"); });
   }
   function pickAlly(deadOnly) {
     var opts = [];
@@ -306,22 +380,20 @@
     });
   }
 
-  // ---------- action execution ----------
+  // ================= member actions =================
   async function execMemberAction(a) {
     var p = party[a.who];
     if (p.hp <= 0) return;
     if (a.kind === "guard") {
-      p.guard = true;
-      renderParty(-1);
-      await say(p.name + "は みをまもっている。");
+      p.guard = true; renderParty(-1);
+      await say(p.name + "は 身を守っている。");
       return;
     }
     if (a.kind === "item") {
       var t = party[a.target];
-      if (a.item === "herb") { items.herb--; t.hp = Math.min(t.maxhp, t.hp + 40); await say(p.name + "は ハーブティーを つかった！\n" + t.name + "のＨＰが 40 かいふく！"); }
-      else { items.elixir--; t.mp = Math.min(t.maxmp, t.mp + 30); await say(p.name + "は エナジーコーヒーを つかった！\n" + t.name + "のＭＰが 30 かいふく！"); }
-      sfx("heal");
-      renderParty(-1);
+      if (a.item === "herb") { items.herb--; t.hp = Math.min(t.maxhp, t.hp + 40); await say(p.name + "は ハーブティーを使った！\n" + t.name + "のＨＰが 40 回復！"); }
+      else { items.elixir--; t.mp = Math.min(t.maxmp, t.mp + 30); await say(p.name + "は エナジーコーヒーを使った！\n" + t.name + "のＭＰが 30 回復！"); }
+      sfx("heal"); renderParty(-1);
       return;
     }
     if (a.kind === "atk") {
@@ -331,33 +403,31 @@
       await say(p.name + "の こうげき！");
       var q = await window.QUIZ.ask(quizLvFor(p, f), { time: f.hasty ? 3.5 : 5 });
       if (q.correct) {
-        chain++;
-        chainBadge();
+        chain++; chainBadge();
         var crit = q.elapsed <= 2;
-        var dmg = Math.max(1, Math.round((p.atk - f.def / 2 + rnd(6)) * chainMult()));
+        var dmg = Math.max(1, Math.round((atkOf(p) - defOf2(f) / 2 + rnd(6)) * chainMult()));
         if (crit) dmg *= 2;
         if (f.base === "metal" && !crit) dmg = 1;
         hitEnemy(ti, dmg, crit);
-        if (crit) await say("かいしんの いちげき！！\n" + f.name + "に " + dmg + " のダメージ！");
+        if (crit) await say("クリティカルヒット！！\n" + f.name + "に " + dmg + " のダメージ！");
         else await say(f.name + "に " + dmg + " のダメージ！" + (chain >= 2 ? "（チェイン×" + chain + "）" : ""));
         await checkFoeDown(ti);
       } else {
         chain = 0; chainBadge();
-        await say(p.name + "の こうげきは からぶり！\n（チェインが とぎれた）");
+        await say(p.name + "の こうげきは 空振り！\n（チェインが途切れた）");
       }
       return;
     }
     if (a.kind === "spell") {
       var sp = a.spell;
-      if (p.mp < sp.mp) { await say("ＭＰが たりない！"); return; }
-      p.mp -= sp.mp;
-      renderParty(-1);
-      await say(p.name + "は『" + sp.name + "』を となえた！");
-      var lvRef = sp.type === "atk" ? (foes[firstAliveFoe()] || { lv: 500 }) : null;
-      var qs = await window.QUIZ.ask(quizLvFor(p, lvRef || aliveFoes()[0]), { time: 5, noCrit: true });
+      if (p.mp < sp.mp) { await say("ＭＰが足りない！"); return; }
+      p.mp -= sp.mp; renderParty(-1);
+      await say(p.name + "は 魔法『" + sp.name + "』を となえた！");
+      var lvRef = sp.type === "atk" ? (foes[firstAliveFoe()] || { lv: 500 }) : (aliveFoes()[0] || { lv: 500 });
+      var qs = await window.QUIZ.ask(quizLvFor(p, lvRef), { time: 5, noCrit: true });
       if (!qs.correct) {
         chain = 0; chainBadge();
-        await say("じゅもんは ふはつに おわった…！\n（チェインが とぎれた）");
+        await say("魔法は 不発に終わった…！\n（チェインが途切れた）");
         return;
       }
       chain++; chainBadge();
@@ -366,26 +436,24 @@
         if (sp.all) {
           aliveMembers().forEach(function (m) { m.hp = Math.min(m.maxhp, m.hp + sp.power); });
           renderParty(-1);
-          await say("やさしい ひかりが ふりそそぐ！\nみんなのＨＰが " + sp.power + " かいふく！");
+          await say("優しい光が降りそそぐ！\nみんなのＨＰが " + sp.power + " 回復！");
         } else {
           var tm = party[a.target];
           tm.hp = Math.min(tm.maxhp, tm.hp + sp.power);
           renderParty(-1);
-          await say(tm.name + "のＨＰが " + sp.power + " かいふくした！");
+          await say(tm.name + "のＨＰが " + sp.power + " 回復した！");
         }
         return;
       }
       if (sp.type === "raise") {
         var rm = party[a.target];
-        if (rm.hp > 0) { await say("しかし なにも おこらなかった。"); return; }
-        rm.hp = Math.min(rm.maxhp, sp.power);
-        sfx("heal");
-        renderParty(-1);
-        await say(rm.name + "が たちあがった！");
+        if (rm.hp > 0) { await say("しかし 何も起こらなかった。"); return; }
+        rm.hp = Math.max(1, Math.round(rm.maxhp * sp.power));
+        sfx("heal"); renderParty(-1);
+        await say(rm.name + "が 起き上がった！");
         return;
       }
-      // attack spell
-      var fxc = sp.elem === "fire" ? "rgba(255,150,60,.9)" : sp.elem === "thunder" ? "rgba(255,230,90,.9)" : "rgba(200,160,255,.9)";
+      var fxc = sp.elem === "fire" ? "rgba(255,150,60,.9)" : sp.elem === "thunder" ? "rgba(255,230,90,.9)" : sp.elem === "ice" ? "rgba(150,220,255,.9)" : sp.elem === "holy" ? "rgba(255,250,200,.95)" : "rgba(200,160,255,.9)";
       var targets = sp.all ? foes.map(function (f, i) { return i; }).filter(function (i) { return foes[i].hp > 0; })
                            : [foes[a.target] && foes[a.target].hp > 0 ? a.target : firstAliveFoe()];
       for (var k = 0; k < targets.length; k++) {
@@ -394,24 +462,21 @@
         var sd = Math.round(sp.power * (0.85 + Math.random() * 0.3) * chainMult());
         if (qs.elapsed <= 2) sd = Math.round(sd * 1.3);
         var weak = sp.elem && window.WEAK && window.WEAK[foe.base] === sp.elem;
-        if (weak) { sd = Math.round(sd * 1.5); bpop("じゃくてん！", "weak", $("penemy-" + fi)); }
+        if (weak) { sd = Math.round(sd * 1.5); bpop("弱点！", "weak", $("penemy-" + fi)); }
         hitEnemy(fi, sd, false, fxc);
-        await say(foe.name + "に " + sd + " のダメージ！" + (weak ? "\nじゃくてんを ついた！" : ""));
+        await say(foe.name + "に " + sd + " のダメージ！" + (weak ? "\n弱点を突いた！" : ""));
         await checkFoeDown(fi);
         if (firstAliveFoe() < 0) break;
       }
     }
   }
+  function defOf2(f) { return f.def; }
 
   async function checkFoeDown(i) {
     var f = foes[i];
-    if (f.hp > 0) {
-      if (f.boss && f.phases) await checkPhase(f);
-      return;
-    }
+    if (f.hp > 0) { if (f.boss && f.phases) await checkPhase(f); return; }
     await say(f.name + "を たおした！");
   }
-
   async function checkPhase(f) {
     var ratio = f.hp / f.maxhp;
     var next = f.phases[f.phase + 1];
@@ -425,33 +490,35 @@
     }
   }
 
-  // ---------- enemy turn ----------
+  // ================= enemy actions =================
+  function magDmg(f, m, mult, guard) {
+    var base = (f.mag || Math.round(f.atk * 0.9)) * mult;
+    return Math.max(1, Math.round((base + rnd(6)) * (guard ? 0.6 : 1)));
+  }
   async function execFoeAction(fi) {
     var f = foes[fi];
     if (f.hp <= 0) return;
     var el = $("penemy-" + fi);
     if (el) { el.classList.add("lunge"); setTimeout(function () { el.classList.remove("lunge"); }, 400); }
-
     var phase = f.boss ? f.phases[f.phase] : null;
 
-    // charged mega attack resolves first
+    // resolve a charged mega attack
     if (f.charging) {
       f.charging = false;
-      await say(f.name + "の ためていた ちからが\nかいほうされた！！");
+      await say(f.name + "の ためていた力が 解き放たれた！！");
+      aliveMembers().forEach(function () {});
       for (var i = 0; i < party.length; i++) {
-        var m = party[i];
-        if (m.hp <= 0) continue;
-        var dm = Math.max(1, Math.round((f.atk * 1.5 - m.def / 2 + rnd(8)) * (m.guard ? 0.45 : 1)));
+        var mm = party[i]; if (mm.hp <= 0) continue;
+        var dm = Math.max(1, Math.round((f.atk * 1.5 - defOf(mm) / 2 + rnd(8)) * (mm.guard ? 0.45 : 1)));
         hitMember(i, dm);
       }
-      await say("すさまじい しょうげきが\nパーティ全体を おそう！");
+      await say("すさまじい衝撃が パーティ全体を襲う！");
       return;
     }
-
-    // boss may start charging in late phases
+    // boss charge windup
     if (phase && phase.charge && Math.random() < phase.charge) {
       f.charging = true;
-      await say(f.name + "は ちからを ためはじめた…！\n（ぼうぎょで しのげ！）");
+      await say(f.name + "は 力をためはじめた…！\n（防御でしのげ！）");
       return;
     }
 
@@ -460,30 +527,53 @@
       var living = [];
       party.forEach(function (m, i) { if (m.hp > 0) living.push(i); });
       if (!living.length) return;
-      // AoE breath sometimes in phase 2+
-      if (phase && phase.aoe && Math.random() < phase.aoe) {
-        await say(f.name + "は 「しずまれ！」と\nさけんだ！　ことばの あらしだ！");
+
+      // enemy spell / breath (from skills table) or boss AoE
+      var useSkill = f.skills && f.skills.length && Math.random() < (f.skillRate || 0.4);
+      var bossAoe = phase && phase.aoe && Math.random() < phase.aoe;
+      if (bossAoe && (!f.skills || Math.random() < 0.5)) {
+        await say(f.name + "は「静まれ！」と叫んだ！\n言葉の嵐が吹き荒れる！");
         for (var j = 0; j < living.length; j++) {
-          var mi = living[j], mm = party[mi];
-          var ad = Math.max(1, Math.round((f.atk * 0.8 - mm.def / 2 + rnd(6)) * (mm.guard ? 0.5 : 1)));
+          var mi = living[j], mm2 = party[mi];
+          var ad = Math.max(1, Math.round((f.atk * 0.8 - defOf(mm2) / 2 + rnd(6)) * (mm2.guard ? 0.5 : 1)));
           hitMember(mi, ad);
         }
-        await say("パーティ全体が ダメージを うけた！");
+        await say("パーティ全体が ダメージを受けた！");
         continue;
       }
+      if (useSkill) {
+        var sk = f.skills[rnd(f.skills.length)];
+        await say(f.name + "は『" + sk.name + "』を放った！");
+        sfx("ng");
+        if (sk.all) {
+          for (var a2 = 0; a2 < living.length; a2++) {
+            var mi2 = living[a2], mt = party[mi2];
+            hitMember(mi2, magDmg(f, mt, sk.power, mt.guard));
+          }
+          await say("パーティ全体が ダメージを受けた！");
+        } else {
+          var ti2 = living[rnd(living.length)], tg = party[ti2];
+          var d2 = magDmg(f, tg, sk.power, tg.guard);
+          hitMember(ti2, d2);
+          await say(tg.name + "に " + d2 + " のダメージ！");
+          if (tg.hp <= 0) await say(tg.name + "は 倒れてしまった！");
+        }
+        continue;
+      }
+
+      // plain attack
       var ti = living[rnd(living.length)];
       var t = party[ti];
-      var dmg = Math.max(1, Math.round((f.atk - t.def / 2 + rnd(6)) * (t.guard ? 0.5 : 1)));
+      var dmg = Math.max(1, Math.round((f.atk - defOf(t) / 2 + rnd(6)) * (t.guard ? 0.5 : 1)));
       hitMember(ti, dmg);
-      await say(f.name + "の こうげき！\n" + t.name + "は " + dmg + " のダメージ！" + (t.guard ? "（ぼうぎょで はんげん）" : ""));
-      if (t.hp <= 0) await say(t.name + "は たおれてしまった！");
+      await say(f.name + "の こうげき！\n" + t.name + "に " + dmg + " のダメージ！" + (t.guard ? "（防御で半減）" : ""));
+      if (t.hp <= 0) await say(t.name + "は 倒れてしまった！");
     }
   }
 
-  // ---------- main loop ----------
+  // ================= main loop =================
   async function start(encounter) {
-    party = window.PBATTLE._party || (window.PBATTLE._party = makeParty());
-    // fresh copies of foes
+    party = window.PBATTLE.getParty();
     foes = encounter.enemies.map(function (e) {
       return Object.assign({ phase: 0, charging: false, maxhp: e.hp }, e);
     });
@@ -496,35 +586,52 @@
       bgEl.style.backgroundImage = "url('" + bgSrc + "')";
     } else bgEl.style.backgroundImage = "";
 
-    renderEnemies();
-    renderParty(-1);
-    chainBadge();
+    renderEnemies(); renderParty(-1); chainBadge();
 
-    var isBoss = foes.some(function (f) { return f.boss; });
+    var isBoss = anyBoss();
     if (window.BGM) {
       BGM.stop();
       setTimeout(function () {
         if (screenEl.style.display === "none") return;
         if (isBoss) BGM.playAny(["midboss", "boss"]);
         else BGM.playAny(Math.random() < 0.5 ? ["battle", "battle2"] : ["battle2", "battle"]);
-      }, 1200);
+      }, 1000);
     }
     sfx(isBoss ? "boss" : "encounter");
     await say(foes.map(function (f) { return f.name; }).join("と ") + "が あらわれた！");
-    if (encounter.intro) for (var i = 0; i < encounter.intro.length; i++) await say(encounter.intro[i]);
+    if (encounter.intro) for (var ii = 0; ii < encounter.intro.length; ii++) await say(encounter.intro[ii]);
 
     var result = null;
     while (!result) {
       party.forEach(function (p) { p.guard = false; });
       renderParty(-1);
 
-      var acts = await pickCommands();
+      var cmd = await pickCommands();
 
-      // build turn order: members + foes by agility
+      // flee attempt (party level)
+      if (cmd.flee) {
+        if (isBoss) { await say("ボスからは 逃げられない！"); continue; }
+        var pAgi = aliveMembers().reduce(function (s, m) { return s + m.agi; }, 0) / Math.max(1, aliveMembers().length);
+        var fAgi = aliveFoes().reduce(function (s, f) { return s + f.agi; }, 0) / Math.max(1, aliveFoes().length);
+        if (Math.random() < clamp(0.55 + (pAgi - fAgi) * 0.03, 0.2, 0.92)) {
+          await say("うまく 逃げ切った！");
+          result = "flee"; break;
+        } else {
+          await say("しかし 逃げ切れなかった！");
+          // enemies still act this turn
+          var foeq = [];
+          foes.forEach(function (f, i) { if (f.hp > 0) foeq.push(i); });
+          for (var fq = 0; fq < foeq.length; fq++) {
+            await execFoeAction(foeq[fq]);
+            if (!aliveMembers().length) { result = "lose"; break; }
+          }
+          continue;
+        }
+      }
+
+      var acts = cmd.acts;
       var queue = acts.map(function (a) { return { m: true, a: a, agi: party[a.who].agi + rnd(8) }; });
-      foes.forEach(function (f, i) {
-        if (f.hp > 0) queue.push({ m: false, fi: i, agi: f.agi + rnd(8) });
-      });
+      foes.forEach(function (f, i) { if (f.hp > 0) queue.push({ m: false, fi: i, agi: f.agi + rnd(8) }); });
       queue.sort(function (x, y) { return y.agi - x.agi; });
 
       for (var qi = 0; qi < queue.length; qi++) {
@@ -536,25 +643,58 @@
       }
     }
 
+    var totalExp = 0;
     if (result === "win") {
       if (window.BGM) BGM.stop();
       sfx("win");
-      await say("たたかいに かった！");
-      var exp = foes.reduce(function (s, f) { return s + (f.exp || 0); }, 0);
-      if (exp) await say("けいけんち " + exp + " を みんなで わけあった！");
-    } else {
+      await say("たたかいに 勝った！");
+      totalExp = foes.reduce(function (s, f) { return s + (f.exp || 0); }, 0);
+      if (totalExp > 0) {
+        await say("パーティは " + totalExp + " の 経験値を得た！");
+        // each surviving member earns the full exp, DQ-style
+        for (var pi = 0; pi < party.length; pi++) {
+          var m = party[pi];
+          if (m.hp <= 0) continue;
+          var res = gainExp(m, totalExp);
+          for (var u = 0; u < res.ups.length; u++) {
+            sfx("level");
+            await say(m.name + "は レベル " + res.ups[u].lv + " に上がった！");
+            if (res.ups[u].learned.length) {
+              await say(m.name + "は 魔法『" + res.ups[u].learned.join("』『") + "』を おぼえた！");
+            }
+          }
+        }
+      }
+    } else if (result === "lose") {
       if (window.BGM) BGM.stop();
-      await say("ぜんめつ してしまった…");
+      await say("全滅してしまった…");
     }
     screenEl.style.display = "none";
-    return { result: result };
+    return { result: result, exp: totalExp };
   }
 
+  // ================= public API =================
   window.PBATTLE = {
     start: start,
-    resetParty: function () { window.PBATTLE._party = null; items = { herb: 6, elixir: 2 }; },
-    getParty: function () { return window.PBATTLE._party || (window.PBATTLE._party = makeParty()); },
+    _party: null,
+    makeMember: makeMember,
+    resetParty: function () { window.PBATTLE._party = [makeMember("yu", 1)]; items = { herb: 6, elixir: 2 }; return window.PBATTLE._party; },
+    demoParty: function (lv) {
+      lv = lv || 6;
+      window.PBATTLE._party = ["yu", "gai", "rina", "mia"].map(function (id) { return makeMember(id, lv); });
+      items = { herb: 8, elixir: 4 };
+      return window.PBATTLE._party;
+    },
+    getParty: function () { return window.PBATTLE._party || window.PBATTLE.resetParty(); },
     setParty: function (p) { window.PBATTLE._party = p; },
+    hasMember: function (id) { return (window.PBATTLE._party || []).some(function (m) { return m.id === id; }); },
+    addMember: function (id, lv) {
+      var p = window.PBATTLE.getParty();
+      if (p.some(function (m) { return m.id === id; })) return null;
+      var m = makeMember(id, lv || 1);
+      p.push(m);
+      return m;
+    },
     getItems: function () { return items; },
     setItems: function (o) { items = o; },
     pressA: function () { var t = INPUT.top(); if (t && t.onA) t.onA(); },

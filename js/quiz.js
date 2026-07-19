@@ -170,11 +170,11 @@
         });
         if (correct) {
           var fast = elapsed <= 2 && !opts.noCrit;
-          resultEl.textContent = fast ? "かいしん！ +" + entry.w + " = " + entry.m : "せいかい！";
+          resultEl.textContent = fast ? "クリティカルヒット！ " + entry.w + " = " + entry.m : "正解！";
           resultEl.className = "ok";
           if (window.SFX) SFX.play(fast ? "crit" : "ok");
         } else {
-          resultEl.textContent = (timeout ? "じかんぎれ… " : "ミス… ") + entry.w + " = " + entry.m;
+          resultEl.textContent = (timeout ? "時間切れ… " : "ミス… ") + entry.w + " = " + entry.m;
           resultEl.className = "ng";
           if (window.SFX) SFX.play("ng");
         }

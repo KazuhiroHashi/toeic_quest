@@ -18,6 +18,10 @@
 /* ---------- field explore ---------- */
 #pfield-wrap { position: absolute; inset: 0; display: none; }
 #pfield-wrap #field-canvas { width: 100%; height: 100%; display: block; }
+#pfield-wrap #status-win { position: absolute; top: 6px; left: 6px; min-width: 150px; font-size: 12px; line-height: 1.45; z-index: 5; }
+#pfield-wrap #status-win .name { font-weight: bold; color: #ffd54a; margin-bottom: 2px; }
+#pfield-wrap #status-win .pstat { white-space: nowrap; color: #dfe7f5; }
+#pfield-wrap #status-win .pstat b { color: #fff; }
 #msg-win { position: absolute; left: 8px; right: 8px; bottom: 8px; min-height: 20%; display: none; z-index: 40; }
 #cmd-win { position: absolute; left: 8px; bottom: 26%; display: none; z-index: 41; }
 #sub-win { position: absolute; left: 150px; bottom: 24%; max-height: 46%; overflow-y: auto; display: none; z-index: 42; }
@@ -79,10 +83,10 @@
 }
 @keyframes phaseflash { 0% { opacity: 0; } 25% { opacity: 1; } 100% { opacity: 0; } }
 
-/* ---------- party status strip ---------- */
+/* ---------- party status strip (sits just above the message band) ---------- */
 #pparty-strip {
-  position: absolute; left: 4px; right: 4px; bottom: 27%;
-  display: flex; gap: 4px; z-index: 3;
+  position: absolute; left: 4px; right: 4px; bottom: 25%;
+  display: flex; gap: 4px; z-index: 7;
 }
 .pmember {
   flex: 1; min-width: 0;
@@ -92,8 +96,8 @@
   font-size: 11px; line-height: 1.5;
   transition: border-color .2s, box-shadow .2s;
 }
-.pmember .pname { font-weight: bold; font-size: 11.5px; white-space: nowrap; overflow: hidden; }
-.pmember .prole { color: #9ab; font-size: 9.5px; margin-left: 2px; }
+.pmember .pname { font-weight: bold; font-size: 12px; white-space: nowrap; overflow: hidden; }
+.pmember .plv { color: #9ab; font-size: 9.5px; margin-left: 3px; font-weight: normal; }
 .pmember .phv { color: #cde; white-space: nowrap; }
 .pmember .phv b { color: #fff; }
 .pmember .pmv { color: #8fa8d0; white-space: nowrap; font-size: 10.5px; }
@@ -110,16 +114,17 @@
 }
 .pmember.guarding .pname::after { content: "🛡"; margin-left: 3px; }
 
-/* windows */
+/* windows — message and command share the bottom band; message always visible */
 #pbattle-msg {
-  left: 8px; right: 8px; bottom: 8px; height: 24%;
-  z-index: 4;
+  position: absolute;
+  left: 6px; right: 6px; bottom: 6px; height: 22%; min-height: 96px;
+  z-index: 8;
 }
-#pbattle-cmd { left: 8px; bottom: 8px; z-index: 5; }
-#pbattle-sub { left: 150px; bottom: 8px; max-height: 44%; overflow-y: auto; z-index: 5; }
+#pbattle-cmd { position: absolute; left: 6px; bottom: 6px; min-width: 128px; z-index: 9; }
+#pbattle-sub { position: absolute; right: 6px; bottom: 6px; max-height: 40%; overflow-y: auto; z-index: 10; }
 
 #pchain-badge {
-  position: absolute; top: 6px; right: 8px; z-index: 5;
+  position: absolute; top: 6px; right: 8px; z-index: 11;
   font-size: 13px; font-weight: bold; color: #ffd54a;
   background: rgba(0, 0, 0, .6); border: 1px solid #ffd54a; border-radius: 999px;
   padding: 3px 10px;

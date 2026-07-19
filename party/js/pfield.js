@@ -42,16 +42,29 @@
     cave: [["bat", "rat"], ["slime", "bat", "rat"], ["goblin", "rat"]],
     tower: [["wolf", "ghost"], ["bee", "bee", "mush"], ["snake", "owl"]]
   };
+  // some enemies use magic / group attacks (kanji names). power = ×atk multiplier.
+  var FOE_SKILLS = {
+    ghost: [{ name: "呪いの言葉", power: 1.1, all: false, elem: "dark" }],
+    owl:   [{ name: "風の刃", power: 0.75, all: true }],
+    bee:   [{ name: "群れの一撃", power: 0.7, all: true }],
+    bat:   [{ name: "吸血", power: 1.0, all: false }],
+    mush:  [{ name: "毒の胞子", power: 0.65, all: true }],
+    snake: [{ name: "毒牙", power: 1.05, all: false }],
+    goblin:[{ name: "石つぶて", power: 0.7, all: true }]
+  };
   function scaledFoe(id) {
     var d = window.ENEMY_BY_ID[id];
     return {
       base: d.id, name: d.name, lv: d.lv,
-      hp: Math.round(d.hp * 3.5), atk: Math.round(d.atk * 2.2), def: Math.round(d.def * 1.5),
-      exp: d.exp, agi: Math.round(d.lv / 25),
-      hasty: d.traits && d.traits.indexOf("hasty") >= 0
+      hp: Math.round(d.hp * 1.5), atk: Math.round(d.atk * 1.15), def: Math.round(d.def * 1.05),
+      mag: Math.round(d.atk * 1.1),
+      exp: Math.round(d.exp * 1.4), agi: Math.round(d.lv / 25),
+      hasty: d.traits && d.traits.indexOf("hasty") >= 0,
+      skills: FOE_SKILLS[id], skillRate: 0.32
     };
   }
-  var ENC_RATE = { world: 0.055, dungeon: 0.075 };
+  // halved encounter rate per feedback
+  var ENC_RATE = { world: 0.028, dungeon: 0.038 };
 
   // ---------- input ----------
   var INPUT = {
@@ -388,11 +401,13 @@
     }
     ctx.restore();
 
-    var lead = window.PBATTLE.getParty()[0];
+    var roster = window.PBATTLE.getParty().map(function (p) {
+      var cls = p.hp <= 0 ? " style='color:#c66'" : (p.hp <= p.maxhp * 0.25 ? " style='color:#e94'" : "");
+      return "<div class='pstat'" + cls + ">" + p.name + " <b>" + Math.max(0, p.hp) + "</b>/" + p.maxhp + "</div>";
+    }).join("");
     $("status-win").innerHTML =
-      '<div class="name">' + m.name + "</div>" +
-      "<span class='gold-text'>" + S.gold + "G</span><br>" +
-      "ユウ ＨＰ " + lead.hp + "/" + lead.maxhp;
+      '<div class="name">' + m.name + '　<span class="gold-text">' + S.gold + "G</span></div>" +
+      roster;
   }
 
   // ---------- movement ----------
@@ -403,6 +418,27 @@
     playMapBgm();
     await fade(false);
     busy = false;
+    await checkStoryJoins();
+  }
+
+  // party grows through the story instead of starting full
+  function partyLv() {
+    return window.PBATTLE.getParty().reduce(function (m, p) { return Math.max(m, p.lv); }, 1);
+  }
+  async function joinMember(id, line) {
+    if (window.PBATTLE.hasMember(id)) return;
+    var m = window.PBATTLE.addMember(id, partyLv());
+    if (!m) return;
+    if (line) await say(line);
+    await say(m.name + "が 仲間に加わった！");
+    save();
+  }
+  async function checkStoryJoins() {
+    // ガイ: 鋼の村にたどり着くと合流
+    if (S.pos.map === "village" && !S.flags.gai_joined) {
+      S.flags.gai_joined = true;
+      await joinMember("gai", "剣士のガイが 駆け寄ってきた。\n「妹の声を取り戻したい。\n　その旅、おれも連れて行ってくれ！」");
+    }
   }
   function playMapBgm() {
     if (!window.BGM) return;
@@ -489,11 +525,11 @@
       await say("宝箱を開けた！\n『" + ITEM_NAMES[loot.item] + "』を " + n + "個 手に入れた！");
     } else if (loot.weapon) {
       var g = GEAR[loot.weapon];
-      window.PBATTLE.getParty().forEach(function (p) { p.atk += g.atk; });
+      window.PBATTLE.getParty().forEach(function (p) { p.gearAtk = (p.gearAtk || 0) + g.atk; });
       await say("宝箱を開けた！\n『" + g.name + "』を手に入れた！\nパーティの攻撃力が " + g.atk + " 上がった！");
     } else if (loot.armor) {
       var g2 = GEAR[loot.armor];
-      window.PBATTLE.getParty().forEach(function (p) { p.def += g2.def; });
+      window.PBATTLE.getParty().forEach(function (p) { p.gearDef = (p.gearDef || 0) + g2.def; });
       await say("宝箱を開けた！\n『" + g2.name + "』を手に入れた！\nパーティの守備力が " + g2.def + " 上がった！");
     }
   }
@@ -527,6 +563,12 @@
     } else if (r.result === "win" && bossEv) {
       S.flags[bossEv.flag] = true;
       for (var i = 0; i < (bossEv.after || []).length; i++) await say(bossEv.after[i]);
+      // story companions join after key bosses
+      if (bossEv.flag === "cave1_boss_down") {
+        await joinMember("rina", "洞窟の奥にいた 魔法使いのリナが\n進み出た。\n「その力…わたしも 見届けたい。\n　同行させてもらうわ。」");
+      } else if (bossEv.flag === "howl_down") {
+        await joinMember("mia", "塔に囚われていた 僧侶のミアが\n救い出された。\n「あなたたちの旅、\n　この身を捧げて お支えします。」");
+      }
     }
     save();
     busy = false;
@@ -546,17 +588,23 @@
       var boss;
       if (ev.enemy === "gen_r") {
         boss = { bg: "tower1", enemies: [{
-          base: "gen_r", name: "四天王ハウル", lv: 600, hp: 1850, atk: 42, def: 30, agi: 26, exp: 1200, boss: true,
+          base: "gen_r", name: "四天王ハウル", lv: 600, hp: 760, atk: 24, def: 20, agi: 20, mag: 28, exp: 600, boss: true,
+          skills: [{ name: "轟音の叫び", power: 0.85, all: true }], skillRate: 0.3,
           phases: [
             { at: 1.0, acts: 1, aoe: 0, charge: 0 },
-            { at: 0.66, acts: 2, aoe: 0.3, charge: 0, msg: ["ハウルの様子が変わった！\n『ほう…やるではないか！』", "ハウルの行動が2回になった！"] },
+            { at: 0.66, acts: 2, aoe: 0.25, charge: 0, msg: ["ハウルの様子が変わった！\n『ほう…やるではないか！』", "ハウルの行動が2回になった！"] },
             { at: 0.33, acts: 2, aoe: 0.3, charge: 0.4, msg: ["ハウルが本気を出した！！\n『この叫びで終わらせる！』", "（力をためたら防御だ！）"] }
           ]
         }] };
       } else {
-        var f = scaledFoe(ev.enemy);
-        f.hp = Math.round(f.hp * 4); f.boss = true; f.name = "あらしオオカミ";
-        boss = { bg: "cave", enemies: [f] };
+        boss = { bg: "cave", enemies: [{
+          base: ev.enemy, name: "あらしオオカミ", lv: 450, hp: 150, atk: 15, def: 7, agi: 8, mag: 15, exp: 90, boss: true,
+          skills: [{ name: "うなり声", power: 0.7, all: true }], skillRate: 0.28,
+          phases: [
+            { at: 1.0, acts: 1, aoe: 0, charge: 0 },
+            { at: 0.4, acts: 1, aoe: 0.4, charge: 0, msg: ["あらしオオカミは 手負いになり\nいっそう 荒々しくなった！"] }
+          ]
+        }] };
       }
       await runEncounter(boss, ev);
       return;
@@ -601,8 +649,8 @@
       if (GEAR[k]) {
         var g = GEAR[k];
         window.PBATTLE.getParty().forEach(function (p) {
-          if (g.atk) p.atk += g.atk;
-          if (g.def) p.def += g.def;
+          if (g.atk) p.gearAtk = (p.gearAtk || 0) + g.atk;
+          if (g.def) p.gearDef = (p.gearDef || 0) + g.def;
         });
         await say("『" + g.name + "』を買った！\nパーティの" + (g.atk ? "攻撃力が " + g.atk : "守備力が " + g.def) + " 上がった！");
       } else {
@@ -625,8 +673,8 @@
     ], "メニュー");
     if (c === 0) {
       var lines = window.PBATTLE.getParty().map(function (p) {
-        return p.name + "（" + p.role + "）\n　ＨＰ" + p.hp + "/" + p.maxhp + "　ＭＰ" + p.mp + "/" + p.maxmp +
-          "　攻" + p.atk + " 守" + p.def;
+        return p.name + "（Ｌｖ" + p.lv + " " + p.role + "）\n　ＨＰ" + p.hp + "/" + p.maxhp + "　ＭＰ" + p.mp + "/" + p.maxmp +
+          "　攻" + (p.atk + (p.gearAtk || 0)) + " 守" + (p.def + (p.gearDef || 0));
       });
       await say(lines.join("\n") + "\n\n所持金 " + S.gold + "G");
     } else if (c === 1) {
