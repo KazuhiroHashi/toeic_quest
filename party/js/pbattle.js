@@ -96,26 +96,32 @@
   }
 
   // ================= spell / character registry =================
+  // quizLv = the QUESTION difficulty this spell asks (fixed per spell, NOT the enemy's level).
   var SPELLS = {
-    heal:      { name: "ヒール",        mp: 4,  type: "heal",  power: 34, desc: "味方1人のHPを34ほど回復する" },
-    healmore:  { name: "ヒールモア",     mp: 8,  type: "heal",  power: 80, desc: "味方1人のHPを80ほど回復する" },
-    partyheal: { name: "パーティヒール",  mp: 14, type: "heal",  power: 42, all: true, desc: "味方全員のHPを42ほど回復する" },
-    revive:    { name: "リカバー",       mp: 18, type: "raise", power: 0.6, desc: "倒れた味方をHP6割で復活させる" },
-    spark:     { name: "スパーク",       mp: 4,  type: "atk",   power: 26, elem: "thunder", desc: "敵1体に雷のダメージ" },
-    fireball:  { name: "ヒートランス",    mp: 7,  type: "atk",   power: 42, elem: "fire", desc: "敵1体に強い炎のダメージ" },
-    fire:      { name: "フレイムショット", mp: 4,  type: "atk",   power: 30, elem: "fire", desc: "敵1体に炎のダメージ" },
-    frost:     { name: "フロストショット", mp: 5,  type: "atk",   power: 34, elem: "ice", desc: "敵1体に氷のダメージ" },
-    fira:      { name: "フレイムバースト", mp: 9,  type: "atk",   power: 38, elem: "fire", all: true, desc: "敵全体に炎のダメージ" },
-    thunder:   { name: "ボルトストーム",  mp: 13, type: "atk",   power: 44, elem: "thunder", all: true, desc: "敵全体に雷のダメージ" },
-    holy:      { name: "セイクリッド",    mp: 8,  type: "atk",   power: 54, elem: "holy", desc: "敵1体に聖なるダメージ（不死・悪魔に特効）" }
+    heal:      { name: "ヒール",        mp: 4,  type: "heal",  power: 34, quizLv: 400, desc: "味方1人のHPを34ほど回復する" },
+    healmore:  { name: "ヒールモア",     mp: 8,  type: "heal",  power: 80, quizLv: 600, desc: "味方1人のHPを80ほど回復する" },
+    fullheal:  { name: "フルヒール",     mp: 14, type: "heal",  power: 9999, quizLv: 700, desc: "味方1人のHPを全回復する" },
+    partyheal: { name: "パーティヒール",  mp: 14, type: "heal",  power: 42, all: true, quizLv: 600, desc: "味方全員のHPを42ほど回復する" },
+    sanctuary: { name: "サンクチュアリ",  mp: 26, type: "heal",  power: 90, all: true, quizLv: 800, desc: "味方全員のHPを90ほど回復する" },
+    revive:    { name: "そせい",         mp: 18, type: "raise", power: 0.6, quizLv: 700, desc: "戦闘不能の味方をＨＰ6割で復活させる" },
+    spark:     { name: "スパーク",       mp: 4,  type: "atk",   power: 26, elem: "thunder", quizLv: 400, desc: "敵1体に雷のダメージ" },
+    fire:      { name: "フレイムショット", mp: 4,  type: "atk",   power: 30, elem: "fire", quizLv: 400, desc: "敵1体に炎のダメージ" },
+    frost:     { name: "フロストショット", mp: 5,  type: "atk",   power: 34, elem: "ice", quizLv: 450, desc: "敵1体に氷のダメージ" },
+    fireball:  { name: "ヒートランス",    mp: 7,  type: "atk",   power: 44, elem: "fire", quizLv: 600, desc: "敵1体に強い炎のダメージ" },
+    holy:      { name: "セイクリッド",    mp: 8,  type: "atk",   power: 54, elem: "holy", quizLv: 600, desc: "敵1体に聖なるダメージ（不死・悪魔に特効）" },
+    fira:      { name: "フレイムバースト", mp: 9,  type: "atk",   power: 40, elem: "fire", all: true, quizLv: 600, desc: "敵全体に炎のダメージ" },
+    thunder:   { name: "ボルトストーム",  mp: 13, type: "atk",   power: 46, elem: "thunder", all: true, quizLv: 700, desc: "敵全体に雷のダメージ" },
+    frostnova: { name: "フロストノヴァ",  mp: 14, type: "atk",   power: 48, elem: "ice", all: true, quizLv: 750, desc: "敵全体に氷のダメージ" },
+    inferno:   { name: "インフェルノ",    mp: 20, type: "atk",   power: 66, elem: "fire", all: true, quizLv: 900, desc: "敵全体に灼熱の大ダメージ" },
+    plasma:    { name: "プラズマストーム", mp: 22, type: "atk",   power: 68, elem: "thunder", all: true, quizLv: 900, desc: "敵全体に雷の大ダメージ" }
   };
 
-  // learn: { level: spellId | [spellId,...] }
+  // learn: { level: spellId | [spellId,...] } — casters gain more spells as they level up
   var CHARS = {
     yu:   { name: "ユウ", role: "ゆうしゃ", quizOff: 0,
             base: { hp: 36, mp: 10, atk: 12, def: 9, agi: 9 },
             grow: { hp: 9,  mp: 3,  atk: 3,  def: 2, agi: 2 },
-            learn: { 3: "heal", 6: "spark", 10: "fireball", 14: "healmore" } },
+            learn: { 3: "heal", 6: "spark", 10: "fireball", 14: "healmore", 19: "fullheal", 24: "inferno" } },
     gai:  { name: "ガイ", role: "せんし", quizOff: -100,
             base: { hp: 48, mp: 0,  atk: 16, def: 12, agi: 6 },
             grow: { hp: 12, mp: 0,  atk: 4,  def: 3,  agi: 1 },
@@ -123,11 +129,11 @@
     rina: { name: "リナ", role: "まほうつかい", quizOff: 100,
             base: { hp: 26, mp: 18, atk: 7,  def: 6, agi: 8 },
             grow: { hp: 6,  mp: 6,  atk: 2,  def: 1, agi: 2 },
-            learn: { 1: ["fire", "frost"], 6: "fira", 11: "thunder" } },
+            learn: { 1: ["fire", "frost"], 6: "fira", 11: "thunder", 16: "frostnova", 20: "inferno", 25: "plasma" } },
     mia:  { name: "ミア", role: "そうりょ", quizOff: 0,
             base: { hp: 32, mp: 16, atk: 8,  def: 8, agi: 8 },
             grow: { hp: 7,  mp: 6,  atk: 2,  def: 2, agi: 2 },
-            learn: { 1: "heal", 5: "partyheal", 9: "holy", 12: "revive" } }
+            learn: { 1: "heal", 5: "partyheal", 9: "holy", 12: "revive", 17: "fullheal", 22: "sanctuary" } }
   };
 
   // cumulative EXP needed to REACH level n (index = level)
@@ -194,12 +200,12 @@
   var items = { herb: 6, elixir: 2 };
 
   // ================= state =================
-  var party, foes, chain, screenEl;
+  var party, foes, chain, screenEl, battleQuizLv = 500;
 
-  function quizLvFor(member, foe) {
-    var lv = (foe ? foe.lv : 500) + (member.quizOff || 0);
-    return clamp(lv, 400, 900);
-  }
+  // normal attacks: base difficulty of THIS battle + the member's role offset
+  function atkQuizLv(member) { return clamp(battleQuizLv + (member.quizOff || 0), 400, 900); }
+  // spells: the spell decides its own question difficulty (independent of the enemy)
+  function spellQuizLv(sp) { return clamp(sp.quizLv || 500, 400, 900); }
   function enemyImg(id) {
     return (window.ENEMY_ART && window.ENEMY_ART[id]) || "../assets/enemies/" + id + ".png";
   }
@@ -407,7 +413,7 @@
       if (ti < 0) return;
       var f = foes[ti];
       await say(p.name + "の こうげき！");
-      var q = await window.QUIZ.ask(quizLvFor(p, f), { time: f.hasty ? 3.5 : 5 });
+      var q = await window.QUIZ.ask(atkQuizLv(p), { time: f.hasty ? 3.5 : 5 });
       if (q.correct) {
         chain++; chainBadge();
         var crit = q.elapsed <= 2;
@@ -429,8 +435,7 @@
       if (p.mp < sp.mp) { await say("ＭＰが足りない！"); return; }
       p.mp -= sp.mp; renderParty(-1);
       await say(p.name + "は 魔法『" + sp.name + "』を となえた！");
-      var lvRef = sp.type === "atk" ? (foes[firstAliveFoe()] || { lv: 500 }) : (aliveFoes()[0] || { lv: 500 });
-      var qs = await window.QUIZ.ask(quizLvFor(p, lvRef), { time: 5, noCrit: true });
+      var qs = await window.QUIZ.ask(spellQuizLv(sp), { time: 5, noCrit: true });
       if (!qs.correct) {
         chain = 0; chainBadge();
         await say("魔法は 不発に終わった…！\n（チェインが途切れた）");
@@ -453,10 +458,10 @@
       }
       if (sp.type === "raise") {
         var rm = party[a.target];
-        if (rm.hp > 0) { await say("しかし 何も起こらなかった。"); return; }
+        if (rm.hp > 0) { await say("しかし 何も起こらなかった。\n（そせいは 戦闘不能の味方にだけ）"); return; }
         rm.hp = Math.max(1, Math.round(rm.maxhp * sp.power));
         sfx("heal"); renderParty(-1);
-        await say(rm.name + "が 起き上がった！");
+        await say(rm.name + "が 生き返った！");
         return;
       }
       var fxc = sp.elem === "fire" ? "rgba(255,150,60,.9)" : sp.elem === "thunder" ? "rgba(255,230,90,.9)" : sp.elem === "ice" ? "rgba(150,220,255,.9)" : sp.elem === "holy" ? "rgba(255,250,200,.95)" : "rgba(200,160,255,.9)";
@@ -594,6 +599,8 @@
     foes = encounter.enemies.map(function (e) {
       return Object.assign({ phase: 0, charging: false, maxhp: e.hp }, e);
     });
+    // base difficulty of normal attacks this battle (spells set their own)
+    battleQuizLv = encounter.quizLv || (foes[0] ? foes[0].lv : 500);
     chain = 0;
     screenEl = $("pbattle-screen");
     screenEl.style.display = "block";
@@ -610,7 +617,8 @@
       BGM.stop();
       setTimeout(function () {
         if (screenEl.style.display === "none") return;
-        if (isBoss) BGM.playAny(["midboss", "boss"]);
+        if (encounter.bgm) BGM.playAny([encounter.bgm]);
+        else if (isBoss) BGM.playAny(["midboss", "boss"]);
         else BGM.playAny(Math.random() < 0.5 ? ["battle", "battle2"] : ["battle2", "battle"]);
       }, 1000);
     }

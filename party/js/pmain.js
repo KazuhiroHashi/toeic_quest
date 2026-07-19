@@ -71,43 +71,73 @@
     };
   }
 
-  function bossGag() {
+  // four heavenly kings — escalating; each stronger than the last (player levels up too)
+  function king(o) {
     return {
-      bg: "tower2",
-      intro: [
-        "四天王ガグが 立ちはだかる！",
-        "『話す力は 我が手にある。\n　ハウルより 我のほうが 手強いぞ！』"
-      ],
+      bg: o.bg, quizLv: o.quizLv, intro: o.intro,
       enemies: [{
-        base: "gen_l", name: "四天王ガグ", lv: 700,
-        hp: 4800, atk: 52, def: 26, agi: 22, mag: 58, exp: 2000, boss: true,
-        skills: [{ name: "沈黙の号令", power: 0.9, all: true }, { name: "言霊砕き", power: 1.25, all: false }], skillRate: 0.36,
+        base: o.base, name: o.name, lv: o.lv,
+        hp: o.hp, atk: o.atk, def: o.def, agi: 22, mag: Math.round(o.atk * 1.15), exp: o.exp, boss: true,
+        skills: o.skills, skillRate: 0.34,
         phases: [
           { at: 1.0, acts: 1, aoe: 0.15, charge: 0 },
-          { at: 0.6, acts: 2, aoe: 0.3, charge: 0, msg: ["ガグの怒号が 響く！", "ガグの行動が 2回になった！"] },
-          { at: 0.3, acts: 2, aoe: 0.35, charge: 0.4, msg: ["『まだ 口を閉じぬか！』", "ガグが 力をためる—防御を！"] }
+          { at: 0.62, acts: 2, aoe: 0.28, charge: 0, msg: [o.name + "の様子が変わった！", o.name + "の行動が 2回になった！"] },
+          { at: 0.3, acts: o.acts3 || 2, aoe: 0.34, charge: 0.3, msg: [o.name + "が 本気を出した！！", "（力をためたら 防御だ！）"] }
         ]
       }]
     };
   }
-
-  function bossMaou() {
+  function bossHowl() {
+    return king({ base: "gen_r", name: "四天王ハウル", lv: 600, hp: 3600, atk: 58, def: 24, exp: 1400, quizLv: 600,
+      skills: [{ name: "轟音の叫び", power: 0.9, all: true }],
+      intro: ["四天王ハウルが 道をふさぐ！", "『聞く力は わたしが喰らった。\n　お前たちの叫びは 誰にも届かん！』"] });
+  }
+  function bossGag() {
+    return king({ base: "gen_l", name: "四天王ガグ", lv: 700, hp: 4600, atk: 76, def: 28, exp: 2000, quizLv: 650,
+      skills: [{ name: "沈黙の号令", power: 0.95, all: true }, { name: "言霊砕き", power: 1.3, all: false }],
+      intro: ["四天王ガグが 立ちはだかる！", "『話す力は 我が手にある。\n　ハウルより 我のほうが 手強いぞ！』"] });
+  }
+  function bossBlank() {
+    return king({ base: "reaper", name: "四天王ブランク", lv: 800, hp: 5600, atk: 94, def: 30, exp: 2800, quizLv: 700, acts3: 3,
+      skills: [{ name: "白紙化", power: 1.0, all: true }, { name: "記憶消去", power: 1.35, all: false }],
+      intro: ["四天王ブランクが 現れた！", "『読む力は 消し去った。\n　お前たちの記憶も 白紙にしてやろう』"] });
+  }
+  function bossErase() {
+    return king({ base: "wizard", name: "四天王イレイズ", lv: 850, hp: 6800, atk: 112, def: 34, exp: 3600, quizLv: 750, acts3: 3,
+      skills: [{ name: "消し去る風", power: 1.05, all: true }, { name: "抹消の一撃", power: 1.4, all: false }],
+      intro: ["最後の四天王 イレイズ！", "『書く力を 奪った我が、\n　四天王 最強よ。ここで 消えろ！』"] });
+  }
+  // two-phase last boss: beat ミュートス, then the TRUE form rises
+  function bossMaou1() {
     return {
-      bg: "maou",
-      intro: [
-        "ついに 現れた 沈黙王ミュートス。",
-        "『ことばは 人を傷つける。\n　ならば いっそ 全て奪おう。\n　この静寂こそ 救いなのだ』",
-        "（長い戦いになる。\n　アイテムを 出し惜しむな！）"
-      ],
+      bg: "maou", quizLv: 750,
+      intro: ["ついに 現れた 沈黙王ミュートス。", "『ことばは 人を傷つける。\n　ならば いっそ 全て奪おう。\n　この静寂こそ 救いなのだ』"],
+      bgm: "boss",
       enemies: [{
         base: "maou", name: "沈黙王ミュートス", lv: 900,
-        hp: 13000, atk: 55, def: 40, agi: 22, mag: 62, exp: 8000, boss: true,
-        skills: [{ name: "静寂の波動", power: 0.9, all: true }, { name: "言葉狩り", power: 1.35, all: false }], skillRate: 0.42,
+        hp: 4600, atk: 66, def: 38, agi: 22, mag: 74, exp: 5000, boss: true,
+        skills: [{ name: "静寂の波動", power: 0.95, all: true }, { name: "言葉狩り", power: 1.3, all: false }], skillRate: 0.4,
         phases: [
-          { at: 1.0, acts: 1, aoe: 0.15, charge: 0 },
-          { at: 0.75, acts: 2, aoe: 0.3, charge: 0, msg: ["ミュートスの闇が 濃くなる…！", "行動が 2回になった！"] },
-          { at: 0.5, acts: 2, aoe: 0.35, charge: 0.35, msg: ["『まだ 声を捨てぬのか』", "ミュートスが 力をためる—防御を！"] },
-          { at: 0.25, acts: 3, aoe: 0.4, charge: 0.4, msg: ["ミュートスが 最後の力を放つ！！", "行動が 3回に！総力戦だ！"] }
+          { at: 1.0, acts: 1, aoe: 0.18, charge: 0 },
+          { at: 0.6, acts: 2, aoe: 0.32, charge: 0, msg: ["ミュートスの闇が 濃くなる…！", "行動が 2回になった！"] },
+          { at: 0.3, acts: 2, aoe: 0.36, charge: 0.35, msg: ["『まだ 声を捨てぬのか』", "ミュートスが 力をためる—防御を！"] }
+        ]
+      }]
+    };
+  }
+  function bossMaou2() {
+    return {
+      bg: "maou", quizLv: 800,
+      intro: ["『ふふ…まだ 終わらぬ』", "沈黙王ミュートスが 真の姿を現した！！", "『これが 静寂の 極み—！』"],
+      bgm: "boss",
+      enemies: [{
+        base: "maou", name: "真・沈黙王ミュートス", lv: 900,
+        hp: 6800, atk: 88, def: 42, agi: 24, mag: 98, exp: 12000, boss: true,
+        skills: [{ name: "絶対静寂", power: 1.1, all: true }, { name: "言葉狩り", power: 1.4, all: false }], skillRate: 0.44,
+        phases: [
+          { at: 1.0, acts: 2, aoe: 0.25, charge: 0 },
+          { at: 0.66, acts: 2, aoe: 0.35, charge: 0.3, msg: ["真ミュートスの 咆哮！", "闇が 渦を巻く！"] },
+          { at: 0.33, acts: 3, aoe: 0.42, charge: 0.4, msg: ["ミュートスが 最後の力を放つ！！", "行動が 3回に！総力戦だ！"] }
         ]
       }]
     };
@@ -131,23 +161,25 @@
       window.addEventListener("keydown", onKey);
     });
   }
-  var GIFTS = ["herb", "elixir", "herb", "wing", "elixir", "herb", "elixir", "herb", "elixir"];
+  var GIFTS = ["herb", "elixir", "herb", "wing", "elixir", "herb", "elixir", "wing", "elixir", "herb"];
   // party grows: Yu solo -> +Gai(b2) -> +Rina(b3) -> +Mia(b5). joinAfter[i] joins after round i.
   var JOIN_AFTER = { 0: { id: "gai", line: "剣士のガイが 加勢した！\n「おれも 一緒に戦うぜ！」" },
                      1: { id: "rina", line: "魔法使いのリナが 加勢した！\n「魔法で 援護するわ。」" },
                      3: { id: "mia", line: "僧侶のミアが 加勢した！\n「回復は お任せください。」" } };
+  // 11 rounds: zako(1-4) -> 中ボス竜(5) -> 四天王4連戦(6-9) -> ラスボス(10) -> 真ラスボス(11)
   function arenaRounds() {
     return [
-      { label: "第1戦", enc: { bg: "zone1", enemies: [af("slime", 1.4), af("bat", 1.4)] } },        // Yu solo
-      { label: "第2戦", enc: { bg: "zone2", enemies: [af("rat", 1.4), af("goblin", 1.4), af("bee", 1.4)] } }, // +Gai
-      { label: "第3戦", enc: { bg: "zone2", enemies: [af("wolf", 1.5), af("ghost", 1.5), af("snake", 1.5)] } }, // +Rina
-      { label: "第4戦", enc: { bg: "zone3", enemies: [af("mush", 1.8), af("owl", 1.8), af("ghost", 1.8), af("wolf", 1.8)] } },
-      { label: "第5戦・中ボス", enc: { bg: "cave", enemies: [miniBoss("dragon", "洞窟の古竜", {})] } }, // +Mia
-      { label: "第6戦", enc: { bg: "zone3", enemies: [af("lizard", 2.0), af("clock", 2.0), af("snake", 2.0)] } },
-      { label: "第7戦", enc: { bg: "zone4", enemies: [af("lizard", 2.3), af("wolf", 2.3), af("ghost", 2.3), af("owl", 2.3)] } },
-      { label: "第8戦・四天王ハウル", enc: bossHowl() },
-      { label: "第9戦・四天王ガグ", enc: bossGag() },
-      { label: "最終戦・ラスボス", enc: bossMaou() }
+      { label: "第1戦", enc: { bg: "zone1", quizLv: 400, enemies: [af("slime", 1.4), af("bat", 1.4)] } },        // Yu solo
+      { label: "第2戦", enc: { bg: "zone2", quizLv: 450, enemies: [af("rat", 1.4), af("goblin", 1.4), af("bee", 1.4)] } }, // +Gai
+      { label: "第3戦", enc: { bg: "zone2", quizLv: 500, enemies: [af("wolf", 1.5), af("ghost", 1.5), af("snake", 1.5)] } }, // +Rina
+      { label: "第4戦", enc: { bg: "zone3", quizLv: 550, enemies: [af("mush", 1.9), af("owl", 1.9), af("ghost", 1.9), af("wolf", 1.9)] } },
+      { label: "第5戦・中ボス 洞窟の古竜", enc: Object.assign({ bg: "cave", quizLv: 600, enemies: [miniBoss("dragon", "洞窟の古竜", { atk: 34 })] }) }, // +Mia（竜は少し弱め）
+      { label: "第6戦・四天王ハウル", enc: bossHowl() },
+      { label: "第7戦・四天王ガグ", enc: bossGag() },
+      { label: "第8戦・四天王ブランク", enc: bossBlank() },
+      { label: "第9戦・四天王イレイズ", enc: bossErase() },
+      { label: "第10戦・ラスボス", enc: bossMaou1() },
+      { label: "最終戦・真ラスボス", enc: bossMaou2() }
     ];
   }
 
@@ -167,27 +199,26 @@
       var res = await window.PBATTLE.start(r.enc);
       saveStudy();
       if (res.result !== "win") {
-        await gsay("闘技場に 敗れた…。\nＬｖ" + window.PBATTLE.getParty()[0].lv + "／" + (i + 1) + "戦目でリタイア。");
+        await gsay("闘技場に 敗れた…。\nＬｖ" + window.PBATTLE.getParty()[0].lv + "／" + (i + 1) + "戦目でリタイア。\n（タイトルで たんごちょうを 見られます）");
         break;
       }
       if (i < rounds.length - 1) {
         window.PBATTLE.fullHeal();
-        var lv = window.PBATTLE.getParty()[0].lv;
-        var ups = window.PBATTLE.levelEveryone(i >= 6 ? 3 : 2); // level a bit faster near the bosses
+        var ups = window.PBATTLE.levelEveryone(i >= 4 ? 3 : 2); // faster leveling once the boss run starts
         var gift = GIFTS[i] || "herb";
         var who = window.PBATTLE.giveItemToParty(gift);
         var giftName = gift === "herb" ? "ハーブティー" : gift === "elixir" ? "エナジーコーヒー" : "帰還の羽根ペン";
-        var msg = "勝利！ パーティは 全回復した。\n" + (who ? who + "が『" + giftName + "』を拾った！" : "（道具袋は満杯だった）");
+        var head = (i === 9) ? "ミュートスを倒した…と思ったその時！" : "勝利！ パーティは 全回復した。";
+        var msg = head + "\n" + (who ? who + "が『" + giftName + "』を拾った！" : "（道具袋は満杯だった）");
         if (ups.length) msg += "\nみんなの レベルが上がった！（Ｌｖ" + window.PBATTLE.getParty()[0].lv + "）";
         await gsay(msg);
-        // new companion joins for the next battle
         var join = JOIN_AFTER[i];
         if (join) {
           var m = window.PBATTLE.addMember(join.id, window.PBATTLE.getParty()[0].lv);
           if (m) { m.bag = ["herb", "elixir"]; await gsay(join.line); }
         }
       } else {
-        await gsay("沈黙王ミュートスを 打ち倒した！！\n\n〜 ことばの闘技場 制覇 〜\nおめでとう！");
+        await gsay("真・沈黙王ミュートスを 打ち倒した！！\n\n〜 ことばの闘技場 制覇 〜\nおめでとう！\n（タイトルで たんごちょうを 見られます）");
       }
     }
     if (window.BGM) BGM.stop();
@@ -200,6 +231,7 @@
   }
 
   $("pbtn-arena").addEventListener("click", function () { $("pbtn-arena").blur(); runArena(); });
+  $("pbtn-zukan").addEventListener("click", function () { $("pbtn-zukan").blur(); if (window.PFIELD) window.PFIELD.openZukan(); });
   $("pbtn-field").addEventListener("click", function () {
     $("pbtn-field").blur();
     window.PFIELD.start(false); // continues the save if one exists

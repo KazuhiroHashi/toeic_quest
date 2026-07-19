@@ -1019,32 +1019,54 @@
     $("zukan-list").innerHTML = rows.join("");
     $("zukan-list").scrollTop = 0;
   }
+  // Self-contained zukan (own listeners) so it works from field OR the title screen.
   function openZukan() {
     return new Promise(function (resolve) {
       renderZukan();
       $("zukan").classList.add("on");
+      var list = $("zukan-list");
+      function band(dir) {
+        var bands = [400, 500, 600, 700, 800, 900];
+        var i = bands.indexOf(zukanBand);
+        zukanBand = bands[(i + (dir > 0 ? 1 : 5)) % 6]; renderZukan();
+      }
+      function block(e) { if (e) { e.preventDefault(); e.stopPropagation(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); } }
+      function onKey(e) {
+        block(e);
+        if (e.key === "Escape" || e.key === "x") close();
+        else if (e.key === "Enter" || e.key === " " || e.key === "z" || e.key === "ArrowDown") list.scrollTop += 260;
+        else if (e.key === "ArrowUp") list.scrollTop -= 260;
+        else if (e.key === "ArrowLeft") band(-1);
+        else if (e.key === "ArrowRight") band(1);
+      }
+      function tapA(e) { block(e); list.scrollTop += 260; }
+      function tapB(e) { block(e); close(); }
+      function tapUp(e) { block(e); list.scrollTop -= 260; }
+      function tapDown(e) { block(e); list.scrollTop += 260; }
+      function tapLeft(e) { block(e); band(-1); }
+      function tapRight(e) { block(e); band(1); }
       function close() {
-        INPUT.stack.pop();
-        $("zukan").classList.remove("on");
+        window.removeEventListener("keydown", onKey, true);
+        $("btn-a").removeEventListener("pointerdown", tapA, true);
+        $("btn-b").removeEventListener("pointerdown", tapB, true);
+        $("dpad-up").removeEventListener("pointerdown", tapUp, true);
+        $("dpad-down").removeEventListener("pointerdown", tapDown, true);
+        $("dpad-left").removeEventListener("pointerdown", tapLeft, true);
+        $("dpad-right").removeEventListener("pointerdown", tapRight, true);
         $("zukan-close").onpointerdown = null;
+        $("zukan").classList.remove("on");
         resolve();
       }
-      var list = $("zukan-list");
-      INPUT.stack.push({
-        onA: function () { list.scrollTop += 260; },
-        onB: close,
-        onDir: function (d) {
-          var bands = [400, 500, 600, 700, 800, 900];
-          var i = bands.indexOf(zukanBand);
-          if (d === "left") { zukanBand = bands[(i + 5) % 6]; renderZukan(); }
-          else if (d === "right") { zukanBand = bands[(i + 1) % 6]; renderZukan(); }
-          else if (d === "down") list.scrollTop += 260;
-          else if (d === "up") list.scrollTop -= 260;
-        }
-      });
+      window.addEventListener("keydown", onKey, true);
+      $("btn-a").addEventListener("pointerdown", tapA, true);
+      $("btn-b").addEventListener("pointerdown", tapB, true);
+      $("dpad-up").addEventListener("pointerdown", tapUp, true);
+      $("dpad-down").addEventListener("pointerdown", tapDown, true);
+      $("dpad-left").addEventListener("pointerdown", tapLeft, true);
+      $("dpad-right").addEventListener("pointerdown", tapRight, true);
       $("zukan-close").onpointerdown = function (e) { e.preventDefault(); close(); };
     });
   }
 
-  window.PFIELD = { start: start, hasSave: function () { return !!load(); } };
+  window.PFIELD = { start: start, hasSave: function () { return !!load(); }, openZukan: openZukan };
 })();
