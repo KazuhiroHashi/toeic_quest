@@ -88,22 +88,22 @@
     };
   }
   function bossHowl() {
-    return king({ base: "gen_r", name: "四天王ハウル", lv: 600, hp: 3600, atk: 58, def: 24, exp: 1400, quizLv: 600,
-      skills: [{ name: "轟音の叫び", power: 0.9, all: true }],
+    return king({ base: "gen_r", name: "四天王ハウル", lv: 600, hp: 3600, atk: 58, def: 24, exp: 1400, quizLv: 600, bg: "tower1",
+      skills: [{ name: "轟音の叫び", power: 0.72, all: true }],
       intro: ["四天王ハウルが 道をふさぐ！", "『聞く力は わたしが喰らった。\n　お前たちの叫びは 誰にも届かん！』"] });
   }
   function bossGag() {
-    return king({ base: "gen_l", name: "四天王ガグ", lv: 700, hp: 4600, atk: 76, def: 28, exp: 2000, quizLv: 650,
+    return king({ base: "gen_l", name: "四天王ガグ", lv: 700, hp: 4600, atk: 76, def: 28, exp: 2000, quizLv: 650, bg: "tower2",
       skills: [{ name: "沈黙の号令", power: 0.95, all: true }, { name: "言霊砕き", power: 1.3, all: false }],
       intro: ["四天王ガグが 立ちはだかる！", "『話す力は 我が手にある。\n　ハウルより 我のほうが 手強いぞ！』"] });
   }
   function bossBlank() {
-    return king({ base: "reaper", name: "四天王ブランク", lv: 800, hp: 5600, atk: 94, def: 30, exp: 2800, quizLv: 700, acts3: 3,
+    return king({ base: "reaper", name: "四天王ブランク", lv: 800, hp: 5600, atk: 94, def: 30, exp: 2800, quizLv: 700, acts3: 3, bg: "zone6",
       skills: [{ name: "白紙化", power: 1.0, all: true }, { name: "記憶消去", power: 1.35, all: false }],
       intro: ["四天王ブランクが 現れた！", "『読む力は 消し去った。\n　お前たちの記憶も 白紙にしてやろう』"] });
   }
   function bossErase() {
-    return king({ base: "wizard", name: "四天王イレイズ", lv: 850, hp: 6800, atk: 112, def: 34, exp: 3600, quizLv: 750, acts3: 3,
+    return king({ base: "wizard", name: "四天王イレイズ", lv: 850, hp: 6800, atk: 112, def: 34, exp: 3600, quizLv: 750, acts3: 3, bg: "zone5",
       skills: [{ name: "消し去る風", power: 1.05, all: true }, { name: "抹消の一撃", power: 1.4, all: false }],
       intro: ["最後の四天王 イレイズ！", "『書く力を 奪った我が、\n　四天王 最強よ。ここで 消えろ！』"] });
   }
@@ -209,7 +209,8 @@
     var rounds = arenaRounds();
     for (var i = 0; i < rounds.length; i++) {
       var r = rounds[i];
-      await gsay("【ことばの闘技場】\n" + r.label + "（" + (i + 1) + "／" + rounds.length + "）\nＡボタンで 開始！");
+      // 10 shown battles; the 11th (真ラスボス) is a hidden surprise — no counter, no start card
+      if (i < 10) await gsay("【ことばの闘技場】\n" + r.label + "（" + (i + 1) + "／10）\nＡボタンで 開始！");
       var res = await window.PBATTLE.start(r.enc);
       saveStudy();
       if (res.result !== "win") {
@@ -236,6 +237,7 @@
       }
     }
     if (window.BGM) BGM.stop();
+    $("pbattle-screen").style.display = "none"; // clear the battle layer so the title/zukan show cleanly
     $("ptitle-screen").style.display = "flex";
     if (window.BGM) BGM.playAny(["title"]);
   }

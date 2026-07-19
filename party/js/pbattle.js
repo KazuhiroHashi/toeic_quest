@@ -100,7 +100,7 @@
   var SPELLS = {
     heal:      { name: "ヒール",        mp: 4,  type: "heal",  power: 34, quizLv: 400, desc: "味方1人のHPを34ほど回復する" },
     healmore:  { name: "ヒールモア",     mp: 8,  type: "heal",  power: 80, quizLv: 600, desc: "味方1人のHPを80ほど回復する" },
-    fullheal:  { name: "フルヒール",     mp: 14, type: "heal",  power: 9999, quizLv: 700, desc: "味方1人のHPを全回復する" },
+    fullheal:  { name: "フルヒール",     mp: 14, type: "heal",  power: 9999, full: true, quizLv: 700, desc: "味方1人のHPを全回復する" },
     partyheal: { name: "パーティヒール",  mp: 14, type: "heal",  power: 42, all: true, quizLv: 600, desc: "味方全員のHPを42ほど回復する" },
     sanctuary: { name: "サンクチュアリ",  mp: 26, type: "heal",  power: 90, all: true, quizLv: 800, desc: "味方全員のHPを90ほど回復する" },
     revive:    { name: "そせい",         mp: 18, type: "raise", power: 0.6, quizLv: 700, desc: "戦闘不能の味方をＨＰ6割で復活させる" },
@@ -450,9 +450,10 @@
           await say("優しい光が降りそそぐ！\nみんなのＨＰが " + sp.power + " 回復！");
         } else {
           var tm = party[a.target];
-          tm.hp = Math.min(tm.maxhp, tm.hp + sp.power);
+          var before = tm.hp;
+          tm.hp = sp.full ? tm.maxhp : Math.min(tm.maxhp, tm.hp + sp.power);
           renderParty(-1);
-          await say(tm.name + "のＨＰが " + sp.power + " 回復した！");
+          await say(sp.full ? tm.name + "のＨＰが 全回復した！" : tm.name + "のＨＰが " + (tm.hp - before) + " 回復した！");
         }
         return;
       }

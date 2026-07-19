@@ -127,7 +127,7 @@
       var t0 = performance.now();
       var raf = 0, timeoutId = 0;
 
-      levelTag.textContent = "TOEIC " + lv + " レベル" + (lv !== level ? "（" + level + "の代替出題）" : "");
+      levelTag.textContent = "TOEIC " + lv + " レベル";
       wordEl.textContent = entry.w;
       hintEl.textContent = "【" + (POS_LABEL[entry.p] || "?") + "】 意味は？";
       resultEl.textContent = ""; resultEl.className = "";

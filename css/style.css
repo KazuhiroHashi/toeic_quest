@@ -445,7 +445,7 @@ canvas#field-canvas {
 
 /* ---------- word encyclopedia (zukan) ---------- */
 #zukan {
-  position: absolute; inset: 0; z-index: 55;
+  position: absolute; inset: 0; z-index: 75; /* above title (60) so it opens from the title screen too */
   background: #05060f;
   display: none; flex-direction: column;
 }
