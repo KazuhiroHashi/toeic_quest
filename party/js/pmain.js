@@ -163,9 +163,23 @@
   }
   var GIFTS = ["herb", "elixir", "herb", "wing", "elixir", "herb", "elixir", "wing", "elixir", "herb"];
   // party grows: Yu solo -> +Gai(b2) -> +Rina(b3) -> +Mia(b5). joinAfter[i] joins after round i.
-  var JOIN_AFTER = { 0: { id: "gai", line: "剣士のガイが 加勢した！\n「おれも 一緒に戦うぜ！」" },
-                     1: { id: "rina", line: "魔法使いのリナが 加勢した！\n「魔法で 援護するわ。」" },
-                     3: { id: "mia", line: "僧侶のミアが 加勢した！\n「回復は お任せください。」" } };
+  var JOIN_AFTER = {
+    0: { id: "gai", scene: [
+      "ひとりの剣士が 剣を杖にして\n立ち上がり、こちらを見た。\n「あんたら…四天王と 戦うのか？」",
+      "「おれの妹は 声を奪われた。\n　あの日から ずっと 黙ったままだ。\n　あいつらを 倒せるってんなら—」",
+      "「この剣、あんたらに 預ける！」\n剣士ガイが 仲間に加わった！"
+    ] },
+    1: { id: "rina", scene: [
+      "観客席から 少女が 身を乗り出した。\n「その戦い方…見過ごせないわね」",
+      "「わたしは 魔法学院のリナ。\n　ことばが 奪われてから\n　魔法を 使えない人が 増えてるの。」",
+      "「あなたたちになら 賭けてみたい。\n　わたしの魔法、役立ててみせる！」\n魔法使いリナが 仲間に加わった！"
+    ] },
+    3: { id: "mia", scene: [
+      "闘技場の隅で 静かに祈る娘がいた。\nゆっくりと 目を開け、微笑む。",
+      "「わたしは 僧侶のミア。\n　傷ついた人を 癒すことしか\n　できません。でも…」",
+      "「あなたたちの旅の 支えになりたい。\n　どうか、連れて行ってください。」\n僧侶ミアが 仲間に加わった！"
+    ] }
+  };
   // 11 rounds: zako(1-4) -> 中ボス竜(5) -> 四天王4連戦(6-9) -> ラスボス(10) -> 真ラスボス(11)
   function arenaRounds() {
     return [
@@ -215,7 +229,7 @@
         var join = JOIN_AFTER[i];
         if (join) {
           var m = window.PBATTLE.addMember(join.id, window.PBATTLE.getParty()[0].lv);
-          if (m) { m.bag = ["herb", "elixir"]; await gsay(join.line); }
+          if (m) { m.bag = ["herb", "elixir"]; for (var s = 0; s < join.scene.length; s++) await gsay(join.scene[s]); }
         }
       } else {
         await gsay("真・沈黙王ミュートスを 打ち倒した！！\n\n〜 ことばの闘技場 制覇 〜\nおめでとう！\n（タイトルで たんごちょうを 見られます）");

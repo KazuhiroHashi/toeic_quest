@@ -474,12 +474,12 @@
         var sd = Math.round(sp.power * (0.85 + Math.random() * 0.3) * chainMult());
         if (qs.elapsed <= 2) sd = Math.round(sd * 1.3);
         var weak = sp.elem && window.WEAK && window.WEAK[foe.base] === sp.elem;
-        if (weak) { sd = Math.round(sd * 1.5); anyWeak = true; bpop("弱点！", "weak", $("penemy-" + fi)); }
+        if (weak) { sd = Math.round(sd * 1.5); anyWeak = true; bpop("ばつぐん！", "weak", $("penemy-" + fi)); }
         hitEnemy(fi, sd, false, fxc);
-        lines.push(foe.name + "に " + sd + (weak ? "（弱点！）" : ""));
+        lines.push(foe.name + "に " + sd);
       }
       // one message listing each target's damage
-      await say(lines.join("\n") + " のダメージ！" + (anyWeak ? "\n弱点を突いた！" : ""));
+      await say(lines.join("\n") + " のダメージ！" + (anyWeak ? "\nこうかは ばつぐんだ！" : ""));
       for (var d2 = 0; d2 < targets.length; d2++) { if (foes[targets[d2]] && foes[targets[d2]].hp <= 0) await say(foes[targets[d2]].name + "を たおした！"); }
       if (aliveFoes().length) { var bossF = foes.filter(function (f) { return f.boss && f.hp > 0; })[0]; if (bossF && bossF.phases) await checkPhase(bossF); }
     }
