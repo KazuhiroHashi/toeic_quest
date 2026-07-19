@@ -618,7 +618,7 @@
       BGM.stop();
       setTimeout(function () {
         if (screenEl.style.display === "none") return;
-        if (encounter.bgm) BGM.playAny([encounter.bgm]);
+        if (encounter.bgm) BGM.playAny([encounter.bgm, "boss", "midboss"]); // missing files fall through
         else if (isBoss) BGM.playAny(["midboss", "boss"]);
         else BGM.playAny(Math.random() < 0.5 ? ["battle", "battle2"] : ["battle2", "battle"]);
       }, 1000);

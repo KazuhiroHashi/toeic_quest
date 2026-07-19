@@ -8,8 +8,8 @@
   "use strict";
 
   var TRACKS = ["title", "field", "town", "dungeon",
-                "battle", "battle2", "battle_dungeon", "midboss", "boss", "ending"];
-  var NO_RESUME = { battle: 1, battle2: 1, battle_dungeon: 1, midboss: 1, boss: 1, ending: 1 };
+                "battle", "battle2", "battle_dungeon", "midboss", "boss", "lastboss", "ending"];
+  var NO_RESUME = { battle: 1, battle2: 1, battle_dungeon: 1, midboss: 1, boss: 1, lastboss: 1, ending: 1 };
   var VOLUME = 0.55;
 
   var enabled = true;

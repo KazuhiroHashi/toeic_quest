@@ -2,6 +2,7 @@
 (function () {
   "use strict";
   window.ASSET_BASE = "../"; // bgm.js loads from ../assets/bgm/
+  window.LEVEL_LABEL = "スコア"; // 公開用: TOEICはETS商標のため表示は「スコア600 レベル」形式にする
 
   // minimal state for quiz.js (study log + combo)
   window.G = { study: { missed: {}, answered: 0, correct: 0 }, combo: 0 };
@@ -129,7 +130,7 @@
     return {
       bg: "maou", quizLv: 800,
       intro: ["『ふふ…まだ 終わらぬ』", "沈黙王ミュートスが 真の姿を現した！！", "『これが 静寂の 極み—！』"],
-      bgm: "boss",
+      bgm: "lastboss", // 専用曲があれば使用、無ければbossにフォールバック
       enemies: [{
         base: "maou", name: "真・沈黙王ミュートス", lv: 900,
         hp: 6800, atk: 88, def: 42, agi: 24, mag: 98, exp: 12000, boss: true,
@@ -233,6 +234,7 @@
           if (m) { m.bag = ["herb", "elixir"]; for (var s = 0; s < join.scene.length; s++) await gsay(join.scene[s]); }
         }
       } else {
+        if (window.BGM) BGM.playAny(["ending", "title"]); // victory epilogue music
         await gsay("真・沈黙王ミュートスを 打ち倒した！！\n\n〜 ことばの闘技場 制覇 〜\nおめでとう！\n（タイトルで たんごちょうを 見られます）");
       }
     }
@@ -248,8 +250,21 @@
 
   $("pbtn-arena").addEventListener("click", function () { $("pbtn-arena").blur(); runArena(); });
   $("pbtn-zukan").addEventListener("click", function () { $("pbtn-zukan").blur(); if (window.PFIELD) window.PFIELD.openZukan(); });
+  // story mode is under construction: first tap warns, second tap (within 4s) opens the preview
+  var fieldArmed = false;
   $("pbtn-field").addEventListener("click", function () {
     $("pbtn-field").blur();
+    if (!fieldArmed) {
+      fieldArmed = true;
+      $("pbtn-field").textContent = "作成中です　もう一度押すと試遊";
+      setTimeout(function () {
+        fieldArmed = false;
+        $("pbtn-field").textContent = "ストーリーモード（作成中）";
+      }, 4000);
+      return;
+    }
+    fieldArmed = false;
+    $("pbtn-field").textContent = "ストーリーモード（作成中）";
     window.PFIELD.start(false); // continues the save if one exists
   });
   $("pbtn-bgm").addEventListener("click", function () {

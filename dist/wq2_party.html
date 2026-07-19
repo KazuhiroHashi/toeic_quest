@@ -699,7 +699,7 @@ canvas#field-canvas {
         <div id="ptitle-logo">WORD<br>QUEST II</div>
         <div id="ptitle-sub">〜 沈黙の四天王（戦闘プロトタイプ）〜</div>
         <button id="pbtn-arena" class="title-btn">ことばの闘技場（連戦）</button>
-        <button id="pbtn-field" class="title-btn">ストーリーモード（第１章）</button>
+        <button id="pbtn-field" class="title-btn">ストーリーモード（作成中）</button>
         <button id="pbtn-zukan" class="title-btn">たんごちょう</button>
         <button id="pbtn-bgm" class="title-btn">ＢＧＭ：ＯＦＦ</button>
         <div id="title-copy">パーティ4人で早押し英単語バトル！<br>役割ごとに単語レベルが違い、連続正解でチェイン。</div>
@@ -4726,8 +4726,8 @@ window.ITEM_DEFS = {
   "use strict";
 
   var TRACKS = ["title", "field", "town", "dungeon",
-                "battle", "battle2", "battle_dungeon", "midboss", "boss", "ending"];
-  var NO_RESUME = { battle: 1, battle2: 1, battle_dungeon: 1, midboss: 1, boss: 1, ending: 1 };
+                "battle", "battle2", "battle_dungeon", "midboss", "boss", "lastboss", "ending"];
+  var NO_RESUME = { battle: 1, battle2: 1, battle_dungeon: 1, midboss: 1, boss: 1, lastboss: 1, ending: 1 };
   var VOLUME = 0.55;
 
   var enabled = true;
@@ -4951,7 +4951,7 @@ window.ITEM_DEFS = {
       var t0 = performance.now();
       var raf = 0, timeoutId = 0;
 
-      levelTag.textContent = "TOEIC " + lv + " レベル";
+      levelTag.textContent = (window.LEVEL_LABEL || "TOEIC ") + lv + " レベル";
       wordEl.textContent = entry.w;
       hintEl.textContent = "【" + (POS_LABEL[entry.p] || "?") + "】 意味は？";
       resultEl.textContent = ""; resultEl.className = "";
@@ -5641,7 +5641,7 @@ window.ITEM_DEFS = {
       BGM.stop();
       setTimeout(function () {
         if (screenEl.style.display === "none") return;
-        if (encounter.bgm) BGM.playAny([encounter.bgm]);
+        if (encounter.bgm) BGM.playAny([encounter.bgm, "boss", "midboss"]); // missing files fall through
         else if (isBoss) BGM.playAny(["midboss", "boss"]);
         else BGM.playAny(Math.random() < 0.5 ? ["battle", "battle2"] : ["battle2", "battle"]);
       }, 1000);
@@ -6864,6 +6864,7 @@ window.ITEM_DEFS = {
 (function () {
   "use strict";
   window.ASSET_BASE = "../"; // bgm.js loads from ../assets/bgm/
+  window.LEVEL_LABEL = "スコア"; // 公開用: TOEICはETS商標のため表示は「スコア600 レベル」形式にする
 
   // minimal state for quiz.js (study log + combo)
   window.G = { study: { missed: {}, answered: 0, correct: 0 }, combo: 0 };
@@ -6991,7 +6992,7 @@ window.ITEM_DEFS = {
     return {
       bg: "maou", quizLv: 800,
       intro: ["『ふふ…まだ 終わらぬ』", "沈黙王ミュートスが 真の姿を現した！！", "『これが 静寂の 極み—！』"],
-      bgm: "boss",
+      bgm: "lastboss", // 専用曲があれば使用、無ければbossにフォールバック
       enemies: [{
         base: "maou", name: "真・沈黙王ミュートス", lv: 900,
         hp: 6800, atk: 88, def: 42, agi: 24, mag: 98, exp: 12000, boss: true,
@@ -7095,6 +7096,7 @@ window.ITEM_DEFS = {
           if (m) { m.bag = ["herb", "elixir"]; for (var s = 0; s < join.scene.length; s++) await gsay(join.scene[s]); }
         }
       } else {
+        if (window.BGM) BGM.playAny(["ending", "title"]); // victory epilogue music
         await gsay("真・沈黙王ミュートスを 打ち倒した！！\n\n〜 ことばの闘技場 制覇 〜\nおめでとう！\n（タイトルで たんごちょうを 見られます）");
       }
     }
@@ -7110,8 +7112,21 @@ window.ITEM_DEFS = {
 
   $("pbtn-arena").addEventListener("click", function () { $("pbtn-arena").blur(); runArena(); });
   $("pbtn-zukan").addEventListener("click", function () { $("pbtn-zukan").blur(); if (window.PFIELD) window.PFIELD.openZukan(); });
+  // story mode is under construction: first tap warns, second tap (within 4s) opens the preview
+  var fieldArmed = false;
   $("pbtn-field").addEventListener("click", function () {
     $("pbtn-field").blur();
+    if (!fieldArmed) {
+      fieldArmed = true;
+      $("pbtn-field").textContent = "作成中です　もう一度押すと試遊";
+      setTimeout(function () {
+        fieldArmed = false;
+        $("pbtn-field").textContent = "ストーリーモード（作成中）";
+      }, 4000);
+      return;
+    }
+    fieldArmed = false;
+    $("pbtn-field").textContent = "ストーリーモード（作成中）";
     window.PFIELD.start(false); // continues the save if one exists
   });
   $("pbtn-bgm").addEventListener("click", function () {
