@@ -19,12 +19,34 @@
     cave_key: "洞窟のカギ", tower_key: "塔のカギ"
   };
   var GEAR = {
-    w1: { name: "かきかたブレード", atk: 3, gold: 80 },
-    w2: { name: "製図のレイピア", atk: 7, gold: 350 },
-    w3: { name: "鋼のペン剣", atk: 12, gold: 900 },
-    a1: { name: "布のスクールコート", def: 3, gold: 60 },
-    a2: { name: "鋼のバインダー鎧", def: 8, gold: 420 }
+    w1: { name: "かきかたブレード", kind: "weapon", atk: 4, gold: 80 },
+    w2: { name: "製図のレイピア", kind: "weapon", atk: 9, gold: 350 },
+    w3: { name: "鋼のペン剣", kind: "weapon", atk: 15, gold: 900 },
+    a1: { name: "布のスクールコート", kind: "armor", def: 4, gold: 60 },
+    a2: { name: "鋼のバインダー鎧", kind: "armor", def: 9, gold: 420 }
   };
+  // recompute a member's gear bonuses from its equipped weapon/armor ids
+  function recalcGear(p) {
+    p.gearAtk = p.weapon && GEAR[p.weapon] ? GEAR[p.weapon].atk : 0;
+    p.gearDef = p.armor && GEAR[p.armor] ? GEAR[p.armor].def : 0;
+  }
+  function addOwned(id, n) { S.owned[id] = (S.owned[id] || 0) + (n || 1); }
+  // move gear from the shared bag onto a member (old piece returns to the bag)
+  function equipGear(p, id) {
+    var kind = GEAR[id].kind, slot = kind === "weapon" ? "weapon" : "armor";
+    if ((S.owned[id] || 0) <= 0) return false;
+    S.owned[id]--;
+    if (p[slot]) addOwned(p[slot], 1); // old piece back to the bag
+    p[slot] = id;
+    recalcGear(p);
+    return true;
+  }
+  function unequipGear(p, slot) {
+    if (!p[slot]) return;
+    addOwned(p[slot], 1);
+    p[slot] = null;
+    recalcGear(p);
+  }
   var ITEM_PRICE = { herb: 12, wing: 40, elixir: 60 };
 
   // ---------- encounter tables (chapter-1 scope) ----------
@@ -63,8 +85,8 @@
       skills: FOE_SKILLS[id], skillRate: 0.32
     };
   }
-  // halved encounter rate per feedback
-  var ENC_RATE = { world: 0.028, dungeon: 0.038 };
+  // field doubled back up (dungeon stays lower); tuned per feedback
+  var ENC_RATE = { world: 0.056, dungeon: 0.038 };
 
   // ---------- input ----------
   var INPUT = {
@@ -385,11 +407,14 @@
     });
     var hx = Math.round((px - camx) * TILE), hy = Math.round((py - camy) * TILE);
     var d = S.pos.dir;
+    // walking bounce: lift the sprite on a sine while a step is animating
+    var bob = anim ? -Math.round(Math.abs(Math.sin(anim.p * Math.PI)) * 4) : 0;
+    var sway = anim ? Math.round(Math.sin(anim.p * Math.PI * 2) * 1.5) : 0;
     var himg = fieldImg(d === "up" ? "hero_up" : (d === "left" || d === "right") ? "hero_side" : "hero_down");
-    if (himg) drawSprite(himg, hx, hy, 1.35, d === "left");
+    if (himg) drawSprite(himg, hx + sway, hy + bob, 1.35, d === "left");
     else {
       ctx.font = "22px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText("🧝", hx + TILE / 2, hy + TILE / 2);
+      ctx.fillText("🧝", hx + TILE / 2, hy + TILE / 2 + bob);
     }
     if (m.dark) {
       var gx = hx + TILE / 2, gy = hy + TILE / 2;
@@ -524,13 +549,11 @@
       addItem(loot.item, n);
       await say("宝箱を開けた！\n『" + ITEM_NAMES[loot.item] + "』を " + n + "個 手に入れた！");
     } else if (loot.weapon) {
-      var g = GEAR[loot.weapon];
-      window.PBATTLE.getParty().forEach(function (p) { p.gearAtk = (p.gearAtk || 0) + g.atk; });
-      await say("宝箱を開けた！\n『" + g.name + "』を手に入れた！\nパーティの攻撃力が " + g.atk + " 上がった！");
+      addOwned(loot.weapon, 1);
+      await say("宝箱を開けた！\n『" + GEAR[loot.weapon].name + "』を手に入れた！\n（メニューの「そうび」で装備できる）");
     } else if (loot.armor) {
-      var g2 = GEAR[loot.armor];
-      window.PBATTLE.getParty().forEach(function (p) { p.gearDef = (p.gearDef || 0) + g2.def; });
-      await say("宝箱を開けた！\n『" + g2.name + "』を手に入れた！\nパーティの守備力が " + g2.def + " 上がった！");
+      addOwned(loot.armor, 1);
+      await say("宝箱を開けた！\n『" + GEAR[loot.armor].name + "』を手に入れた！\n（メニューの「そうび」で装備できる）");
     }
   }
   function addItem(key, n) {
@@ -556,10 +579,10 @@
       await fade(true);
       S.gold = Math.floor(S.gold / 2);
       window.PBATTLE.getParty().forEach(function (p) { p.hp = p.maxhp; p.mp = p.maxmp; });
-      S.pos = { map: "castle", x: 20, y: 26, dir: "up" };
+      S.pos = { map: "castle", x: 20, y: 6, dir: "up" }; // revive in front of the king
       playMapBgm();
       await fade(false);
-      await say("気を落とすな、勇者よ。\n失敗は学びのもとだ。\n（所持金が半分になった）");
+      await say("国王グロッサ\n『気を落とすでない、勇者よ。\n　失敗は学びのもと。\n　また 送り出してやろう。』\n（所持金が半分になった）");
     } else if (r.result === "win" && bossEv) {
       S.flags[bossEv.flag] = true;
       for (var i = 0; i < (bossEv.after || []).length; i++) await say(bossEv.after[i]);
@@ -647,12 +670,8 @@
       if (S.gold < price) { await say("ゴールドが足りない！"); continue; }
       S.gold -= price;
       if (GEAR[k]) {
-        var g = GEAR[k];
-        window.PBATTLE.getParty().forEach(function (p) {
-          if (g.atk) p.gearAtk = (p.gearAtk || 0) + g.atk;
-          if (g.def) p.gearDef = (p.gearDef || 0) + g.def;
-        });
-        await say("『" + g.name + "』を買った！\nパーティの" + (g.atk ? "攻撃力が " + g.atk : "守備力が " + g.def) + " 上がった！");
+        addOwned(k, 1);
+        await say("『" + GEAR[k].name + "』を買った！\n（メニューの「そうび」で装備しよう）");
       } else {
         addItem(k, 1);
         await say("『" + ITEM_NAMES[k] + "』を買った！");
@@ -667,17 +686,22 @@
     busy = true;
     var bgmOn = window.BGM ? BGM.isEnabled() : false;
     var c = await menu($("cmd-win"), [
-      { label: "つよさ" }, { label: "どうぐ" }, { label: "セーブ" },
+      { label: "つよさ" }, { label: "そうび" }, { label: "どうぐ" }, { label: "セーブ" },
       { label: "ＢＧＭ：" + (bgmOn ? "ＯＮ" : "ＯＦＦ") },
       { label: "タイトルへ" }, { label: "とじる" }
     ], "メニュー");
     if (c === 0) {
       var lines = window.PBATTLE.getParty().map(function (p) {
+        var wn = p.weapon && GEAR[p.weapon] ? GEAR[p.weapon].name : "なし";
+        var an = p.armor && GEAR[p.armor] ? GEAR[p.armor].name : "なし";
         return p.name + "（Ｌｖ" + p.lv + " " + p.role + "）\n　ＨＰ" + p.hp + "/" + p.maxhp + "　ＭＰ" + p.mp + "/" + p.maxmp +
-          "　攻" + (p.atk + (p.gearAtk || 0)) + " 守" + (p.def + (p.gearDef || 0));
+          "　攻" + (p.atk + (p.gearAtk || 0)) + " 守" + (p.def + (p.gearDef || 0)) +
+          "\n　武器：" + wn + "／防具：" + an;
       });
-      await say(lines.join("\n") + "\n\n所持金 " + S.gold + "G");
+      await say(lines.join("\n\n") + "\n\n所持金 " + S.gold + "G");
     } else if (c === 1) {
+      await equipMenu();
+    } else if (c === 2) {
       var inv = [];
       Object.keys(S.items).forEach(function (k) {
         if (S.items[k] > 0) inv.push({ label: (ITEM_NAMES[k] || k) + " ×" + S.items[k], k: k });
@@ -699,21 +723,21 @@
             await say(p1.name + "のＭＰが 30 回復した！");
           } else if (k === "wing") {
             S.items.wing--;
-            await transferTo("world", 18, 59);
-            await say("帰還の羽根ペンで\n王都の前まで戻った！");
+            await transferTo("castle", 20, 26);
+            await say("帰還の羽根ペンで\n王都グロッサに戻った！");
           } else {
             await say("ここでは使えない。");
           }
           save();
         }
       }
-    } else if (c === 2) {
+    } else if (c === 3) {
       save();
       await say("冒険の記録を保存した！");
-    } else if (c === 3) {
+    } else if (c === 4) {
       if (window.BGM) BGM.setEnabled(!bgmOn);
       await say("ＢＧＭを " + (!bgmOn ? "ＯＮ" : "ＯＦＦ") + " にした。");
-    } else if (c === 4) {
+    } else if (c === 5) {
       mode = "off";
       if (window.BGM) BGM.stop();
       $("pfield-wrap").style.display = "none";
@@ -721,6 +745,49 @@
       if (window.BGM) BGM.playAny(["title"]);
     }
     busy = false;
+  }
+
+  // equip / hand gear between members (shared bag = handing items to allies)
+  async function equipMenu() {
+    while (true) {
+      var party = window.PBATTLE.getParty();
+      var mem = party.map(function (p) {
+        return { label: p.name + "  武器:" + (p.weapon ? GEAR[p.weapon].name : "なし") + " / 防具:" + (p.armor ? GEAR[p.armor].name : "なし"), p: p };
+      });
+      mem.push({ label: "やめる" });
+      var mi = await menu($("cmd-win"), mem, "だれの装備？");
+      if (mi < 0 || mi === mem.length - 1) break;
+      var p = mem[mi].p;
+      // slot choice
+      while (true) {
+        var slotSel = await menu($("sub-win"), [
+          { label: "武器：" + (p.weapon ? GEAR[p.weapon].name : "なし") },
+          { label: "防具：" + (p.armor ? GEAR[p.armor].name : "なし") },
+          { label: "もどる" }
+        ], p.name + "の装備");
+        if (slotSel < 0 || slotSel === 2) break;
+        var kind = slotSel === 0 ? "weapon" : "armor";
+        var slot = kind;
+        // owned gear of this kind (shared bag) + unequip option
+        var opts = [];
+        Object.keys(S.owned).forEach(function (id) {
+          if (S.owned[id] > 0 && GEAR[id] && GEAR[id].kind === kind) {
+            var stat = kind === "weapon" ? "攻+" + GEAR[id].atk : "守+" + GEAR[id].def;
+            opts.push({ label: GEAR[id].name + "（" + stat + "）×" + S.owned[id], id: id });
+          }
+        });
+        if (p[slot]) opts.push({ id: "__off", label: "はずす（" + GEAR[p[slot]].name + "）" });
+        opts.push({ id: "__cancel", label: "やめる" });
+        var gi = await menu($("sub-win"), opts, (kind === "weapon" ? "武器" : "防具") + "をえらぶ");
+        if (gi < 0) continue;
+        var pick = opts[gi];
+        if (pick.id === "__cancel") continue;
+        if (pick.id === "__off") { unequipGear(p, slot); await say(p.name + "は 装備をはずした。"); save(); continue; }
+        equipGear(p, pick.id);
+        await say(p.name + "は『" + GEAR[pick.id].name + "』を装備した！");
+        save();
+      }
+    }
   }
   function lowestHpMember() {
     var ps = window.PBATTLE.getParty().filter(function (p) { return p.hp > 0; });
@@ -742,7 +809,7 @@
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify({
         pos: S.pos, gold: S.gold, chests: S.chests, flags: S.flags, items: S.items,
-        party: window.PBATTLE.getParty()
+        owned: S.owned, party: window.PBATTLE.getParty()
       }));
     } catch (e) {}
   }
@@ -781,12 +848,17 @@
     }
     var sv = !isNew && load();
     if (sv) {
-      S = { pos: sv.pos, gold: sv.gold, chests: sv.chests || {}, flags: sv.flags || {}, items: sv.items || {} };
-      if (sv.party) window.PBATTLE.setParty(sv.party);
+      S = { pos: sv.pos, gold: sv.gold, chests: sv.chests || {}, flags: sv.flags || {}, items: sv.items || {}, owned: sv.owned || {} };
+      if (sv.party) {
+        window.PBATTLE.setParty(sv.party);
+        window.PBATTLE.getParty().forEach(recalcGear); // rebuild gear bonuses from equipped ids
+      }
     } else {
       window.PBATTLE.resetParty();
       S = { pos: { map: "castle", x: 20, y: 26, dir: "up" }, gold: 120,
-            chests: {}, flags: {}, items: { herb: 6, elixir: 2, wing: 1 } };
+            chests: {}, flags: {}, items: { herb: 6, elixir: 2, wing: 1 }, owned: { w1: 1, a1: 1 } };
+      var yu = window.PBATTLE.getParty()[0];
+      equipGear(yu, "w1"); equipGear(yu, "a1"); // hero starts with basic gear equipped
     }
     syncToBattle();
     mode = "field";

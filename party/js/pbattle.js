@@ -159,7 +159,7 @@
       lv: lv, exp: EXP_FOR[lv] || 0,
       hp: s.hp, maxhp: s.hp, mp: s.mp, maxmp: s.mp,
       atk: s.atk, def: s.def, agi: s.agi,
-      gearAtk: 0, gearDef: 0,
+      gearAtk: 0, gearDef: 0, weapon: null, armor: null,
       spellIds: spellsAt(id, lv)
     };
   }

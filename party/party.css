@@ -32,6 +32,7 @@
   display: none;
   background: #000;
   overflow: hidden;
+  z-index: 50; /* cover the field's top-left status window (which isn't redrawn mid-battle) */
 }
 #pbattle-bg {
   position: absolute; inset: 0;
