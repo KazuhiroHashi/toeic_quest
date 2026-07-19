@@ -105,7 +105,7 @@
     fireball:  { name: "ファイアボール",  mp: 7,  type: "atk",   power: 42, elem: "fire", desc: "敵1体に強い炎のダメージ" },
     fire:      { name: "ファイア",       mp: 4,  type: "atk",   power: 30, elem: "fire", desc: "敵1体に炎のダメージ" },
     frost:     { name: "フロスト",       mp: 5,  type: "atk",   power: 34, elem: "ice", desc: "敵1体に氷のダメージ" },
-    fira:      { name: "ファイラ",       mp: 9,  type: "atk",   power: 38, elem: "fire", all: true, desc: "敵全体に炎のダメージ" },
+    fira:      { name: "ファイアモア",    mp: 9,  type: "atk",   power: 38, elem: "fire", all: true, desc: "敵全体に炎のダメージ" },
     thunder:   { name: "サンダー",       mp: 13, type: "atk",   power: 44, elem: "thunder", all: true, desc: "敵全体に雷のダメージ" },
     holy:      { name: "ホーリー",       mp: 8,  type: "atk",   power: 54, elem: "holy", desc: "敵1体に聖なるダメージ（不死・悪魔に特効）" }
   };
