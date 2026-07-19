@@ -1,55 +1,68 @@
-# 次回作業メモ（セッション切れ対策・2026-07-18記録）
+# 作業リスト（2026-07-19 更新・新作WORD QUEST II 開発フェーズ）
 
-ユーザーからの修正依頼リストと実装方針。途中でセッションが切れたら、ここから再開する。
+1作目 TOEIC QUEST は完成・保存済み（アーティファクトURL不変）。以後の開発は新作が主軸。
 
-## 修正依頼（2026-07-18受領）
+- 1作目: https://claude.ai/code/artifact/8fe8b8da-110b-4d9b-98ed-e9632f9e2323
+- 新作戦闘プロトタイプ: https://claude.ai/code/artifact/7b26dc4a-6c42-4d7e-b3ac-35220101ff5b
 
-1. **戦闘BGMは続き再生をやめる** — 毎回最初から。フィールド/町/ダンジョンBGMは続き再生のまま。
-2. **戦闘曲を複数化** — Sunoでもう1曲完成済み（ユーザー側）。`assets/bgm/battle2.mp3` としてアップしてもらい、
-   通常戦闘は battle / battle2 からランダム。さらに:
-   - 塔・洞窟での戦闘曲: `battle_dungeon.mp3`（あれば優先使用）
-   - 中ボス曲: `midboss.mp3`（将軍・ドラゴンなど maou 以外のボス戦。無ければ boss.mp3）
-   - Suno用プロンプトを docs/AUDIO_GUIDE.md 形式で提示する（→ docs/AUDIO_PROMPTS_2.md 作成）
-3. **呪い（にがて単語を敵が出題してくる仕組み）を削除** — battle.js の curse ブロックを丸ごと除去。
-   いろいろな単語に触れる方が良い・ゲームバランスが崩れるため。通常攻撃のみに戻す。
-4. **かいしんの いちげき は通常こうげき限定** — ヒール・呪文では「かいしん」を出さない
-   （2秒以内正解の×2ボーナスも呪文には付けない。battle.js の呪文処理を確認）。
-5. **エンディング実装** — 現状: 魔王撃破後、ボス曲が流れたまま開始の城に戻るだけ。
-   - 魔王撃破 → BGM停止 → 勝利ジングル → エンディングシーン（スタッフロール風テキスト+一枚絵）→ THE END → タイトルへ
-   - `ending.mp3` があればエンディング曲として使用（Sunoプロンプトも提示）
-6. **ストーリー用ビデオクリップ** — OP・中ボス戦前・最終ボス戦前・エンディングの4本。
-   ユーザーはChatGPT Plus加入済み → **Sora**（Plusに含まれる、sora.com）で生成してもらう。
-   プロンプト集を docs/VIDEO_PROMPTS.md に作成。保存先: `assets/video/op.mp4` など。
-   ゲーム側は <video> オーバーレイで該当タイミングに再生（スキップ可能に）。
-   注意: 動画はサイズが大きいのでartifact版には埋め込まない（リポジトリ/実機ビルドのみ）。
-7. **エンカウント効果音の作り直し** — 今のはイマイチ。ElevenLabs用プロンプトを再考して提示。
-8. **戦闘終了時のBGM切り替え** — 勝利した瞬間に戦闘BGMを即停止 → 勝利ファンファーレSFX → その後フィールドBGM再開。
-   現状はBGMが唐突にフィールド曲へ切り替わる。
-9. **フィールド用テクスチャ・スプライト・アイコンはユーザーが生成中**（docs/ART_PROMPTS_FIELD.md 参照）。
-   届いたら assets/field/ を確認して新フィールド描画エンジンを実装する。
+---
 
-## 実装状態（2026-07-18 全項目実装済み・commit 74c935a）
+# ユーザーの作業（優先度順）
 
-残タスク: battle2.mp3ほか新BGM・新encounter.mp3・動画4本・フィールド画像30枚のアップ待ち → 届いたら inline assets再生成+動画再生機能+新フィールド描画エンジンを実装
+## 0.【最重要・5分】新作の死闘デモを遊んで感想を返す
+戦闘の面白さの方向性が全ての土台。四天王ハウル戦（目標: 正解率9割で勝率90%・6分強の死闘）の
+手応え・テンポ・難度の感想がほしい。
 
-- [x] bgm.js: battle系（battle/battle2/battle_dungeon/midboss/boss）は currentTime=0 から再生
-- [x] bgm.js: 論理名→候補リスト解決（battle→ランダム、無いファイルはフォールバック）
-- [x] game.js runBattle: マップ種別（cave/tower）で battle_dungeon、ボスid=maou→boss、他ボス→midboss
-- [x] battle.js: 呪い削除
-- [x] battle.js: 呪文・ヒールのかいしん除去
-- [x] game.js: エンディングシーン実装（魔王撃破フラグで分岐）
-- [x] battle.js/game.js: 勝利時 BGM即stop→winジングル→フィールドBGM
-- [x] docs/AUDIO_PROMPTS_2.md（Suno: battle_dungeon / midboss / ending）
-- [x] docs/VIDEO_PROMPTS.md（Sora: op / midboss_cutscene / finalboss_cutscene / ending 4本）
-- [x] ElevenLabs エンカウント音の新プロンプト（AUDIO_PROMPTS_2.md に含める)
-- [x] リビルド（inline assets→artifact/dist）・アーティファクト再公開・commit/push
+## 1.【画像・最優先】フィールドHDリテイク 16枚
+- docs/ART_PROMPTS_FIELD_HD.md（ピクセルアート指定・**ファイル名は現行と同じ＝上書きで自動反映**）
+- 内訳: 地形9 ＋ **tree/peak 2（最優先）** ＋ 建物アイコン5
+- アップ先: assets/field
 
-## 資産の置き場所ルール（再掲）
+## 2.【画像】UI素材 8枚
+- docs/UI_PROMPTS.md（**frame.png が最優先**。アップした瞬間 全ウィンドウに自動適用・実装済み）
+- 内訳: frame / button / cmd_attack / cmd_spell / cmd_guard / cmd_item / logo_wq2 / timer_frame
+- アップ先: assets/ui
 
-- BGM: assets/bgm/*.mp3（title/field/town/dungeon/battle/boss + 今後 battle2/battle_dungeon/midboss/ending）
-- SFX: assets/sfx/*.mp3（13種、encounter は差し替え予定）
-- 動画: assets/video/*.mp4（op/midboss/finalboss/ending）※新設
-- フィールド画像: assets/field/（地形9・アイコン7・主人公3・NPC11 = 30枚、生成中）
-- アップロードURL: https://github.com/KazuhiroHashi/toeic_quest/upload/claude/toeic-quest-game-8zva6k/<フォルダ>
-- アーティファクトURL（固定）: https://claude.ai/code/artifact/8fe8b8da-110b-4d9b-98ed-e9632f9e2323
-- artifact再構築手順: scratchpad/make_inline_assets.mjs → tools/build_standalone.js --artifact --embed=inline_assets.js
+## 3.【画像】新作キャラ素材 21枚（戦闘の方向性が固まってからでOK）
+- docs/ASSET_PROMPTS_WQ2.md
+- 内訳: 顔グラ4 ＋ 歩行スプライト9（ガイ/リナ/ミア×3方向）＋ 四天王・魔王5 ＋ 新戦闘背景3
+- アップ先: assets/party（新規）と assets/bg
+
+## 4.【音】Suno 新曲5 ＋ ElevenLabs 効果音
+- docs/ASSET_PROMPTS_WQ2.md 後半（新ワールド曲・章/加入ジングル・四天王戦・最終戦）
+- docs/AUDIO_PROMPTS_2.md の encounter.mp3 リテイク3案（1作目の音がイマイチな件）
+- アップ先: assets/bgm / assets/sfx
+
+## 5.【動画】保留中（ユーザー判断でストップ。再開時は docs/VIDEO_PROMPTS.md）
+
+### 自動化についての結論（2026-07-19時点）
+- gpt-image / Suno / ElevenLabs は**API課金なしでは私から直接駆動できない**（ユーザー方針: API課金なし）
+- Codex はコード作業しかできず画像は作れない → コードは私が担当するので出番なし
+- 軽減策: 各プロンプト集は「1つの会話に連投→まとめてダウンロード→同名アップ」で済む構成にしてある。
+  実質作業は コピペ→保存→アップロード のみ
+
+---
+
+# Claude側の作業キュー（自動進行）
+
+## 進行中（並列エージェント）
+- [x] シナリオ案A（docs/SCENARIO_WQ2.md・930行）
+- [ ] シナリオ案B（人間ドラマ軸・docs/SCENARIO_WQ2_B.md）← 実行中
+- [ ] シナリオ案C（ゲームプレイ統合軸・docs/SCENARIO_WQ2_C.md）← 実行中
+- [ ] 3案の審査・統合 → docs/SCENARIO_WQ2_FINAL.md（B/C完了後に審査エージェント起動）
+- [x] マップ（party/data/maps_wq2.js: 96×80ワールド＋城＋村＋洞窟3F＋塔4F、BFS検証PASS）
+- [x] バランス（シム2000回: 正解率90%→勝率90%・6.2分。適用済み）
+- [x] アセットプロンプト集（docs/ASSET_PROMPTS_WQ2.md）
+
+## 次の実装（プロトタイプの感想を受けてから着手が理想）
+1. フィールドエンジンを party/ に移植（WQ2_MAPS で歩く・エンカウント・宝箱・階段・鍵）
+2. SCENARIO_WQ2_FINAL.md をイベントデータ化（章フラグ・仲間加入・四天王配置・世界変化）
+3. パーティメニュー（つよさ/どうぐ/じゅもん/さくせん/セーブ）・レベル個別成長・装備
+4. UI素材（frame/button/cmd/logo）が届き次第の組み込み（frameは実装済み・自動）
+5. face_*.png が届いたらパーティ枠に顔グラ表示
+6. 敵グループのゾーン別編成テーブル・中ボス/固定シンボル戦
+7. 20分ダンジョンの中間回復石・ショートカット鍵の実装（マップデータ側は準備済み）
+
+## ビルド・公開手順（毎回）
+- scratchpad/make_inline_assets.mjs → tools/build_standalone.js（1作目 --embed=inline_assets.js /
+  新作 --src=party/index.html --embed=party_inline.js）→ 両アーティファクト republish → commit/push
