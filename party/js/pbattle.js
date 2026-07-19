@@ -722,6 +722,24 @@
     },
     getItems: function () { return items; },
     setItems: function (o) { items = o; },
+    // ---- gauntlet helpers ----
+    fullHeal: function () { (window.PBATTLE._party || []).forEach(function (m) { m.hp = m.maxhp; m.mp = m.maxmp; }); },
+    levelEveryone: function (n) {
+      var msgs = [];
+      (window.PBATTLE._party || []).forEach(function (m) {
+        for (var i = 0; i < (n || 1) && m.lv < 50; i++) {
+          var need = (EXP_FOR[m.lv + 1] || 0) - m.exp + 1;
+          var res = gainExp(m, Math.max(1, need));
+          res.ups.forEach(function (u) { msgs.push({ name: m.name, lv: u.lv, learned: u.learned }); });
+        }
+      });
+      return msgs;
+    },
+    giveItemToParty: function (key) {
+      var p = window.PBATTLE._party || [];
+      for (var i = 0; i < p.length; i++) { if (p[i].bag.length < 8) { p[i].bag.push(key); return p[i].name; } }
+      return null;
+    },
     // exp remaining to the member's next level (0 if maxed)
     expToNext: function (m) { return m.lv >= 50 ? 0 : Math.max(0, (EXP_FOR[m.lv + 1] || 0) - m.exp); },
     // learned spells with descriptions, for the inspect command

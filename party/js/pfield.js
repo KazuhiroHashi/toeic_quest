@@ -653,7 +653,7 @@
       var boss;
       if (ev.enemy === "gen_r") {
         boss = { bg: "tower1", enemies: [{
-          base: "gen_r", name: "四天王ハウル", lv: 600, hp: 2300, atk: 24, def: 22, agi: 20, mag: 28, exp: 1400, boss: true,
+          base: "gen_r", name: "四天王ハウル", lv: 600, hp: 3450, atk: 48, def: 22, agi: 20, mag: 56, exp: 1400, boss: true,
           skills: [{ name: "轟音の叫び", power: 0.85, all: true }], skillRate: 0.3,
           phases: [
             { at: 1.0, acts: 1, aoe: 0, charge: 0 },
