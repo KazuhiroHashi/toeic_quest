@@ -558,6 +558,7 @@
     getItems: function () { return items; },
     setItems: function (o) { items = o; },
     pressA: function () { var t = INPUT.top(); if (t && t.onA) t.onA(); },
-    pressB: function () { var t = INPUT.top(); if (t && t.onB) t.onB(); }
+    pressB: function () { var t = INPUT.top(); if (t && t.onB) t.onB(); },
+    pressDir: function (d) { var t = INPUT.top(); if (t && t.onDir) t.onDir(d === "left" ? "up" : d === "right" ? "down" : d); }
   };
 })();

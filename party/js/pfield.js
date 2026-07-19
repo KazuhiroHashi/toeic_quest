@@ -84,7 +84,7 @@
     var el = $(id);
     function down(e) {
       e.preventDefault();
-      if (battleActive()) return;
+      if (battleActive()) { window.PBATTLE.pressDir(dir); return; } // menu cursor in battle
       INPUT.held[dir] = true; INPUT.pressDir(dir);
     }
     function up(e) { e.preventDefault(); INPUT.held[dir] = false; }
@@ -93,6 +93,23 @@
     el.addEventListener("pointercancel", up);
     el.addEventListener("pointerleave", up);
   }
+
+  // controller is live from page load — battles can be played standalone (demo
+  // buttons) without ever entering field mode
+  function bindControls() {
+    bindHold("dpad-up", "up"); bindHold("dpad-down", "down");
+    bindHold("dpad-left", "left"); bindHold("dpad-right", "right");
+    $("btn-a").addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      if (battleActive()) window.PBATTLE.pressA(); else if (mode === "field") INPUT.pressA();
+    });
+    $("btn-b").addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      if (battleActive()) window.PBATTLE.pressB(); else if (mode === "field") INPUT.pressB();
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bindControls);
+  else bindControls();
 
   // ---------- UI: say / menu (field windows) ----------
   function say(text, el) {
@@ -713,16 +730,6 @@
       canvas.height = VH * TILE * dpr;
       ctx.imageSmoothingEnabled = true;
       if (ctx.imageSmoothingQuality) ctx.imageSmoothingQuality = "high";
-      bindHold("dpad-up", "up"); bindHold("dpad-down", "down");
-      bindHold("dpad-left", "left"); bindHold("dpad-right", "right");
-      $("btn-a").addEventListener("pointerdown", function (e) {
-        e.preventDefault();
-        if (battleActive()) window.PBATTLE.pressA(); else INPUT.pressA();
-      });
-      $("btn-b").addEventListener("pointerdown", function (e) {
-        e.preventDefault();
-        if (battleActive()) window.PBATTLE.pressB(); else INPUT.pressB();
-      });
     }
     var sv = !isNew && load();
     if (sv) {

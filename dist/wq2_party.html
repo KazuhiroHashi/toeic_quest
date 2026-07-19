@@ -5367,7 +5367,8 @@ window.ITEM_DEFS = {
     getItems: function () { return items; },
     setItems: function (o) { items = o; },
     pressA: function () { var t = INPUT.top(); if (t && t.onA) t.onA(); },
-    pressB: function () { var t = INPUT.top(); if (t && t.onB) t.onB(); }
+    pressB: function () { var t = INPUT.top(); if (t && t.onB) t.onB(); },
+    pressDir: function (d) { var t = INPUT.top(); if (t && t.onDir) t.onDir(d === "left" ? "up" : d === "right" ? "down" : d); }
   };
 })();
 
@@ -5459,7 +5460,7 @@ window.ITEM_DEFS = {
     var el = $(id);
     function down(e) {
       e.preventDefault();
-      if (battleActive()) return;
+      if (battleActive()) { window.PBATTLE.pressDir(dir); return; } // menu cursor in battle
       INPUT.held[dir] = true; INPUT.pressDir(dir);
     }
     function up(e) { e.preventDefault(); INPUT.held[dir] = false; }
@@ -5468,6 +5469,23 @@ window.ITEM_DEFS = {
     el.addEventListener("pointercancel", up);
     el.addEventListener("pointerleave", up);
   }
+
+  // controller is live from page load — battles can be played standalone (demo
+  // buttons) without ever entering field mode
+  function bindControls() {
+    bindHold("dpad-up", "up"); bindHold("dpad-down", "down");
+    bindHold("dpad-left", "left"); bindHold("dpad-right", "right");
+    $("btn-a").addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      if (battleActive()) window.PBATTLE.pressA(); else if (mode === "field") INPUT.pressA();
+    });
+    $("btn-b").addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      if (battleActive()) window.PBATTLE.pressB(); else if (mode === "field") INPUT.pressB();
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bindControls);
+  else bindControls();
 
   // ---------- UI: say / menu (field windows) ----------
   function say(text, el) {
@@ -6088,16 +6106,6 @@ window.ITEM_DEFS = {
       canvas.height = VH * TILE * dpr;
       ctx.imageSmoothingEnabled = true;
       if (ctx.imageSmoothingQuality) ctx.imageSmoothingQuality = "high";
-      bindHold("dpad-up", "up"); bindHold("dpad-down", "down");
-      bindHold("dpad-left", "left"); bindHold("dpad-right", "right");
-      $("btn-a").addEventListener("pointerdown", function (e) {
-        e.preventDefault();
-        if (battleActive()) window.PBATTLE.pressA(); else INPUT.pressA();
-      });
-      $("btn-b").addEventListener("pointerdown", function (e) {
-        e.preventDefault();
-        if (battleActive()) window.PBATTLE.pressB(); else INPUT.pressB();
-      });
     }
     var sv = !isNew && load();
     if (sv) {
