@@ -285,8 +285,88 @@
   };
   var GLYPH = { C: "🏰", T: "🏠", D: "🕳️", U: "🗼", X: "🚪" };
 
+  // ---- generated field art (assets/field/, auto-detected; falls back to procedural) ----
+  var TERRAIN_TEX = {
+    ".": "grass", t: "forest", m: "mountain", w: "water", s: "sand", b: "cliff",
+    "=": "stonewall", ",": "floor", "-": "cavefloor",
+    "^": "floor", v: "cavefloor", c: "floor",
+    C: "grass", T: "grass", U: "grass", D: "mountain", X: "sand"
+  };
+  var TILE_ICON = { C: "icon_castle", T: "icon_town", D: "icon_cave", U: "icon_tower", X: "icon_gate" };
+  var NPC_SPRITE = {
+    "👑": "npc_king", "💂": "npc_guard", "🧙": "npc_mage", "⚔️": "npc_weapon",
+    "🧴": "npc_item", "🛏️": "npc_inn", "👦": "npc_boy", "👩": "npc_woman",
+    "🧔": "npc_man", "👴": "npc_oldman", "👵": "npc_oldgrandma"
+  };
+  var FIELD_IMG = {};
+  function fieldImg(name, src) {
+    if (!name) return null;
+    var v = FIELD_IMG[name];
+    if (v === undefined) {
+      FIELD_IMG[name] = "loading";
+      var img = new Image();
+      img.onload = function () { FIELD_IMG[name] = img; };
+      img.onerror = function () { FIELD_IMG[name] = "no"; };
+      img.src = src || (window.FIELD_ART && window.FIELD_ART[name]) || "assets/field/" + name + ".png";
+      return null;
+    }
+    return (v === "no" || v === "loading") ? null : v;
+  }
+  // field bosses reuse their battle illustration
+  function enemyFieldImg(id) {
+    return fieldImg("enemy_" + id, (window.ENEMY_ART && window.ENEMY_ART[id]) || "assets/enemies/" + id + ".png");
+  }
+  // draw a sprite bottom-anchored in a tile, keeping aspect (mirror for left-facing)
+  function drawSprite(img, px, py, hMul, mirror) {
+    var h = TILE * hMul, w = h * img.width / img.height;
+    var dx = px + (TILE - w) / 2, dy = py + TILE - h;
+    if (mirror) {
+      ctx.save();
+      ctx.translate(dx + w / 2, 0); ctx.scale(-1, 1);
+      ctx.drawImage(img, -w / 2, dy, w, h);
+      ctx.restore();
+    } else ctx.drawImage(img, dx, dy, w, h);
+  }
+
   function drawTile(m, x, y, px, py) {
     var t = tileAt(m, x, y);
+    var tex = fieldImg(TERRAIN_TEX[t]);
+    if (tex) {
+      // sample one quadrant so the texture spans a seamless 2x2-tile pattern
+      var hw = tex.width / 2, hh = tex.height / 2;
+      ctx.drawImage(tex, (x & 1) * hw, (y & 1) * hh, hw, hh, px, py, TILE, TILE);
+      if (t === "^" || t === "v") {
+        ctx.fillStyle = "rgba(20,16,10,.6)";
+        ctx.fillRect(px + 4, py + 16, 16, 4); ctx.fillRect(px + 7, py + 10, 10, 4); ctx.fillRect(px + 10, py + 4, 4, 4);
+      }
+      if (GLYPH[t]) {
+        var icon = fieldImg(TILE_ICON[t]);
+        if (icon) drawSprite(icon, px, py, 1.2);
+        else {
+          ctx.font = "18px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          ctx.fillText(GLYPH[t], px + TILE / 2, py + TILE / 2 + 1);
+        }
+      }
+      if (t === "c") {
+        var cev = eventAt(m, x, y);
+        var copen = cev && G.chests[cev.id];
+        var cimg = fieldImg(copen ? "chest_open" : "chest_closed");
+        if (cimg) drawSprite(cimg, px, py, 1.0);
+        else {
+          ctx.fillStyle = copen ? "#7a5a30" : "#a8742f";
+          ctx.fillRect(px + 4, py + 8, 16, 12);
+          ctx.fillStyle = copen ? "#4a3418" : "#ffd54a";
+          ctx.fillRect(px + 4, py + 12, 16, 3);
+          ctx.fillStyle = "#4a3418";
+          ctx.fillRect(px + 4, py + 8, 16, 2);
+        }
+      }
+      return;
+    }
+    drawTileProc(m, x, y, px, py, t);
+  }
+
+  function drawTileProc(m, x, y, px, py, t) {
     var c = TILE_COLORS[t] || TILE_COLORS["."];
     ctx.fillStyle = c[0];
     ctx.fillRect(px, py, TILE, TILE);
@@ -365,19 +445,27 @@
     // events (npc, boss)
     (m.events || []).forEach(function (ev) {
       if (ev.type === "npc" || (ev.type === "boss" && !G.flags[ev.flag])) {
-        drawEmoji(ev.icon, Math.round((ev.x - camx) * TILE), Math.round((ev.y - camy) * TILE), ev.type === "boss" ? 20 : 18);
+        var ex = Math.round((ev.x - camx) * TILE), ey = Math.round((ev.y - camy) * TILE);
+        var eimg = ev.type === "boss" ? enemyFieldImg(ev.enemy) : fieldImg(NPC_SPRITE[ev.icon]);
+        if (eimg) drawSprite(eimg, ex, ey, ev.type === "boss" ? 1.5 : 1.35);
+        else drawEmoji(ev.icon, ex, ey, ev.type === "boss" ? 20 : 18);
       }
     });
     // player
     var hx = Math.round((px - camx) * TILE), hy = Math.round((py - camy) * TILE);
-    drawEmoji("🧝", hx, hy, 19);
-    // facing indicator
-    ctx.fillStyle = "rgba(255,255,255,.85)";
     var d = G.pos.dir;
-    if (d === "up") ctx.fillRect(hx + 10, hy, 4, 3);
-    else if (d === "down") ctx.fillRect(hx + 10, hy + 21, 4, 3);
-    else if (d === "left") ctx.fillRect(hx, hy + 10, 3, 4);
-    else ctx.fillRect(hx + 21, hy + 10, 3, 4);
+    var himg = fieldImg(d === "up" ? "hero_up" : (d === "left" || d === "right") ? "hero_side" : "hero_down");
+    if (himg) {
+      drawSprite(himg, hx, hy, 1.35, d === "left"); // side art faces right; mirror for left
+    } else {
+      drawEmoji("🧝", hx, hy, 19);
+      // facing indicator (procedural fallback only)
+      ctx.fillStyle = "rgba(255,255,255,.85)";
+      if (d === "up") ctx.fillRect(hx + 10, hy, 4, 3);
+      else if (d === "down") ctx.fillRect(hx + 10, hy + 21, 4, 3);
+      else if (d === "left") ctx.fillRect(hx, hy + 10, 3, 4);
+      else ctx.fillRect(hx + 21, hy + 10, 3, 4);
+    }
 
     // darkness in dark dungeons
     if (m.dark) {
