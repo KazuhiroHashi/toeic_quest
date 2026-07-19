@@ -87,7 +87,7 @@
     };
   }
   // field doubled back up (dungeon stays lower); tuned per feedback
-  var ENC_RATE = { world: 0.056, dungeon: 0.038 };
+  var ENC_RATE = { world: 0.056, dungeon: 0.027 }; // dungeon lowered a further ~30%
 
   // ---------- input ----------
   var INPUT = {
@@ -235,7 +235,7 @@
 
   // ---------- rendering (ported from game 1, ASSET_BASE-aware) ----------
   var TILE = 32, VW = 12, VH = 10;
-  var canvas, ctx, dpr = 1, tick = 0, anim = null;
+  var canvas, ctx, dpr = 1, tick = 0, anim = null, walkFrame = 0;
   var TILE_COLORS = {
     ".": ["#2f9e44", "#268a3a"], t: ["#2f9e44", "#14591f"], m: ["#7a5c33", "#5c421f"],
     w: ["#1b4fbf", "#1640a0"], s: ["#d9c06b", "#c4aa53"], b: ["#8a5a2b", "#6e4218"],
@@ -312,6 +312,37 @@
       else ctx.fillRect(px + TILE - E, py, E, TILE);
     }
   }
+  // draw a clear top-down staircase: a stone frame with receding steps.
+  // up = steps ascend toward a lit top; down = steps descend into a dark pit.
+  function drawStairs(px, py, up) {
+    var pad = TILE * 0.12, x0 = px + pad, y0 = py + pad, w = TILE - pad * 2, h = TILE - pad * 2;
+    // stone frame
+    ctx.fillStyle = "#3a3f52"; ctx.fillRect(x0 - 2, y0 - 2, w + 4, h + 4);
+    var steps = 4;
+    for (var i = 0; i < steps; i++) {
+      // for "up" the widest (front) step is at the bottom and they narrow toward a bright back;
+      // for "down" the opening is dark at the back (top)
+      var t0 = i / steps, t1 = (i + 1) / steps;
+      var yTop = y0 + h * t0, yBot = y0 + h * t1;
+      var shade = up ? (0.45 + 0.5 * (1 - t0)) : (0.5 * (1 - t0));
+      var g = Math.round(150 * shade + 40);
+      ctx.fillStyle = "rgb(" + g + "," + (g + 8) + "," + (g + 20) + ")";
+      var inset = (up ? t0 : (1 - t1)) * w * 0.22;
+      ctx.fillRect(x0 + inset, yTop, w - inset * 2, yBot - yTop);
+      ctx.fillStyle = "rgba(0,0,0,.45)";
+      ctx.fillRect(x0 + inset, yBot - Math.max(1, h * 0.03), w - inset * 2, Math.max(1, h * 0.03));
+    }
+    if (!up) { // dark mouth at the back
+      ctx.fillStyle = "rgba(0,0,0,.7)";
+      ctx.fillRect(x0 + w * 0.22, y0, w * 0.56, h * 0.28);
+    }
+    // direction arrow
+    ctx.fillStyle = up ? "#ffe08a" : "#8fb0ff";
+    ctx.font = Math.round(TILE * 0.4) + "px serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(up ? "▲" : "▼", px + TILE / 2, py + TILE / 2);
+  }
+
   function drawTile(m, x, y, px, py) {
     var t = tileAt(m, x, y);
     var tex = fieldImg(TERRAIN_TEX[t]);
@@ -337,16 +368,7 @@
       if (t === "^" || t === "v") {
         var stair = fieldImg(t === "^" ? "stairs_up" : "stairs_down");
         if (stair) drawSprite(stair, px, py, 1.0);
-        else {
-          // cleaner procedural stairs: stepped blocks with shading
-          var u = TILE / 24;
-          for (var si = 0; si < 4; si++) {
-            var sw = (TILE - si * 4 * u), sy = py + si * 5 * u;
-            ctx.fillStyle = "#b9c2d0"; ctx.fillRect(px + si * 2 * u, sy, sw, 4 * u);
-            ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.fillRect(px + si * 2 * u, sy + 4 * u, sw, 1 * u);
-          }
-          if (t === "^") { ctx.fillStyle = "#ffe08a"; ctx.font = Math.round(10 * u) + "px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("▲", px + TILE / 2, py + 4 * u); }
-        }
+        else drawStairs(px, py, t === "^");
       }
       if (GLYPH[t]) {
         var icon = fieldImg(TILE_ICON[t]);
@@ -415,11 +437,15 @@
     });
     var hx = Math.round((px - camx) * TILE), hy = Math.round((py - camy) * TILE);
     var d = S.pos.dir;
-    // walking bounce: lift the sprite on a sine while a step is animating
-    var bob = anim ? -Math.round(Math.abs(Math.sin(anim.p * Math.PI)) * 4) : 0;
-    var sway = anim ? Math.round(Math.sin(anim.p * Math.PI * 2) * 1.5) : 0;
-    var himg = fieldImg(d === "up" ? "hero_up" : (d === "left" || d === "right") ? "hero_side" : "hero_down");
-    if (himg) drawSprite(himg, hx + sway, hy + bob, 1.35, d === "left");
+    // 2-frame walk cycle: base = contact pose, base_b = passing (mid-step) pose.
+    // If the _b frame isn't supplied, we just show the base with a small bob.
+    var baseName = d === "up" ? "hero_up" : (d === "left" || d === "right") ? "hero_side" : "hero_down";
+    var himg = fieldImg(baseName);
+    var altimg = fieldImg(baseName + "_b");
+    var stepping = !!anim && anim.p > 0.22 && anim.p < 0.78;
+    var useImg = (altimg && stepping) ? altimg : himg;
+    var bob = anim ? -Math.round(Math.abs(Math.sin(anim.p * Math.PI)) * (altimg ? 2 : 3)) : 0;
+    if (useImg) drawSprite(useImg, hx, hy + bob, 1.35, d === "left");
     else {
       ctx.font = "22px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
       ctx.fillText("🧝", hx + TILE / 2, hy + TILE / 2 + bob);
@@ -509,11 +535,12 @@
     if (SOLID[t]) return;
 
     moving = true;
+    walkFrame ^= 1; // advance the 2-frame walk cycle each tile
     anim = { fx: S.pos.x, fy: S.pos.y, tx: nx, ty: ny, p: 0 };
-    var steps = 5;
+    var steps = 7;
     for (var i = 1; i <= steps; i++) {
       anim.p = i / steps;
-      await new Promise(function (r) { setTimeout(r, 26); });
+      await new Promise(function (r) { setTimeout(r, 32); }); // ~224ms/tile: ~30% slower, more deliberate
     }
     anim = null;
     S.pos.x = nx; S.pos.y = ny;

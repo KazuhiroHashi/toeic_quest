@@ -268,9 +268,12 @@
         }
     });
 
-    // ---- open grass plain around 王都グロッサ (player complaint #1) ----
-    // Clear a generous disc (r=14) to plain: no mountains/water near the castle.
-    var CQX = 40, CQY = 128, CQR = 14;
+    // ---- small breathing space around 王都グロッサ (player complaint #2) ----
+    // Earlier the castle sat in a huge r=14 cleared disc ("城の周りに何もなさすぎ").
+    // Now clear only a tiny r=3 ring right at the gate (no mountains/water touching
+    // the door); from the 4th tile out the normal SW-plains terrain generated above
+    // (forests, sand, ridges, roads) is left intact so the surroundings stay varied.
+    var CQX = 40, CQY = 128, CQR = 3;
     for (var py = CQY - CQR; py <= CQY + CQR; py++)
       for (var px = CQX - CQR; px <= CQX + CQR; px++) {
         if (py < 0 || py >= OW_H || px < 0 || px >= OW_W) continue;

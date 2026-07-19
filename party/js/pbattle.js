@@ -256,7 +256,7 @@
       b.className = "on";
     } else b.className = "";
   }
-  function chainMult() { return 1 + Math.min((chain - 1) * 0.15, 0.6); }
+  function chainMult() { return 1 + Math.min((chain - 1) * 0.05, 0.15); } // gentle: max +15%
 
   function bpop(text, cls, anchorEl) {
     var d = document.createElement("div");
@@ -630,7 +630,7 @@
         if (isBoss) { await say("ボスからは 逃げられない！"); continue; }
         var pAgi = aliveMembers().reduce(function (s, m) { return s + m.agi; }, 0) / Math.max(1, aliveMembers().length);
         var fAgi = aliveFoes().reduce(function (s, f) { return s + f.agi; }, 0) / Math.max(1, aliveFoes().length);
-        if (Math.random() < clamp(0.55 + (pAgi - fAgi) * 0.03, 0.2, 0.92)) {
+        if (Math.random() < clamp(0.5 + (pAgi - fAgi) * 0.015, 0.4, 0.62)) {
           await say("うまく 逃げ切った！");
           result = "flee"; break;
         } else {
