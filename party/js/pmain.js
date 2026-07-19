@@ -94,17 +94,17 @@
       intro: ["四天王ハウルが 道をふさぐ！", "『聞く力は わたしが喰らった。\n　お前たちの叫びは 誰にも届かん！』"] });
   }
   function bossGag() {
-    return king({ base: "gen_l", name: "四天王ガグ", lv: 700, hp: 4600, atk: 76, def: 28, exp: 2000, quizLv: 650, bg: "tower2",
+    return king({ base: "king_gag", name: "四天王ガグ", lv: 700, hp: 4600, atk: 76, def: 28, exp: 2000, quizLv: 650, bg: "tower2",
       skills: [{ name: "沈黙の号令", power: 0.95, all: true }, { name: "言霊砕き", power: 1.3, all: false }],
       intro: ["四天王ガグが 立ちはだかる！", "『話す力は 我が手にある。\n　ハウルより 我のほうが 手強いぞ！』"] });
   }
   function bossBlank() {
-    return king({ base: "reaper", name: "四天王ブランク", lv: 800, hp: 5600, atk: 94, def: 30, exp: 2800, quizLv: 700, acts3: 3, bg: "zone6",
+    return king({ base: "king_blank", name: "四天王ブランク", lv: 800, hp: 5600, atk: 94, def: 30, exp: 2800, quizLv: 700, acts3: 3, bg: "zone6",
       skills: [{ name: "白紙化", power: 1.0, all: true }, { name: "記憶消去", power: 1.35, all: false }],
       intro: ["四天王ブランクが 現れた！", "『読む力は 消し去った。\n　お前たちの記憶も 白紙にしてやろう』"] });
   }
   function bossErase() {
-    return king({ base: "wizard", name: "四天王イレイズ", lv: 850, hp: 6800, atk: 112, def: 34, exp: 3600, quizLv: 750, acts3: 3, bg: "zone5",
+    return king({ base: "king_erase", name: "四天王イレイズ", lv: 850, hp: 6800, atk: 112, def: 34, exp: 3600, quizLv: 750, acts3: 3, bg: "zone5",
       skills: [{ name: "消し去る風", power: 1.05, all: true }, { name: "抹消の一撃", power: 1.4, all: false }],
       intro: ["最後の四天王 イレイズ！", "『書く力を 奪った我が、\n　四天王 最強よ。ここで 消えろ！』"] });
   }
@@ -115,7 +115,7 @@
       intro: ["ついに 現れた 沈黙王ミュートス。", "『ことばは 人を傷つける。\n　ならば いっそ 全て奪おう。\n　この静寂こそ 救いなのだ』"],
       bgm: "boss",
       enemies: [{
-        base: "maou", name: "沈黙王ミュートス", lv: 900,
+        base: "maou_mutos", name: "沈黙王ミュートス", lv: 900,
         hp: 4600, atk: 66, def: 38, agi: 22, mag: 74, exp: 5000, boss: true,
         skills: [{ name: "静寂の波動", power: 0.95, all: true }, { name: "言葉狩り", power: 1.3, all: false }], skillRate: 0.4,
         phases: [
@@ -132,7 +132,7 @@
       intro: ["『ふふ…まだ 終わらぬ』", "沈黙王ミュートスが 真の姿を現した！！", "『これが 静寂の 極み—！』"],
       bgm: "lastboss", // 専用曲があれば使用、無ければbossにフォールバック
       enemies: [{
-        base: "maou", name: "真・沈黙王ミュートス", lv: 900,
+        base: "maou_true", name: "真・沈黙王ミュートス", lv: 900,
         hp: 6800, atk: 88, def: 42, agi: 24, mag: 98, exp: 12000, boss: true,
         skills: [{ name: "絶対静寂", power: 1.1, all: true }, { name: "言葉狩り", power: 1.4, all: false }], skillRate: 0.44,
         phases: [

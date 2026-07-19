@@ -20,6 +20,18 @@
     } catch (e) {}
   }
 
+  // one-shot victory fanfare (assets/bgm/victory.mp3); falls back to the win SFX
+  var victoryAudio = null;
+  function victoryJingle() {
+    var src = (window.BGM_ART && window.BGM_ART.victory) || "../assets/bgm/victory.mp3";
+    try {
+      if (!victoryAudio) victoryAudio = new Audio(src);
+      victoryAudio.currentTime = 0; victoryAudio.volume = 0.7;
+      var p = victoryAudio.play();
+      if (p && p.catch) p.catch(function () { sfx("win"); });
+    } catch (e) { sfx("win"); }
+  }
+
   // ================= input + UI =================
   var INPUT = { stack: [] };
   INPUT.top = function () { return this.stack[this.stack.length - 1] || null; };
@@ -672,7 +684,7 @@
     var totalExp = 0;
     if (result === "win") {
       if (window.BGM) BGM.stop();
-      sfx("win");
+      victoryJingle();
       await say("たたかいに 勝った！");
       totalExp = foes.reduce(function (s, f) { return s + (f.exp || 0); }, 0);
       if (totalExp > 0) {
