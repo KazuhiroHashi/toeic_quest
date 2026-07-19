@@ -102,12 +102,12 @@
     partyheal: { name: "パーティヒール",  mp: 14, type: "heal",  power: 42, all: true, desc: "味方全員のHPを42ほど回復する" },
     revive:    { name: "リカバー",       mp: 18, type: "raise", power: 0.6, desc: "倒れた味方をHP6割で復活させる" },
     spark:     { name: "スパーク",       mp: 4,  type: "atk",   power: 26, elem: "thunder", desc: "敵1体に雷のダメージ" },
-    fireball:  { name: "ファイアボール",  mp: 7,  type: "atk",   power: 42, elem: "fire", desc: "敵1体に強い炎のダメージ" },
-    fire:      { name: "ファイア",       mp: 4,  type: "atk",   power: 30, elem: "fire", desc: "敵1体に炎のダメージ" },
-    frost:     { name: "フロスト",       mp: 5,  type: "atk",   power: 34, elem: "ice", desc: "敵1体に氷のダメージ" },
-    fira:      { name: "ファイアモア",    mp: 9,  type: "atk",   power: 38, elem: "fire", all: true, desc: "敵全体に炎のダメージ" },
-    thunder:   { name: "サンダー",       mp: 13, type: "atk",   power: 44, elem: "thunder", all: true, desc: "敵全体に雷のダメージ" },
-    holy:      { name: "ホーリー",       mp: 8,  type: "atk",   power: 54, elem: "holy", desc: "敵1体に聖なるダメージ（不死・悪魔に特効）" }
+    fireball:  { name: "ヒートランス",    mp: 7,  type: "atk",   power: 42, elem: "fire", desc: "敵1体に強い炎のダメージ" },
+    fire:      { name: "フレイムショット", mp: 4,  type: "atk",   power: 30, elem: "fire", desc: "敵1体に炎のダメージ" },
+    frost:     { name: "フロストショット", mp: 5,  type: "atk",   power: 34, elem: "ice", desc: "敵1体に氷のダメージ" },
+    fira:      { name: "フレイムバースト", mp: 9,  type: "atk",   power: 38, elem: "fire", all: true, desc: "敵全体に炎のダメージ" },
+    thunder:   { name: "ボルトストーム",  mp: 13, type: "atk",   power: 44, elem: "thunder", all: true, desc: "敵全体に雷のダメージ" },
+    holy:      { name: "セイクリッド",    mp: 8,  type: "atk",   power: 54, elem: "holy", desc: "敵1体に聖なるダメージ（不死・悪魔に特効）" }
   };
 
   // learn: { level: spellId | [spellId,...] }

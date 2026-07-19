@@ -654,11 +654,11 @@
       if (ev.enemy === "gen_r") {
         boss = { bg: "tower1", enemies: [{
           base: "gen_r", name: "四天王ハウル", lv: 600, hp: 3450, atk: 48, def: 22, agi: 20, mag: 56, exp: 1400, boss: true,
-          skills: [{ name: "轟音の叫び", power: 0.85, all: true }], skillRate: 0.3,
+          skills: [{ name: "轟音の叫び", power: 0.85, all: true }], skillRate: 0.28,
           phases: [
-            { at: 1.0, acts: 1, aoe: 0, charge: 0 },
-            { at: 0.66, acts: 2, aoe: 0.25, charge: 0, msg: ["ハウルの様子が変わった！\n『ほう…やるではないか！』", "ハウルの行動が2回になった！"] },
-            { at: 0.33, acts: 2, aoe: 0.3, charge: 0.4, msg: ["ハウルが本気を出した！！\n『この叫びで終わらせる！』", "（力をためたら防御だ！）"] }
+            { at: 1.0, acts: 1, aoe: 0.12, charge: 0 },
+            { at: 0.7, acts: 2, aoe: 0.22, charge: 0, msg: ["ハウルの様子が変わった！\n『ほう…やるではないか！』", "ハウルの行動が2回になった！"] },
+            { at: 0.35, acts: 2, aoe: 0.28, charge: 0.28, msg: ["ハウルが本気を出した！！\n『この叫びで終わらせる！』", "（力をためたら防御だ！）"] }
           ]
         }] };
       } else {

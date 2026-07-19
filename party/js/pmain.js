@@ -22,17 +22,19 @@
     snake: [{ name: "毒牙", power: 1.05, all: false }],
     goblin:[{ name: "石つぶて", power: 0.7, all: true }]
   };
-  function scaledFoe(id, over) {
+  function scaledFoe(id, over, str) {
+    str = str || 1;
     var d = window.ENEMY_BY_ID[id];
     return Object.assign({
       base: d.id, name: d.name, lv: d.lv,
-      hp: Math.round(d.hp * 1.5), atk: Math.round(d.atk * 1.15), def: Math.round(d.def * 1.05),
-      mag: Math.round(d.atk * 1.1), exp: Math.round(d.exp * 1.4),
+      hp: Math.round(d.hp * 1.5 * str), atk: Math.round(d.atk * 1.15 * str), def: Math.round(d.def * 1.05),
+      mag: Math.round(d.atk * 1.1 * str), exp: Math.round(d.exp * 1.4 * str),
       agi: Math.round(d.lv / 25),
       hasty: d.traits && d.traits.indexOf("hasty") >= 0,
       skills: FOE_SKILLS[id], skillRate: 0.32
     }, over || {});
   }
+  function af(id, str) { return scaledFoe(id, null, str); } // arena foe with strength scale
 
   function miniBoss(id, name, over) {
     var f = scaledFoe(id, over);
@@ -57,13 +59,33 @@
         base: "gen_r", name: "四天王ハウル", lv: 600,
         hp: 3450, atk: 48, def: 22, agi: 20, mag: 56, exp: 1400,
         boss: true,
-        skills: [{ name: "轟音の叫び", power: 0.85, all: true }], skillRate: 0.3,
+        skills: [{ name: "轟音の叫び", power: 0.85, all: true }], skillRate: 0.28,
         phases: [
-          { at: 1.0, acts: 1, aoe: 0, charge: 0 },
-          { at: 0.66, acts: 2, aoe: 0.25, charge: 0,
+          { at: 1.0, acts: 1, aoe: 0.12, charge: 0 },
+          { at: 0.7, acts: 2, aoe: 0.22, charge: 0,
             msg: ["ハウルの様子が変わった！\n『ほう… やるではないか！』", "ハウルの行動が 2回になった！"] },
-          { at: 0.33, acts: 2, aoe: 0.3, charge: 0.4,
+          { at: 0.35, acts: 2, aoe: 0.28, charge: 0.28,
             msg: ["ハウルが本気を出した！！\n『この叫びで 終わらせる！』", "（力をためたら 防御だ！）"] }
+        ]
+      }]
+    };
+  }
+
+  function bossGag() {
+    return {
+      bg: "tower2",
+      intro: [
+        "四天王ガグが 立ちはだかる！",
+        "『話す力は 我が手にある。\n　ハウルより 我のほうが 手強いぞ！』"
+      ],
+      enemies: [{
+        base: "gen_l", name: "四天王ガグ", lv: 700,
+        hp: 4800, atk: 52, def: 26, agi: 22, mag: 58, exp: 2000, boss: true,
+        skills: [{ name: "沈黙の号令", power: 0.9, all: true }, { name: "言霊砕き", power: 1.25, all: false }], skillRate: 0.36,
+        phases: [
+          { at: 1.0, acts: 1, aoe: 0.15, charge: 0 },
+          { at: 0.6, acts: 2, aoe: 0.3, charge: 0, msg: ["ガグの怒号が 響く！", "ガグの行動が 2回になった！"] },
+          { at: 0.3, acts: 2, aoe: 0.35, charge: 0.4, msg: ["『まだ 口を閉じぬか！』", "ガグが 力をためる—防御を！"] }
         ]
       }]
     };
@@ -110,24 +132,34 @@
     });
   }
   var GIFTS = ["herb", "elixir", "herb", "wing", "elixir", "herb", "elixir", "herb", "elixir"];
+  // party grows: Yu solo -> +Gai(b2) -> +Rina(b3) -> +Mia(b5). joinAfter[i] joins after round i.
+  var JOIN_AFTER = { 0: { id: "gai", line: "剣士のガイが 加勢した！\n「おれも 一緒に戦うぜ！」" },
+                     1: { id: "rina", line: "魔法使いのリナが 加勢した！\n「魔法で 援護するわ。」" },
+                     3: { id: "mia", line: "僧侶のミアが 加勢した！\n「回復は お任せください。」" } };
   function arenaRounds() {
     return [
-      { label: "第1戦", enc: { bg: "zone1", enemies: ["slime", "bat"].map(function (i) { return scaledFoe(i); }) } },
-      { label: "第2戦", enc: { bg: "zone2", enemies: ["rat", "goblin"].map(function (i) { return scaledFoe(i); }) } },
-      { label: "第3戦", enc: { bg: "zone2", enemies: ["bee", "mush", "wolf"].map(function (i) { return scaledFoe(i); }) } },
-      { label: "第4戦", enc: { bg: "zone3", enemies: ["ghost", "snake", "owl"].map(function (i) { return scaledFoe(i); }) } },
-      { label: "第5戦・中ボス", enc: { bg: "cave", enemies: [miniBoss("dragon", "洞窟の古竜", {})] } },
-      { label: "第6戦", enc: { bg: "zone3", enemies: ["wolf", "ghost", "lizard"].map(function (i) { return scaledFoe(i); }) } },
-      { label: "第7戦", enc: { bg: "zone4", enemies: ["lizard", "clock", "snake"].map(function (i) { return scaledFoe(i); }) } },
-      { label: "第8戦・四天王", enc: bossHowl() },
-      { label: "第9戦・中ボス", enc: { bg: "tower2", enemies: [miniBoss("gen_l", "四天王ガグ", { atk: 30 })] } },
+      { label: "第1戦", enc: { bg: "zone1", enemies: [af("slime", 1.4), af("bat", 1.4)] } },        // Yu solo
+      { label: "第2戦", enc: { bg: "zone2", enemies: [af("rat", 1.4), af("goblin", 1.4), af("bee", 1.4)] } }, // +Gai
+      { label: "第3戦", enc: { bg: "zone2", enemies: [af("wolf", 1.5), af("ghost", 1.5), af("snake", 1.5)] } }, // +Rina
+      { label: "第4戦", enc: { bg: "zone3", enemies: [af("mush", 1.8), af("owl", 1.8), af("ghost", 1.8), af("wolf", 1.8)] } },
+      { label: "第5戦・中ボス", enc: { bg: "cave", enemies: [miniBoss("dragon", "洞窟の古竜", {})] } }, // +Mia
+      { label: "第6戦", enc: { bg: "zone3", enemies: [af("lizard", 2.0), af("clock", 2.0), af("snake", 2.0)] } },
+      { label: "第7戦", enc: { bg: "zone4", enemies: [af("lizard", 2.3), af("wolf", 2.3), af("ghost", 2.3), af("owl", 2.3)] } },
+      { label: "第8戦・四天王ハウル", enc: bossHowl() },
+      { label: "第9戦・四天王ガグ", enc: bossGag() },
       { label: "最終戦・ラスボス", enc: bossMaou() }
     ];
   }
 
+  function arenaStartParty() {
+    var yu = window.PBATTLE.makeMember("yu", 5);
+    yu.bag = ["herb", "herb", "elixir"];
+    window.PBATTLE.setParty([yu]);
+  }
+
   async function runArena() {
     $("ptitle-screen").style.display = "none";
-    window.PBATTLE.demoParty(6); // arena party starts at Lv6, grows each round
+    arenaStartParty(); // Yu solo; companions join as the gauntlet goes
     var rounds = arenaRounds();
     for (var i = 0; i < rounds.length; i++) {
       var r = rounds[i];
@@ -140,13 +172,20 @@
       }
       if (i < rounds.length - 1) {
         window.PBATTLE.fullHeal();
-        var ups = window.PBATTLE.levelEveryone(i === 6 || i === 8 ? 3 : 2); // extra before bosses
+        var lv = window.PBATTLE.getParty()[0].lv;
+        var ups = window.PBATTLE.levelEveryone(i >= 6 ? 3 : 2); // level a bit faster near the bosses
         var gift = GIFTS[i] || "herb";
         var who = window.PBATTLE.giveItemToParty(gift);
         var giftName = gift === "herb" ? "ハーブティー" : gift === "elixir" ? "エナジーコーヒー" : "帰還の羽根ペン";
         var msg = "勝利！ パーティは 全回復した。\n" + (who ? who + "が『" + giftName + "』を拾った！" : "（道具袋は満杯だった）");
         if (ups.length) msg += "\nみんなの レベルが上がった！（Ｌｖ" + window.PBATTLE.getParty()[0].lv + "）";
         await gsay(msg);
+        // new companion joins for the next battle
+        var join = JOIN_AFTER[i];
+        if (join) {
+          var m = window.PBATTLE.addMember(join.id, window.PBATTLE.getParty()[0].lv);
+          if (m) { m.bag = ["herb", "elixir"]; await gsay(join.line); }
+        }
       } else {
         await gsay("沈黙王ミュートスを 打ち倒した！！\n\n〜 ことばの闘技場 制覇 〜\nおめでとう！");
       }
