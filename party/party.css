@@ -1,0 +1,127 @@
+/* WORD QUEST II - party battle prototype styles (extends ../css/style.css) */
+
+#ptitle-screen {
+  position: absolute; inset: 0; z-index: 60;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px;
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(60, 40, 120, .55), transparent 60%),
+    linear-gradient(180deg, #0a0c1e 0%, #05060f 100%);
+}
+#ptitle-logo {
+  font-size: 52px; font-weight: bold; line-height: 1.05; text-align: center;
+  letter-spacing: 6px; color: #fff;
+  text-shadow: 0 0 24px rgba(140, 120, 255, .7), 3px 3px 0 #201040;
+}
+#ptitle-sub { font-size: 14px; color: #b9c3ff; margin-bottom: 14px; letter-spacing: 2px; }
+
+/* ---------- battle screen ---------- */
+#pbattle-screen {
+  position: absolute; inset: 0;
+  display: none;
+  background: #000;
+  overflow: hidden;
+}
+#pbattle-bg {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, #1c2340 0%, #090c18 70%);
+  background-size: cover; background-position: center;
+}
+#pbattle-bg::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,.05) 55%, rgba(0,0,0,.72) 100%);
+}
+
+#penemy-row {
+  position: absolute; left: 0; right: 0; top: 7%;
+  height: 44%;
+  display: flex; align-items: flex-end; justify-content: center; gap: 2%;
+  z-index: 2;
+}
+.penemy { position: relative; text-align: center; transition: opacity .5s, transform .5s; }
+.penemy img {
+  width: 100%; height: auto; display: block;
+  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, .55));
+}
+.penemy .ptag {
+  font-size: 11px; color: #fff; text-shadow: 1px 1px 0 #000;
+  margin-bottom: 2px; white-space: nowrap;
+}
+.penemy .phpbar {
+  height: 6px; margin: 4px 10% 0; border-radius: 3px;
+  background: #222; border: 1px solid #000; overflow: hidden;
+}
+.penemy .phpbar > div { height: 100%; background: linear-gradient(90deg, #e33, #f96); transition: width .35s; }
+.penemy.dead { opacity: 0; transform: scale(.6) translateY(24px); pointer-events: none; }
+.penemy.hit { animation: pshake .18s; }
+.penemy.lunge { animation: lunge .38s ease-in-out; }
+.penemy.target::before {
+  content: "▼"; position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+  color: #ffd54a; font-size: 16px; animation: blink 0.8s infinite; z-index: 3;
+}
+@keyframes pshake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-7px); } 75% { transform: translateX(7px); }
+}
+
+/* boss phase flash */
+#pbattle-screen.phase-flash::after {
+  content: ""; position: absolute; inset: 0; z-index: 6; pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(255, 60, 60, .45), transparent 70%);
+  animation: phaseflash .9s ease-out forwards;
+}
+@keyframes phaseflash { 0% { opacity: 0; } 25% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ---------- party status strip ---------- */
+#pparty-strip {
+  position: absolute; left: 4px; right: 4px; bottom: 27%;
+  display: flex; gap: 4px; z-index: 3;
+}
+.pmember {
+  flex: 1; min-width: 0;
+  background: rgba(4, 6, 16, .92);
+  border: 2px solid #fff; border-radius: 8px;
+  padding: 4px 5px 5px;
+  font-size: 11px; line-height: 1.5;
+  transition: border-color .2s, box-shadow .2s;
+}
+.pmember .pname { font-weight: bold; font-size: 11.5px; white-space: nowrap; overflow: hidden; }
+.pmember .prole { color: #9ab; font-size: 9.5px; margin-left: 2px; }
+.pmember .phv { color: #cde; white-space: nowrap; }
+.pmember .phv b { color: #fff; }
+.pmember .pmv { color: #8fa8d0; white-space: nowrap; font-size: 10.5px; }
+.pmember .php { height: 5px; border-radius: 3px; background: #222; overflow: hidden; margin-top: 2px; }
+.pmember .php > div { height: 100%; background: linear-gradient(90deg, #2fd06a, #9be15d); transition: width .3s; }
+.pmember.low .php > div { background: linear-gradient(90deg, #e3a52f, #ffd54a); }
+.pmember.danger .php > div { background: linear-gradient(90deg, #e3352f, #ff7a5a); }
+.pmember.active { border-color: #ffd54a; box-shadow: 0 0 12px rgba(255, 213, 74, .5); }
+.pmember.dead { opacity: .45; border-color: #833; }
+.pmember.hitflash { animation: pmemhit .3s; }
+@keyframes pmemhit {
+  0%,100% { background: rgba(4, 6, 16, .92); }
+  40% { background: rgba(140, 20, 20, .95); }
+}
+.pmember.guarding .pname::after { content: "🛡"; margin-left: 3px; }
+
+/* windows */
+#pbattle-msg {
+  left: 8px; right: 8px; bottom: 8px; height: 24%;
+  z-index: 4;
+}
+#pbattle-cmd { left: 8px; bottom: 8px; z-index: 5; }
+#pbattle-sub { left: 150px; bottom: 8px; max-height: 44%; overflow-y: auto; z-index: 5; }
+
+#pchain-badge {
+  position: absolute; top: 6px; right: 8px; z-index: 5;
+  font-size: 13px; font-weight: bold; color: #ffd54a;
+  background: rgba(0, 0, 0, .6); border: 1px solid #ffd54a; border-radius: 999px;
+  padding: 3px 10px;
+  display: none;
+}
+#pchain-badge.on { display: block; animation: bpopin .25s; }
+@keyframes bpopin { 0% { transform: scale(.6); } 100% { transform: scale(1); } }
+
+@media (max-height: 700px) {
+  .pmember { font-size: 10px; }
+  #ptitle-logo { font-size: 42px; }
+}

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>WORD QUEST II - パーティ戦闘プロトタイプ</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="party.css">
+</head>
+<body>
+<div id="app">
+  <div id="game-wrap">
+    <div id="screen">
+      <!-- party battle -->
+      <div id="pbattle-screen">
+        <div id="pbattle-bg"></div>
+        <div id="penemy-row"></div>
+        <div id="pchain-badge"></div>
+        <div id="pbattle-msg" class="dq-window"></div>
+        <div id="pparty-strip"></div>
+        <div id="pbattle-cmd" class="dq-window menu-win"></div>
+        <div id="pbattle-sub" class="dq-window menu-win"></div>
+      </div>
+
+      <!-- quiz overlay (same ids as quiz.js expects) -->
+      <div id="quiz-overlay">
+        <div id="quiz-box" class="dq-window">
+          <div id="quiz-level-tag"></div>
+          <div id="quiz-word"></div>
+          <div id="quiz-hint"></div>
+          <div id="timer-bar-wrap"><div id="timer-bar"></div></div>
+          <div id="quiz-choices"></div>
+          <div id="quiz-result"></div>
+        </div>
+      </div>
+
+      <div id="fade-layer"></div>
+
+      <!-- demo menu -->
+      <div id="ptitle-screen">
+        <div id="ptitle-logo">WORD<br>QUEST II</div>
+        <div id="ptitle-sub">〜 沈黙の四天王（戦闘プロトタイプ）〜</div>
+        <button id="pbtn-zako" class="title-btn">ザコせん デモ</button>
+        <button id="pbtn-boss" class="title-btn">死闘デモ：四天王ハウル</button>
+        <button id="pbtn-bgm" class="title-btn">ＢＧＭ：ＯＦＦ</button>
+        <div id="title-copy">パーティ4人で戦え！　役割ごとに単語レベルがちがう。<br>連続正解で チェインボーナス！</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../data/vocab_400.js"></script>
+<script src="../data/vocab_500.js"></script>
+<script src="../data/vocab_600.js"></script>
+<script src="../data/vocab_700.js"></script>
+<script src="../data/vocab_800.js"></script>
+<script src="../data/vocab_900.js"></script>
+<script src="../data/enemies.js"></script>
+<script src="../js/bgm.js"></script>
+<script src="../js/quiz.js"></script>
+<script src="js/pbattle.js"></script>
+<script src="js/pmain.js"></script>
+</body>
+</html>

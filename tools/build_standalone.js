@@ -17,8 +17,11 @@ var srcDir = path.dirname(srcHtml);
 
 var html = fs.readFileSync(srcHtml, "utf8");
 var title = html.match(/<title>([^<]*)<\/title>/)[1];
-var cssPath = html.match(/<link rel="stylesheet" href="([^"]+)">/)[1];
-var css = fs.readFileSync(path.join(srcDir, cssPath), "utf8");
+var css = "";
+var cssRe = /<link rel="stylesheet" href="([^"]+)">/g, cm;
+while ((cm = cssRe.exec(html))) {
+  css += fs.readFileSync(path.join(srcDir, cm[1]), "utf8") + "\n";
+}
 
 // body content without the external script/link tags
 var body = html.match(/<body>([\s\S]*?)<script/)[1];

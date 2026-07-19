@@ -28,7 +28,7 @@
     a.volume = VOLUME;
     a.oncanplaythrough = function () { a.oncanplaythrough = null; cache[name] = a; cb(a); };
     a.onerror = function () { cache[name] = "no"; cb("no"); };
-    a.src = (window.BGM_ART && window.BGM_ART[name]) || "assets/bgm/" + name + ".mp3";
+    a.src = (window.BGM_ART && window.BGM_ART[name]) || (window.ASSET_BASE || "") + "assets/bgm/" + name + ".mp3";
   }
 
   function fadeOut(a) {
