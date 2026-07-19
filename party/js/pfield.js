@@ -50,10 +50,11 @@
   var ITEM_PRICE = { herb: 12, wing: 40, elixir: 60 };
 
   // ---------- encounter tables (chapter-1 scope) ----------
+  // world is 216x176, split at its center (see maps_wq2.js OW_CX/OW_CY)
   function region(x, y) {
-    if (x < 52 && y >= 38) return "sw";
-    if (x >= 52 && y < 40) return "ne";
-    if (x >= 52 && y >= 40) return "se";
+    if (x < 108 && y >= 88) return "sw";
+    if (x >= 108 && y < 88) return "ne";
+    if (x >= 108 && y >= 88) return "se";
     return "nw";
   }
   var PACKS = {

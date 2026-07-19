@@ -4,7 +4,7 @@
 //  = wall   , floor   - dungeon floor  ^ stairs up/exit  v stairs down/exit
 //  c chest  C castle-entrance  T town-entrance  D cave-entrance  U tower-entrance
 //
-// Maps: world (96x80), castle 王都グロッサ (40x30), village 鋼の村 (30x24),
+// Maps: world (216x176), castle 王都グロッサ (40x30), village 鋼の村 (30x24),
 //       cave1_f1..f3 旅立ちの洞窟 (40x40 x3), tower_f1..f4 音の塔 (36x36 x4)
 // Every map: { id, name, kind, w, h, grid, rows, entry, exit, events }
 // (grid === rows: both point at the same array of row strings.)
@@ -78,30 +78,36 @@
         if (walkable(g[yy][xx]) && !seen[xx + "," + yy]) g[yy][xx] = fill;
   }
 
-  // ---------- overworld: グロッサリア大陸 (96 x 80) ----------
-  // 4 regions around a central sea:
-  //   NW snow/rock  | NE forest/mountain (鋼の村, 音の塔)
-  //   --------------+---------------------------------
-  //   SW plains (王都グロッサ, 旅立ちの洞窟) | SE desert
-  // Rivers run N/S/E/W from the central sea; one bridge per river = chokepoints.
-  var OW_W = 96, OW_H = 80;
+  // ---------- overworld: グロッサリア大陸 (216 x 176) ----------
+  // Enlarged ~5x per player feedback ("フィールドが狭すぎる。この5倍はあっても良い").
+  // Same 4-region layout around a central sea (sea + 4 rivers cut the continent
+  // into quadrants joined only by bridges = inter-region chokepoints):
+  //   NW snow/rock            | NE forest/mountain (鋼の村 T, 音の塔 U)
+  //   ------------------------+-----------------------------------------
+  //   SW plains (王都 C, 洞窟 D) | SE desert
+  // Rivers run N/S/E/W from the central sea; one bridge per river. Roads cut
+  // passes through the mountain ridges and connect all four entrances.
+  var OW_W = 216, OW_H = 176;
+
+  // region split point (kept in sync with pfield.js region()/encounter tables)
+  var OW_CX = 108, OW_CY = 88;
 
   function buildWorld() {
     var g = newGrid(OW_W, OW_H, "w");
     var rnd = makeRng(20260719);
 
-    // continent
-    rect(g, 4, 3, 91, 76, ".");
+    // continent (leaves a water margin for an irregular coastline)
+    rect(g, 6, 5, 209, 170, ".");
 
-    // coastline shaping (bays + trimmed corners)
-    rect(g, 4, 3, 14, 6, "w"); rect(g, 4, 3, 7, 10, "w");        // NW corner
-    rect(g, 80, 3, 91, 5, "w"); rect(g, 88, 3, 91, 12, "w");     // NE corner
-    rect(g, 4, 70, 10, 76, "w"); rect(g, 4, 66, 6, 76, "w");     // SW corner
-    rect(g, 84, 70, 91, 76, "w"); rect(g, 88, 62, 91, 76, "w");  // SE corner
-    rect(g, 4, 20, 6, 32, "w");                                   // west bay
-    rect(g, 89, 28, 91, 46, "w");                                 // east bay
-    rect(g, 42, 74, 58, 76, "w");                                 // south bay
-    rect(g, 44, 3, 52, 4, "w");                                   // north river mouth
+    // coastline shaping (bays + trimmed corners so the outline is irregular)
+    rect(g, 6, 5, 34, 12, "w");  rect(g, 6, 5, 16, 24, "w");        // NW corner
+    rect(g, 184, 5, 209, 11, "w"); rect(g, 198, 5, 209, 28, "w");   // NE corner
+    rect(g, 6, 158, 24, 170, "w"); rect(g, 6, 148, 13, 170, "w");   // SW corner
+    rect(g, 190, 158, 209, 170, "w"); rect(g, 198, 140, 209, 170, "w"); // SE corner
+    rect(g, 6, 46, 12, 74, "w");                                    // west bay
+    rect(g, 203, 62, 209, 104, "w");                               // east bay
+    rect(g, 92, 165, 130, 170, "w");                              // south bay
+    rect(g, 40, 30, 46, 44, "w"); rect(g, 150, 118, 158, 132, "w"); // inland lakes
 
     // region terrain (seeded scatter; only decorates base grass)
     function scatter(x0, y0, x1, y1, fn) {
@@ -113,77 +119,86 @@
         }
     }
     // NW: snowfield (s) + rock (m) + sparse dead trees
-    scatter(4, 3, 47, 39, function (r) {
+    scatter(6, 5, 107, 87, function (r) {
       return r < 0.30 ? "s" : r < 0.40 ? "m" : r < 0.45 ? "t" : null;
     });
     // NE: deep forest + mountains
-    scatter(48, 3, 91, 39, function (r) {
+    scatter(109, 5, 209, 87, function (r) {
       return r < 0.36 ? "t" : r < 0.46 ? "m" : null;
     });
     // SW: green plains, light woods
-    scatter(4, 40, 47, 76, function (r) {
+    scatter(6, 89, 107, 170, function (r) {
       return r < 0.13 ? "t" : r < 0.17 ? "s" : null;
     });
     // SE: desert - sand base with dunes and rare oases
-    rect(g, 48, 41, 91, 76, "s");
-    for (var y = 41; y <= 76; y++)
-      for (var x = 48; x <= 91; x++) {
+    rect(g, 109, 89, 209, 170, "s");
+    for (var y = 89; y <= 170; y++)
+      for (var x = 109; x <= 209; x++) {
         if (g[y][x] !== "s") continue;
         var r = rnd();
         if (r < 0.06) g[y][x] = ".";
         else if (r < 0.12) g[y][x] = "m";
       }
 
-    // mountain ridges shaping routes
-    rect(g, 10, 18, 26, 19, "m");                       // NW ridge (road cuts a pass)
-    rect(g, 30, 8, 42, 9, "m");                          // NW north ridge
-    rect(g, 20, 26, 34, 27, "m");                        // NW south ridge
-    rect(g, 58, 20, 67, 21, "m");                        // NE ridge west half
-    rect(g, 73, 20, 88, 21, "m");                        // NE ridge east half (pass at x68-72)
-    rect(g, 54, 28, 60, 34, "m");                        // NE massif
-    rect(g, 82, 24, 88, 25, "m");                        // ridge above the tower
-    rect(g, 24, 64, 26, 74, "m");                        // SW divider near the cave
-    rect(g, 56, 54, 58, 62, "m");                        // SE dune ridges
-    rect(g, 66, 48, 74, 49, "m");
-    rect(g, 70, 58, 78, 59, "m");
+    // mountain ridges shaping routes (roads cut passes where they cross)
+    // NW
+    rect(g, 22, 40, 62, 41, "m");                       // ridge (road pass @ x35)
+    rect(g, 60, 55, 92, 56, "m");                       // south ridge
+    rect(g, 30, 16, 58, 17, "m");                       // north ridge
+    rect(g, 14, 55, 15, 82, "m");                       // west spur
+    // NE
+    rect(g, 120, 44, 162, 45, "m");                     // ridge (road pass @ x150)
+    rect(g, 132, 14, 152, 15, "m");                     // north ridge above village
+    rect(g, 184, 44, 206, 45, "m");                     // ridge north of tower
+    rect(g, 168, 22, 169, 58, "m");                     // massif spur
+    // SW
+    rect(g, 30, 110, 70, 111, "m");                     // plains divider
+    rect(g, 85, 118, 86, 158, "m");                     // east spur near the cave road
+    rect(g, 18, 128, 42, 129, "m");
+    // SE
+    rect(g, 140, 108, 182, 109, "m");                   // dune ridge
+    rect(g, 120, 148, 160, 149, "m");                   // dune ridge
+    rect(g, 176, 120, 177, 150, "m");
 
-    // central sea (ellipse) + four rivers (1 tile wide)
-    for (var sy = 27; sy <= 53; sy++)
-      for (var sx = 30; sx <= 66; sx++) {
-        var dx = (sx - 48) / 17, dy = (sy - 40) / 12;
-        if (dx * dx + dy * dy <= 1) g[sy][sx] = "w";
+    // central sea (ellipse, center OW_CX/OW_CY) + four rivers (1 tile wide)
+    for (var ey = 60; ey <= 116; ey++)
+      for (var ex = 68; ex <= 148; ex++) {
+        var dx = (ex - OW_CX) / 40, dy = (ey - OW_CY) / 28;
+        if (dx * dx + dy * dy <= 1) g[ey][ex] = "w";
       }
-    rect(g, 4, 40, 31, 40, "w");    // west river
-    rect(g, 65, 40, 91, 40, "w");   // east river
-    rect(g, 48, 3, 48, 28, "w");    // north river
-    rect(g, 48, 52, 48, 76, "w");   // south river
+    rect(g, 6, OW_CY, 68, OW_CY, "w");        // west river  (coast -> sea)
+    rect(g, 148, OW_CY, 209, OW_CY, "w");     // east river  (sea -> coast)
+    rect(g, OW_CX, 5, OW_CX, 60, "w");        // north river (coast -> sea)
+    rect(g, OW_CX, 116, OW_CX, 170, "w");     // south river (sea -> coast)
 
-    // bridges = chokepoints between the 4 regions
-    put(g, 14, 40, "b");   // SW <-> NW
-    put(g, 48, 12, "b");   // NW <-> NE
-    put(g, 48, 64, "b");   // SW <-> SE
-    put(g, 80, 40, "b");   // SE <-> NE
+    // bridges = the only crossings between the 4 regions
+    put(g, 35, OW_CY, "b");    // NW <-> SW  (west river)
+    put(g, 175, OW_CY, "b");   // NE <-> SE  (east river)
+    put(g, OW_CX, 30, "b");    // NW <-> NE  (north river)
+    put(g, OW_CX, 145, "b");   // SW <-> SE  (south river)
 
-    // roads connecting castle / village / cave / tower through the bridges
-    road(g, [[18, 57], [18, 44], [14, 44], [14, 34]], ".");            // castle -> west bridge
-    road(g, [[14, 34], [14, 12], [47, 12]], ".");                       // NW -> north bridge
-    road(g, [[49, 12], [70, 12]], ".");                                 // north bridge -> village
-    road(g, [[70, 13], [70, 26], [86, 26], [86, 29]], ".");             // village -> tower (ridge pass)
-    road(g, [[18, 59], [18, 60], [44, 60], [44, 64], [47, 64]], ".");   // castle -> south bridge
-    road(g, [[49, 64], [80, 64], [80, 41]], ".");                       // desert road -> east bridge
-    road(g, [[80, 39], [80, 36], [86, 36], [86, 31]], ".");             // east bridge -> tower
-    road(g, [[18, 60], [30, 60], [30, 70], [37, 70]], ".");             // castle -> cave
+    // winding roads connecting castle / village / cave / tower through bridges.
+    // River crossings run perpendicular through the bridge tile (road() leaves
+    // 'w'/'b' intact, so a road column threads the bridge and links both banks).
+    road(g, [[40, 129], [40, 152], [72, 152], [72, 156]], ".");         // castle -> cave (SW)
+    road(g, [[40, 127], [35, 127], [35, 86]], ".");                     // castle -> west bridge -> NW
+    road(g, [[35, 86], [35, 30], [110, 30]], ".");                      // NW -> north bridge -> NE
+    road(g, [[110, 30], [150, 30], [150, 26]], ".");                    // north bridge -> village
+    road(g, [[150, 27], [150, 68], [192, 68]], ".");                    // village -> tower (ridge pass)
+    road(g, [[192, 69], [192, 86], [175, 86], [175, 90]], ".");         // tower -> east bridge -> SE
+    road(g, [[175, 90], [175, 130], [130, 130], [130, 145], [106, 145]], "."); // SE -> south bridge -> SW
+    road(g, [[106, 145], [106, 131], [41, 131]], ".");                  // south bridge -> back to castle (loop)
 
     // keep exit landings walkable
-    [[18, 59], [70, 13], [38, 71], [86, 31]].forEach(function (p) {
+    [[40, 129], [150, 27], [72, 157], [192, 69]].forEach(function (p) {
       g[p[1]][p[0]] = ".";
     });
 
-    // entrances
-    put(g, 18, 58, "C");   // 王都グロッサ
-    put(g, 70, 12, "T");   // 鋼の村
-    put(g, 38, 70, "D");   // 旅立ちの洞窟 (chapter 1)
-    put(g, 86, 30, "U");   // 音の塔 (chapter 2)
+    // entrances (spread across the enlarged map)
+    put(g, 40, 128, "C");    // 王都グロッサ (SW plains)
+    put(g, 150, 26, "T");    // 鋼の村 (NE forest)
+    put(g, 72, 156, "D");    // 旅立ちの洞窟 (SW, chapter 1)
+    put(g, 192, 68, "U");    // 音の塔 (NE, chapter 2)
 
     return g;
   }
@@ -516,13 +531,13 @@
     world: {
       id: "world", name: "グロッサリア大陸", kind: "world",
       g: world,
-      start: { x: 18, y: 59 },
-      entry: { x: 18, y: 59 },
+      start: { x: 40, y: 129 },
+      entry: { x: 40, y: 129 },
       events: [
-        { type: "enter", x: 18, y: 58, map: "castle", tx: 20, ty: 28 },
-        { type: "enter", x: 70, y: 12, map: "village", tx: 15, ty: 22 },
-        { type: "enter", x: 38, y: 70, map: "cave1_f1", tx: 1, ty: 34 },
-        { type: "enter", x: 86, y: 30, map: "tower_f1", tx: 1, ty: 30 }
+        { type: "enter", x: 40, y: 128, map: "castle", tx: 20, ty: 28 },
+        { type: "enter", x: 150, y: 26, map: "village", tx: 15, ty: 22 },
+        { type: "enter", x: 72, y: 156, map: "cave1_f1", tx: 1, ty: 34 },
+        { type: "enter", x: 192, y: 68, map: "tower_f1", tx: 1, ty: 30 }
       ]
     },
 
@@ -530,7 +545,7 @@
       id: "castle", name: "王都グロッサ", kind: "town",
       g: castleG,
       entry: { x: 20, y: 28 },
-      exit: { map: "world", x: 18, y: 59 },
+      exit: { map: "world", x: 40, y: 129 },
       events: [
         { type: "npc", x: 20, y: 4, icon: "👑",
           text: ["国王グロッサ\n『勇者ユウよ…この都から\n　人々の《声》が消えていく。\n　沈黙王ミュートスの仕業だ。\n　まずは南東の洞窟へ向かい\n　旅の心得を身につけるのだ！』"] },
@@ -563,7 +578,7 @@
       id: "village", name: "鋼の村", kind: "town",
       g: villageG,
       entry: { x: 15, y: 22 },
-      exit: { map: "world", x: 70, y: 13 },
+      exit: { map: "world", x: 150, y: 27 },
       events: [
         { type: "npc", x: 6, y: 8, icon: "⚔️",
           shop: { kind: "weapon", items: ["w2", "w3", "a2"] },
@@ -585,7 +600,7 @@
       id: "cave1_f1", name: "旅立ちの洞窟 B1", kind: "dungeon", dark: true,
       g: c1.g, zone: 1,
       entry: { x: 1, y: 34 },
-      exit: { map: "world", x: 38, y: 71 },
+      exit: { map: "world", x: 72, y: 157 },
       events: [
         { type: "stairs", x: 35, y: 1, map: "cave1_f2", tx: 34, ty: 1 },
         { type: "gate", x: 19, y: 37, needs: "cave_key",
@@ -627,7 +642,7 @@
       id: "tower_f1", name: "音の塔 1F", kind: "dungeon", dark: false,
       g: t1.g, zone: 2,
       entry: { x: 1, y: 30 },
-      exit: { map: "world", x: 86, y: 31 },
+      exit: { map: "world", x: 192, y: 69 },
       events: [
         { type: "stairs", x: 31, y: 1, map: "tower_f2", tx: 30, ty: 1 },
         { type: "gate", x: 17, y: 33, needs: "tower_key",
