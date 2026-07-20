@@ -138,8 +138,8 @@
     fira:      { name: "フレイムバースト", mp: 9,  type: "atk",   power: 40, elem: "fire", all: true, quizLv: 600, desc: "敵全体に炎のダメージ" },
     thunder:   { name: "ボルトストーム",  mp: 13, type: "atk",   power: 46, elem: "thunder", all: true, quizLv: 700, desc: "敵全体に雷のダメージ" },
     frostnova: { name: "フロストノヴァ",  mp: 14, type: "atk",   power: 48, elem: "ice", all: true, quizLv: 750, desc: "敵全体に氷のダメージ" },
-    inferno:   { name: "インフェルノ",    mp: 20, type: "atk",   power: 66, elem: "fire", all: true, quizLv: 900, desc: "敵全体に灼熱の大ダメージ" },
-    plasma:    { name: "プラズマストーム", mp: 22, type: "atk",   power: 68, elem: "thunder", all: true, quizLv: 900, desc: "敵全体に雷の大ダメージ" }
+    inferno:   { name: "インフェルノ",    mp: 20, type: "atk",   power: 72, elem: "fire", all: true, quizLv: 900, desc: "敵全体に灼熱の大ダメージ" },
+    plasma:    { name: "プラズマストーム", mp: 24, type: "atk",   power: 80, elem: "thunder", all: true, quizLv: 900, desc: "敵全体に雷の特大ダメージ（リナの奥義）" }
   };
 
   // learn: { level: spellId | [spellId,...] } — casters gain more spells as they level up
@@ -201,6 +201,12 @@
   }
   function atkOf(m) { return m.atk + (m.gearAtk || 0); }
   function defOf(m) { return m.def + (m.gearDef || 0); }
+  // magic attack power — like atk, it scales with level so spells don't fall off.
+  // mages scale hardest; warriors barely cast anyway.
+  function magOf(m) {
+    var per = m.role === "まほうつかい" ? 3.6 : m.role === "そうりょ" ? 2.2 : m.role === "ゆうしゃ" ? 2.0 : 1.6;
+    return Math.round(m.lv * per);
+  }
 
   // grant exp to one member, return {gained, ups:[{lv, learned:[names]}]}
   function gainExp(m, amount) {
@@ -502,7 +508,7 @@
       for (var k = 0; k < targets.length; k++) {
         var fi = targets[k], foe = foes[fi];
         if (fi < 0 || foe.hp <= 0) continue;
-        var sd = Math.round(sp.power * (0.85 + Math.random() * 0.3) * chainMult());
+        var sd = Math.round((sp.power + magOf(p)) * (0.85 + Math.random() * 0.3) * chainMult());
         if (qs.elapsed <= 2) sd = Math.round(sd * 1.3);
         var weak = sp.elem && window.WEAK && window.WEAK[foe.base] === sp.elem;
         if (weak) { sd = Math.round(sd * 1.5); anyWeak = true; bpop("ばつぐん！", "weak", $("penemy-" + fi)); }
