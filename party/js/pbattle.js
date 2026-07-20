@@ -651,7 +651,13 @@
   async function start(encounter) {
     party = window.PBATTLE.getParty();
     foes = encounter.enemies.map(function (e) {
-      return Object.assign({ phase: 0, charging: false, maxhp: e.hp }, e);
+      var f = Object.assign({ phase: 0, charging: false, maxhp: e.hp }, e);
+      if (window.WQ2_EASY) { // やさしいモード: 敵の攻撃とHPを控えめに
+        f.atk = Math.round(f.atk * 0.72);
+        f.hp = Math.round(f.hp * 0.78); f.maxhp = f.hp;
+        if (f.mag) f.mag = Math.round(f.mag * 0.72);
+      }
+      return f;
     });
     // base difficulty of normal attacks this battle (spells set their own)
     battleQuizLv = encounter.quizLv || (foes[0] ? foes[0].lv : 500);
@@ -745,7 +751,7 @@
         }
       }
     } else if (result === "lose") {
-      if (window.BGM) BGM.stop();
+      if (window.BGM) { BGM.stop(); BGM.playAny(["gameover"]); } // 全滅曲（無ければ無音）
       await say("全滅してしまった…");
     }
     screenEl.style.display = "none";

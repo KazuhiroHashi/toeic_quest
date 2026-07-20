@@ -3,6 +3,7 @@
   "use strict";
   window.ASSET_BASE = "../"; // bgm.js loads from ../assets/bgm/
   window.LEVEL_LABEL = "スコア"; // 公開用: TOEICはETS商標のため表示は「スコア600 レベル」形式にする
+  try { window.WQ2_EASY = localStorage.getItem("wq2_easy") === "1"; } catch (e) { window.WQ2_EASY = false; }
 
   // minimal state for quiz.js (study log + combo)
   window.G = { study: { missed: {}, answered: 0, correct: 0 }, combo: 0 };
@@ -254,7 +255,17 @@
         }
       } else {
         if (window.BGM) BGM.playAny(["ending", "title"]); // victory epilogue music
-        await gsay("真・沈黙王ミュートスを 打ち倒した！！\n\n〜 ことばの闘技場 制覇 〜\nおめでとう！\n（タイトルで たんごちょうを 見られます）");
+        var lv = window.PBATTLE.getParty()[0].lv;
+        var ending = [
+          "真・沈黙王ミュートスは\nまばゆい光の中へ 消えていった…。",
+          "『ことばは ときに 人を傷つける。\n　だが それ以上に——\n　人と人を つなぐ 力になる。』",
+          "奪われていた ことばが\n世界に 戻っていく。\n人々の 声が、笑い声が、\n少しずつ 街に あふれていった。",
+          "ユウたちは たがいの顔を 見合わせ、\n静かに うなずいた。\nもう 多くの言葉は いらなかった。",
+          "そして いつか——\nきみが おぼえた 一つ一つの単語が、\n誰かに 何かを 伝える日が くる。",
+          "〜 ことばの闘技場 制覇 〜\n〜 WORD QUEST II ・ 完 〜\n\n最終Ｌｖ" + lv + "　おめでとう！ そして ありがとう。",
+          "（タイトルの「たんごちょう」で\n　これまでに 出会った単語を 復習できます）"
+        ];
+        for (var e = 0; e < ending.length; e++) await gsay(ending[e]);
       }
     }
     if (window.BGM) BGM.stop();
@@ -266,6 +277,15 @@
   function refreshBgmBtn() {
     $("pbtn-bgm").textContent = "ＢＧＭ：" + (window.BGM && BGM.isEnabled() ? "ＯＮ" : "ＯＦＦ");
   }
+  function refreshDiffBtn() {
+    $("pbtn-diff").textContent = "難易度：" + (window.WQ2_EASY ? "やさしい" : "ふつう");
+  }
+  $("pbtn-diff").addEventListener("click", function () {
+    $("pbtn-diff").blur();
+    window.WQ2_EASY = !window.WQ2_EASY;
+    try { localStorage.setItem("wq2_easy", window.WQ2_EASY ? "1" : "0"); } catch (e) {}
+    refreshDiffBtn();
+  });
 
   $("pbtn-arena").addEventListener("click", function () { $("pbtn-arena").blur(); runArena(); });
   $("pbtn-zukan").addEventListener("click", function () { $("pbtn-zukan").blur(); if (window.PFIELD) window.PFIELD.openZukan(); });
@@ -275,15 +295,15 @@
     $("pbtn-field").blur();
     if (!fieldArmed) {
       fieldArmed = true;
-      $("pbtn-field").textContent = "作成中です　もう一度押すと試遊";
+      $("pbtn-field").textContent = "制作中です　もう一度押すと試遊";
       setTimeout(function () {
         fieldArmed = false;
-        $("pbtn-field").textContent = "ストーリーモード（作成中）";
+        $("pbtn-field").textContent = "※ ストーリーモードは 制作中です";
       }, 4000);
       return;
     }
     fieldArmed = false;
-    $("pbtn-field").textContent = "ストーリーモード（作成中）";
+    $("pbtn-field").textContent = "※ ストーリーモードは 制作中です";
     window.PFIELD.start(false); // continues the save if one exists
   });
   $("pbtn-bgm").addEventListener("click", function () {
@@ -303,5 +323,6 @@
   })();
 
   refreshBgmBtn();
+  refreshDiffBtn();
   if (window.BGM) BGM.playAny(["title"]);
 })();
