@@ -204,8 +204,8 @@
   // 11 rounds: zako(1-4) -> 中ボス竜(5) -> 四天王4連戦(6-9) -> ラスボス(10) -> 真ラスボス(11)
   function arenaRounds() {
     return [
-      { label: "第1戦", enc: { bg: "zone1", quizLv: 400, enemies: [af("rat", 1.4), af("bat", 1.4)] } },        // Yu solo
-      { label: "第2戦", enc: { bg: "zone2", quizLv: 450, enemies: [af("worm", 1.4), af("goblin", 1.4), af("bee", 1.4)] } }, // +Gai
+      { label: "第1戦", enc: { bg: "zone1", quizLv: 400, enemies: [af("bee", 1.4), af("bat", 1.4)] } },        // Yu solo（スペルバード＝青 ＋ アルファベットひよこ＝黄）
+      { label: "第2戦", enc: { bg: "zone2", quizLv: 450, enemies: [af("worm", 1.4), af("goblin", 1.4), af("rat", 1.4)] } }, // +Gai（ペンシルラビット登場）
       { label: "第3戦", enc: { bg: "zone3", quizLv: 500, enemies: [af("wolf", 1.5), af("ghost", 1.5), af("snake", 1.5)] } }, // +Rina
       { label: "第4戦", enc: { bg: "zone4", quizLv: 550, enemies: [af("mush", 1.9), af("owl", 1.9), af("ghost", 1.9), af("wolf", 1.9)] } },
       { label: "第5戦・中ボス 洞窟の古竜", enc: dragonEnc() }, // +Mia
