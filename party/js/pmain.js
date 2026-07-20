@@ -49,11 +49,12 @@
     return f;
   }
 
-  // mid-boss dragon (round 5) — a touch stronger: +30% HP, +20% ATK
+  // mid-boss dragon (round 5) — tanky (+30% HP) but hits moderately:
+  // fixed atk 74 -> 単純攻撃 ~55 / 鎮まれ(全体) ~48（以前は128で90+も出て強すぎた）
   function dragonEnc() {
     var d = miniBoss("dragon", "洞窟の古竜");
     d.hp = Math.round(d.hp * 1.3); d.maxhp = d.hp;
-    d.atk = Math.round(d.atk * 1.2); d.mag = Math.round(d.atk * 1.1);
+    d.atk = 74; d.mag = Math.round(d.atk * 1.1);
     return { bg: "cave", quizLv: 600, bgm: "midboss", enemies: [d] };
   }
 
@@ -103,7 +104,7 @@
   }
   function bossGag() {
     return king({ base: "king_gag", name: "四天王ガグ", lv: 700, hp: 3910, atk: 76, def: 28, exp: 2000, quizLv: 650, bg: "tower2", bgm: "midboss2",
-      skills: [{ name: "沈黙の号令", power: 0.95, all: true }, { name: "言霊砕き", power: 1.3, all: false }],
+      skills: [{ name: "沈黙の号令", power: 0.5, all: true }, { name: "言霊砕き", power: 1.3, all: false }],
       intro: ["四天王ガグが 立ちはだかる！", "『話す力は 我が手にある。\n　その声も この地で 奪わせてもらう。』"] });
   }
   function bossBlank() {

@@ -7,6 +7,8 @@
   function $(id) { return document.getElementById(id); }
   function rnd(n) { return Math.floor(Math.random() * n); }
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  // heal amounts wobble +/-3 around the listed value
+  function healJitter(p) { return Math.max(1, p + rnd(7) - 3); }
 
   // ================= SFX =================
   var sfxCache = {};
@@ -111,7 +113,7 @@
   // quizLv = the QUESTION difficulty this spell asks (fixed per spell, NOT the enemy's level).
   var SPELLS = {
     heal:      { name: "ヒール",        mp: 4,  type: "heal",  power: 34, quizLv: 400, desc: "味方1人のHPを34ほど回復する" },
-    healmore:  { name: "ヒールモア",     mp: 8,  type: "heal",  power: 80, quizLv: 600, desc: "味方1人のHPを80ほど回復する" },
+    healmore:  { name: "ヒールモア",     mp: 8,  type: "heal",  power: 88, quizLv: 600, desc: "味方1人のHPを85前後 回復する" },
     fullheal:  { name: "フルヒール",     mp: 14, type: "heal",  power: 9999, full: true, quizLv: 700, desc: "味方1人のHPを全回復する" },
     partyheal: { name: "パーティヒール",  mp: 14, type: "heal",  power: 50, all: true, quizLv: 600, desc: "味方全員のHPを50ほど回復する" },
     sanctuary: { name: "サンクチュアリ",  mp: 26, type: "heal",  power: 90, all: true, quizLv: 800, desc: "味方全員のHPを90ほど回復する" },
@@ -457,13 +459,14 @@
       if (sp.type === "heal") {
         sfx("heal");
         if (sp.all) {
-          aliveMembers().forEach(function (m) { m.hp = Math.min(m.maxhp, m.hp + sp.power); });
+          var amt = healJitter(sp.power);
+          aliveMembers().forEach(function (m) { m.hp = Math.min(m.maxhp, m.hp + amt); });
           renderParty(-1);
-          await say("優しい光が降りそそぐ！\nみんなのＨＰが " + sp.power + " 回復！");
+          await say("優しい光が降りそそぐ！\nみんなのＨＰが " + amt + " 回復！");
         } else {
           var tm = party[a.target];
           var before = tm.hp;
-          tm.hp = sp.full ? tm.maxhp : Math.min(tm.maxhp, tm.hp + sp.power);
+          tm.hp = sp.full ? tm.maxhp : Math.min(tm.maxhp, tm.hp + healJitter(sp.power));
           renderParty(-1);
           await say(sp.full ? tm.name + "のＨＰが 全回復した！" : tm.name + "のＨＰが " + (tm.hp - before) + " 回復した！");
         }
