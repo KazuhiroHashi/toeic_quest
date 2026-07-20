@@ -22,6 +22,18 @@
     } catch (e) {}
   }
 
+  // element-aware spell sound: play magic_<elem> if it exists, else the generic magic sfx
+  function sfxEl(elem) {
+    var name = elem ? "magic_" + elem : "magic";
+    if (window.SFX_ART) { sfx(window.SFX_ART[name] ? name : "magic"); return; } // inline build
+    try { // file build: try the element file, fall back to generic on 404
+      var a = sfxCache[name] || (sfxCache[name] = new Audio("../assets/sfx/" + name + ".mp3"));
+      a.volume = 0.7; a.onerror = function () { sfx("magic"); };
+      a.currentTime = 0;
+      var p = a.play(); if (p && p.catch) p.catch(function () { sfx("magic"); });
+    } catch (e) { sfx("magic"); }
+  }
+
   // one-shot victory fanfare (assets/bgm/victory.mp3); falls back to the win SFX
   var victoryAudio = null;
   function victoryJingle() {
@@ -485,7 +497,7 @@
       var fxc = sp.elem === "fire" ? "rgba(255,150,60,.9)" : sp.elem === "thunder" ? "rgba(255,230,90,.9)" : sp.elem === "ice" ? "rgba(150,220,255,.9)" : sp.elem === "holy" ? "rgba(255,250,200,.95)" : "rgba(200,160,255,.9)";
       var targets = sp.all ? foes.map(function (f, i) { return i; }).filter(function (i) { return foes[i].hp > 0; })
                            : [foes[a.target] && foes[a.target].hp > 0 ? a.target : firstAliveFoe()];
-      sfx("magic"); // distinct spell sound (falls back to silence if the file is missing)
+      sfxEl(sp.elem); // element-aware spell sound (magic_fire/ice/thunder/holy, else magic)
       var lines = [], anyWeak = false;
       for (var k = 0; k < targets.length; k++) {
         var fi = targets[k], foe = foes[fi];
