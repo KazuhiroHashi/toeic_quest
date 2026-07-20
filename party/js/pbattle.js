@@ -113,12 +113,12 @@
     heal:      { name: "ヒール",        mp: 4,  type: "heal",  power: 34, quizLv: 400, desc: "味方1人のHPを34ほど回復する" },
     healmore:  { name: "ヒールモア",     mp: 8,  type: "heal",  power: 80, quizLv: 600, desc: "味方1人のHPを80ほど回復する" },
     fullheal:  { name: "フルヒール",     mp: 14, type: "heal",  power: 9999, full: true, quizLv: 700, desc: "味方1人のHPを全回復する" },
-    partyheal: { name: "パーティヒール",  mp: 14, type: "heal",  power: 42, all: true, quizLv: 600, desc: "味方全員のHPを42ほど回復する" },
+    partyheal: { name: "パーティヒール",  mp: 14, type: "heal",  power: 50, all: true, quizLv: 600, desc: "味方全員のHPを50ほど回復する" },
     sanctuary: { name: "サンクチュアリ",  mp: 26, type: "heal",  power: 90, all: true, quizLv: 800, desc: "味方全員のHPを90ほど回復する" },
     revive:    { name: "そせい",         mp: 18, type: "raise", power: 0.6, quizLv: 700, desc: "戦闘不能の味方をＨＰ6割で復活させる" },
     spark:     { name: "スパーク",       mp: 4,  type: "atk",   power: 26, elem: "thunder", quizLv: 400, desc: "敵1体に雷のダメージ" },
-    fire:      { name: "フレイムショット", mp: 4,  type: "atk",   power: 30, elem: "fire", quizLv: 400, desc: "敵1体に炎のダメージ" },
-    frost:     { name: "フロストショット", mp: 5,  type: "atk",   power: 34, elem: "ice", quizLv: 450, desc: "敵1体に氷のダメージ" },
+    fire:      { name: "フレイム",       mp: 4,  type: "atk",   power: 30, elem: "fire", quizLv: 400, desc: "敵1体に炎のダメージ" },
+    frost:     { name: "フロスト",       mp: 5,  type: "atk",   power: 34, elem: "ice", quizLv: 450, desc: "敵1体に氷のダメージ" },
     fireball:  { name: "ヒートランス",    mp: 7,  type: "atk",   power: 44, elem: "fire", quizLv: 600, desc: "敵1体に強い炎のダメージ" },
     holy:      { name: "セイクリッド",    mp: 8,  type: "atk",   power: 54, elem: "holy", quizLv: 600, desc: "敵1体に聖なるダメージ（不死・悪魔に特効）" },
     fira:      { name: "フレイムバースト", mp: 9,  type: "atk",   power: 40, elem: "fire", all: true, quizLv: 600, desc: "敵全体に炎のダメージ" },
@@ -133,7 +133,7 @@
     yu:   { name: "ユウ", role: "ゆうしゃ", quizOff: 0,
             base: { hp: 36, mp: 10, atk: 12, def: 9, agi: 9 },
             grow: { hp: 9,  mp: 3,  atk: 3,  def: 2, agi: 2 },
-            learn: { 3: "heal", 6: "spark", 10: "fireball", 14: "healmore", 19: "fullheal", 24: "inferno" } },
+            learn: { 3: "heal", 6: "spark", 10: "fireball", 14: "healmore", 20: "partyheal", 22: "fullheal", 26: "inferno" } },
     gai:  { name: "ガイ", role: "せんし", quizOff: -100,
             base: { hp: 48, mp: 0,  atk: 16, def: 12, agi: 6 },
             grow: { hp: 12, mp: 0,  atk: 4,  def: 3,  agi: 1 },
@@ -145,7 +145,7 @@
     mia:  { name: "ミア", role: "そうりょ", quizOff: 0,
             base: { hp: 32, mp: 16, atk: 8,  def: 8, agi: 8 },
             grow: { hp: 7,  mp: 6,  atk: 2,  def: 2, agi: 2 },
-            learn: { 1: "heal", 5: "partyheal", 9: "holy", 12: "revive", 17: "fullheal", 22: "sanctuary" } }
+            learn: { 1: "heal", 5: "partyheal", 9: "holy", 12: "revive", 16: "fullheal", 20: "sanctuary" } }
   };
 
   // cumulative EXP needed to REACH level n (index = level)
@@ -492,7 +492,7 @@
         lines.push(foe.name + "に " + sd);
       }
       // one message listing each target's damage
-      await say(lines.join("\n") + " のダメージ！" + (anyWeak ? "\nこうかは ばつぐんだ！" : ""));
+      await say(lines.join("\n") + " のダメージ！" + (anyWeak ? "\n弱点を つらぬいた！" : ""));
       for (var d2 = 0; d2 < targets.length; d2++) { if (foes[targets[d2]] && foes[targets[d2]].hp <= 0) await say(foes[targets[d2]].name + "を たおした！"); }
       if (aliveFoes().length) { var bossF = foes.filter(function (f) { return f.boss && f.hp > 0; })[0]; if (bossF && bossF.phases) await checkPhase(bossF); }
     }
@@ -684,7 +684,7 @@
     var totalExp = 0;
     if (result === "win") {
       if (window.BGM) BGM.stop();
-      victoryJingle();
+      victoryJingle(); // 専用ファンファーレ victory.mp3（無ければ win.mp3 にフォールバック）
       await say("たたかいに 勝った！");
       totalExp = foes.reduce(function (s, f) { return s + (f.exp || 0); }, 0);
       if (totalExp > 0) {

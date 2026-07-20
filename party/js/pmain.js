@@ -49,6 +49,14 @@
     return f;
   }
 
+  // mid-boss dragon (round 5) — a touch stronger: +30% HP, +20% ATK
+  function dragonEnc() {
+    var d = miniBoss("dragon", "洞窟の古竜");
+    d.hp = Math.round(d.hp * 1.3); d.maxhp = d.hp;
+    d.atk = Math.round(d.atk * 1.2); d.mag = Math.round(d.atk * 1.1);
+    return { bg: "cave", quizLv: 600, bgm: "midboss", enemies: [d] };
+  }
+
   function bossHowl() {
     return {
       bg: "tower1",
@@ -75,7 +83,7 @@
   // four heavenly kings — escalating; each stronger than the last (player levels up too)
   function king(o) {
     return {
-      bg: o.bg, quizLv: o.quizLv, intro: o.intro,
+      bg: o.bg, quizLv: o.quizLv, intro: o.intro, bgm: o.bgm,
       enemies: [{
         base: o.base, name: o.name, lv: o.lv,
         hp: o.hp, atk: o.atk, def: o.def, agi: 22, mag: Math.round(o.atk * 1.15), exp: o.exp, boss: true,
@@ -89,22 +97,22 @@
     };
   }
   function bossHowl() {
-    return king({ base: "gen_r", name: "四天王ハウル", lv: 600, hp: 3600, atk: 58, def: 24, exp: 1400, quizLv: 600, bg: "tower1",
+    return king({ base: "gen_r", name: "四天王ハウル", lv: 600, hp: 3060, atk: 58, def: 24, exp: 1400, quizLv: 600, bg: "tower1", bgm: "midboss",
       skills: [{ name: "轟音の叫び", power: 0.72, all: true }],
       intro: ["四天王ハウルが 道をふさぐ！", "『聞く力は わたしが喰らった。\n　お前たちの叫びは 誰にも届かん！』"] });
   }
   function bossGag() {
-    return king({ base: "king_gag", name: "四天王ガグ", lv: 700, hp: 4600, atk: 76, def: 28, exp: 2000, quizLv: 650, bg: "tower2",
+    return king({ base: "king_gag", name: "四天王ガグ", lv: 700, hp: 3910, atk: 76, def: 28, exp: 2000, quizLv: 650, bg: "tower2", bgm: "midboss2",
       skills: [{ name: "沈黙の号令", power: 0.95, all: true }, { name: "言霊砕き", power: 1.3, all: false }],
-      intro: ["四天王ガグが 立ちはだかる！", "『話す力は 我が手にある。\n　ハウルより 我のほうが 手強いぞ！』"] });
+      intro: ["四天王ガグが 立ちはだかる！", "『話す力は 我が手にある。\n　その声も この地で 奪わせてもらう。』"] });
   }
   function bossBlank() {
-    return king({ base: "king_blank", name: "四天王ブランク", lv: 800, hp: 5600, atk: 94, def: 30, exp: 2800, quizLv: 700, acts3: 3, bg: "zone6",
+    return king({ base: "king_blank", name: "四天王ブランク", lv: 800, hp: 5600, atk: 94, def: 30, exp: 2800, quizLv: 700, acts3: 3, bg: "zone6", bgm: "boss",
       skills: [{ name: "白紙化", power: 1.0, all: true }, { name: "記憶消去", power: 1.35, all: false }],
       intro: ["四天王ブランクが 現れた！", "『読む力は 消し去った。\n　お前たちの記憶も 白紙にしてやろう』"] });
   }
   function bossErase() {
-    return king({ base: "king_erase", name: "四天王イレイズ", lv: 850, hp: 6800, atk: 112, def: 34, exp: 3600, quizLv: 750, acts3: 3, bg: "zone5",
+    return king({ base: "king_erase", name: "四天王イレイズ", lv: 850, hp: 6800, atk: 112, def: 34, exp: 3600, quizLv: 750, acts3: 3, bg: "zone5", bgm: "midboss3",
       skills: [{ name: "消し去る風", power: 1.05, all: true }, { name: "抹消の一撃", power: 1.4, all: false }],
       intro: ["最後の四天王 イレイズ！", "『書く力を 奪った我が、\n　四天王 最強よ。ここで 消えろ！』"] });
   }
@@ -162,23 +170,23 @@
       window.addEventListener("keydown", onKey);
     });
   }
-  var GIFTS = ["herb", "elixir", "herb", "wing", "elixir", "herb", "elixir", "wing", "elixir", "herb"];
+  var GIFTS = ["herb", "elixir", "herb", "elixir", "elixir", "herb", "elixir", "elixir", "elixir", "herb"];
   // party grows: Yu solo -> +Gai(b2) -> +Rina(b3) -> +Mia(b5). joinAfter[i] joins after round i.
   var JOIN_AFTER = {
     0: { id: "gai", scene: [
-      "ひとりの剣士が 剣を杖にして\n立ち上がり、こちらを見た。\n「あんたら…四天王と 戦うのか？」",
-      "「おれの妹は 声を奪われた。\n　あの日から ずっと 黙ったままだ。\n　あいつらを 倒せるってんなら—」",
-      "「この剣、あんたらに 預ける！」\n剣士ガイが 仲間に加わった！"
+      "闘技を 見終えた 剣士が\n静かに 歩み寄ってきた。",
+      "「見事な 太刀筋だった。\n　—だが お前 ひとりでは\n　四天王には 届かん。」",
+      "剣士ガイが 背中を預けると\n決めたようだ。\n仲間に 加わった！"
     ] },
     1: { id: "rina", scene: [
-      "観客席から 少女が 身を乗り出した。\n「その戦い方…見過ごせないわね」",
-      "「わたしは 魔法学院のリナ。\n　ことばが 奪われてから\n　魔法を 使えない人が 増えてるの。」",
-      "「あなたたちになら 賭けてみたい。\n　わたしの魔法、役立ててみせる！」\n魔法使いリナが 仲間に加わった！"
+      "客席の 灯りが ひとつ 消え、\n杖を手にした 娘が 降りてきた。",
+      "「魔法使いの リナよ。\n　あなたの その眼、\n　まだ 言葉を 諦めていない。」",
+      "「なら わたしの 魔法も\n　その 眼のために。」\n魔法使いリナが 仲間に加わった！"
     ] },
     3: { id: "mia", scene: [
-      "闘技場の隅で 静かに祈る娘がいた。\nゆっくりと 目を開け、微笑む。",
-      "「わたしは 僧侶のミア。\n　傷ついた人を 癒すことしか\n　できません。でも…」",
-      "「あなたたちの旅の 支えになりたい。\n　どうか、連れて行ってください。」\n僧侶ミアが 仲間に加わった！"
+      "傷を負った あなたたちに\n白い光が そっと 差した。\n祈りを 捧げる 娘がいた。",
+      "「僧侶の ミアと 申します。\n　剣は 持てませんが、\n　あなたがたを 倒れさせは しません。」",
+      "「どうか この先も、\n　ご一緒 させてください。」\n僧侶ミアが 仲間に加わった！"
     ] }
   };
   // 11 rounds: zako(1-4) -> 中ボス竜(5) -> 四天王4連戦(6-9) -> ラスボス(10) -> 真ラスボス(11)
@@ -186,9 +194,9 @@
     return [
       { label: "第1戦", enc: { bg: "zone1", quizLv: 400, enemies: [af("slime", 1.4), af("bat", 1.4)] } },        // Yu solo
       { label: "第2戦", enc: { bg: "zone2", quizLv: 450, enemies: [af("rat", 1.4), af("goblin", 1.4), af("bee", 1.4)] } }, // +Gai
-      { label: "第3戦", enc: { bg: "zone2", quizLv: 500, enemies: [af("wolf", 1.5), af("ghost", 1.5), af("snake", 1.5)] } }, // +Rina
-      { label: "第4戦", enc: { bg: "zone3", quizLv: 550, enemies: [af("mush", 1.9), af("owl", 1.9), af("ghost", 1.9), af("wolf", 1.9)] } },
-      { label: "第5戦・中ボス 洞窟の古竜", enc: Object.assign({ bg: "cave", quizLv: 600, enemies: [miniBoss("dragon", "洞窟の古竜", { atk: 34 })] }) }, // +Mia（竜は少し弱め）
+      { label: "第3戦", enc: { bg: "zone3", quizLv: 500, enemies: [af("wolf", 1.5), af("ghost", 1.5), af("snake", 1.5)] } }, // +Rina
+      { label: "第4戦", enc: { bg: "zone4", quizLv: 550, enemies: [af("mush", 1.9), af("owl", 1.9), af("ghost", 1.9), af("wolf", 1.9)] } },
+      { label: "第5戦・中ボス 洞窟の古竜", enc: dragonEnc() }, // +Mia
       { label: "第6戦・四天王ハウル", enc: bossHowl() },
       { label: "第7戦・四天王ガグ", enc: bossGag() },
       { label: "第8戦・四天王ブランク", enc: bossBlank() },
@@ -220,7 +228,7 @@
       }
       if (i < rounds.length - 1) {
         window.PBATTLE.fullHeal();
-        var ups = window.PBATTLE.levelEveryone(i >= 4 ? 3 : 2); // faster leveling once the boss run starts
+        var ups = window.PBATTLE.levelEveryone(i >= 3 ? 3 : 2); // faster leveling from the mid-boss on (Yu reaches Lv20=パーティヒール by the ガグ戦)
         var gift = GIFTS[i] || "herb";
         var who = window.PBATTLE.giveItemToParty(gift);
         var giftName = gift === "herb" ? "ハーブティー" : gift === "elixir" ? "エナジーコーヒー" : "帰還の羽根ペン";
