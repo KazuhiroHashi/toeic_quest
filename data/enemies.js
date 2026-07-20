@@ -4,7 +4,6 @@
 //         hasty=quiz timer shortened, flee=often runs away, boss=boss flags
 window.ENEMIES = [
   // ---- zone1 : TOEIC400 ----
-  {id:"slime",    name:"ワードスライム",      icon:"💧", lv:400, hp:8,   atk:5,  def:2,  exp:2,   gold:3,   traits:[]},
   {id:"bat",      name:"アルファベットひよこ", icon:"🐣", lv:400, hp:10,  atk:6,  def:2,  exp:3,   gold:4,   traits:[]},
   {id:"rat",      name:"ペンシルラビット",    icon:"🐰", lv:400, hp:13,  atk:7,  def:3,  exp:4,   gold:6,   traits:[]},
   {id:"mush",     name:"イレイザーマッシュ",      icon:"🍄", lv:400, hp:15,  atk:8,  def:6,  exp:6,   gold:7,   traits:[]},
@@ -49,7 +48,7 @@ window.ENEMIES.forEach(function(e){ window.ENEMY_BY_ID[e.id] = e; });
 
 // encounter tables per zone (weighted)
 window.ZONE_TABLE = {
-  1: [["slime",30],["bat",28],["rat",22],["mush",12],["goblin",8]],
+  1: [["bat",30],["rat",26],["mush",16],["goblin",12]],
   2: [["goblin",15],["bee",25],["worm",22],["snake",18],["ghost",12],["wolf",8]],
   3: [["wolf",12],["owl",24],["twins",20],["lizard",18],["clock",14],["knight5",12]],
   4: [["knight5",10],["golem",22],["demon",20],["mummy",18],["ogre",16],["snight",10],["metal",4]],
@@ -75,7 +74,7 @@ window.LEVEL_TABLE = (function(){
 
 // elemental weaknesses (spell elem matches -> x1.5 damage)
 window.WEAK = {
-  slime:"fire", mush:"fire", ghost:"fire", twins:"fire", mummy:"fire", shadow:"fire", mimic:"fire",
+  mush:"fire", ghost:"fire", twins:"fire", mummy:"fire", shadow:"fire", mimic:"fire",
   bee:"thunder", wolf:"thunder", owl:"thunder", lizard:"thunder", clock:"thunder", knight5:"thunder",
   snight:"thunder", harpy:"thunder", reaper:"thunder", kraken:"thunder", gen_l:"thunder", golem:"fire"
 };

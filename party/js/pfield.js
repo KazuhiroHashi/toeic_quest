@@ -58,11 +58,11 @@
     return "nw";
   }
   var PACKS = {
-    sw: [["slime"], ["slime", "bat"], ["rat", "goblin"]],
+    sw: [["rat"], ["rat", "bat"], ["rat", "goblin"]],
     ne: [["wolf", "bee"], ["mush", "wolf"], ["goblin", "bee", "bat"]],
     se: [["snake", "lizard"], ["snake", "snake"], ["worm", "lizard"]],
     nw: [["ghost", "owl"], ["ghost", "wolf"], ["owl", "owl"]],
-    cave: [["bat", "rat"], ["slime", "bat", "rat"], ["goblin", "rat"]],
+    cave: [["bat", "rat"], ["mush", "bat", "rat"], ["goblin", "rat"]],
     tower: [["wolf", "ghost"], ["bee", "bee", "mush"], ["snake", "owl"]]
   };
   // some enemies use magic / group attacks (kanji names). power = ×atk multiplier.
