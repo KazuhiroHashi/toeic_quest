@@ -112,8 +112,8 @@
   // ================= spell / character registry =================
   // quizLv = the QUESTION difficulty this spell asks (fixed per spell, NOT the enemy's level).
   var SPELLS = {
-    heal:      { name: "ヒール",        mp: 4,  type: "heal",  power: 34, quizLv: 400, desc: "味方1人のHPを34ほど回復する" },
-    healmore:  { name: "ヒールモア",     mp: 8,  type: "heal",  power: 88, quizLv: 600, desc: "味方1人のHPを85前後 回復する" },
+    heal:      { name: "ヒール",        mp: 4,  type: "heal",  power: 40, quizLv: 400, desc: "味方1人のHPを40前後 回復する" },
+    healmore:  { name: "ヒールモア",     mp: 8,  type: "heal",  power: 85, quizLv: 600, desc: "味方1人のHPを85前後 回復する" },
     fullheal:  { name: "フルヒール",     mp: 14, type: "heal",  power: 9999, full: true, quizLv: 700, desc: "味方1人のHPを全回復する" },
     partyheal: { name: "パーティヒール",  mp: 14, type: "heal",  power: 50, all: true, quizLv: 600, desc: "味方全員のHPを50ほど回復する" },
     sanctuary: { name: "サンクチュアリ",  mp: 26, type: "heal",  power: 90, all: true, quizLv: 800, desc: "味方全員のHPを90ほど回復する" },
@@ -299,13 +299,13 @@
     setTimeout(function () { d.remove(); }, 320);
   }
 
-  function hitEnemy(i, dmg, crit, fxColor) {
+  function hitEnemy(i, dmg, crit, fxColor, silent) {
     var f = foes[i], el = $("penemy-" + i);
     f.hp = Math.max(0, f.hp - dmg);
     if (el) { el.classList.add("hit"); setTimeout(function () { el.classList.remove("hit"); }, 200); }
     slashFx(fxColor);
     bpop(String(dmg), crit ? "crit" : "", el);
-    sfx(crit ? "crit" : "slash");
+    if (!silent) sfx(crit ? "crit" : "slash"); // spells play their own "magic" sfx once
     updateEnemyHp(i);
   }
   function hitMember(i, dmg) {
@@ -365,10 +365,11 @@
         acts.push({ who: i, kind: "guard" });
       } else {
         var counts = {};
-        p.bag.forEach(function (k) { if (k === "herb" || k === "elixir") counts[k] = (counts[k] || 0) + 1; });
+        p.bag.forEach(function (k) { if (k === "herb" || k === "elixir" || k === "espresso") counts[k] = (counts[k] || 0) + 1; });
         var inv = [];
         if (counts.herb) inv.push({ key: "herb", label: "ハーブティー ×" + counts.herb });
         if (counts.elixir) inv.push({ key: "elixir", label: "エナジーコーヒー ×" + counts.elixir });
+        if (counts.espresso) inv.push({ key: "espresso", label: "エスプレッソ ×" + counts.espresso });
         if (!inv.length) { await say(p.name + "は 使える道具を持っていない！"); continue; }
         var ii = await menu($("pbattle-sub"), inv, p.name + "の どうぐ");
         if (ii === -1) continue;
@@ -418,6 +419,7 @@
       if (bi < 0) { await say("道具が見つからない…"); return; }
       p.bag.splice(bi, 1); // consume from the acting member's bag
       if (a.item === "herb") { t.hp = Math.min(t.maxhp, t.hp + 40); await say(p.name + "は ハーブティーを使った！\n" + t.name + "のＨＰが 40 回復！"); }
+      else if (a.item === "espresso") { t.mp = Math.min(t.maxmp, t.mp + 80); await say(p.name + "は エスプレッソを使った！\n" + t.name + "のＭＰが 80 回復！"); }
       else { t.mp = Math.min(t.maxmp, t.mp + 30); await say(p.name + "は エナジーコーヒーを使った！\n" + t.name + "のＭＰが 30 回復！"); }
       sfx("heal"); renderParty(-1);
       return;
@@ -483,6 +485,7 @@
       var fxc = sp.elem === "fire" ? "rgba(255,150,60,.9)" : sp.elem === "thunder" ? "rgba(255,230,90,.9)" : sp.elem === "ice" ? "rgba(150,220,255,.9)" : sp.elem === "holy" ? "rgba(255,250,200,.95)" : "rgba(200,160,255,.9)";
       var targets = sp.all ? foes.map(function (f, i) { return i; }).filter(function (i) { return foes[i].hp > 0; })
                            : [foes[a.target] && foes[a.target].hp > 0 ? a.target : firstAliveFoe()];
+      sfx("magic"); // distinct spell sound (falls back to silence if the file is missing)
       var lines = [], anyWeak = false;
       for (var k = 0; k < targets.length; k++) {
         var fi = targets[k], foe = foes[fi];
@@ -491,7 +494,7 @@
         if (qs.elapsed <= 2) sd = Math.round(sd * 1.3);
         var weak = sp.elem && window.WEAK && window.WEAK[foe.base] === sp.elem;
         if (weak) { sd = Math.round(sd * 1.5); anyWeak = true; bpop("ばつぐん！", "weak", $("penemy-" + fi)); }
-        hitEnemy(fi, sd, false, fxc);
+        hitEnemy(fi, sd, false, fxc, true);
         lines.push(foe.name + "に " + sd);
       }
       // one message listing each target's damage
@@ -555,6 +558,14 @@
     }
 
     var acts = phase ? phase.acts : 1;
+    var struck = {}; // spread multi-hits: prefer members not already hit this turn
+    function pickLiving(living) {
+      var fresh = living.filter(function (i) { return !struck[i]; });
+      var pool = fresh.length ? fresh : living;
+      var idx = pool[rnd(pool.length)];
+      struck[idx] = true;
+      return idx;
+    }
     for (var n = 0; n < acts; n++) {
       var living = [];
       party.forEach(function (m, i) { if (m.hp > 0) living.push(i); });
@@ -564,7 +575,7 @@
       var useSkill = f.skills && f.skills.length && Math.random() < (f.skillRate || 0.4);
       var bossAoe = phase && phase.aoe && Math.random() < phase.aoe;
       if (bossAoe && (!f.skills || Math.random() < 0.5)) {
-        await say(f.name + "は「静まれ！」と叫んだ！\n言葉の嵐が吹き荒れる！");
+        await say(f.name + "は「" + (f.aoeCry || "静まれ") + "！」と" + (f.aoeVerb || "叫んだ") + "！\n言葉の嵐が吹き荒れる！");
         var al = [];
         for (var j = 0; j < living.length; j++) {
           var mi = living[j], mm2 = party[mi];
@@ -590,7 +601,7 @@
           await say(sl.join("\n") + " のダメージ！");
           for (var dz = 0; dz < living.length; dz++) { if (party[living[dz]].hp <= 0) await say(party[living[dz]].name + "は 倒れてしまった！"); }
         } else {
-          var ti2 = living[rnd(living.length)], tg = party[ti2];
+          var ti2 = pickLiving(living), tg = party[ti2];
           var d2 = magDmg(f, tg, sk.power, tg.guard);
           hitMember(ti2, d2);
           await say(tg.name + "に " + d2 + " のダメージ！");
@@ -600,7 +611,7 @@
       }
 
       // plain attack
-      var ti = living[rnd(living.length)];
+      var ti = pickLiving(living);
       var t = party[ti];
       var dmg = Math.max(1, Math.round((f.atk - defOf(t) / 2 + rnd(6)) * (t.guard ? 0.5 : 1)));
       hitMember(ti, dmg);

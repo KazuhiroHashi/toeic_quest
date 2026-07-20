@@ -88,6 +88,7 @@
       enemies: [{
         base: o.base, name: o.name, lv: o.lv,
         hp: o.hp, atk: o.atk, def: o.def, agi: 22, mag: Math.round(o.atk * 1.15), exp: o.exp, boss: true,
+        aoeCry: o.aoeCry, aoeVerb: o.aoeVerb,
         skills: o.skills, skillRate: 0.34,
         phases: [
           { at: 1.0, acts: 1, aoe: 0.15, charge: 0 },
@@ -104,12 +105,13 @@
   }
   function bossGag() {
     return king({ base: "king_gag", name: "四天王ガグ", lv: 700, hp: 3910, atk: 76, def: 28, exp: 2000, quizLv: 650, bg: "tower2", bgm: "midboss2",
+      aoeCry: "静まりなさい", aoeVerb: "命じた",
       skills: [{ name: "沈黙の号令", power: 0.5, all: true }, { name: "言霊砕き", power: 1.3, all: false }],
       intro: ["四天王ガグが 立ちはだかる！", "『話す力は 我が手にある。\n　その声も この地で 奪わせてもらう。』"] });
   }
   function bossBlank() {
     return king({ base: "king_blank", name: "四天王ブランク", lv: 800, hp: 5600, atk: 94, def: 30, exp: 2800, quizLv: 700, acts3: 3, bg: "zone6", bgm: "boss",
-      skills: [{ name: "白紙化", power: 1.0, all: true }, { name: "記憶消去", power: 1.35, all: false }],
+      skills: [{ name: "白紙化", power: 0.72, all: true }, { name: "記憶消去", power: 1.35, all: false }],
       intro: ["四天王ブランクが 現れた！", "『読む力は 消し去った。\n　お前たちの記憶も 白紙にしてやろう』"] });
   }
   function bossErase() {
@@ -171,7 +173,8 @@
       window.addEventListener("keydown", onKey);
     });
   }
-  var GIFTS = ["herb", "elixir", "herb", "elixir", "elixir", "herb", "elixir", "elixir", "elixir", "herb"];
+  // 中盤以降はMP大回復の「エスプレッソ」を拾えるように（MPが枯れやすいボス連戦対策）
+  var GIFTS = ["herb", "elixir", "herb", "elixir", "espresso", "elixir", "espresso", "herb", "espresso", "herb"];
   // party grows: Yu solo -> +Gai(b2) -> +Rina(b3) -> +Mia(b5). joinAfter[i] joins after round i.
   var JOIN_AFTER = {
     0: { id: "gai", scene: [
@@ -232,7 +235,7 @@
         var ups = window.PBATTLE.levelEveryone(i >= 3 ? 3 : 2); // faster leveling from the mid-boss on (Yu reaches Lv20=パーティヒール by the ガグ戦)
         var gift = GIFTS[i] || "herb";
         var who = window.PBATTLE.giveItemToParty(gift);
-        var giftName = gift === "herb" ? "ハーブティー" : gift === "elixir" ? "エナジーコーヒー" : "帰還の羽根ペン";
+        var giftName = gift === "herb" ? "ハーブティー" : gift === "elixir" ? "エナジーコーヒー" : gift === "espresso" ? "エスプレッソ" : "帰還の羽根ペン";
         var head = (i === 9) ? "ミュートスを倒した…と思ったその時！" : "勝利！ パーティは 全回復した。";
         var msg = head + "\n" + (who ? who + "が『" + giftName + "』を拾った！" : "（道具袋は満杯だった）");
         if (ups.length) msg += "\nみんなの レベルが上がった！（Ｌｖ" + window.PBATTLE.getParty()[0].lv + "）";
