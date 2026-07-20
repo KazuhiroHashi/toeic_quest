@@ -89,6 +89,7 @@
         base: o.base, name: o.name, lv: o.lv,
         hp: o.hp, atk: o.atk, def: o.def, agi: 22, mag: Math.round(o.atk * 1.15), exp: o.exp, boss: true,
         aoeCry: o.aoeCry, aoeVerb: o.aoeVerb,
+        magicCharge: o.magicCharge, chargeCry: o.chargeCry,
         skills: o.skills, skillRate: 0.34,
         phases: [
           { at: 1.0, acts: 1, aoe: 0.15, charge: 0 },
@@ -106,18 +107,22 @@
   function bossGag() {
     return king({ base: "king_gag", name: "四天王ガグ", lv: 700, hp: 3910, atk: 76, def: 28, exp: 2000, quizLv: 650, bg: "tower2", bgm: "midboss2",
       aoeCry: "静まりなさい", aoeVerb: "命じた",
+      magicCharge: true, chargeCry: "『沈黙の 大呪文—！』",
       skills: [{ name: "沈黙の号令", power: 0.5, all: true }, { name: "言霊砕き", power: 1.3, all: false }],
       intro: ["四天王ガグが 立ちはだかる！", "『話す力は 我が手にある。\n　その声も この地で 奪わせてもらう。』"] });
   }
   function bossBlank() {
-    return king({ base: "king_blank", name: "四天王ブランク", lv: 800, hp: 5600, atk: 94, def: 30, exp: 2800, quizLv: 700, acts3: 3, bg: "zone6", bgm: "boss",
+    return king({ base: "king_blank", name: "四天王ブランク", lv: 800, hp: 5600, atk: 94, def: 30, exp: 2800, quizLv: 700, bg: "zone6", bgm: "boss",
+      aoeCry: "しずかに しようね", aoeVerb: "ささやいた",
+      magicCharge: true, chargeCry: "『いくよー。ぜんぶ まっしろ！』",
       skills: [{ name: "白紙化", power: 0.72, all: true }, { name: "記憶消去", power: 1.35, all: false }],
-      intro: ["四天王ブランクが 現れた！", "『読む力は 消し去った。\n　お前たちの記憶も 白紙にしてやろう』"] });
+      intro: ["四天王ブランクが ぽわんと 現れた！", "『こんにちは。みんなの あたまの中、\n　まっしろに しちゃうね？　うふふ』"] });
   }
   function bossErase() {
-    return king({ base: "king_erase", name: "四天王イレイズ", lv: 850, hp: 6800, atk: 112, def: 34, exp: 3600, quizLv: 750, acts3: 3, bg: "zone5", bgm: "midboss3",
-      skills: [{ name: "消し去る風", power: 1.05, all: true }, { name: "抹消の一撃", power: 1.4, all: false }],
-      intro: ["最後の四天王 イレイズ！", "『書く力を 奪った我が、\n　四天王 最強よ。ここで 消えろ！』"] });
+    return king({ base: "king_erase", name: "四天王イレイズ", lv: 850, hp: 6800, atk: 112, def: 34, exp: 3600, quizLv: 750, bg: "zone5", bgm: "midboss3",
+      magicCharge: true, chargeCry: "『すべて、消える。』",
+      skills: [{ name: "消し去る風", power: 0.68, all: true }, { name: "抹消の一撃", power: 1.0, all: false }],
+      intro: ["最後の四天王 イレイズが 立ちはだかる！", "『書く力は すでに この手の中。\n　お前たちの名も、ここで 消す。』"] });
   }
   // two-phase last boss: beat ミュートス, then the TRUE form rises
   function bossMaou1() {
@@ -128,6 +133,7 @@
       enemies: [{
         base: "maou_mutos", name: "沈黙王ミュートス", lv: 900,
         hp: 4600, atk: 66, def: 38, agi: 22, mag: 74, exp: 5000, boss: true,
+        magicCharge: true, chargeCry: "『静寂よ、すべてを 呑み込め—！』",
         skills: [{ name: "静寂の波動", power: 0.95, all: true }, { name: "言葉狩り", power: 1.3, all: false }], skillRate: 0.4,
         phases: [
           { at: 1.0, acts: 1, aoe: 0.18, charge: 0 },
@@ -145,11 +151,12 @@
       enemies: [{
         base: "maou_true", name: "真・沈黙王ミュートス", lv: 900,
         hp: 6800, atk: 88, def: 42, agi: 24, mag: 98, exp: 12000, boss: true,
+        magicCharge: true, chargeCry: "『これが 絶対の 静寂—！』",
         skills: [{ name: "絶対静寂", power: 1.1, all: true }, { name: "言葉狩り", power: 1.4, all: false }], skillRate: 0.44,
         phases: [
           { at: 1.0, acts: 2, aoe: 0.25, charge: 0 },
-          { at: 0.66, acts: 2, aoe: 0.35, charge: 0.3, msg: ["真ミュートスの 咆哮！", "闇が 渦を巻く！"] },
-          { at: 0.33, acts: 3, aoe: 0.42, charge: 0.4, msg: ["ミュートスが 最後の力を放つ！！", "行動が 3回に！総力戦だ！"] }
+          { at: 0.66, acts: 2, aoe: 0.35, charge: 0.32, msg: ["真ミュートスの 咆哮！", "闇が 渦を巻く！"] },
+          { at: 0.33, acts: 2, aoe: 0.44, charge: 0.45, msg: ["ミュートスが 最後の力を放つ！！", "闇が すべてを 呑み込もうとする！"] }
         ]
       }]
     };

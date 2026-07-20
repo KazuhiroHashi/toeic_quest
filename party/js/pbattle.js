@@ -553,25 +553,34 @@
     if (el) { el.classList.add("lunge"); setTimeout(function () { el.classList.remove("lunge"); }, 400); }
     var phase = f.boss ? f.phases[f.phase] : null;
 
-    // resolve a charged mega attack
+    // resolve a charged mega attack (magic casters unleash a big spell instead of a body blow)
     if (f.charging) {
       f.charging = false;
-      await say(f.name + "の ためていた力が 解き放たれた！！");
+      if (f.magicCharge) {
+        await say(f.name + "の ためた魔力が はじけた！！\n" + (f.chargeCry || "強大な魔法が 炸裂する！"));
+        sfx("ng");
+      } else {
+        await say(f.name + "の ためていた力が 解き放たれた！！");
+      }
       var cl = [];
       for (var i = 0; i < party.length; i++) {
         var mm = party[i]; if (mm.hp <= 0) continue;
-        var dm = Math.max(1, Math.round((f.atk * 1.5 - defOf(mm) / 2 + rnd(8)) * (mm.guard ? 0.45 : 1)));
+        // magic charge scales off mag and ignores defence (like other spells); guard still softens it
+        var dm = f.magicCharge
+          ? Math.max(1, Math.round(((f.mag || Math.round(f.atk * 0.9)) * 1.25 + rnd(8)) * (mm.guard ? 0.45 : 1)))
+          : Math.max(1, Math.round((f.atk * 1.5 - defOf(mm) / 2 + rnd(8)) * (mm.guard ? 0.45 : 1)));
         hitMember(i, dm);
         cl.push(mm.name + "に " + dm);
       }
       await say(cl.join("\n") + " のダメージ！");
-      for (var cz = 0; cz < party.length; cz++) { if (party[cz].hp <= 0 && party[cz].maxhp > 0) {} }
       return;
     }
     // boss charge windup
     if (phase && phase.charge && Math.random() < phase.charge) {
       f.charging = true;
-      await say(f.name + "は 力をためはじめた…！\n（防御でしのげ！）");
+      await say(f.magicCharge
+        ? f.name + "は 魔力を ためはじめた…！\n（強力な魔法が くる！防御を！）"
+        : f.name + "は 力をためはじめた…！\n（防御でしのげ！）");
       return;
     }
 
