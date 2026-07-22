@@ -22,6 +22,10 @@
 
   function probe(name, cb) {
     if (cache[name]) { cb(cache[name]); return; }
+    // inline/standalone build: only embedded tracks exist. Skip non-embedded ones
+    // instantly so playAny() falls back cleanly (a hosted relative path can stall
+    // instead of erroring, which previously caused silence for missing tracks).
+    if (window.BGM_ART && !window.BGM_ART[name]) { cache[name] = "no"; cb("no"); return; }
     var a = new Audio();
     a.preload = "auto";
     a.loop = true;

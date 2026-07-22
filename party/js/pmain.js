@@ -106,21 +106,21 @@
       intro: ["四天王ハウルが 道をふさぐ！", "『聞く力は わたしが喰らった。\n　お前たちの叫びは 誰にも届かん！』"] });
   }
   function bossGag() {
-    return king({ base: "king_gag", name: "四天王ガグ", lv: 700, hp: 3910, atk: 76, def: 28, exp: 2000, quizLv: 650, bg: "tower2", bgm: "midboss2",
+    return king({ base: "king_gag", name: "四天王ガグ", lv: 700, hp: 3910, atk: 76, def: 28, exp: 2000, quizLv: 650, bg: "tower2", bgm: "boss",
       aoeCry: "静まりなさい", aoeVerb: "命じた",
       magicCharge: true, chargeCry: "『沈黙の 大呪文—！』",
       skills: [{ name: "沈黙の号令", power: 0.5, all: true }, { name: "言霊砕き", power: 1.3, all: false }],
       intro: ["四天王ガグが 立ちはだかる！", "『話す力は 我が手にある。\n　その声も この地で 奪わせてもらう。』"] });
   }
   function bossBlank() {
-    return king({ base: "king_blank", name: "四天王ブランク", lv: 800, hp: 5600, atk: 94, def: 30, exp: 2800, quizLv: 700, bg: "zone6", bgm: "boss",
+    return king({ base: "king_blank", name: "四天王ブランク", lv: 800, hp: 5600, atk: 94, def: 30, exp: 2800, quizLv: 700, bg: "zone6", bgm: "midboss",
       aoeCry: "しずかに しようね", aoeVerb: "ささやいた",
       magicCharge: true, chargeCry: "『いくよー。ぜんぶ まっしろ！』",
       skills: [{ name: "白紙化", power: 0.72, all: true }, { name: "記憶消去", power: 1.35, all: false }],
       intro: ["四天王ブランクが ぽわんと 現れた！", "『こんにちは。みんなの あたまの中、\n　まっしろに しちゃうね？　うふふ』"] });
   }
   function bossErase() {
-    return king({ base: "king_erase", name: "四天王イレイズ", lv: 850, hp: 6800, atk: 112, def: 34, exp: 3600, quizLv: 750, bg: "zone5", bgm: "midboss3",
+    return king({ base: "king_erase", name: "四天王イレイズ", lv: 850, hp: 6800, atk: 112, def: 34, exp: 3600, quizLv: 750, bg: "zone5", bgm: "boss",
       magicCharge: true, chargeCry: "『すべて、消える。』",
       skills: [{ name: "消し去る風", power: 0.68, all: true }, { name: "抹消の一撃", power: 1.0, all: false }],
       intro: ["最後の四天王 イレイズが 立ちはだかる！", "『書く力は すでに この手の中。\n　お前たちの名も、ここで 消す。』"] });
