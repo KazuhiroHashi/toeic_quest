@@ -26,16 +26,18 @@ A bright, cheerful key visual for a cute fantasy JRPG about learning English wor
 
 ## ② タイトルロゴ　【保存名: logo.png】
 
-**背景透過PNG／文字は正確に「WORD QUEST II」**。GPTは稀に綴りを間違えるので、生成後に **WORD QUEST II** の綴りを必ず確認。
+**文字は「WORD QUEST」のみ（数字・II・2・1は入れない）／背景透過PNG。**
+日本のゲームロゴ風＝**丸ゴシック系のポップ書体・フラット寄り・細く均一なフチ・ツヤ控えめ**が肝（西洋カジュアルの厚ぼったい3Dキャンディ調は避ける）。
 
 ```
-A playful, glossy logo for a cute fantasy RPG, with the exact text "WORD QUEST II" on two lines: "WORD QUEST" on top and a large "II" below. Bold rounded 3D letters with a thick cream outline, glossy golden-yellow and sky-blue gradient fill, a small sparkle and a tiny open book icon as a decorative accent, adventurous and friendly storybook style, high contrast so it reads on any background. Centered, transparent background (PNG), no extra text, no tagline, correct spelling "WORD QUEST II".
+A cute, clean title logo for a cozy Japanese mobile RPG about learning English words, in the style of popular Japanese casual game logos — flat, crisp and graphic, NOT the heavy glossy 3D candy style of Western match-3 games. The text is ONLY "WORD QUEST" (two words, absolutely no number, no Roman numeral, no "II", no "2", no subtitle). Use a friendly rounded Japanese-style pop typeface (maru-gothic / soft rounded sans), neat, evenly weighted and very legible. Flat, clean design with soft pastel fills — warm honey-gold for "WORD" and sky-blue for "QUEST" — a gentle subtle gradient and only a slight soft highlight (minimal bevel, no gooey 3D gloss), with a thin even crisp outline. A few small tasteful accents only: a tiny star and a small cute open book. Wholesome, warm, kawaii yet refined, appealing to both women and men. "WORD" on top and "QUEST" below, centered and balanced. Transparent background (PNG). Avoid: any number or numeral, heavy 3D candy bevel, thick brown outline, glossy bubble letters, ornate metal, swords, generic western match-3 look. Correct spelling exactly "WORD QUEST", nothing else.
 ```
 
 ポイント／微調整用メモ：
-- 和名にしたい場合は text を `"WORD QUEST II"` のままにしつつ、別途サブタイトル画像は作らず、ゲーム内の「〜沈黙の四天王〜」を使えばOK
-- 色を変えたい → `golden-yellow and sky-blue` を好みの2色に
-- もっと剣＆冒険感 → `a small crossed sword accent` を追加
+- まだ洋物っぽい → `flatter, less 3D gloss, thinner even outline, rounded maru-gothic typeface` を追い足し
+- 色を変えたい → `honey-gold and sky-blue` を好みの2色に
+- カタカナ「ワードクエスト」は画像だと崩れやすいので、**ロゴ画像は英字のみ**にして、カナはゲーム内文字で表示するのが確実
+- タイトルは **「WORD QUEST」**（続編番号は付けない）
 
 ---
 

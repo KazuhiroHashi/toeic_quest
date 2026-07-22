@@ -369,7 +369,7 @@
     var img = new Image();
     img.onload = function () {
       var lg = $("ptitle-logo");
-      lg.innerHTML = '<img src="' + src + '" alt="WORD QUEST II">';
+      lg.innerHTML = '<img src="' + src + '" alt="WORD QUEST">';
       lg.classList.add("img");
     };
     img.src = src;

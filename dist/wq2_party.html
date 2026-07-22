@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 </head>
 <body>
-<title>WORD QUEST II - パーティ戦闘プロトタイプ</title>
+<title>WORD QUEST - 英単語バトルRPG</title>
 <style>
 /* TOEIC QUEST - DQ1-style retro RPG styling */
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -785,7 +785,7 @@ canvas#field-canvas {
       <div id="ptitle-screen">
         <div id="ptitle-inner">
           <div id="ptitle-badge">英単語 × RPG</div>
-          <div id="ptitle-logo">WORD QUEST<span class="ii">II</span></div>
+          <div id="ptitle-logo">WORD QUEST</div>
           <div id="ptitle-sub">〜 沈黙の四天王 〜</div>
           <div id="ptitle-stamina"></div>
           <div id="ptitle-menu">
@@ -7511,7 +7511,7 @@ window.ITEM_DEFS = {
     var img = new Image();
     img.onload = function () {
       var lg = $("ptitle-logo");
-      lg.innerHTML = '<img src="' + src + '" alt="WORD QUEST II">';
+      lg.innerHTML = '<img src="' + src + '" alt="WORD QUEST">';
       lg.classList.add("img");
     };
     img.src = src;
