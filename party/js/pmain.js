@@ -355,7 +355,8 @@
     var img = new Image();
     img.onload = function () {
       var t = $("ptitle-screen");
-      t.style.backgroundImage = "linear-gradient(180deg, rgba(10,12,34,.12), rgba(6,7,20,.55) 78%), url('" + src + "')";
+      // light top scrim (logo/buttons pop against the bright sky); keep the heroes at the bottom bright
+      t.style.backgroundImage = "linear-gradient(180deg, rgba(8,10,30,.28) 0%, rgba(8,10,30,0) 34%, rgba(8,10,30,0) 82%, rgba(8,10,30,.30) 100%), url('" + src + "')";
       t.style.backgroundSize = "cover";
       t.style.backgroundPosition = "center top";
       t.classList.add("has-kv");

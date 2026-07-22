@@ -32,7 +32,9 @@ while ((m = re.exec(html))) {
   scripts.push('<script>\n' + fs.readFileSync(path.join(srcDir, m[1]), "utf8") + "\n</script>");
 }
 if (embedArg) {
-  scripts.push('<script>\n' + fs.readFileSync(path.resolve(embedArg.slice(8)), "utf8") + "\n</script>");
+  // asset data (window.*_ART) must be defined BEFORE the game scripts run, because
+  // the title screen reads UI_ART at script-eval time (not lazily like battle art).
+  scripts.unshift('<script>\n' + fs.readFileSync(path.resolve(embedArg.slice(8)), "utf8") + "\n</script>");
 }
 
 var core =
