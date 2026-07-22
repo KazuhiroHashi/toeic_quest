@@ -509,9 +509,10 @@ canvas#field-canvas {
   display: flex; align-items: center; justify-content: center;
   overflow-y: auto;
   background:
-    radial-gradient(ellipse at 50% 26%, rgba(96, 66, 190, .55), transparent 62%),
-    radial-gradient(ellipse at 50% 100%, rgba(40, 90, 150, .30), transparent 60%),
-    linear-gradient(180deg, #0b0d22 0%, #05060f 100%);
+    radial-gradient(ellipse at 50% 16%, rgba(255, 224, 150, .45), transparent 46%),
+    radial-gradient(ellipse at 22% 30%, rgba(120, 200, 255, .40), transparent 52%),
+    radial-gradient(ellipse at 82% 40%, rgba(180, 130, 255, .40), transparent 52%),
+    linear-gradient(180deg, #3b53a8 0%, #5a4bb0 46%, #2c2668 100%);
 }
 #ptitle-inner {
   display: flex; flex-direction: column; align-items: center;
@@ -552,8 +553,55 @@ canvas#field-canvas {
   box-shadow: 0 0 18px rgba(255, 200, 90, .35);
 }
 #ptitle-inner #title-copy {
-  position: static; margin-top: 16px; font-size: 11px; color: #8a93b0; line-height: 1.7;
+  position: static; margin-top: 16px; font-size: 11px; color: #d6ddf5; line-height: 1.7;
+  text-shadow: 0 1px 2px rgba(0,0,0,.5);
 }
+/* logo as an image (assets/ui/logo.png) instead of text */
+#ptitle-logo.img { text-shadow: none; }
+#ptitle-logo.img img { display: block; width: 100%; max-width: 340px; height: auto; margin: 0 auto; }
+/* stamina chip */
+#ptitle-stamina {
+  font-size: 12px; letter-spacing: 1px; color: #fff3cf;
+  background: rgba(0,0,0,.28); border: 1px solid rgba(255,220,140,.45); border-radius: 16px;
+  padding: 4px 14px; margin-bottom: 16px; text-shadow: 0 1px 2px rgba(0,0,0,.5);
+}
+/* secondary "unlock" button */
+#ptitle-menu .title-btn, #pbtn-unlock { text-shadow: 0 1px 2px rgba(0,0,0,.35); }
+#pbtn-unlock.ghost {
+  display: block; width: 100%; margin: 12px 0 0; padding: 10px;
+  font-size: 13px; letter-spacing: 1px; font-family: inherit;
+  background: rgba(255, 215, 120, .14); color: #ffe9b0;
+  border: 1px dashed rgba(255, 215, 120, .6); border-radius: 10px; cursor: pointer;
+}
+#pbtn-unlock.ghost:active { background: rgba(255, 215, 120, .28); }
+/* when a key-visual image is present, dim button backgrounds a touch for contrast */
+#ptitle-screen.has-kv #ptitle-menu .title-btn { background: rgba(8, 10, 24, .72); }
+
+/* ---------- store / ad overlays ---------- */
+.wq2-store-ovl {
+  position: absolute; inset: 0; z-index: 90;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(2, 3, 10, .72); padding: 18px;
+}
+.wq2-store-panel {
+  width: 100%; max-width: 320px; text-align: center; padding: 18px 16px;
+}
+.wq2-store-h { font-size: 15px; font-weight: bold; color: #ffe08a; margin-bottom: 10px; }
+.wq2-store-p { font-size: 13px; line-height: 1.7; color: #eef2ff; margin-bottom: 12px; }
+.wq2-store-btns { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.wq2-store-btn {
+  font-family: inherit; font-size: 14px; letter-spacing: 1px; padding: 11px 10px;
+  background: rgba(12, 16, 34, .9); color: #eef2ff;
+  border: 2px solid #4a5480; border-radius: 9px; cursor: pointer;
+}
+.wq2-store-btn.primary { background: linear-gradient(180deg, #3a2f7a, #241b52); border-color: #ffd76a; color: #fff; font-weight: bold; }
+.wq2-store-btn:active { background: #1a2140; }
+.wq2-ad-tag { font-size: 11px; letter-spacing: 2px; color: #9fb0d8; margin-bottom: 12px; }
+.wq2-ad-body { font-size: 15px; color: #fff; margin-bottom: 12px; }
+.wq2-ad-bar { height: 8px; background: #222b48; border-radius: 5px; overflow: hidden; margin: 0 6px 10px; }
+.wq2-ad-bar > div { height: 100%; width: 0; background: linear-gradient(90deg, #ffd76a, #ff9f5a); animation: wq2adfill 1.6s linear forwards; }
+@keyframes wq2adfill { from { width: 0; } to { width: 100%; } }
+.wq2-ad-note { font-size: 10px; color: #8792b3; line-height: 1.5; }
 
 /* ---------- field explore ---------- */
 #pfield-wrap { position: absolute; inset: 0; display: none; }
@@ -739,6 +787,7 @@ canvas#field-canvas {
           <div id="ptitle-badge">英単語 × RPG</div>
           <div id="ptitle-logo">WORD QUEST<span class="ii">II</span></div>
           <div id="ptitle-sub">〜 沈黙の四天王 〜</div>
+          <div id="ptitle-stamina"></div>
           <div id="ptitle-menu">
             <button id="pbtn-arena" class="title-btn primary">▶ ことばの闘技場</button>
             <button id="pbtn-diff" class="title-btn">難易度：ふつう</button>
@@ -746,6 +795,7 @@ canvas#field-canvas {
             <button id="pbtn-bgm" class="title-btn">ＢＧＭ：ＯＮ</button>
           </div>
           <div id="title-copy">4人パーティで 早押し英単語バトル。<br>2秒以内の正解で 会心の一撃！</div>
+          <button id="pbtn-unlock" class="title-btn ghost">★ ぜんぶ遊ぶ（¥600・広告オフ）</button>
           <div id="ptitle-foot"><span id="pbtn-field">※ ストーリーモードは 制作中です</span></div>
         </div>
       </div>
@@ -5065,6 +5115,133 @@ window.ITEM_DEFS = {
 
 </script>
 <script>
+// WORD QUEST II - monetization layer
+// Free + daily stamina + rewarded-ad continue + one-time "full unlock" (ads off).
+// WEB build uses MOCK ad/purchase (clearly labelled デモ). The native (Capacitor)
+// build overrides WQ2_STORE.showRewarded / WQ2_STORE.buyUnlock with real
+// AdMob (rewarded video) and StoreKit / Play Billing (¥600 non-consumable).
+(function () {
+  "use strict";
+  var KEY = "wq2_store_v1";
+  var MAX = 5;        // 無料の1日あたり挑戦回数（スタミナ）
+  var AD_REFILL = 3;  // リワード広告1回で回復するスタミナ
+
+  function today() {
+    var d = new Date();
+    return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+  }
+  var state = { day: today(), stamina: MAX, premium: false };
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (raw) { var s = JSON.parse(raw); if (s && typeof s === "object") state = s; }
+  } catch (e) {}
+  if (state.day !== today()) { state.day = today(); state.stamina = MAX; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  save();
+
+  function screenEl() { return document.getElementById("screen") || document.body; }
+
+  // ---- overlay with buttons -> Promise(key) ----
+  function overlay(html, buttons) {
+    return new Promise(function (resolve) {
+      var wrap = document.createElement("div");
+      wrap.className = "wq2-store-ovl";
+      var panel = document.createElement("div");
+      panel.className = "wq2-store-panel dq-window";
+      panel.innerHTML = html;
+      var row = document.createElement("div");
+      row.className = "wq2-store-btns";
+      buttons.forEach(function (b) {
+        var el = document.createElement("button");
+        el.className = "wq2-store-btn" + (b.primary ? " primary" : "");
+        el.textContent = b.label;
+        el.onclick = function (e) { e.preventDefault(); wrap.remove(); resolve(b.key); };
+        row.appendChild(el);
+      });
+      panel.appendChild(row);
+      wrap.appendChild(panel);
+      screenEl().appendChild(wrap);
+    });
+  }
+
+  // ---- mock rewarded-ad playback screen (native build overrides showRewarded) ----
+  function adScreen() {
+    return new Promise(function (resolve) {
+      var wrap = document.createElement("div");
+      wrap.className = "wq2-store-ovl";
+      wrap.innerHTML =
+        '<div class="wq2-store-panel dq-window">' +
+        '<div class="wq2-ad-tag">広告（デモ）</div>' +
+        '<div class="wq2-ad-body">📺 動画広告を 再生中…</div>' +
+        '<div class="wq2-ad-bar"><div></div></div>' +
+        '<div class="wq2-ad-note">※実際の広告は 公開版で表示されます</div>' +
+        '</div>';
+      screenEl().appendChild(wrap);
+      setTimeout(function () { wrap.remove(); resolve(); }, 1700);
+    });
+  }
+
+  var api = {
+    stamina: function () { return state.stamina; },
+    max: function () { return MAX; },
+    isPremium: function () { return !!state.premium; },
+    canPlay: function () { return state.premium || state.stamina > 0; },
+    spendPlay: function () { if (!state.premium && state.stamina > 0) { state.stamina--; save(); } },
+
+    // rewarded video. cb(true) on completed view. NATIVE OVERRIDES THIS.
+    showRewarded: function (cb) { adScreen().then(function () { cb(true); }); },
+
+    // one-time unlock purchase. cb(true) on success. NATIVE OVERRIDES THIS.
+    buyUnlock: function (cb) {
+      overlay(
+        '<div class="wq2-store-h">★ 全ステージ 解放</div>' +
+        '<div class="wq2-store-p">¥600（買い切り）で<br>スタミナ制限なし＋広告オフ。<br>ずっと 好きなだけ 遊べます。</div>' +
+        '<div class="wq2-ad-note">※デモ版：実際の課金は 公開版で有効になります</div>',
+        [{ key: "buy", label: "購入する（デモ）", primary: true }, { key: "no", label: "やめる" }]
+      ).then(function (k) {
+        if (k === "buy") { state.premium = true; save(); cb(true); } else cb(false);
+      });
+    },
+
+    // out of stamina -> gate. resolves to whether the player can now play.
+    openGate: function () {
+      return overlay(
+        '<div class="wq2-store-h">今日の 無料プレイを 使い切りました</div>' +
+        '<div class="wq2-store-p">スタミナ ' + state.stamina + ' ／ ' + MAX + '<br>広告を見て 回復するか、<br>全解放で いつでも 遊べます。</div>',
+        [{ key: "ad", label: "📺 広告を見て ＋" + AD_REFILL, primary: true },
+         { key: "buy", label: "★ 全解放（¥600）" },
+         { key: "no", label: "やめる" }]
+      ).then(function (k) {
+        if (k === "ad") return new Promise(function (r) { api.showRewarded(function () { state.stamina += AD_REFILL; save(); r(); }); });
+        if (k === "buy") return new Promise(function (r) { api.buyUnlock(function () { r(); }); });
+        return;
+      }).then(function () { return api.canPlay(); });
+    },
+
+    // defeat -> offer a continue. resolves true if the player continues.
+    offerContinue: function () {
+      if (state.premium) {
+        return overlay(
+          '<div class="wq2-store-h">たおれてしまった…</div>' +
+          '<div class="wq2-store-p">その場で 全回復して<br>もう一度 挑みますか？</div>',
+          [{ key: "yes", label: "コンティニュー", primary: true }, { key: "no", label: "タイトルへ" }]
+        ).then(function (k) { return k === "yes"; });
+      }
+      return overlay(
+        '<div class="wq2-store-h">たおれてしまった…</div>' +
+        '<div class="wq2-store-p">広告を見れば その場で<br>全回復して 続けられます。</div>',
+        [{ key: "ad", label: "📺 広告を見て 復活", primary: true }, { key: "no", label: "タイトルへ" }]
+      ).then(function (k) {
+        if (k === "ad") return new Promise(function (r) { api.showRewarded(function () { r(true); }); });
+        return false;
+      });
+    }
+  };
+  window.WQ2_STORE = api;
+})();
+
+</script>
+<script>
 // WORD QUEST II - party battle engine
 // PBATTLE.start(encounter) -> Promise<{result:"win"|"lose"|"flee", exp}>
 // encounter: { enemies:[{base,name,lv,hp,atk,def,agi,exp,boss,phases,skills,mag}], bg, intro }
@@ -7190,6 +7367,14 @@ window.ITEM_DEFS = {
   }
 
   async function runArena() {
+    // stamina gate (free daily plays); premium skips it entirely
+    if (window.WQ2_STORE && !WQ2_STORE.canPlay()) {
+      var ok = await WQ2_STORE.openGate();
+      refreshStamina();
+      if (!ok) return; // out of plays, stay on title
+    }
+    if (window.WQ2_STORE) { WQ2_STORE.spendPlay(); refreshStamina(); }
+
     $("ptitle-screen").style.display = "none";
     arenaStartParty(); // Yu solo; companions join as the gauntlet goes
     var rounds = arenaRounds();
@@ -7200,6 +7385,9 @@ window.ITEM_DEFS = {
       var res = await window.PBATTLE.start(r.enc);
       saveStudy();
       if (res.result !== "win") {
+        // rewarded-ad continue: full-heal and retry this same battle
+        var cont = window.WQ2_STORE ? await WQ2_STORE.offerContinue() : false;
+        if (cont) { window.PBATTLE.fullHeal(); i--; continue; }
         await gsay("闘技場に 敗れた…。\nＬｖ" + window.PBATTLE.getParty()[0].lv + "／" + (i + 1) + "戦目でリタイア。\n（タイトルで たんごちょうを 見られます）");
         break;
       }
@@ -7236,6 +7424,7 @@ window.ITEM_DEFS = {
     if (window.BGM) BGM.stop();
     $("pbattle-screen").style.display = "none"; // clear the battle layer so the title/zukan show cleanly
     $("ptitle-screen").style.display = "flex";
+    refreshStamina();
     if (window.BGM) BGM.playAny(["title"]);
   }
 
@@ -7245,6 +7434,21 @@ window.ITEM_DEFS = {
   function refreshDiffBtn() {
     $("pbtn-diff").textContent = "難易度：" + (window.WQ2_EASY ? "やさしい" : "ふつう");
   }
+  function refreshStamina() {
+    var el = $("ptitle-stamina"), ub = $("pbtn-unlock");
+    if (!window.WQ2_STORE) { if (el) el.style.display = "none"; if (ub) ub.style.display = "none"; return; }
+    if (WQ2_STORE.isPremium()) {
+      if (el) el.innerHTML = "★ 全解放ずみ（広告オフ）";
+      if (ub) ub.style.display = "none";
+    } else {
+      if (el) el.innerHTML = "⚡ 本日のプレイ　" + WQ2_STORE.stamina() + " ／ " + WQ2_STORE.max();
+      if (ub) ub.style.display = "";
+    }
+  }
+  if ($("pbtn-unlock")) $("pbtn-unlock").addEventListener("click", function () {
+    $("pbtn-unlock").blur();
+    if (window.WQ2_STORE) WQ2_STORE.buyUnlock(function (ok) { if (ok) refreshStamina(); });
+  });
   $("pbtn-diff").addEventListener("click", function () {
     $("pbtn-diff").blur();
     window.WQ2_EASY = !window.WQ2_EASY;
@@ -7287,8 +7491,35 @@ window.ITEM_DEFS = {
     img.src = src;
   })();
 
+  // optional title key-visual: assets/ui/title_bg.png (GPT-image). Falls back to the CSS gradient.
+  (function () {
+    var src = (window.UI_ART && window.UI_ART.titlebg) || "../assets/ui/title_bg.png";
+    var img = new Image();
+    img.onload = function () {
+      var t = $("ptitle-screen");
+      t.style.backgroundImage = "linear-gradient(180deg, rgba(10,12,34,.12), rgba(6,7,20,.55) 78%), url('" + src + "')";
+      t.style.backgroundSize = "cover";
+      t.style.backgroundPosition = "center top";
+      t.classList.add("has-kv");
+    };
+    img.src = src;
+  })();
+
+  // optional title logo image: assets/ui/logo.png (GPT-image). Falls back to the text logo.
+  (function () {
+    var src = (window.UI_ART && window.UI_ART.logo) || "../assets/ui/logo.png";
+    var img = new Image();
+    img.onload = function () {
+      var lg = $("ptitle-logo");
+      lg.innerHTML = '<img src="' + src + '" alt="WORD QUEST II">';
+      lg.classList.add("img");
+    };
+    img.src = src;
+  })();
+
   refreshBgmBtn();
   refreshDiffBtn();
+  refreshStamina();
   if (window.BGM) BGM.playAny(["title"]);
 })();
 

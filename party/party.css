@@ -5,9 +5,10 @@
   display: flex; align-items: center; justify-content: center;
   overflow-y: auto;
   background:
-    radial-gradient(ellipse at 50% 26%, rgba(96, 66, 190, .55), transparent 62%),
-    radial-gradient(ellipse at 50% 100%, rgba(40, 90, 150, .30), transparent 60%),
-    linear-gradient(180deg, #0b0d22 0%, #05060f 100%);
+    radial-gradient(ellipse at 50% 16%, rgba(255, 224, 150, .45), transparent 46%),
+    radial-gradient(ellipse at 22% 30%, rgba(120, 200, 255, .40), transparent 52%),
+    radial-gradient(ellipse at 82% 40%, rgba(180, 130, 255, .40), transparent 52%),
+    linear-gradient(180deg, #3b53a8 0%, #5a4bb0 46%, #2c2668 100%);
 }
 #ptitle-inner {
   display: flex; flex-direction: column; align-items: center;
@@ -48,8 +49,55 @@
   box-shadow: 0 0 18px rgba(255, 200, 90, .35);
 }
 #ptitle-inner #title-copy {
-  position: static; margin-top: 16px; font-size: 11px; color: #8a93b0; line-height: 1.7;
+  position: static; margin-top: 16px; font-size: 11px; color: #d6ddf5; line-height: 1.7;
+  text-shadow: 0 1px 2px rgba(0,0,0,.5);
 }
+/* logo as an image (assets/ui/logo.png) instead of text */
+#ptitle-logo.img { text-shadow: none; }
+#ptitle-logo.img img { display: block; width: 100%; max-width: 340px; height: auto; margin: 0 auto; }
+/* stamina chip */
+#ptitle-stamina {
+  font-size: 12px; letter-spacing: 1px; color: #fff3cf;
+  background: rgba(0,0,0,.28); border: 1px solid rgba(255,220,140,.45); border-radius: 16px;
+  padding: 4px 14px; margin-bottom: 16px; text-shadow: 0 1px 2px rgba(0,0,0,.5);
+}
+/* secondary "unlock" button */
+#ptitle-menu .title-btn, #pbtn-unlock { text-shadow: 0 1px 2px rgba(0,0,0,.35); }
+#pbtn-unlock.ghost {
+  display: block; width: 100%; margin: 12px 0 0; padding: 10px;
+  font-size: 13px; letter-spacing: 1px; font-family: inherit;
+  background: rgba(255, 215, 120, .14); color: #ffe9b0;
+  border: 1px dashed rgba(255, 215, 120, .6); border-radius: 10px; cursor: pointer;
+}
+#pbtn-unlock.ghost:active { background: rgba(255, 215, 120, .28); }
+/* when a key-visual image is present, dim button backgrounds a touch for contrast */
+#ptitle-screen.has-kv #ptitle-menu .title-btn { background: rgba(8, 10, 24, .72); }
+
+/* ---------- store / ad overlays ---------- */
+.wq2-store-ovl {
+  position: absolute; inset: 0; z-index: 90;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(2, 3, 10, .72); padding: 18px;
+}
+.wq2-store-panel {
+  width: 100%; max-width: 320px; text-align: center; padding: 18px 16px;
+}
+.wq2-store-h { font-size: 15px; font-weight: bold; color: #ffe08a; margin-bottom: 10px; }
+.wq2-store-p { font-size: 13px; line-height: 1.7; color: #eef2ff; margin-bottom: 12px; }
+.wq2-store-btns { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.wq2-store-btn {
+  font-family: inherit; font-size: 14px; letter-spacing: 1px; padding: 11px 10px;
+  background: rgba(12, 16, 34, .9); color: #eef2ff;
+  border: 2px solid #4a5480; border-radius: 9px; cursor: pointer;
+}
+.wq2-store-btn.primary { background: linear-gradient(180deg, #3a2f7a, #241b52); border-color: #ffd76a; color: #fff; font-weight: bold; }
+.wq2-store-btn:active { background: #1a2140; }
+.wq2-ad-tag { font-size: 11px; letter-spacing: 2px; color: #9fb0d8; margin-bottom: 12px; }
+.wq2-ad-body { font-size: 15px; color: #fff; margin-bottom: 12px; }
+.wq2-ad-bar { height: 8px; background: #222b48; border-radius: 5px; overflow: hidden; margin: 0 6px 10px; }
+.wq2-ad-bar > div { height: 100%; width: 0; background: linear-gradient(90deg, #ffd76a, #ff9f5a); animation: wq2adfill 1.6s linear forwards; }
+@keyframes wq2adfill { from { width: 0; } to { width: 100%; } }
+.wq2-ad-note { font-size: 10px; color: #8792b3; line-height: 1.5; }
 
 /* ---------- field explore ---------- */
 #pfield-wrap { position: absolute; inset: 0; display: none; }

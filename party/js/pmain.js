@@ -225,6 +225,14 @@
   }
 
   async function runArena() {
+    // stamina gate (free daily plays); premium skips it entirely
+    if (window.WQ2_STORE && !WQ2_STORE.canPlay()) {
+      var ok = await WQ2_STORE.openGate();
+      refreshStamina();
+      if (!ok) return; // out of plays, stay on title
+    }
+    if (window.WQ2_STORE) { WQ2_STORE.spendPlay(); refreshStamina(); }
+
     $("ptitle-screen").style.display = "none";
     arenaStartParty(); // Yu solo; companions join as the gauntlet goes
     var rounds = arenaRounds();
@@ -235,6 +243,9 @@
       var res = await window.PBATTLE.start(r.enc);
       saveStudy();
       if (res.result !== "win") {
+        // rewarded-ad continue: full-heal and retry this same battle
+        var cont = window.WQ2_STORE ? await WQ2_STORE.offerContinue() : false;
+        if (cont) { window.PBATTLE.fullHeal(); i--; continue; }
         await gsay("闘技場に 敗れた…。\nＬｖ" + window.PBATTLE.getParty()[0].lv + "／" + (i + 1) + "戦目でリタイア。\n（タイトルで たんごちょうを 見られます）");
         break;
       }
@@ -271,6 +282,7 @@
     if (window.BGM) BGM.stop();
     $("pbattle-screen").style.display = "none"; // clear the battle layer so the title/zukan show cleanly
     $("ptitle-screen").style.display = "flex";
+    refreshStamina();
     if (window.BGM) BGM.playAny(["title"]);
   }
 
@@ -280,6 +292,21 @@
   function refreshDiffBtn() {
     $("pbtn-diff").textContent = "難易度：" + (window.WQ2_EASY ? "やさしい" : "ふつう");
   }
+  function refreshStamina() {
+    var el = $("ptitle-stamina"), ub = $("pbtn-unlock");
+    if (!window.WQ2_STORE) { if (el) el.style.display = "none"; if (ub) ub.style.display = "none"; return; }
+    if (WQ2_STORE.isPremium()) {
+      if (el) el.innerHTML = "★ 全解放ずみ（広告オフ）";
+      if (ub) ub.style.display = "none";
+    } else {
+      if (el) el.innerHTML = "⚡ 本日のプレイ　" + WQ2_STORE.stamina() + " ／ " + WQ2_STORE.max();
+      if (ub) ub.style.display = "";
+    }
+  }
+  if ($("pbtn-unlock")) $("pbtn-unlock").addEventListener("click", function () {
+    $("pbtn-unlock").blur();
+    if (window.WQ2_STORE) WQ2_STORE.buyUnlock(function (ok) { if (ok) refreshStamina(); });
+  });
   $("pbtn-diff").addEventListener("click", function () {
     $("pbtn-diff").blur();
     window.WQ2_EASY = !window.WQ2_EASY;
@@ -322,7 +349,34 @@
     img.src = src;
   })();
 
+  // optional title key-visual: assets/ui/title_bg.png (GPT-image). Falls back to the CSS gradient.
+  (function () {
+    var src = (window.UI_ART && window.UI_ART.titlebg) || "../assets/ui/title_bg.png";
+    var img = new Image();
+    img.onload = function () {
+      var t = $("ptitle-screen");
+      t.style.backgroundImage = "linear-gradient(180deg, rgba(10,12,34,.12), rgba(6,7,20,.55) 78%), url('" + src + "')";
+      t.style.backgroundSize = "cover";
+      t.style.backgroundPosition = "center top";
+      t.classList.add("has-kv");
+    };
+    img.src = src;
+  })();
+
+  // optional title logo image: assets/ui/logo.png (GPT-image). Falls back to the text logo.
+  (function () {
+    var src = (window.UI_ART && window.UI_ART.logo) || "../assets/ui/logo.png";
+    var img = new Image();
+    img.onload = function () {
+      var lg = $("ptitle-logo");
+      lg.innerHTML = '<img src="' + src + '" alt="WORD QUEST II">';
+      lg.classList.add("img");
+    };
+    img.src = src;
+  })();
+
   refreshBgmBtn();
   refreshDiffBtn();
+  refreshStamina();
   if (window.BGM) BGM.playAny(["title"]);
 })();
