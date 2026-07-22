@@ -287,10 +287,12 @@
   }
 
   function refreshBgmBtn() {
-    $("pbtn-bgm").textContent = "ＢＧＭ：" + (window.BGM && BGM.isEnabled() ? "ＯＮ" : "ＯＦＦ");
+    $("pbtn-bgm").textContent = (window.BGM && BGM.isEnabled()) ? "🔊" : "🔇";
+    $("pbtn-bgm").classList.toggle("off", !(window.BGM && BGM.isEnabled()));
   }
   function refreshDiffBtn() {
-    $("pbtn-diff").textContent = "難易度：" + (window.WQ2_EASY ? "やさしい" : "ふつう");
+    var tx = $("pbtn-diff").querySelector(".tx") || $("pbtn-diff");
+    tx.textContent = "難易度：" + (window.WQ2_EASY ? "やさしい" : "ふつう");
   }
   function refreshStamina() {
     var el = $("ptitle-stamina"), ub = $("pbtn-unlock");

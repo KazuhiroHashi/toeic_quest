@@ -36,18 +36,39 @@
   border-bottom: 1px dotted rgba(120, 130, 160, .4); padding-bottom: 1px;
 }
 #ptitle-menu .title-btn {
-  display: block; width: 100%; margin: 6px 0; padding: 13px 10px;
-  font-size: 16px; letter-spacing: 2px;
-  background: rgba(12, 16, 34, .82); color: #eef2ff;
-  border: 2px solid #4a5480; border-radius: 10px;
+  display: flex; align-items: center; gap: 10px; width: 100%; margin: 7px 0; padding: 12px 16px;
+  font-size: 16px; letter-spacing: 1px; font-weight: bold; text-align: left; font-family: inherit; cursor: pointer;
+  color: #eef2ff;
+  background: linear-gradient(180deg, rgba(42,52,96,.94), rgba(16,20,44,.95));
+  border: 2px solid #5b6aa5; border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 3px 8px rgba(0,0,0,.42);
 }
-#ptitle-menu .title-btn:active { background: #1a2140; }
+#ptitle-menu .title-btn .ic {
+  flex: none; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+  font-size: 16px; border-radius: 8px;
+  background: rgba(255,255,255,.10); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14);
+}
+#ptitle-menu .title-btn .tx { flex: 1; }
+#ptitle-menu .title-btn:active { transform: translateY(1px); filter: brightness(1.12); }
 #ptitle-menu .title-btn.primary {
-  font-size: 18px; padding: 15px 10px; margin-bottom: 10px; font-weight: bold;
-  background: linear-gradient(180deg, #3a2f7a, #241b52);
+  font-size: 18px; padding: 15px 16px; margin-bottom: 10px; letter-spacing: 2px;
+  background: linear-gradient(180deg, #5647c2, #2c2072);
   border-color: #ffd76a; color: #fff;
-  box-shadow: 0 0 18px rgba(255, 200, 90, .35);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 0 20px rgba(255,200,90,.40), 0 3px 10px rgba(0,0,0,.45);
 }
+#ptitle-menu .title-btn.primary .ic {
+  background: rgba(255,215,110,.24); box-shadow: inset 0 0 0 1px rgba(255,215,110,.45); color: #ffe9b0;
+}
+/* corner BGM (mute) toggle */
+.title-corner {
+  position: absolute; top: 12px; right: 12px; z-index: 62;
+  width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
+  font-size: 20px; cursor: pointer; user-select: none;
+  background: rgba(8,10,24,.55); border: 2px solid rgba(255,255,255,.30); border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,.4);
+}
+.title-corner:active { transform: scale(.93); }
+.title-corner.off { opacity: .55; }
 #ptitle-inner #title-copy {
   position: static; margin-top: 16px; font-size: 11px; color: #d6ddf5; line-height: 1.7;
   text-shadow: 0 1px 2px rgba(0,0,0,.5);
@@ -79,8 +100,8 @@
 #ptitle-screen.has-kv #title-copy { display: none; } /* the artwork carries the vibe */
 #ptitle-screen.has-kv #ptitle-logo.img img { max-width: 270px; }
 #ptitle-screen.has-kv #ptitle-stamina { margin: 2px 0 10px; }
-#ptitle-screen.has-kv #ptitle-menu .title-btn { margin: 4px 0; padding: 10px; background: rgba(8, 10, 24, .78); border-color: #6a74a8; }
-#ptitle-screen.has-kv #ptitle-menu .title-btn.primary { padding: 12px; margin-bottom: 6px; background: linear-gradient(180deg, #4536a0, #2a1f66); }
+#ptitle-screen.has-kv #ptitle-menu .title-btn { margin: 5px 0; padding: 11px 14px; background: linear-gradient(180deg, rgba(30,38,74,.95), rgba(10,13,32,.96)); border-color: #6a74a8; }
+#ptitle-screen.has-kv #ptitle-menu .title-btn.primary { padding: 13px 14px; margin-bottom: 6px; background: linear-gradient(180deg, #5647c2, #2a1f66); }
 #ptitle-screen.has-kv #pbtn-unlock.ghost { margin-top: 8px; padding: 8px; }
 #ptitle-screen.has-kv #ptitle-foot { margin-top: 8px; }
 #ptitle-screen.has-kv #ptitle-foot #pbtn-field { background: rgba(8,10,24,.55); padding: 3px 10px; border-radius: 10px; }
