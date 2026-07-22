@@ -1,6 +1,6 @@
 {
-  "appId": "com.example.wordquest2",
-  "appName": "ことばクエスト",
+  "appId": "com.kazuhirohashi.wordquest",
+  "appName": "WORD QUEST",
   "webDir": "www",
   "backgroundColor": "#05060f",
   "android": {

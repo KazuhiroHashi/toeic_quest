@@ -1,11 +1,12 @@
 {
-  "name": "wordquest2-app",
+  "name": "wordquest-app",
   "version": "0.1.0",
   "private": true,
-  "description": "WORD QUEST II - native app wrapper (Capacitor) for iOS/Android",
+  "description": "WORD QUEST - native app wrapper (Capacitor) for iOS/Android",
   "scripts": {
     "sync:www": "node tools/sync_www.js",
     "cap:sync": "npm run sync:www && npx cap sync",
+    "assets": "npx @capacitor/assets generate --assetPath appicon --iconBackgroundColor '#0b1230' --iconBackgroundColorDark '#0b1230'",
     "open:android": "npm run cap:sync && npx cap open android",
     "open:ios": "npm run cap:sync && npx cap open ios"
   },
@@ -15,6 +16,7 @@
     "@capacitor/ios": "^6.1.2"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^6.1.2"
   }
 }
