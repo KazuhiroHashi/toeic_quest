@@ -167,6 +167,16 @@
 .zk-band b { color: #fff; font-size: 15px;
   font-family: "Hiragino Sans","Yu Gothic UI",system-ui,sans-serif; }
 .zk-legend { font-size: 10.5px; color: #8894ad; margin-top: 5px; line-height: 1.6; }
+.zk-rank { font-size: 12px; letter-spacing: 2px; color: #b9c3ea; font-weight: bold; margin-bottom: 2px;
+  font-family: "Hiragino Sans","Yu Gothic UI",system-ui,sans-serif; }
+.zk-strip { display: flex; gap: 6px; justify-content: center; margin: 0 0 9px; }
+.zk-chip { flex: 1; text-align: center; padding: 6px 2px; border-radius: 9px;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09); }
+.zk-chip.on { border-color: rgba(255,215,120,.65); background: rgba(255,215,120,.10); }
+.zk-chip-ic { font-size: 20px; line-height: 1; }
+.zk-chip.none .zk-chip-ic { opacity: .5; filter: grayscale(1); }
+.zk-chip-lv { font-size: 10px; color: #9aa6c0; margin-top: 2px;
+  font-family: "Hiragino Sans","Yu Gothic UI",system-ui,sans-serif; }
 
 /* ---------- field explore ---------- */
 #pfield-wrap { position: absolute; inset: 0; display: none; }
