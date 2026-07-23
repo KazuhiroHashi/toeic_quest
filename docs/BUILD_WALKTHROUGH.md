@@ -6,8 +6,8 @@
 ---
 
 ## STEP 0：決めるだけ（5分）
-- **名義**：会社未設立なら **個人（Individual）で今すぐ開始**が最速。あとで Bridge AI 法人へ**アプリ移管**できる（Apple/Google とも移管に対応）。
-- **バンドルID**：`com.bridgeai.wordquest` を推奨（会社が実在しなくても“文字列”として使える）。※**最初のアップロード後は変更不可**。決めたら私が `capacitor.config.json` を確定します。
+- **会社名＝Bridge AI に決定**。名義は会社未設立なら **個人（Individual）で今すぐ開始**が最速。あとで Bridge AI 法人へ**アプリ移管**できる（Apple/Google とも移管に対応）。
+- **バンドルID＝`com.bridgeai.wordquest` に確定**（`capacitor.config.json` 反映済み）。※**最初のアップロード後は変更不可**。
 
 ---
 
