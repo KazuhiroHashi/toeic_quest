@@ -606,9 +606,15 @@ canvas#field-canvas {
 #ptitle-screen.has-kv #ptitle-stamina { margin: 2px 0 10px; }
 #ptitle-screen.has-kv #ptitle-menu .title-btn { margin: 5px 0; padding: 11px 14px; background: linear-gradient(180deg, rgba(30,38,74,.95), rgba(10,13,32,.96)); border-color: #6a74a8; }
 #ptitle-screen.has-kv #ptitle-menu .title-btn.primary { padding: 13px 14px; margin-bottom: 6px; background: linear-gradient(180deg, #5647c2, #2a1f66); }
-#ptitle-screen.has-kv #pbtn-unlock.ghost { margin-top: 8px; padding: 8px; }
-#ptitle-screen.has-kv #ptitle-foot { margin-top: 8px; }
-#ptitle-screen.has-kv #ptitle-foot #pbtn-field { background: rgba(8,10,24,.55); padding: 3px 10px; border-radius: 10px; }
+#ptitle-screen.has-kv #pbtn-unlock.ghost {
+  margin-top: 8px; padding: 9px; border-style: solid;
+  background: rgba(10,12,28,.82); color: #ffe9b0; text-shadow: 0 1px 2px rgba(0,0,0,.6);
+}
+#ptitle-screen.has-kv #ptitle-foot { margin-top: 10px; }
+#ptitle-screen.has-kv #ptitle-foot #pbtn-field {
+  background: rgba(10,12,28,.82); color: #c3cbe0; padding: 4px 12px; border-radius: 12px;
+  border-bottom: none; text-shadow: 0 1px 2px rgba(0,0,0,.6);
+}
 
 /* ---------- store / ad overlays ---------- */
 .wq2-store-ovl {
@@ -635,6 +641,36 @@ canvas#field-canvas {
 .wq2-ad-bar > div { height: 100%; width: 0; background: linear-gradient(90deg, #ffd76a, #ff9f5a); animation: wq2adfill 1.6s linear forwards; }
 @keyframes wq2adfill { from { width: 0; } to { width: 100%; } }
 .wq2-ad-note { font-size: 10px; color: #8792b3; line-height: 1.5; }
+
+/* ---------- 単語帳（word book）summary ---------- */
+.zk-total {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  background: linear-gradient(180deg, rgba(34,28,66,.7), rgba(14,12,32,.7));
+  border: 1px solid rgba(255,215,120,.30); border-radius: 14px;
+  padding: 12px 14px 14px; margin: 4px 0 10px;
+}
+.zk-trophy { font-size: 42px; line-height: 1; filter: drop-shadow(0 2px 5px rgba(0,0,0,.55)); }
+.zk-trophy.none { opacity: .85; }
+.zk-count { margin-top: 4px; display: flex; align-items: baseline; gap: 4px; }
+.big-num {
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  font-weight: 800; font-size: 48px; line-height: 1; letter-spacing: 1px;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(180deg, #fff3c4 0%, #ffcf5c 55%, #f5a623 100%);
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent; -webkit-text-fill-color: transparent;
+}
+.zk-slash { font-family: "Hiragino Sans","Yu Gothic UI",system-ui,sans-serif; font-size: 15px; color: #d3dcee; font-weight: 700; }
+.zk-tier { margin-top: 6px; font-size: 12.5px; font-weight: bold; letter-spacing: 1px;
+  font-family: "Hiragino Sans","Yu Gothic UI",system-ui,sans-serif; }
+.zk-tier.bronze { color: #e0a266; } .zk-tier.silver { color: #d7e0ee; }
+.zk-tier.gold { color: #ffd54a; } .zk-tier.platinum { color: #9ae6ff; } .zk-tier.none { color: #9aa6c0; }
+.zk-bar { width: 100%; max-width: 260px; height: 8px; margin-top: 9px; background: rgba(255,255,255,.13); border-radius: 5px; overflow: hidden; }
+.zk-bar > div { height: 100%; background: linear-gradient(90deg, #ffd76a, #ff9f5a); border-radius: 5px; transition: width .4s; }
+.zk-band { font-size: 12.5px; color: #cde; letter-spacing: 1px; }
+.zk-band b { color: #fff; font-size: 15px;
+  font-family: "Hiragino Sans","Yu Gothic UI",system-ui,sans-serif; }
+.zk-legend { font-size: 10.5px; color: #8894ad; margin-top: 5px; line-height: 1.6; }
 
 /* ---------- field explore ---------- */
 #pfield-wrap { position: absolute; inset: 0; display: none; }
@@ -804,8 +840,8 @@ canvas#field-canvas {
       <!-- word encyclopedia -->
       <div id="zukan">
         <div id="zukan-head">
-          <div id="zukan-title">たんごちょう</div>
-          <div id="zukan-close">✕ とじる</div>
+          <div id="zukan-title">単語帳</div>
+          <div id="zukan-close">✕ 閉じる</div>
         </div>
         <div id="zukan-tabs"></div>
         <div id="zukan-summary"></div>
@@ -6842,7 +6878,7 @@ window.ITEM_DEFS = {
     var bgmOn = window.BGM ? BGM.isEnabled() : false;
     var c = await menu($("cmd-win"), [
       { label: "つよさ" }, { label: "そうび" }, { label: "どうぐ" }, { label: "じゅもん" },
-      { label: "たんごちょう" }, { label: "セーブ" },
+      { label: "単語帳" }, { label: "セーブ" },
       { label: "ＢＧＭ：" + (bgmOn ? "ＯＮ" : "ＯＦＦ") },
       { label: "タイトルへ" }, { label: "とじる" }
     ], "メニュー");
@@ -7123,12 +7159,26 @@ window.ITEM_DEFS = {
         '<div class="zm' + (known ? "" : " hidden-m") + '">' + (known ? e.m : "？？？") + "</div>" +
         (weak ? '<div class="zweak">！</div>' : "") + "</div>";
     });
-    $("zukan-summary").innerHTML =
-      "はっけん " + nB + "／" + pool.length +
+    // ---- big total-cleared across all 3000 + trophy ----
+    var prog = window.studyProgress ? window.studyProgress() : { cleared: 0, total: 3000 };
+    var tr = window.trophyFor ? window.trophyFor(prog.cleared) : { name: "", icon: "", cls: "none", next: 100 };
+    var pct = Math.min(100, Math.round(100 * prog.cleared / (prog.total || 3000)));
+    var toNext = tr.next ? Math.max(0, tr.next - prog.cleared) : 0;
+    var head =
+      '<div class="zk-total">' +
+        '<div class="zk-trophy ' + tr.cls + '">' + (tr.icon || "🔰") + '</div>' +
+        '<div class="zk-count"><span class="big-num">' + prog.cleared + '</span>' +
+          '<span class="zk-slash"> ／ ' + prog.total + ' 問クリア</span></div>' +
+        '<div class="zk-tier ' + tr.cls + '">' + (tr.cls === "none" ? "ブロンズまで あと " + toNext : tr.name + "トロフィー") +
+          (tr.next ? '（次まで あと ' + toNext + '）' : "") + '</div>' +
+        '<div class="zk-bar"><div style="width:' + pct + '%"></div></div>' +
+      '</div>';
+    $("zukan-summary").innerHTML = head +
+      '<div class="zk-band">スコア' + zukanBand + '：発見 <b>' + nB + '</b> ／ ' + pool.length +
       '　<span style="color:#cfd8e6">★' + nS + "</span>" +
       '　<span style="color:#ffd54a">★' + nG + "</span>" +
-      (weakN ? '　<span style="color:#ff5a5a">にがて ' + weakN + "</span>" : "") +
-      '<div style="font-size:10.5px;color:#889;margin-top:2px">★＝正解ずみ／銀★＝2秒以内で正解／金★＝3連続正解</div>';
+      (weakN ? '　<span style="color:#ff5a5a">にがて ' + weakN + "</span>" : "") + "</div>" +
+      '<div class="zk-legend">★＝正解ずみ／銀★＝2秒以内で正解／金★＝3連続正解　｜　🥉100 🥈200 🥇300 🏆500</div>';
     $("zukan-list").innerHTML = rows.join("");
     $("zukan-list").scrollTop = 0;
   }
@@ -7202,6 +7252,24 @@ window.ITEM_DEFS = {
   function saveStudy() {
     try { localStorage.setItem("wq2_study_v1", JSON.stringify(window.G.study)); } catch (e) {}
   }
+
+  // total distinct words cleared (answered correctly at least once) out of all 3000
+  window.studyProgress = function () {
+    var words = (window.G && window.G.study && window.G.study.words) || {};
+    var cleared = 0;
+    for (var k in words) { if (words[k] && words[k].c > 0) cleared++; }
+    var total = 0;
+    [400, 500, 600, 700, 800, 900].forEach(function (l) { total += (window.VOCAB && window.VOCAB[l] ? window.VOCAB[l].length : 0); });
+    return { cleared: cleared, total: total || 3000 };
+  };
+  // trophy tier for a cleared count: 100 bronze / 200 silver / 300 gold / 500 platinum
+  window.trophyFor = function (n) {
+    if (n >= 500) return { name: "プラチナ", icon: "🏆", cls: "platinum", need: 500 };
+    if (n >= 300) return { name: "ゴールド", icon: "🥇", cls: "gold", need: 300, next: 500 };
+    if (n >= 200) return { name: "シルバー", icon: "🥈", cls: "silver", need: 200, next: 300 };
+    if (n >= 100) return { name: "ブロンズ", icon: "🥉", cls: "bronze", need: 100, next: 200 };
+    return { name: "トロフィーまであと少し", icon: "🔰", cls: "none", need: 0, next: 100 };
+  };
 
   function $(id) { return document.getElementById(id); }
 
@@ -7434,7 +7502,10 @@ window.ITEM_DEFS = {
         // rewarded-ad continue: full-heal and retry this same battle
         var cont = window.WQ2_STORE ? await WQ2_STORE.offerContinue() : false;
         if (cont) { window.PBATTLE.fullHeal(); i--; continue; }
-        await gsay("闘技場に 敗れた…。\nＬｖ" + window.PBATTLE.getParty()[0].lv + "／" + (i + 1) + "戦目でリタイア。\n（タイトルで たんごちょうを 見られます）");
+        var pg = window.studyProgress(), tr = window.trophyFor(pg.cleared);
+        await gsay("闘技場に 敗れた…。\nＬｖ" + window.PBATTLE.getParty()[0].lv + "／" + (i + 1) + "戦目でリタイア。\n\n" +
+          "これまでに " + pg.cleared + " ／ " + pg.total + " 問クリア！" + (tr.icon ? "　" + tr.icon + tr.name : "") + "\n" +
+          "（タイトルの「単語帳」で 復習できます）");
         break;
       }
       if (i < rounds.length - 1) {
@@ -7462,7 +7533,7 @@ window.ITEM_DEFS = {
           "ユウたちは たがいの顔を 見合わせ、\n静かに うなずいた。\nもう 多くの言葉は いらなかった。",
           "そして いつか——\nきみが おぼえた 一つ一つの単語が、\n誰かに 何かを 伝える日が くる。",
           "〜 ことばの闘技場 制覇 〜\n〜 WORD QUEST II ・ 完 〜\n\n最終Ｌｖ" + lv + "　おめでとう！ そして ありがとう。",
-          "（タイトルの「たんごちょう」で\n　これまでに 出会った単語を 復習できます）"
+          "（タイトルの「単語帳」で\n　これまでに 出会った単語を 復習できます）"
         ];
         for (var e = 0; e < ending.length; e++) await gsay(ending[e]);
       }

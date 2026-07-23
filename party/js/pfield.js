@@ -729,7 +729,7 @@
     var bgmOn = window.BGM ? BGM.isEnabled() : false;
     var c = await menu($("cmd-win"), [
       { label: "つよさ" }, { label: "そうび" }, { label: "どうぐ" }, { label: "じゅもん" },
-      { label: "たんごちょう" }, { label: "セーブ" },
+      { label: "単語帳" }, { label: "セーブ" },
       { label: "ＢＧＭ：" + (bgmOn ? "ＯＮ" : "ＯＦＦ") },
       { label: "タイトルへ" }, { label: "とじる" }
     ], "メニュー");
@@ -1010,12 +1010,26 @@
         '<div class="zm' + (known ? "" : " hidden-m") + '">' + (known ? e.m : "？？？") + "</div>" +
         (weak ? '<div class="zweak">！</div>' : "") + "</div>";
     });
-    $("zukan-summary").innerHTML =
-      "はっけん " + nB + "／" + pool.length +
+    // ---- big total-cleared across all 3000 + trophy ----
+    var prog = window.studyProgress ? window.studyProgress() : { cleared: 0, total: 3000 };
+    var tr = window.trophyFor ? window.trophyFor(prog.cleared) : { name: "", icon: "", cls: "none", next: 100 };
+    var pct = Math.min(100, Math.round(100 * prog.cleared / (prog.total || 3000)));
+    var toNext = tr.next ? Math.max(0, tr.next - prog.cleared) : 0;
+    var head =
+      '<div class="zk-total">' +
+        '<div class="zk-trophy ' + tr.cls + '">' + (tr.icon || "🔰") + '</div>' +
+        '<div class="zk-count"><span class="big-num">' + prog.cleared + '</span>' +
+          '<span class="zk-slash"> ／ ' + prog.total + ' 問クリア</span></div>' +
+        '<div class="zk-tier ' + tr.cls + '">' + (tr.cls === "none" ? "ブロンズまで あと " + toNext : tr.name + "トロフィー") +
+          (tr.next ? '（次まで あと ' + toNext + '）' : "") + '</div>' +
+        '<div class="zk-bar"><div style="width:' + pct + '%"></div></div>' +
+      '</div>';
+    $("zukan-summary").innerHTML = head +
+      '<div class="zk-band">スコア' + zukanBand + '：発見 <b>' + nB + '</b> ／ ' + pool.length +
       '　<span style="color:#cfd8e6">★' + nS + "</span>" +
       '　<span style="color:#ffd54a">★' + nG + "</span>" +
-      (weakN ? '　<span style="color:#ff5a5a">にがて ' + weakN + "</span>" : "") +
-      '<div style="font-size:10.5px;color:#889;margin-top:2px">★＝正解ずみ／銀★＝2秒以内で正解／金★＝3連続正解</div>';
+      (weakN ? '　<span style="color:#ff5a5a">にがて ' + weakN + "</span>" : "") + "</div>" +
+      '<div class="zk-legend">★＝正解ずみ／銀★＝2秒以内で正解／金★＝3連続正解　｜　🥉100 🥈200 🥇300 🏆500</div>';
     $("zukan-list").innerHTML = rows.join("");
     $("zukan-list").scrollTop = 0;
   }

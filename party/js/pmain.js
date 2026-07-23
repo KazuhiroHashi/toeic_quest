@@ -15,6 +15,24 @@
     try { localStorage.setItem("wq2_study_v1", JSON.stringify(window.G.study)); } catch (e) {}
   }
 
+  // total distinct words cleared (answered correctly at least once) out of all 3000
+  window.studyProgress = function () {
+    var words = (window.G && window.G.study && window.G.study.words) || {};
+    var cleared = 0;
+    for (var k in words) { if (words[k] && words[k].c > 0) cleared++; }
+    var total = 0;
+    [400, 500, 600, 700, 800, 900].forEach(function (l) { total += (window.VOCAB && window.VOCAB[l] ? window.VOCAB[l].length : 0); });
+    return { cleared: cleared, total: total || 3000 };
+  };
+  // trophy tier for a cleared count: 100 bronze / 200 silver / 300 gold / 500 platinum
+  window.trophyFor = function (n) {
+    if (n >= 500) return { name: "プラチナ", icon: "🏆", cls: "platinum", need: 500 };
+    if (n >= 300) return { name: "ゴールド", icon: "🥇", cls: "gold", need: 300, next: 500 };
+    if (n >= 200) return { name: "シルバー", icon: "🥈", cls: "silver", need: 200, next: 300 };
+    if (n >= 100) return { name: "ブロンズ", icon: "🥉", cls: "bronze", need: 100, next: 200 };
+    return { name: "トロフィーまであと少し", icon: "🔰", cls: "none", need: 0, next: 100 };
+  };
+
   function $(id) { return document.getElementById(id); }
 
   var FOE_SKILLS = {
@@ -246,7 +264,10 @@
         // rewarded-ad continue: full-heal and retry this same battle
         var cont = window.WQ2_STORE ? await WQ2_STORE.offerContinue() : false;
         if (cont) { window.PBATTLE.fullHeal(); i--; continue; }
-        await gsay("闘技場に 敗れた…。\nＬｖ" + window.PBATTLE.getParty()[0].lv + "／" + (i + 1) + "戦目でリタイア。\n（タイトルで たんごちょうを 見られます）");
+        var pg = window.studyProgress(), tr = window.trophyFor(pg.cleared);
+        await gsay("闘技場に 敗れた…。\nＬｖ" + window.PBATTLE.getParty()[0].lv + "／" + (i + 1) + "戦目でリタイア。\n\n" +
+          "これまでに " + pg.cleared + " ／ " + pg.total + " 問クリア！" + (tr.icon ? "　" + tr.icon + tr.name : "") + "\n" +
+          "（タイトルの「単語帳」で 復習できます）");
         break;
       }
       if (i < rounds.length - 1) {
@@ -274,7 +295,7 @@
           "ユウたちは たがいの顔を 見合わせ、\n静かに うなずいた。\nもう 多くの言葉は いらなかった。",
           "そして いつか——\nきみが おぼえた 一つ一つの単語が、\n誰かに 何かを 伝える日が くる。",
           "〜 ことばの闘技場 制覇 〜\n〜 WORD QUEST II ・ 完 〜\n\n最終Ｌｖ" + lv + "　おめでとう！ そして ありがとう。",
-          "（タイトルの「たんごちょう」で\n　これまでに 出会った単語を 復習できます）"
+          "（タイトルの「単語帳」で\n　これまでに 出会った単語を 復習できます）"
         ];
         for (var e = 0; e < ending.length; e++) await gsay(ending[e]);
       }
