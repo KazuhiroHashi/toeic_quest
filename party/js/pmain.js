@@ -151,7 +151,7 @@
       bgm: "boss",
       enemies: [{
         base: "maou_mutos", name: "沈黙王ミュートス", lv: 900,
-        hp: 4600, atk: 66, def: 38, agi: 22, mag: 74, exp: 5000, boss: true,
+        hp: 4600, atk: 112, def: 38, agi: 22, mag: 92, exp: 5000, boss: true,
         magicCharge: true, chargeCry: "『静寂よ、すべてを 呑み込め—！』",
         skills: [{ name: "静寂の波動", power: 0.95, all: true }, { name: "言葉狩り", power: 1.3, all: false }], skillRate: 0.4,
         phases: [
@@ -169,7 +169,7 @@
       bgm: "lastboss", // 専用曲があれば使用、無ければbossにフォールバック
       enemies: [{
         base: "maou_true", name: "真・沈黙王ミュートス", lv: 900,
-        hp: 6800, atk: 88, def: 42, agi: 24, mag: 98, exp: 12000, boss: true,
+        hp: 6800, atk: 148, def: 42, agi: 24, mag: 112, exp: 12000, boss: true,
         magicCharge: true, chargeCry: "『これが 絶対の 静寂—！』",
         skills: [{ name: "絶対静寂", power: 1.1, all: true }, { name: "言葉狩り", power: 1.4, all: false }], skillRate: 0.44,
         phases: [
@@ -287,15 +287,25 @@
         }
       } else {
         if (window.BGM) BGM.playAny(["ending", "title"]); // victory epilogue music
+        // ending scene: clear the fallen boss and switch to a bright, hopeful backdrop
+        $("penemy-row").innerHTML = "";
+        var kv = (window.UI_ART && window.UI_ART.titlebg) || "../assets/ui/title_bg.png";
+        var bgEl = $("pbattle-bg");
+        bgEl.style.backgroundImage = "url('" + kv + "')";
+        bgEl.style.backgroundSize = "cover"; bgEl.style.backgroundPosition = "center top";
         var lv = window.PBATTLE.getParty()[0].lv;
+        var pg = window.studyProgress(), tr = window.trophyFor(pg.cleared);
         var ending = [
-          "真・沈黙王ミュートスは\nまばゆい光の中へ 消えていった…。",
-          "『ことばは ときに 人を傷つける。\n　だが それ以上に——\n　人と人を つなぐ 力になる。』",
-          "奪われていた ことばが\n世界に 戻っていく。\n人々の 声が、笑い声が、\n少しずつ 街に あふれていった。",
-          "ユウたちは たがいの顔を 見合わせ、\n静かに うなずいた。\nもう 多くの言葉は いらなかった。",
-          "そして いつか——\nきみが おぼえた 一つ一つの単語が、\n誰かに 何かを 伝える日が くる。",
-          "〜 ことばの闘技場 制覇 〜\n〜 WORD QUEST II ・ 完 〜\n\n最終Ｌｖ" + lv + "　おめでとう！ そして ありがとう。",
-          "（タイトルの「単語帳」で\n　これまでに 出会った単語を 復習できます）"
+          "真・沈黙王ミュートスは\nまばゆい光の中へ 溶けて消えた…。",
+          "『…ありがとう。\n　わたしは ことばに 傷つき、\n　ことばを 憎んでいた。』",
+          "『けれど きみたちの声は\n　まっすぐで、あたたかかった。\n　その響きに、救われたよ。』",
+          "奪われていた ことばが\n世界へ 還っていく。\n人々の 声が、歌が、笑い声が、\n少しずつ 街に あふれ出した。",
+          "ユウたちは たがいの顔を 見合わせ、\nどちらからともなく 笑った。\nもう 多くの言葉は いらなかった。",
+          "——そして いつか。\nきみが おぼえた 一つ一つの単語が、\n誰かに 何かを 伝える日が くる。",
+          "【 冒険の記録 】\n　最終レベル … " + lv + "\n　おぼえた単語 … " + pg.cleared + " ／ " + pg.total + " 語" +
+            (tr.icon ? "\n　称号 … " + tr.icon + " " + tr.name : ""),
+          "〜 ことばの闘技場 制覇 〜\n\n★　ＷＯＲＤ　ＱＵＥＳＴ　・　完　★\n\nおめでとう！ そして ありがとう。",
+          "（タイトルの「単語帳」で\n　出会った単語を いつでも 復習できます。\n　全3000語 制覇を めざそう！）"
         ];
         for (var e = 0; e < ending.length; e++) await gsay(ending[e]);
       }

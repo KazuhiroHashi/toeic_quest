@@ -1035,13 +1035,15 @@
         '<div class="zk-chip-ic">' + (t.icon || "🔒") + '</div>' +
         '<div class="zk-chip-lv">' + bd + '</div></div>';
     }).join("") + '</div>';
-    $("zukan-summary").innerHTML = head + strip +
-      '<div class="zk-band">このランク：発見 <b>' + nB + '</b> ／ ' + total +
+    var bandLine = '<div class="zk-band">このランク：発見 <b>' + nB + '</b> ／ ' + total +
       '　<span style="color:#cfd8e6">★' + nS + "</span>" +
       '　<span style="color:#ffd54a">★' + nG + "</span>" +
-      (weakN ? '　<span style="color:#ff5a5a">にがて ' + weakN + "</span>" : "") + "</div>" +
-      '<div class="zk-legend">★＝正解ずみ／銀★＝2秒以内で正解／金★＝3連続正解　｜　各ランク500問：🥉100 🥈200 🥇300 🏆500</div>';
-    $("zukan-list").innerHTML = rows.join("");
+      (weakN ? '　<span style="color:#ff5a5a">にがて ' + weakN + "</span>" : "") + "</div>";
+    var legend = '<div class="zk-legend">★＝正解ずみ／銀★＝2秒以内で正解／金★＝3連続正解　｜　各ランク500問：🥉100 🥈200 🥇300 🏆500</div>';
+    // Keep only the rank tabs fixed: put the summary INSIDE the scroll area so
+    // the word list gets the full remaining height.
+    $("zukan-summary").style.display = "none";
+    $("zukan-list").innerHTML = '<div class="zk-summary-inner">' + head + strip + bandLine + legend + '</div>' + rows.join("");
     $("zukan-list").scrollTop = 0;
   }
   // Self-contained zukan (own listeners) so it works from field OR the title screen.

@@ -190,6 +190,7 @@
 .zk-chip.none .zk-chip-ic { opacity: .5; filter: grayscale(1); }
 .zk-chip-lv { font-size: 10px; color: #9aa6c0; margin-top: 2px;
   font-family: "Hiragino Sans","Yu Gothic UI",system-ui,sans-serif; }
+.zk-summary-inner { padding: 4px 0 10px; }
 
 /* ---------- field explore ---------- */
 #pfield-wrap { position: absolute; inset: 0; display: none; }
