@@ -4908,8 +4908,14 @@ window.ITEM_DEFS = {
   "use strict";
 
   var TRACKS = ["title", "field", "town", "dungeon",
-                "battle", "battle2", "battle_dungeon", "midboss", "midboss2", "midboss3", "boss", "lastboss", "ending", "gameover"];
-  var NO_RESUME = { battle: 1, battle2: 1, battle_dungeon: 1, midboss: 1, midboss2: 1, midboss3: 1, boss: 1, lastboss: 1, ending: 1, gameover: 1 };
+                "battle", "battle2", "battle_dungeon",
+                "arena1", "arena2", "arena3", "arena4",
+                "midboss", "king1", "king2", "king3", "king4",
+                "boss", "lastboss", "ending", "victory", "gameover"];
+  var NO_RESUME = { battle: 1, battle2: 1, battle_dungeon: 1,
+                    arena1: 1, arena2: 1, arena3: 1, arena4: 1,
+                    midboss: 1, king1: 1, king2: 1, king3: 1, king4: 1,
+                    boss: 1, lastboss: 1, ending: 1, gameover: 1 };
   var VOLUME = 0.55;
 
   var enabled = true;
@@ -6013,7 +6019,7 @@ window.ITEM_DEFS = {
       BGM.stop();
       setTimeout(function () {
         if (screenEl.style.display === "none") return;
-        if (encounter.bgm) BGM.playAny([encounter.bgm, "boss", "midboss"]); // missing files fall through
+        if (encounter.bgm) BGM.playAny(isBoss ? [encounter.bgm, "boss", "midboss"] : [encounter.bgm, "battle", "battle2"]); // missing files fall back
         else if (isBoss) BGM.playAny(["midboss", "boss"]);
         else BGM.playAny(Math.random() < 0.5 ? ["battle", "battle2"] : ["battle2", "battle"]);
       }, 1000);
@@ -7378,26 +7384,26 @@ window.ITEM_DEFS = {
     };
   }
   function bossHowl() {
-    return king({ base: "gen_r", name: "四天王ハウル", lv: 600, hp: 3060, atk: 58, def: 24, exp: 1400, quizLv: 600, bg: "tower1", bgm: "midboss",
+    return king({ base: "gen_r", name: "四天王ハウル", lv: 600, hp: 3060, atk: 58, def: 24, exp: 1400, quizLv: 600, bg: "tower1", bgm: "king1",
       skills: [{ name: "轟音の叫び", power: 0.72, all: true }],
       intro: ["四天王ハウルが 道をふさぐ！", "『聞く力は わたしが喰らった。\n　お前たちの叫びは 誰にも届かん！』"] });
   }
   function bossGag() {
-    return king({ base: "king_gag", name: "四天王ガグ", lv: 700, hp: 3910, atk: 76, def: 28, exp: 2000, quizLv: 650, bg: "tower2", bgm: "boss",
+    return king({ base: "king_gag", name: "四天王ガグ", lv: 700, hp: 3910, atk: 76, def: 28, exp: 2000, quizLv: 650, bg: "tower2", bgm: "king2",
       aoeCry: "静まりなさい", aoeVerb: "命じた",
       magicCharge: true, chargeCry: "『沈黙の 大呪文—！』",
       skills: [{ name: "沈黙の号令", power: 0.5, all: true }, { name: "言霊砕き", power: 1.3, all: false }],
       intro: ["四天王ガグが 立ちはだかる！", "『話す力は 我が手にある。\n　その声も この地で 奪わせてもらう。』"] });
   }
   function bossBlank() {
-    return king({ base: "king_blank", name: "四天王ブランク", lv: 800, hp: 5600, atk: 94, def: 30, exp: 2800, quizLv: 700, bg: "zone6", bgm: "midboss",
+    return king({ base: "king_blank", name: "四天王ブランク", lv: 800, hp: 5600, atk: 94, def: 30, exp: 2800, quizLv: 700, bg: "zone6", bgm: "king3",
       aoeCry: "しずかに しようね", aoeVerb: "ささやいた",
       magicCharge: true, chargeCry: "『いくよー。ぜんぶ まっしろ！』",
       skills: [{ name: "白紙化", power: 0.72, all: true }, { name: "記憶消去", power: 1.35, all: false }],
       intro: ["四天王ブランクが ぽわんと 現れた！", "『こんにちは。みんなの あたまの中、\n　まっしろに しちゃうね？　うふふ』"] });
   }
   function bossErase() {
-    return king({ base: "king_erase", name: "四天王イレイズ", lv: 850, hp: 6800, atk: 112, def: 34, exp: 3600, quizLv: 750, bg: "zone5", bgm: "boss",
+    return king({ base: "king_erase", name: "四天王イレイズ", lv: 850, hp: 6800, atk: 112, def: 34, exp: 3600, quizLv: 750, bg: "zone5", bgm: "king4",
       magicCharge: true, chargeCry: "『すべて、消える。』",
       skills: [{ name: "消し去る風", power: 0.68, all: true }, { name: "抹消の一撃", power: 1.0, all: false }],
       intro: ["最後の四天王 イレイズが 立ちはだかる！", "『書く力は すでに この手の中。\n　お前たちの名も、ここで 消す。』"] });
@@ -7481,10 +7487,10 @@ window.ITEM_DEFS = {
   // 11 rounds: zako(1-4) -> 中ボス竜(5) -> 四天王4連戦(6-9) -> ラスボス(10) -> 真ラスボス(11)
   function arenaRounds() {
     return [
-      { label: "第1戦", enc: { bg: "zone1", quizLv: 400, enemies: [af("bee", 1.4), af("bat", 1.4)] } },        // Yu solo（スペルバード＝青 ＋ アルファベットひよこ＝黄）
-      { label: "第2戦", enc: { bg: "zone2", quizLv: 450, enemies: [af("worm", 1.4), af("goblin", 1.4), af("rat", 1.4)] } }, // +Gai（ペンシルラビット登場）
-      { label: "第3戦", enc: { bg: "zone3", quizLv: 500, enemies: [af("wolf", 1.5), af("ghost", 1.5), af("snake", 1.5)] } }, // +Rina
-      { label: "第4戦", enc: { bg: "zone4", quizLv: 550, enemies: [af("mush", 1.9), af("owl", 1.9), af("ghost", 1.9), af("wolf", 1.9)] } },
+      { label: "第1戦", enc: { bg: "zone1", quizLv: 400, bgm: "arena1", enemies: [af("bee", 1.4), af("bat", 1.4)] } },        // Yu solo（スペルバード＝青 ＋ アルファベットひよこ＝黄）
+      { label: "第2戦", enc: { bg: "zone2", quizLv: 450, bgm: "arena2", enemies: [af("worm", 1.4), af("goblin", 1.4), af("rat", 1.4)] } }, // +Gai（ペンシルラビット登場）
+      { label: "第3戦", enc: { bg: "zone3", quizLv: 500, bgm: "arena3", enemies: [af("wolf", 1.5), af("ghost", 1.5), af("snake", 1.5)] } }, // +Rina
+      { label: "第4戦", enc: { bg: "zone4", quizLv: 550, bgm: "arena4", enemies: [af("mush", 1.9), af("owl", 1.9), af("ghost", 1.9), af("wolf", 1.9)] } },
       { label: "第5戦・中ボス 洞窟の古竜", enc: dragonEnc() }, // +Mia
       { label: "第6戦・四天王ハウル", enc: bossHowl() },
       { label: "第7戦・四天王ガグ", enc: bossGag() },

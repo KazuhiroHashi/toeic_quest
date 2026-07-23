@@ -8,8 +8,14 @@
   "use strict";
 
   var TRACKS = ["title", "field", "town", "dungeon",
-                "battle", "battle2", "battle_dungeon", "midboss", "midboss2", "midboss3", "boss", "lastboss", "ending", "gameover"];
-  var NO_RESUME = { battle: 1, battle2: 1, battle_dungeon: 1, midboss: 1, midboss2: 1, midboss3: 1, boss: 1, lastboss: 1, ending: 1, gameover: 1 };
+                "battle", "battle2", "battle_dungeon",
+                "arena1", "arena2", "arena3", "arena4",
+                "midboss", "king1", "king2", "king3", "king4",
+                "boss", "lastboss", "ending", "victory", "gameover"];
+  var NO_RESUME = { battle: 1, battle2: 1, battle_dungeon: 1,
+                    arena1: 1, arena2: 1, arena3: 1, arena4: 1,
+                    midboss: 1, king1: 1, king2: 1, king3: 1, king4: 1,
+                    boss: 1, lastboss: 1, ending: 1, gameover: 1 };
   var VOLUME = 0.55;
 
   var enabled = true;
