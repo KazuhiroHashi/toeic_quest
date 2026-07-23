@@ -402,5 +402,21 @@
   refreshBgmBtn();
   refreshDiffBtn();
   refreshStamina();
-  if (window.BGM) BGM.playAny(["title"]);
+
+  // Opening: browsers block audio until a user gesture, and the first tap is
+  // usually a menu button that jumps straight into battle — so the title theme
+  // never gets heard. Gate the title behind a "tap to start" so the opening
+  // music plays on that first touch. (After a battle, audio is already unlocked,
+  // so returning to the title plays music without the gate.)
+  if (window.BGM) BGM.playAny(["title"]); // set current track = title
+  (function armStart() {
+    var t = $("ptitle-screen");
+    t.classList.add("pre-start");
+    function go() {
+      t.removeEventListener("pointerdown", go);
+      t.classList.remove("pre-start");
+      if (window.BGM) BGM.playAny(["title"]);
+    }
+    t.addEventListener("pointerdown", go);
+  })();
 })();

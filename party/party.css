@@ -73,6 +73,19 @@
   position: static; margin-top: 16px; font-size: 11px; color: #d6ddf5; line-height: 1.7;
   text-shadow: 0 1px 2px rgba(0,0,0,.5);
 }
+/* "tap to start" opening gate (so the title theme plays on the first touch) */
+#ptitle-start { display: none; }
+#ptitle-screen.pre-start #ptitle-start {
+  display: block; margin-top: 26px; font-size: 17px; letter-spacing: 2px; font-weight: bold;
+  color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,.6);
+  animation: tapblink 1.2s ease-in-out infinite;
+}
+@keyframes tapblink { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+#ptitle-screen.pre-start #ptitle-menu,
+#ptitle-screen.pre-start #ptitle-stamina,
+#ptitle-screen.pre-start #pbtn-unlock,
+#ptitle-screen.pre-start #ptitle-foot,
+#ptitle-screen.pre-start #title-copy { display: none; }
 /* logo as an image (assets/ui/logo.png) instead of text */
 #ptitle-logo.img { text-shadow: none; }
 #ptitle-logo.img img { display: block; width: 100%; max-width: 340px; height: auto; margin: 0 auto; }
