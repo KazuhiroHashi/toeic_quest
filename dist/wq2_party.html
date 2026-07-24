@@ -709,6 +709,39 @@ canvas#field-canvas {
   font-family: "Hiragino Sans","Yu Gothic UI",system-ui,sans-serif; }
 .zk-summary-inner { padding: 4px 0 10px; }
 
+/* ---------- battle juice ---------- */
+@keyframes wqshake-sm { 0%,100% { transform: translate(0,0); } 25% { transform: translate(3px,-2px); } 50% { transform: translate(-3px,2px); } 75% { transform: translate(2px,1px); } }
+@keyframes wqshake-lg { 0%,100% { transform: translate(0,0); } 20% { transform: translate(7px,-4px); } 40% { transform: translate(-7px,4px); } 60% { transform: translate(5px,3px); } 80% { transform: translate(-4px,-3px); } }
+#pbattle-screen.shake-sm { animation: wqshake-sm .18s linear; }
+#pbattle-screen.shake-lg { animation: wqshake-lg .3s linear; }
+/* red vignette while a member is in danger */
+#pbattle-screen.hp-danger::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 8;
+  box-shadow: inset 0 0 70px 24px rgba(255, 30, 30, .34);
+  animation: wqdanger 1.1s ease-in-out infinite;
+}
+@keyframes wqdanger { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+/* chain milestone pop */
+.battle-pop.chainpop {
+  left: 50% !important; top: 26% !important; transform: translateX(-50%);
+  font-size: 30px; color: #ffd54a; white-space: nowrap;
+  text-shadow: 0 0 14px rgba(255, 180, 40, .9), 2px 2px 0 #000;
+}
+/* white flash when a boss falls */
+#pbattle-screen.boss-down::before {
+  content: ""; position: absolute; inset: 0; z-index: 9; pointer-events: none;
+  background: #fff; animation: wqbossdown 1s ease-out forwards;
+}
+@keyframes wqbossdown { 0% { opacity: .95; } 100% { opacity: 0; } }
+/* boon buttons allow a small subtitle */
+.wq2-store-btn small { display: block; font-size: 11px; color: #aeb8d8; font-weight: normal; margin-top: 2px; }
+/* daily streak chip */
+#ptitle-streak {
+  font-size: 11.5px; letter-spacing: 1px; color: #ffd9a8;
+  background: rgba(0,0,0,.28); border: 1px solid rgba(255,160,80,.5); border-radius: 14px;
+  padding: 3px 12px; margin-bottom: 6px; text-shadow: 0 1px 2px rgba(0,0,0,.5);
+}
+
 /* ---------- field explore ---------- */
 #pfield-wrap { position: absolute; inset: 0; display: none; }
 #pfield-wrap #field-canvas { width: 100%; height: 100%; display: block; }
@@ -895,6 +928,7 @@ canvas#field-canvas {
           <div id="ptitle-sub">〜 沈黙の四天王 〜</div>
           <div id="ptitle-start">▶ タップして スタート</div>
           <div id="ptitle-stamina"></div>
+          <div id="ptitle-streak" style="display:none"></div>
           <div id="ptitle-records"></div>
           <div id="ptitle-menu">
             <button id="pbtn-arena" class="title-btn primary"><span class="ic">🏆</span><span class="tx">ことばの闘技場</span></button>
@@ -5713,6 +5747,21 @@ window.ITEM_DEFS = {
 
   // ================= state =================
   var party, foes, chain, screenEl, battleQuizLv = 500;
+  var battleAsk = []; // words asked this battle (for the post-battle recap)
+
+  function shake(big) {
+    if (!screenEl) return;
+    var cls = big ? "shake-lg" : "shake-sm";
+    screenEl.classList.remove("shake-sm", "shake-lg");
+    void screenEl.offsetWidth;
+    screenEl.classList.add(cls);
+  }
+  function chainCheer() { // milestone celebration
+    if (chain === 5 || chain === 10 || chain === 15 || chain === 20) {
+      bpop("チェイン ×" + chain + "！！", "chainpop", null);
+      sfx("level");
+    }
+  }
 
   // normal attacks: base difficulty of THIS battle + the member's role offset
   function atkQuizLv(member) { return clamp(battleQuizLv + (member.quizOff || 0), 400, 900); }
@@ -5765,6 +5814,8 @@ window.ITEM_DEFS = {
         '<div class="php"><div style="width:' + Math.max(0, 100 * p.hp / p.maxhp) + '%"></div></div>';
       strip.appendChild(d);
     });
+    // red vignette while anyone is in danger
+    if (screenEl) screenEl.classList.toggle("hp-danger", party.some(function (p) { return p.hp > 0 && p.hp <= p.maxhp * 0.25; }));
   }
 
   function chainBadge() {
@@ -5804,6 +5855,7 @@ window.ITEM_DEFS = {
     if (el) { el.classList.add("hit"); setTimeout(function () { el.classList.remove("hit"); }, 200); }
     slashFx(fxColor);
     bpop(String(dmg), crit ? "crit" : "", el);
+    if (crit) shake(true);
     if (!silent) sfx(crit ? "crit" : "slash"); // spells play their own "magic" sfx once
     updateEnemyHp(i);
   }
@@ -5812,6 +5864,7 @@ window.ITEM_DEFS = {
     p.hp = Math.max(0, p.hp - dmg);
     var el = $("pmember-" + i);
     if (el) { el.classList.add("hitflash"); setTimeout(function () { el.classList.remove("hitflash"); }, 320); }
+    shake(dmg >= 60);
     sfx("hit");
     renderParty(-1);
   }
@@ -5908,8 +5961,12 @@ window.ITEM_DEFS = {
     var p = party[a.who];
     if (p.hp <= 0) return;
     if (a.kind === "guard") {
-      p.guard = true; renderParty(-1);
-      await say(p.name + "は 身を守っている。");
+      p.guard = true;
+      // guarding is also a breather: casters recover a little MP (tactical choice)
+      var mpGain = 0;
+      if (p.maxmp > 0 && p.mp < p.maxmp) { mpGain = Math.min(4, p.maxmp - p.mp); p.mp += mpGain; }
+      renderParty(-1);
+      await say(p.name + "は 身を守っている。" + (mpGain ? "\n精神を集中… ＭＰが " + mpGain + " 回復！" : ""));
       return;
     }
     if (a.kind === "item") {
@@ -5929,8 +5986,9 @@ window.ITEM_DEFS = {
       var f = foes[ti];
       await say(p.name + "の こうげき！");
       var q = await window.QUIZ.ask(atkQuizLv(p), { time: f.hasty ? 3.5 : 5 });
+      if (q.entry) battleAsk.push({ w: q.entry.w, m: q.entry.m, ok: q.correct });
       if (q.correct) {
-        chain++; chainBadge();
+        chain++; chainBadge(); chainCheer();
         var crit = q.elapsed <= 2;
         var dmg = Math.max(1, Math.round((atkOf(p) - defOf2(f) / 2 + rnd(6)) * chainMult()));
         if (crit) dmg *= 2;
@@ -5951,12 +6009,13 @@ window.ITEM_DEFS = {
       p.mp -= sp.mp; renderParty(-1);
       await say(p.name + "は 魔法『" + sp.name + "』を となえた！");
       var qs = await window.QUIZ.ask(spellQuizLv(sp), { time: 5, noCrit: true });
+      if (qs.entry) battleAsk.push({ w: qs.entry.w, m: qs.entry.m, ok: qs.correct });
       if (!qs.correct) {
         chain = 0; chainBadge();
         await say("魔法は 不発に終わった…！\n（チェインが途切れた）");
         return;
       }
-      chain++; chainBadge();
+      chain++; chainBadge(); chainCheer();
       if (sp.type === "heal") {
         sfx("heal");
         if (sp.all) {
@@ -5991,8 +6050,18 @@ window.ITEM_DEFS = {
         if (fi < 0 || foe.hp <= 0) continue;
         var sd = Math.round((sp.power + magOf(p)) * (0.85 + Math.random() * 0.3) * chainMult());
         if (qs.elapsed <= 2) sd = Math.round(sd * 1.3);
+        if (foe.base === "metal") sd = 1; // metal body: magic barely works (crit the quiz instead!)
         var weak = sp.elem && window.WEAK && window.WEAK[foe.base] === sp.elem;
-        if (weak) { sd = Math.round(sd * 1.5); anyWeak = true; bpop("ばつぐん！", "weak", $("penemy-" + fi)); }
+        if (weak) {
+          sd = Math.round(sd * 1.5); anyWeak = true; bpop("ばつぐん！", "weak", $("penemy-" + fi));
+          // remember + show the discovered weakness on the enemy tag
+          if (!foe.weakKnown) {
+            foe.weakKnown = true;
+            var tagEl = $("penemy-" + fi) && $("penemy-" + fi).querySelector(".ptag");
+            var elIco = { fire: "🔥", ice: "❄️", thunder: "⚡", holy: "✨" }[sp.elem] || "";
+            if (tagEl && elIco) tagEl.textContent = foe.name + "（弱点" + elIco + "）";
+          }
+        }
         hitEnemy(fi, sd, false, fxc, true);
         lines.push(foe.name + "に " + sd);
       }
@@ -6007,6 +6076,11 @@ window.ITEM_DEFS = {
   async function checkFoeDown(i) {
     var f = foes[i];
     if (f.hp > 0) { if (f.boss && f.phases) await checkPhase(f); return; }
+    if (f.boss) { // dramatic flash when a boss falls
+      screenEl.classList.remove("boss-down");
+      void screenEl.offsetWidth;
+      screenEl.classList.add("boss-down");
+    }
     await say(f.name + "を たおした！");
   }
   async function checkPhase(f) {
@@ -6030,6 +6104,13 @@ window.ITEM_DEFS = {
   async function execFoeAction(fi) {
     var f = foes[fi];
     if (f.hp <= 0) return;
+    // skittish rare enemies (metal word) may flee before you finish them
+    if (f.fleey && Math.random() < 0.35) {
+      f.exp = 0; f.hp = 0;
+      updateEnemyHp(fi);
+      await say(f.name + "は ピカピカ光りながら\n逃げてしまった！（経験値は もらえない…）");
+      return;
+    }
     var el = $("penemy-" + fi);
     if (el) { el.classList.add("lunge"); setTimeout(function () { el.classList.remove("lunge"); }, 400); }
     var phase = f.boss ? f.phases[f.phase] : null;
@@ -6143,6 +6224,7 @@ window.ITEM_DEFS = {
     // base difficulty of normal attacks this battle (spells set their own)
     battleQuizLv = encounter.quizLv || (foes[0] ? foes[0].lv : 500);
     chain = 0;
+    battleAsk = [];
     screenEl = $("pbattle-screen");
     screenEl.style.display = "block";
     var bgEl = $("pbattle-bg");
@@ -6214,6 +6296,17 @@ window.ITEM_DEFS = {
       if (window.BGM) BGM.stop();
       victoryJingle(); // 専用ファンファーレ victory.mp3（無ければ win.mp3 にフォールバック）
       await say("たたかいに 勝った！");
+      // accuracy feedback: perfect battles reward focus, misses get a recap
+      var missed = [], seenW = {};
+      battleAsk.forEach(function (a) { if (!a.ok && !seenW[a.w]) { seenW[a.w] = 1; missed.push(a); } });
+      if (!missed.length && battleAsk.length >= 3) {
+        aliveMembers().forEach(function (m) { if (m.maxmp > 0) m.mp = Math.min(m.maxmp, m.mp + 6); });
+        renderParty(-1);
+        await say("パーフェクト！ 全問正解！！\n集中力が 冴えわたる…（全員ＭＰ＋6）");
+      } else if (missed.length) {
+        var rl = missed.slice(0, 4).map(function (a) { return "・" + a.w + " ＝ " + a.m; });
+        await say("【ことばの復習】\n" + rl.join("\n") + (missed.length > 4 ? "\n…ほか " + (missed.length - 4) + " 語" : ""));
+      }
       totalExp = foes.reduce(function (s, f) { return s + (f.exp || 0); }, 0);
       if (totalExp > 0) {
         await say("パーティは " + totalExp + " の 経験値を得た！");
@@ -7464,6 +7557,34 @@ window.ITEM_DEFS = {
     return Math.floor(s / 60) + "分" + ("0" + (s % 60)).slice(-2) + "秒";
   }
 
+  // ---- daily study streak (🔥N日連続) ----
+  function dayKey(off) {
+    var d = new Date(Date.now() + (off || 0) * 86400000);
+    return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+  }
+  function bumpStreak() {
+    try {
+      var s = JSON.parse(localStorage.getItem("wq2_streak") || "{}");
+      if (s.last !== dayKey(0)) {
+        s.n = (s.last === dayKey(-1)) ? (s.n || 1) + 1 : 1;
+        s.last = dayKey(0);
+        localStorage.setItem("wq2_streak", JSON.stringify(s));
+      }
+      refreshStreak();
+    } catch (e) {}
+  }
+  function refreshStreak() {
+    var el = $("ptitle-streak");
+    if (!el) return;
+    var n = 0;
+    try {
+      var s = JSON.parse(localStorage.getItem("wq2_streak") || "{}");
+      if (s.last === dayKey(0) || s.last === dayKey(-1)) n = s.n || 0;
+    } catch (e) {}
+    if (n >= 2) { el.style.display = ""; el.textContent = "🔥 " + n + "日連続で 学習中！"; }
+    else el.style.display = "none";
+  }
+
   function $(id) { return document.getElementById(id); }
 
   var FOE_SKILLS = {
@@ -7482,6 +7603,7 @@ window.ITEM_DEFS = {
       mag: Math.round(d.atk * 1.1 * str), exp: Math.round(d.exp * 1.4 * str),
       agi: Math.round(d.lv / 25),
       hasty: d.traits && d.traits.indexOf("hasty") >= 0,
+      fleey: d.traits && d.traits.indexOf("flee") >= 0,
       skills: FOE_SKILLS[id], skillRate: 0.32
     }, over || {});
   }
@@ -7630,8 +7752,50 @@ window.ITEM_DEFS = {
       window.addEventListener("keydown", onKey);
     });
   }
-  // 中盤以降はMP大回復の「エスプレッソ」を拾えるように（MPが枯れやすいボス連戦対策）
-  var GIFTS = ["herb", "elixir", "herb", "elixir", "espresso", "elixir", "espresso", "herb", "espresso", "herb"];
+  // ---- victory boons: pick 1 of 3 after each win (run-scoped buffs / loot) ----
+  function choiceOverlay(title, opts) {
+    return new Promise(function (resolve) {
+      var wrap = document.createElement("div");
+      wrap.className = "wq2-store-ovl";
+      var panel = document.createElement("div");
+      panel.className = "wq2-store-panel dq-window";
+      panel.innerHTML = '<div class="wq2-store-h">' + title + "</div>";
+      var row = document.createElement("div");
+      row.className = "wq2-store-btns";
+      opts.forEach(function (o, i) {
+        var el = document.createElement("button");
+        el.className = "wq2-store-btn";
+        el.innerHTML = o.label;
+        el.onclick = function (e) { e.preventDefault(); wrap.remove(); resolve(i); };
+        row.appendChild(el);
+      });
+      panel.appendChild(row);
+      wrap.appendChild(panel);
+      $("screen").appendChild(wrap);
+    });
+  }
+  var BOONS = [
+    { label: "⚔ 剣の書<br><small>全員の こうげき＋2（この挑戦中）</small>",
+      apply: function (p) { p.forEach(function (m) { m.gearAtk = (m.gearAtk || 0) + 2; }); return "剣の書で 全員の攻撃が 上がった！"; } },
+    { label: "🛡 盾の書<br><small>全員の まもり＋3（この挑戦中）</small>",
+      apply: function (p) { p.forEach(function (m) { m.gearDef = (m.gearDef || 0) + 3; }); return "盾の書で 全員の守りが 固くなった！"; } },
+    { label: "🧰 道具箱<br><small>ハーブティー×2 と エスプレッソ</small>",
+      apply: function () {
+        window.PBATTLE.giveItemToParty("herb"); window.PBATTLE.giveItemToParty("herb");
+        window.PBATTLE.giveItemToParty("espresso");
+        return "道具箱を 手に入れた！（ハーブ×2・エスプレッソ）"; } },
+    { label: "📜 修行の書<br><small>全員 レベル＋1</small>",
+      apply: function () { window.PBATTLE.levelEveryone(1); return "修行の書で 全員のレベルが 上がった！"; } }
+  ];
+  async function pickBoon() {
+    var pool = BOONS.slice();
+    // shuffle & take 3
+    for (var i = pool.length - 1; i > 0; i--) { var j = (Math.random() * (i + 1)) | 0; var t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
+    var three = pool.slice(0, 3);
+    var pick = await choiceOverlay("🎁 戦利品を ひとつ えらぼう", three);
+    return three[pick].apply(window.PBATTLE.getParty());
+  }
+  window.WQ2_TEST = { pickBoon: pickBoon }; // test hook (harmless in production)
   // party grows: Yu solo -> +Gai(b2) -> +Rina(b3) -> +Mia(b5). joinAfter[i] joins after round i.
   var JOIN_AFTER = {
     0: { id: "gai", scene: [
@@ -7683,9 +7847,14 @@ window.ITEM_DEFS = {
     if (window.WQ2_STORE) { WQ2_STORE.spendPlay(); refreshStamina(); }
 
     window.ARENA_STATS = { t0: Date.now(), maxChain: 0 }; // score attack: clear time + max chain
+    bumpStreak();
     $("ptitle-screen").style.display = "none";
     arenaStartParty(); // Yu solo; companions join as the gauntlet goes
     var rounds = arenaRounds();
+    // rare bonus: メタルワード may crash battles 2-4 (magic-proof, huge EXP, flees fast)
+    for (var mi = 1; mi <= 3; mi++) {
+      if (Math.random() < 0.12) rounds[mi].enc.enemies.push(scaledFoe("metal", { hp: 6, atk: 18, exp: 400 }));
+    }
     for (var i = 0; i < rounds.length; i++) {
       var r = rounds[i];
       // 10 shown battles; the 11th (真ラスボス) is a hidden surprise — no counter, no start card
@@ -7708,13 +7877,11 @@ window.ITEM_DEFS = {
       if (i < rounds.length - 1) {
         window.PBATTLE.fullHeal();
         var ups = window.PBATTLE.levelEveryone(i >= 3 ? 3 : 2); // faster leveling from the mid-boss on (Yu reaches Lv20=パーティヒール by the ガグ戦)
-        var gift = GIFTS[i] || "herb";
-        var who = window.PBATTLE.giveItemToParty(gift);
-        var giftName = gift === "herb" ? "ハーブティー" : gift === "elixir" ? "エナジーコーヒー" : gift === "espresso" ? "エスプレッソ" : "帰還の羽根ペン";
         var head = (i === 9) ? "ミュートスを倒した…と思ったその時！" : "勝利！ パーティは 全回復した。";
-        var msg = head + "\n" + (who ? who + "が『" + giftName + "』を拾った！" : "（道具袋は満杯だった）");
-        if (ups.length) msg += "\nみんなの レベルが上がった！（Ｌｖ" + window.PBATTLE.getParty()[0].lv + "）";
-        await gsay(msg);
+        if (ups.length) head += "\nみんなの レベルが上がった！（Ｌｖ" + window.PBATTLE.getParty()[0].lv + "）";
+        await gsay(head);
+        var boonMsg = await pickBoon(); // roguelite: choose 1 of 3 boons
+        await gsay(boonMsg);
         var join = JOIN_AFTER[i];
         if (join) {
           var m = window.PBATTLE.addMember(join.id, window.PBATTLE.getParty()[0].lv);
@@ -7785,6 +7952,7 @@ window.ITEM_DEFS = {
     if (!due.length) {
       await gsay("【今日の復習】\n復習する単語は ありません！\n\n闘技場で ミスした単語が\n自動で ここに たまります。");
     } else {
+      bumpStreak();
       await gsay("【今日の復習】\nミスした単語 " + due.length + " 語に 再挑戦！\n正解するほど 次の出題は 先になります。");
       var ok = 0;
       for (var i = 0; i < due.length; i++) {
@@ -7915,6 +8083,7 @@ window.ITEM_DEFS = {
   refreshStamina();
   refreshReviewBtn();
   refreshRecords();
+  refreshStreak();
 
   // Opening: browsers block audio until a user gesture, and the first tap is
   // usually a menu button that jumps straight into battle — so the title theme

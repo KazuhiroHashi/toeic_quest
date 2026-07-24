@@ -233,6 +233,21 @@
 
   // ================= state =================
   var party, foes, chain, screenEl, battleQuizLv = 500;
+  var battleAsk = []; // words asked this battle (for the post-battle recap)
+
+  function shake(big) {
+    if (!screenEl) return;
+    var cls = big ? "shake-lg" : "shake-sm";
+    screenEl.classList.remove("shake-sm", "shake-lg");
+    void screenEl.offsetWidth;
+    screenEl.classList.add(cls);
+  }
+  function chainCheer() { // milestone celebration
+    if (chain === 5 || chain === 10 || chain === 15 || chain === 20) {
+      bpop("チェイン ×" + chain + "！！", "chainpop", null);
+      sfx("level");
+    }
+  }
 
   // normal attacks: base difficulty of THIS battle + the member's role offset
   function atkQuizLv(member) { return clamp(battleQuizLv + (member.quizOff || 0), 400, 900); }
@@ -285,6 +300,8 @@
         '<div class="php"><div style="width:' + Math.max(0, 100 * p.hp / p.maxhp) + '%"></div></div>';
       strip.appendChild(d);
     });
+    // red vignette while anyone is in danger
+    if (screenEl) screenEl.classList.toggle("hp-danger", party.some(function (p) { return p.hp > 0 && p.hp <= p.maxhp * 0.25; }));
   }
 
   function chainBadge() {
@@ -324,6 +341,7 @@
     if (el) { el.classList.add("hit"); setTimeout(function () { el.classList.remove("hit"); }, 200); }
     slashFx(fxColor);
     bpop(String(dmg), crit ? "crit" : "", el);
+    if (crit) shake(true);
     if (!silent) sfx(crit ? "crit" : "slash"); // spells play their own "magic" sfx once
     updateEnemyHp(i);
   }
@@ -332,6 +350,7 @@
     p.hp = Math.max(0, p.hp - dmg);
     var el = $("pmember-" + i);
     if (el) { el.classList.add("hitflash"); setTimeout(function () { el.classList.remove("hitflash"); }, 320); }
+    shake(dmg >= 60);
     sfx("hit");
     renderParty(-1);
   }
@@ -428,8 +447,12 @@
     var p = party[a.who];
     if (p.hp <= 0) return;
     if (a.kind === "guard") {
-      p.guard = true; renderParty(-1);
-      await say(p.name + "は 身を守っている。");
+      p.guard = true;
+      // guarding is also a breather: casters recover a little MP (tactical choice)
+      var mpGain = 0;
+      if (p.maxmp > 0 && p.mp < p.maxmp) { mpGain = Math.min(4, p.maxmp - p.mp); p.mp += mpGain; }
+      renderParty(-1);
+      await say(p.name + "は 身を守っている。" + (mpGain ? "\n精神を集中… ＭＰが " + mpGain + " 回復！" : ""));
       return;
     }
     if (a.kind === "item") {
@@ -449,8 +472,9 @@
       var f = foes[ti];
       await say(p.name + "の こうげき！");
       var q = await window.QUIZ.ask(atkQuizLv(p), { time: f.hasty ? 3.5 : 5 });
+      if (q.entry) battleAsk.push({ w: q.entry.w, m: q.entry.m, ok: q.correct });
       if (q.correct) {
-        chain++; chainBadge();
+        chain++; chainBadge(); chainCheer();
         var crit = q.elapsed <= 2;
         var dmg = Math.max(1, Math.round((atkOf(p) - defOf2(f) / 2 + rnd(6)) * chainMult()));
         if (crit) dmg *= 2;
@@ -471,12 +495,13 @@
       p.mp -= sp.mp; renderParty(-1);
       await say(p.name + "は 魔法『" + sp.name + "』を となえた！");
       var qs = await window.QUIZ.ask(spellQuizLv(sp), { time: 5, noCrit: true });
+      if (qs.entry) battleAsk.push({ w: qs.entry.w, m: qs.entry.m, ok: qs.correct });
       if (!qs.correct) {
         chain = 0; chainBadge();
         await say("魔法は 不発に終わった…！\n（チェインが途切れた）");
         return;
       }
-      chain++; chainBadge();
+      chain++; chainBadge(); chainCheer();
       if (sp.type === "heal") {
         sfx("heal");
         if (sp.all) {
@@ -511,8 +536,18 @@
         if (fi < 0 || foe.hp <= 0) continue;
         var sd = Math.round((sp.power + magOf(p)) * (0.85 + Math.random() * 0.3) * chainMult());
         if (qs.elapsed <= 2) sd = Math.round(sd * 1.3);
+        if (foe.base === "metal") sd = 1; // metal body: magic barely works (crit the quiz instead!)
         var weak = sp.elem && window.WEAK && window.WEAK[foe.base] === sp.elem;
-        if (weak) { sd = Math.round(sd * 1.5); anyWeak = true; bpop("ばつぐん！", "weak", $("penemy-" + fi)); }
+        if (weak) {
+          sd = Math.round(sd * 1.5); anyWeak = true; bpop("ばつぐん！", "weak", $("penemy-" + fi));
+          // remember + show the discovered weakness on the enemy tag
+          if (!foe.weakKnown) {
+            foe.weakKnown = true;
+            var tagEl = $("penemy-" + fi) && $("penemy-" + fi).querySelector(".ptag");
+            var elIco = { fire: "🔥", ice: "❄️", thunder: "⚡", holy: "✨" }[sp.elem] || "";
+            if (tagEl && elIco) tagEl.textContent = foe.name + "（弱点" + elIco + "）";
+          }
+        }
         hitEnemy(fi, sd, false, fxc, true);
         lines.push(foe.name + "に " + sd);
       }
@@ -527,6 +562,11 @@
   async function checkFoeDown(i) {
     var f = foes[i];
     if (f.hp > 0) { if (f.boss && f.phases) await checkPhase(f); return; }
+    if (f.boss) { // dramatic flash when a boss falls
+      screenEl.classList.remove("boss-down");
+      void screenEl.offsetWidth;
+      screenEl.classList.add("boss-down");
+    }
     await say(f.name + "を たおした！");
   }
   async function checkPhase(f) {
@@ -550,6 +590,13 @@
   async function execFoeAction(fi) {
     var f = foes[fi];
     if (f.hp <= 0) return;
+    // skittish rare enemies (metal word) may flee before you finish them
+    if (f.fleey && Math.random() < 0.35) {
+      f.exp = 0; f.hp = 0;
+      updateEnemyHp(fi);
+      await say(f.name + "は ピカピカ光りながら\n逃げてしまった！（経験値は もらえない…）");
+      return;
+    }
     var el = $("penemy-" + fi);
     if (el) { el.classList.add("lunge"); setTimeout(function () { el.classList.remove("lunge"); }, 400); }
     var phase = f.boss ? f.phases[f.phase] : null;
@@ -663,6 +710,7 @@
     // base difficulty of normal attacks this battle (spells set their own)
     battleQuizLv = encounter.quizLv || (foes[0] ? foes[0].lv : 500);
     chain = 0;
+    battleAsk = [];
     screenEl = $("pbattle-screen");
     screenEl.style.display = "block";
     var bgEl = $("pbattle-bg");
@@ -734,6 +782,17 @@
       if (window.BGM) BGM.stop();
       victoryJingle(); // 専用ファンファーレ victory.mp3（無ければ win.mp3 にフォールバック）
       await say("たたかいに 勝った！");
+      // accuracy feedback: perfect battles reward focus, misses get a recap
+      var missed = [], seenW = {};
+      battleAsk.forEach(function (a) { if (!a.ok && !seenW[a.w]) { seenW[a.w] = 1; missed.push(a); } });
+      if (!missed.length && battleAsk.length >= 3) {
+        aliveMembers().forEach(function (m) { if (m.maxmp > 0) m.mp = Math.min(m.maxmp, m.mp + 6); });
+        renderParty(-1);
+        await say("パーフェクト！ 全問正解！！\n集中力が 冴えわたる…（全員ＭＰ＋6）");
+      } else if (missed.length) {
+        var rl = missed.slice(0, 4).map(function (a) { return "・" + a.w + " ＝ " + a.m; });
+        await say("【ことばの復習】\n" + rl.join("\n") + (missed.length > 4 ? "\n…ほか " + (missed.length - 4) + " 語" : ""));
+      }
       totalExp = foes.reduce(function (s, f) { return s + (f.exp || 0); }, 0);
       if (totalExp > 0) {
         await say("パーティは " + totalExp + " の 経験値を得た！");

@@ -58,6 +58,34 @@
     return Math.floor(s / 60) + "分" + ("0" + (s % 60)).slice(-2) + "秒";
   }
 
+  // ---- daily study streak (🔥N日連続) ----
+  function dayKey(off) {
+    var d = new Date(Date.now() + (off || 0) * 86400000);
+    return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+  }
+  function bumpStreak() {
+    try {
+      var s = JSON.parse(localStorage.getItem("wq2_streak") || "{}");
+      if (s.last !== dayKey(0)) {
+        s.n = (s.last === dayKey(-1)) ? (s.n || 1) + 1 : 1;
+        s.last = dayKey(0);
+        localStorage.setItem("wq2_streak", JSON.stringify(s));
+      }
+      refreshStreak();
+    } catch (e) {}
+  }
+  function refreshStreak() {
+    var el = $("ptitle-streak");
+    if (!el) return;
+    var n = 0;
+    try {
+      var s = JSON.parse(localStorage.getItem("wq2_streak") || "{}");
+      if (s.last === dayKey(0) || s.last === dayKey(-1)) n = s.n || 0;
+    } catch (e) {}
+    if (n >= 2) { el.style.display = ""; el.textContent = "🔥 " + n + "日連続で 学習中！"; }
+    else el.style.display = "none";
+  }
+
   function $(id) { return document.getElementById(id); }
 
   var FOE_SKILLS = {
@@ -76,6 +104,7 @@
       mag: Math.round(d.atk * 1.1 * str), exp: Math.round(d.exp * 1.4 * str),
       agi: Math.round(d.lv / 25),
       hasty: d.traits && d.traits.indexOf("hasty") >= 0,
+      fleey: d.traits && d.traits.indexOf("flee") >= 0,
       skills: FOE_SKILLS[id], skillRate: 0.32
     }, over || {});
   }
@@ -224,8 +253,50 @@
       window.addEventListener("keydown", onKey);
     });
   }
-  // 中盤以降はMP大回復の「エスプレッソ」を拾えるように（MPが枯れやすいボス連戦対策）
-  var GIFTS = ["herb", "elixir", "herb", "elixir", "espresso", "elixir", "espresso", "herb", "espresso", "herb"];
+  // ---- victory boons: pick 1 of 3 after each win (run-scoped buffs / loot) ----
+  function choiceOverlay(title, opts) {
+    return new Promise(function (resolve) {
+      var wrap = document.createElement("div");
+      wrap.className = "wq2-store-ovl";
+      var panel = document.createElement("div");
+      panel.className = "wq2-store-panel dq-window";
+      panel.innerHTML = '<div class="wq2-store-h">' + title + "</div>";
+      var row = document.createElement("div");
+      row.className = "wq2-store-btns";
+      opts.forEach(function (o, i) {
+        var el = document.createElement("button");
+        el.className = "wq2-store-btn";
+        el.innerHTML = o.label;
+        el.onclick = function (e) { e.preventDefault(); wrap.remove(); resolve(i); };
+        row.appendChild(el);
+      });
+      panel.appendChild(row);
+      wrap.appendChild(panel);
+      $("screen").appendChild(wrap);
+    });
+  }
+  var BOONS = [
+    { label: "⚔ 剣の書<br><small>全員の こうげき＋2（この挑戦中）</small>",
+      apply: function (p) { p.forEach(function (m) { m.gearAtk = (m.gearAtk || 0) + 2; }); return "剣の書で 全員の攻撃が 上がった！"; } },
+    { label: "🛡 盾の書<br><small>全員の まもり＋3（この挑戦中）</small>",
+      apply: function (p) { p.forEach(function (m) { m.gearDef = (m.gearDef || 0) + 3; }); return "盾の書で 全員の守りが 固くなった！"; } },
+    { label: "🧰 道具箱<br><small>ハーブティー×2 と エスプレッソ</small>",
+      apply: function () {
+        window.PBATTLE.giveItemToParty("herb"); window.PBATTLE.giveItemToParty("herb");
+        window.PBATTLE.giveItemToParty("espresso");
+        return "道具箱を 手に入れた！（ハーブ×2・エスプレッソ）"; } },
+    { label: "📜 修行の書<br><small>全員 レベル＋1</small>",
+      apply: function () { window.PBATTLE.levelEveryone(1); return "修行の書で 全員のレベルが 上がった！"; } }
+  ];
+  async function pickBoon() {
+    var pool = BOONS.slice();
+    // shuffle & take 3
+    for (var i = pool.length - 1; i > 0; i--) { var j = (Math.random() * (i + 1)) | 0; var t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
+    var three = pool.slice(0, 3);
+    var pick = await choiceOverlay("🎁 戦利品を ひとつ えらぼう", three);
+    return three[pick].apply(window.PBATTLE.getParty());
+  }
+  window.WQ2_TEST = { pickBoon: pickBoon }; // test hook (harmless in production)
   // party grows: Yu solo -> +Gai(b2) -> +Rina(b3) -> +Mia(b5). joinAfter[i] joins after round i.
   var JOIN_AFTER = {
     0: { id: "gai", scene: [
@@ -277,9 +348,14 @@
     if (window.WQ2_STORE) { WQ2_STORE.spendPlay(); refreshStamina(); }
 
     window.ARENA_STATS = { t0: Date.now(), maxChain: 0 }; // score attack: clear time + max chain
+    bumpStreak();
     $("ptitle-screen").style.display = "none";
     arenaStartParty(); // Yu solo; companions join as the gauntlet goes
     var rounds = arenaRounds();
+    // rare bonus: メタルワード may crash battles 2-4 (magic-proof, huge EXP, flees fast)
+    for (var mi = 1; mi <= 3; mi++) {
+      if (Math.random() < 0.12) rounds[mi].enc.enemies.push(scaledFoe("metal", { hp: 6, atk: 18, exp: 400 }));
+    }
     for (var i = 0; i < rounds.length; i++) {
       var r = rounds[i];
       // 10 shown battles; the 11th (真ラスボス) is a hidden surprise — no counter, no start card
@@ -302,13 +378,11 @@
       if (i < rounds.length - 1) {
         window.PBATTLE.fullHeal();
         var ups = window.PBATTLE.levelEveryone(i >= 3 ? 3 : 2); // faster leveling from the mid-boss on (Yu reaches Lv20=パーティヒール by the ガグ戦)
-        var gift = GIFTS[i] || "herb";
-        var who = window.PBATTLE.giveItemToParty(gift);
-        var giftName = gift === "herb" ? "ハーブティー" : gift === "elixir" ? "エナジーコーヒー" : gift === "espresso" ? "エスプレッソ" : "帰還の羽根ペン";
         var head = (i === 9) ? "ミュートスを倒した…と思ったその時！" : "勝利！ パーティは 全回復した。";
-        var msg = head + "\n" + (who ? who + "が『" + giftName + "』を拾った！" : "（道具袋は満杯だった）");
-        if (ups.length) msg += "\nみんなの レベルが上がった！（Ｌｖ" + window.PBATTLE.getParty()[0].lv + "）";
-        await gsay(msg);
+        if (ups.length) head += "\nみんなの レベルが上がった！（Ｌｖ" + window.PBATTLE.getParty()[0].lv + "）";
+        await gsay(head);
+        var boonMsg = await pickBoon(); // roguelite: choose 1 of 3 boons
+        await gsay(boonMsg);
         var join = JOIN_AFTER[i];
         if (join) {
           var m = window.PBATTLE.addMember(join.id, window.PBATTLE.getParty()[0].lv);
@@ -379,6 +453,7 @@
     if (!due.length) {
       await gsay("【今日の復習】\n復習する単語は ありません！\n\n闘技場で ミスした単語が\n自動で ここに たまります。");
     } else {
+      bumpStreak();
       await gsay("【今日の復習】\nミスした単語 " + due.length + " 語に 再挑戦！\n正解するほど 次の出題は 先になります。");
       var ok = 0;
       for (var i = 0; i < due.length; i++) {
@@ -509,6 +584,7 @@
   refreshStamina();
   refreshReviewBtn();
   refreshRecords();
+  refreshStreak();
 
   // Opening: browsers block audio until a user gesture, and the first tap is
   // usually a menu button that jumps straight into battle — so the title theme
