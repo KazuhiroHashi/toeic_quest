@@ -295,21 +295,78 @@
     window.PBATTLE.setParty([yu]);
   }
 
-  async function runArena() {
-    // stamina gate (free daily plays); premium skips it entirely
-    if (window.WQ2_STORE && !WQ2_STORE.canPlay()) {
-      var ok = await WQ2_STORE.openGate();
-      refreshStamina();
-      if (!ok) return; // out of plays, stay on title
-    }
-    if (window.WQ2_STORE) { WQ2_STORE.spendPlay(); refreshStamina(); }
+  // generic choice dialog -> Promise<index>
+  function choiceOverlay(title, opts) {
+    return new Promise(function (resolve) {
+      var wrap = document.createElement("div");
+      wrap.className = "wq2-store-ovl";
+      var panel = document.createElement("div");
+      panel.className = "wq2-store-panel dq-window";
+      panel.innerHTML = '<div class="wq2-store-h">' + title + "</div>";
+      var row = document.createElement("div");
+      row.className = "wq2-store-btns";
+      opts.forEach(function (o, i) {
+        var el = document.createElement("button");
+        el.className = "wq2-store-btn" + (i === 0 ? " primary" : "");
+        el.innerHTML = o.label;
+        el.onclick = function (e) { e.preventDefault(); wrap.remove(); resolve(i); };
+        row.appendChild(el);
+      });
+      panel.appendChild(row);
+      wrap.appendChild(panel);
+      $("screen").appendChild(wrap);
+    });
+  }
 
-    window.ARENA_STATS = { t0: Date.now(), maxChain: 0 }; // score attack: clear time + max chain
+  // ---- mid-run save/resume (phone calls, app switches, accidental closes) ----
+  var RUN_KEY = "wq2_run_v1";
+  function saveRun(nextIndex) {
+    try {
+      localStorage.setItem(RUN_KEY, JSON.stringify({
+        i: nextIndex,                        // next battle to fight
+        party: window.PBATTLE.getParty(),    // levels/HP/MP/bag/spells
+        stats: window.ARENA_STATS || null,
+        easy: !!window.WQ2_EASY,
+        at: Date.now()
+      }));
+    } catch (e) {}
+  }
+  function loadRun() {
+    try {
+      var r = JSON.parse(localStorage.getItem(RUN_KEY) || "null");
+      if (!r || typeof r.i !== "number" || !r.party || !r.party.length) return null;
+      return r;
+    } catch (e) { return null; }
+  }
+  function clearRun() { try { localStorage.removeItem(RUN_KEY); } catch (e) {} }
+
+  async function runArena(resume) {
+    // resuming an interrupted run costs no stamina (it was already paid for)
+    if (!resume) {
+      // stamina gate (free daily plays); premium skips it entirely
+      if (window.WQ2_STORE && !WQ2_STORE.canPlay()) {
+        var ok = await WQ2_STORE.openGate();
+        refreshStamina();
+        if (!ok) return; // out of plays, stay on title
+      }
+      if (window.WQ2_STORE) { WQ2_STORE.spendPlay(); refreshStamina(); }
+    }
+
+    var startAt = 0;
+    if (resume) {
+      window.ARENA_STATS = resume.stats || { t0: Date.now(), maxChain: 0 };
+      window.PBATTLE.setParty(resume.party);
+      startAt = resume.i;
+    } else {
+      window.ARENA_STATS = { t0: Date.now(), maxChain: 0 }; // score attack: clear time + max chain
+      arenaStartParty(); // Yu solo; companions join as the gauntlet goes
+    }
+    if (window.QUIZ && QUIZ.resetRunSeen) QUIZ.resetRunSeen(); // fresh word rotation per run
     bumpStreak();
     $("ptitle-screen").style.display = "none";
-    arenaStartParty(); // Yu solo; companions join as the gauntlet goes
     var rounds = arenaRounds();
-    for (var i = 0; i < rounds.length; i++) {
+    for (var i = startAt; i < rounds.length; i++) {
+      saveRun(i); // checkpoint before each battle so an interruption resumes here
       var r = rounds[i];
       // 10 shown battles; the 11th (真ラスボス) is a hidden surprise — no counter, no start card
       if (i < 10) await gsay("【ことばの闘技場】\n" + r.label + "（" + (i + 1) + "／10）\nＡボタンで 開始！");
@@ -319,6 +376,7 @@
         // rewarded-ad continue: full-heal and retry this same battle
         var cont = window.WQ2_STORE ? await WQ2_STORE.offerContinue() : false;
         if (cont) { window.PBATTLE.fullHeal(); i--; continue; }
+        clearRun(); // run is over — no resume point
         var pg = window.studyProgress(), tr = window.trophyFor(pg.cleared);
         // keep the best chain even on defeat
         var st0 = window.ARENA_STATS || {}, rc0 = loadRec();
@@ -363,6 +421,7 @@
         if (newChain) rc.bestChain = sst.maxChain;
         rc.clears = (rc.clears || 0) + 1;
         saveRec(rc); refreshRecords();
+        clearRun(); // cleared — nothing to resume
         var ending = [
           "真・沈黙王ミュートスは\nまばゆい光の中へ 溶けて消えた…。",
           "『…ありがとう。\n　わたしは ことばに 傷つき、\n　ことばを 憎んでいた。』",
@@ -384,7 +443,75 @@
     if (window.BGM) BGM.stop();
     $("pbattle-screen").style.display = "none"; // clear the battle layer so the title/zukan show cleanly
     $("ptitle-screen").style.display = "flex";
-    refreshStamina();
+    refreshStamina(); refreshArenaBtn(); refreshReviewBtn(); refreshTowerBtn();
+    if (window.BGM) BGM.playAny(["title"]);
+  }
+
+  // ================= 挑戦の塔（endless mode・闘技場のバランスには一切触れない） =================
+  // Unlocked after the first arena clear. Fixed Lv30 party, no level-ups, no items
+  // gained — pure "how far can you go" score attack. Records are separate.
+  var TOWER_FOES = ["bee", "rat", "goblin", "worm", "snake", "ghost", "wolf", "owl", "mush",
+                    "twins", "lizard", "clock", "knight5", "golem", "demon", "mummy", "ogre",
+                    "snight", "harpy", "reaper", "kraken", "phoenix", "wizard", "shadow"];
+  var TOWER_BG = ["zone1", "zone2", "zone3", "zone4", "cave", "tower1", "tower2", "zone5", "zone6", "maou"];
+  function towerFloorEnc(floor) {
+    var str = 1 + (floor - 1) * 0.16;                 // gentle, predictable ramp
+    var qz = [400, 450, 500, 550, 600, 650, 700, 750, 800, 900][Math.min(9, Math.floor((floor - 1) / 3))];
+    var n = floor < 3 ? 2 : floor < 7 ? 3 : 4;
+    var foes = [];
+    for (var k = 0; k < n; k++) {
+      var id = TOWER_FOES[(floor * 3 + k * 5) % TOWER_FOES.length];
+      foes.push(af(id, str));
+    }
+    // every 5th floor is a boss floor
+    if (floor % 5 === 0) {
+      var b = miniBoss(TOWER_FOES[(floor * 7) % TOWER_FOES.length], floor + "階の 守護者");
+      b.hp = Math.round(b.hp * (0.7 + floor * 0.06));
+      b.maxhp = b.hp;
+      b.atk = Math.round(40 + floor * 4.5);
+      b.mag = Math.round(b.atk * 1.05);
+      foes = [b];
+    }
+    return { bg: TOWER_BG[(floor - 1) % TOWER_BG.length], quizLv: qz, bgm: floor % 5 === 0 ? "midboss" : null, enemies: foes };
+  }
+  async function runTower() {
+    if (window.WQ2_STORE && !WQ2_STORE.canPlay()) {
+      var ok = await WQ2_STORE.openGate(); refreshStamina();
+      if (!ok) return;
+    }
+    if (window.WQ2_STORE) { WQ2_STORE.spendPlay(); refreshStamina(); }
+    if (window.QUIZ && QUIZ.resetRunSeen) QUIZ.resetRunSeen();
+    bumpStreak();
+    $("ptitle-screen").style.display = "none";
+    // fixed party: no growth during the climb, so it's purely about your answers
+    window.PBATTLE.setParty(["yu", "gai", "rina", "mia"].map(function (id) {
+      var m = window.PBATTLE.makeMember(id, 30);
+      m.bag = ["herb", "herb", "elixir", "espresso"];
+      return m;
+    }));
+    var rc = loadRec();
+    await gsay("【挑戦の塔】\nどこまで 登れるか——\n\nレベルは Ｌｖ30で 固定。\n回復は 5階ごとだけ！" +
+      (rc.bestFloor ? "\n\n自己ベスト … " + rc.bestFloor + "階" : ""));
+    var floor = 1, reached = 0;
+    for (;;) {
+      await gsay("【挑戦の塔】" + floor + "階" + (floor % 5 === 0 ? "　★守護者の間★" : ""));
+      var res = await window.PBATTLE.start(towerFloorEnc(floor));
+      saveStudy();
+      if (res.result !== "win") { reached = floor - 1; break; }
+      reached = floor;
+      if (floor % 5 === 0) { window.PBATTLE.fullHeal(); await gsay(floor + "階を 突破！\nパーティは 全回復した。"); }
+      floor++;
+    }
+    var st = window.ARENA_STATS || {};
+    var best = rc.bestFloor || 0, isNew = reached > best;
+    if (isNew) { rc.bestFloor = reached; saveRec(rc); refreshRecords(); }
+    var pg = window.studyProgress();
+    await gsay("【挑戦の塔・結果】\n到達 … " + reached + "階" + (isNew ? "　🎉自己ベスト更新！" : "（自己ベスト " + best + "階）") +
+      "\nおぼえた単語 … " + pg.cleared + " ／ " + pg.total + " 語");
+    if (window.BGM) BGM.stop();
+    $("pbattle-screen").style.display = "none";
+    $("ptitle-screen").style.display = "flex";
+    refreshStamina(); refreshRecords(); refreshReviewBtn(); refreshTowerBtn();
     if (window.BGM) BGM.playAny(["title"]);
   }
 
@@ -396,6 +523,55 @@
     var tx = $("pbtn-diff").querySelector(".tx") || $("pbtn-diff");
     tx.textContent = "難易度：" + (window.WQ2_EASY ? "やさしい" : "ふつう");
   }
+  function refreshTowerBtn() {
+    var rc = loadRec();
+    $("pbtn-tower").style.display = (rc.clears > 0) ? "" : "none"; // unlocked after a first clear
+    var tx = $("pbtn-tower").querySelector(".tx");
+    if (tx) tx.textContent = "挑戦の塔" + (rc.bestFloor ? "（最高 " + rc.bestFloor + "階）" : "");
+  }
+
+  // ---- 称号・記録 (achievements) ----
+  function showAchievements() {
+    var rc = loadRec(), pg = window.studyProgress(), words = (window.G.study && window.G.study.words) || {};
+    var perBand = { 400: 0, 500: 0, 600: 0, 700: 0, 800: 0, 900: 0 };
+    var gold = 0, fast = 0;
+    for (var k in words) {
+      var r = words[k];
+      if (!r) continue;
+      if (r.c > 0 && perBand[r.l] != null) perBand[r.l]++;
+      if (r.g) gold++;
+      if (r.f) fast++;
+    }
+    var streak = 0;
+    try { var s = JSON.parse(localStorage.getItem("wq2_streak") || "{}"); if (s.last === dayKey(0) || s.last === dayKey(-1)) streak = s.n || 0; } catch (e) {}
+    var tr = window.trophyFor(pg.cleared);
+    var medals = [400, 500, 600, 700, 800, 900].map(function (b) {
+      var t = window.trophyFor(perBand[b]);
+      return '<div class="achv-medal ' + t.cls + '"><div class="achv-ic">' + (t.icon || "🔒") + '</div>' +
+        '<div class="achv-lv">' + b + '</div><div class="achv-n">' + perBand[b] + '/500</div></div>';
+    }).join("");
+    var rows = [
+      ["📚 おぼえた単語", pg.cleared + " / " + pg.total + " 語"],
+      ["🏆 総合称号", (tr.icon || "🔰") + " " + tr.name],
+      ["⭐ 金★（3連続正解）", gold + " 語"],
+      ["⚡ 銀★（2秒以内）", fast + " 語"],
+      ["🔥 連続学習", streak >= 1 ? streak + " 日" : "—"],
+      ["🎖 闘技場 制覇", (rc.clears || 0) + " 回"],
+      ["⏱ 最速クリア", rc.bestMs ? fmtMs(rc.bestMs) : "—"],
+      ["🔗 最大チェイン", rc.bestChain ? "×" + rc.bestChain : "—"],
+      ["🗼 挑戦の塔 最高", rc.bestFloor ? rc.bestFloor + " 階" : "—"]
+    ].map(function (r) { return '<div class="achv-row"><span>' + r[0] + '</span><b>' + r[1] + '</b></div>'; }).join("");
+    var wrap = document.createElement("div");
+    wrap.className = "wq2-store-ovl";
+    wrap.innerHTML = '<div class="wq2-store-panel dq-window achv-panel">' +
+      '<div class="wq2-store-h">🏅 称号・記録</div>' +
+      '<div class="achv-medals">' + medals + '</div>' +
+      '<div class="achv-list">' + rows + '</div>' +
+      '<div class="wq2-store-btns"><button class="wq2-store-btn primary">とじる</button></div></div>';
+    wrap.querySelector("button").onclick = function (e) { e.preventDefault(); wrap.remove(); };
+    $("screen").appendChild(wrap);
+  }
+
   // ---- 今日の復習 (SRS session) ----
   async function runReview() {
     var due = srsDue();
@@ -471,8 +647,26 @@
     refreshDiffBtn();
   });
 
-  $("pbtn-arena").addEventListener("click", function () { $("pbtn-arena").blur(); runArena(); });
+  function refreshArenaBtn() {
+    var r = loadRun(), tx = $("pbtn-arena").querySelector(".tx");
+    if (!tx) return;
+    tx.textContent = r ? "続きから（" + Math.min(r.i + 1, 11) + "戦目）" : "ことばの闘技場";
+  }
+  $("pbtn-arena").addEventListener("click", async function () {
+    $("pbtn-arena").blur();
+    var r = loadRun();
+    if (r) {
+      var pick = await choiceOverlay("中断した 挑戦が あります",
+        [{ label: "▶ 続きから（" + Math.min(r.i + 1, 11) + "戦目・Ｌｖ" + r.party[0].lv + "）" },
+         { label: "🆕 最初から やり直す" }]);
+      if (pick === 0) { runArena(r); return; }
+      clearRun(); refreshArenaBtn();
+    }
+    runArena();
+  });
   $("pbtn-review").addEventListener("click", function () { $("pbtn-review").blur(); runReview(); });
+  $("pbtn-tower").addEventListener("click", function () { $("pbtn-tower").blur(); runTower(); });
+  $("pbtn-achv").addEventListener("click", function () { $("pbtn-achv").blur(); showAchievements(); });
   $("pbtn-zukan").addEventListener("click", function () { $("pbtn-zukan").blur(); if (window.PFIELD) window.PFIELD.openZukan(); });
   // story mode is under construction: first tap warns, second tap (within 4s) opens the preview
   var fieldArmed = false;
@@ -540,6 +734,8 @@
   refreshReviewBtn();
   refreshRecords();
   refreshStreak();
+  refreshArenaBtn();
+  refreshTowerBtn();
 
   // Opening: browsers block audio until a user gesture, and the first tap is
   // usually a menu button that jumps straight into battle — so the title theme

@@ -42,20 +42,28 @@
     return G.study;
   }
 
-  // weighted pick: words answered wrong recently appear ~4x more often
+  // words already asked during this run — avoid repeats until the pool is used up
+  var runSeen = {};
+  function resetRunSeen() { runSeen = {}; }
+
+  // weighted pick: words answered wrong recently appear ~4x more often,
+  // words already asked this run are heavily de-prioritised (weight 0.02)
   function pickEntry(level) {
     var pool = window.VOCAB[level];
     var st = studyRec();
     var missed = st ? st.missed : {};
     var weights = [], total = 0;
     for (var i = 0; i < pool.length; i++) {
-      var m = missed[pool[i].w];
+      var e = pool[i];
+      var m = missed[e.w];
       var w = (m && m.wrong > 0 && (m.correctStreak || 0) < 2) ? 4 : 1;
+      if (runSeen[e.w]) w *= 0.02; // asked already this run: only reuse if nothing else is left
       total += w; weights.push(total);
     }
     var r = Math.random() * total;
     var lo = 0, hi = weights.length - 1;
     while (lo < hi) { var mid = (lo + hi) >> 1; if (weights[mid] < r) lo = mid + 1; else hi = mid; }
+    runSeen[pool[lo].w] = 1;
     return pool[lo];
   }
 
@@ -200,5 +208,5 @@
     return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
   };
 
-  window.QUIZ = { ask: ask, availableLevels: availableLevels, resolveLevel: resolveLevel };
+  window.QUIZ = { ask: ask, availableLevels: availableLevels, resolveLevel: resolveLevel, resetRunSeen: resetRunSeen };
 })();
