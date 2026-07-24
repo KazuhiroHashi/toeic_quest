@@ -223,6 +223,9 @@ canvas#field-canvas {
   border-radius: 14px;
   padding: 12px 12px 14px;
   box-shadow: 0 8px 26px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.1);
+  /* short screens: never overflow the game frame — shrink and scroll inside */
+  max-height: 100%;
+  overflow-y: auto;
 }
 /* strengthen text shadow so words stay legible over the see-through panel */
 #quiz-word, #quiz-level-tag, #quiz-hint, #quiz-result { text-shadow: 0 2px 6px rgba(0,0,0,.85), 0 0 3px rgba(0,0,0,.9); }

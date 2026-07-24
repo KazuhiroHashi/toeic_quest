@@ -104,7 +104,6 @@
       mag: Math.round(d.atk * 1.1 * str), exp: Math.round(d.exp * 1.4 * str),
       agi: Math.round(d.lv / 25),
       hasty: d.traits && d.traits.indexOf("hasty") >= 0,
-      fleey: d.traits && d.traits.indexOf("flee") >= 0,
       skills: FOE_SKILLS[id], skillRate: 0.32
     }, over || {});
   }
@@ -253,50 +252,8 @@
       window.addEventListener("keydown", onKey);
     });
   }
-  // ---- victory boons: pick 1 of 3 after each win (run-scoped buffs / loot) ----
-  function choiceOverlay(title, opts) {
-    return new Promise(function (resolve) {
-      var wrap = document.createElement("div");
-      wrap.className = "wq2-store-ovl";
-      var panel = document.createElement("div");
-      panel.className = "wq2-store-panel dq-window";
-      panel.innerHTML = '<div class="wq2-store-h">' + title + "</div>";
-      var row = document.createElement("div");
-      row.className = "wq2-store-btns";
-      opts.forEach(function (o, i) {
-        var el = document.createElement("button");
-        el.className = "wq2-store-btn";
-        el.innerHTML = o.label;
-        el.onclick = function (e) { e.preventDefault(); wrap.remove(); resolve(i); };
-        row.appendChild(el);
-      });
-      panel.appendChild(row);
-      wrap.appendChild(panel);
-      $("screen").appendChild(wrap);
-    });
-  }
-  var BOONS = [
-    { label: "⚔ 剣の書<br><small>全員の こうげき＋2（この挑戦中）</small>",
-      apply: function (p) { p.forEach(function (m) { m.gearAtk = (m.gearAtk || 0) + 2; }); return "剣の書で 全員の攻撃が 上がった！"; } },
-    { label: "🛡 盾の書<br><small>全員の まもり＋3（この挑戦中）</small>",
-      apply: function (p) { p.forEach(function (m) { m.gearDef = (m.gearDef || 0) + 3; }); return "盾の書で 全員の守りが 固くなった！"; } },
-    { label: "🧰 道具箱<br><small>ハーブティー×2 と エスプレッソ</small>",
-      apply: function () {
-        window.PBATTLE.giveItemToParty("herb"); window.PBATTLE.giveItemToParty("herb");
-        window.PBATTLE.giveItemToParty("espresso");
-        return "道具箱を 手に入れた！（ハーブ×2・エスプレッソ）"; } },
-    { label: "📜 修行の書<br><small>全員 レベル＋1</small>",
-      apply: function () { window.PBATTLE.levelEveryone(1); return "修行の書で 全員のレベルが 上がった！"; } }
-  ];
-  async function pickBoon() {
-    var pool = BOONS.slice();
-    // shuffle & take 3
-    for (var i = pool.length - 1; i > 0; i--) { var j = (Math.random() * (i + 1)) | 0; var t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
-    var three = pool.slice(0, 3);
-    var pick = await choiceOverlay("🎁 戦利品を ひとつ えらぼう", three);
-    return three[pick].apply(window.PBATTLE.getParty());
-  }
-  window.WQ2_TEST = { pickBoon: pickBoon }; // test hook (harmless in production)
+  // 中盤以降はMP大回復の「エスプレッソ」を拾えるように（MPが枯れやすいボス連戦対策）
+  var GIFTS = ["herb", "elixir", "herb", "elixir", "espresso", "elixir", "espresso", "herb", "espresso", "herb"];
   // party grows: Yu solo -> +Gai(b2) -> +Rina(b3) -> +Mia(b5). joinAfter[i] joins after round i.
   var JOIN_AFTER = {
     0: { id: "gai", scene: [
@@ -352,10 +309,6 @@
     $("ptitle-screen").style.display = "none";
     arenaStartParty(); // Yu solo; companions join as the gauntlet goes
     var rounds = arenaRounds();
-    // rare bonus: メタルワード may crash battles 2-4 (magic-proof, huge EXP, flees fast)
-    for (var mi = 1; mi <= 3; mi++) {
-      if (Math.random() < 0.12) rounds[mi].enc.enemies.push(scaledFoe("metal", { hp: 6, atk: 18, exp: 400 }));
-    }
     for (var i = 0; i < rounds.length; i++) {
       var r = rounds[i];
       // 10 shown battles; the 11th (真ラスボス) is a hidden surprise — no counter, no start card
@@ -378,11 +331,13 @@
       if (i < rounds.length - 1) {
         window.PBATTLE.fullHeal();
         var ups = window.PBATTLE.levelEveryone(i >= 3 ? 3 : 2); // faster leveling from the mid-boss on (Yu reaches Lv20=パーティヒール by the ガグ戦)
+        var gift = GIFTS[i] || "herb";
+        var who = window.PBATTLE.giveItemToParty(gift);
+        var giftName = gift === "herb" ? "ハーブティー" : gift === "elixir" ? "エナジーコーヒー" : "エスプレッソ";
         var head = (i === 9) ? "ミュートスを倒した…と思ったその時！" : "勝利！ パーティは 全回復した。";
-        if (ups.length) head += "\nみんなの レベルが上がった！（Ｌｖ" + window.PBATTLE.getParty()[0].lv + "）";
-        await gsay(head);
-        var boonMsg = await pickBoon(); // roguelite: choose 1 of 3 boons
-        await gsay(boonMsg);
+        var msg = head + "\n" + (who ? who + "が『" + giftName + "』を拾った！" : "（道具袋は満杯だった）");
+        if (ups.length) msg += "\nみんなの レベルが上がった！（Ｌｖ" + window.PBATTLE.getParty()[0].lv + "）";
+        await gsay(msg);
         var join = JOIN_AFTER[i];
         if (join) {
           var m = window.PBATTLE.addMember(join.id, window.PBATTLE.getParty()[0].lv);

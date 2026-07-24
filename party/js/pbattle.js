@@ -447,12 +447,8 @@
     var p = party[a.who];
     if (p.hp <= 0) return;
     if (a.kind === "guard") {
-      p.guard = true;
-      // guarding is also a breather: casters recover a little MP (tactical choice)
-      var mpGain = 0;
-      if (p.maxmp > 0 && p.mp < p.maxmp) { mpGain = Math.min(4, p.maxmp - p.mp); p.mp += mpGain; }
-      renderParty(-1);
-      await say(p.name + "は 身を守っている。" + (mpGain ? "\n精神を集中… ＭＰが " + mpGain + " 回復！" : ""));
+      p.guard = true; renderParty(-1);
+      await say(p.name + "は 身を守っている。");
       return;
     }
     if (a.kind === "item") {
@@ -536,18 +532,8 @@
         if (fi < 0 || foe.hp <= 0) continue;
         var sd = Math.round((sp.power + magOf(p)) * (0.85 + Math.random() * 0.3) * chainMult());
         if (qs.elapsed <= 2) sd = Math.round(sd * 1.3);
-        if (foe.base === "metal") sd = 1; // metal body: magic barely works (crit the quiz instead!)
         var weak = sp.elem && window.WEAK && window.WEAK[foe.base] === sp.elem;
-        if (weak) {
-          sd = Math.round(sd * 1.5); anyWeak = true; bpop("ばつぐん！", "weak", $("penemy-" + fi));
-          // remember + show the discovered weakness on the enemy tag
-          if (!foe.weakKnown) {
-            foe.weakKnown = true;
-            var tagEl = $("penemy-" + fi) && $("penemy-" + fi).querySelector(".ptag");
-            var elIco = { fire: "🔥", ice: "❄️", thunder: "⚡", holy: "✨" }[sp.elem] || "";
-            if (tagEl && elIco) tagEl.textContent = foe.name + "（弱点" + elIco + "）";
-          }
-        }
+        if (weak) { sd = Math.round(sd * 1.5); anyWeak = true; bpop("ばつぐん！", "weak", $("penemy-" + fi)); }
         hitEnemy(fi, sd, false, fxc, true);
         lines.push(foe.name + "に " + sd);
       }
@@ -590,13 +576,6 @@
   async function execFoeAction(fi) {
     var f = foes[fi];
     if (f.hp <= 0) return;
-    // skittish rare enemies (metal word) may flee before you finish them
-    if (f.fleey && Math.random() < 0.35) {
-      f.exp = 0; f.hp = 0;
-      updateEnemyHp(fi);
-      await say(f.name + "は ピカピカ光りながら\n逃げてしまった！（経験値は もらえない…）");
-      return;
-    }
     var el = $("penemy-" + fi);
     if (el) { el.classList.add("lunge"); setTimeout(function () { el.classList.remove("lunge"); }, 400); }
     var phase = f.boss ? f.phases[f.phase] : null;
@@ -782,14 +761,10 @@
       if (window.BGM) BGM.stop();
       victoryJingle(); // 専用ファンファーレ victory.mp3（無ければ win.mp3 にフォールバック）
       await say("たたかいに 勝った！");
-      // accuracy feedback: perfect battles reward focus, misses get a recap
+      // learning recap: show this battle's missed words while the memory is fresh
       var missed = [], seenW = {};
       battleAsk.forEach(function (a) { if (!a.ok && !seenW[a.w]) { seenW[a.w] = 1; missed.push(a); } });
-      if (!missed.length && battleAsk.length >= 3) {
-        aliveMembers().forEach(function (m) { if (m.maxmp > 0) m.mp = Math.min(m.maxmp, m.mp + 6); });
-        renderParty(-1);
-        await say("パーフェクト！ 全問正解！！\n集中力が 冴えわたる…（全員ＭＰ＋6）");
-      } else if (missed.length) {
+      if (missed.length) {
         var rl = missed.slice(0, 4).map(function (a) { return "・" + a.w + " ＝ " + a.m; });
         await say("【ことばの復習】\n" + rl.join("\n") + (missed.length > 4 ? "\n…ほか " + (missed.length - 4) + " 語" : ""));
       }
