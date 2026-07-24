@@ -288,6 +288,7 @@
   }
 
   function chainBadge() {
+    if (window.ARENA_STATS && chain > (ARENA_STATS.maxChain || 0)) ARENA_STATS.maxChain = chain; // score attack
     var b = $("pchain-badge");
     if (chain >= 2) {
       b.textContent = "チェイン ×" + chain + "（ダメージ+" + Math.round((chainMult() - 1) * 100) + "%）";

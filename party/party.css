@@ -93,7 +93,19 @@
 #ptitle-stamina {
   font-size: 12px; letter-spacing: 1px; color: #fff3cf;
   background: rgba(0,0,0,.28); border: 1px solid rgba(255,220,140,.45); border-radius: 16px;
-  padding: 4px 14px; margin-bottom: 16px; text-shadow: 0 1px 2px rgba(0,0,0,.5);
+  padding: 4px 14px; margin-bottom: 6px; text-shadow: 0 1px 2px rgba(0,0,0,.5);
+}
+/* best records line (score attack) */
+#ptitle-records {
+  font-size: 11px; letter-spacing: 1px; color: #cfe0ff;
+  background: rgba(0,0,0,.28); border: 1px solid rgba(140,170,255,.4); border-radius: 14px;
+  padding: 3px 12px; margin-bottom: 12px; text-shadow: 0 1px 2px rgba(0,0,0,.5);
+}
+/* review count badge on the 復習 button */
+#ptitle-menu .title-btn .badge:not(:empty) {
+  margin-left: auto; flex: none;
+  background: #e5484d; color: #fff; font-size: 12px; font-weight: bold;
+  border-radius: 12px; padding: 2px 9px; box-shadow: 0 1px 3px rgba(0,0,0,.4);
 }
 /* secondary "unlock" button */
 #ptitle-menu .title-btn, #pbtn-unlock { text-shadow: 0 1px 2px rgba(0,0,0,.35); }
@@ -112,7 +124,8 @@
 #ptitle-screen.has-kv #ptitle-sub,
 #ptitle-screen.has-kv #title-copy { display: none; } /* the artwork carries the vibe */
 #ptitle-screen.has-kv #ptitle-logo.img img { max-width: 270px; }
-#ptitle-screen.has-kv #ptitle-stamina { margin: 2px 0 10px; }
+#ptitle-screen.has-kv #ptitle-stamina { margin: 2px 0 5px; }
+#ptitle-screen.has-kv #ptitle-records { margin-bottom: 8px; }
 #ptitle-screen.has-kv #ptitle-menu .title-btn { margin: 5px 0; padding: 11px 14px; background: linear-gradient(180deg, rgba(30,38,74,.95), rgba(10,13,32,.96)); border-color: #6a74a8; }
 #ptitle-screen.has-kv #ptitle-menu .title-btn.primary { padding: 13px 14px; margin-bottom: 6px; background: linear-gradient(180deg, #5647c2, #2a1f66); }
 #ptitle-screen.has-kv #pbtn-unlock.ghost {

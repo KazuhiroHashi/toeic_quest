@@ -105,6 +105,8 @@
       if (r.s >= 3) r.g = 1;
     } else {
       r.wr++; r.s = 0;
+      // SRS: a missed word becomes due for review tomorrow (box back to 0)
+      r.box = 0; r.due = window.QUIZ_DNUM ? QUIZ_DNUM(1) : 0;
     }
     // ---- combo chain (persists across battles, reset on miss) ----
     var G = window.G;
@@ -191,6 +193,12 @@
       function timeUp() { timerBar.style.transform = "scaleX(0)"; finish(false, true); }
     });
   }
+
+  // date-as-number helper (yyyymmdd) for the SRS scheduler — shared with the review mode
+  window.QUIZ_DNUM = function (offsetDays) {
+    var d = new Date(Date.now() + (offsetDays || 0) * 86400000);
+    return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  };
 
   window.QUIZ = { ask: ask, availableLevels: availableLevels, resolveLevel: resolveLevel };
 })();

@@ -71,6 +71,16 @@
     canPlay: function () { return state.premium || state.stamina > 0; },
     spendPlay: function () { if (!state.premium && state.stamina > 0) { state.stamina--; save(); } },
 
+    // daily review reward: +1 stamina, once per day (premium doesn't need it)
+    claimReviewBonus: function () {
+      if (state.premium) return false;
+      if (state.srsDay === today()) return false;
+      state.srsDay = today();
+      state.stamina = Math.min(MAX, state.stamina + 1);
+      save();
+      return true;
+    },
+
     // rewarded video. cb(true) on completed view. NATIVE OVERRIDES THIS.
     showRewarded: function (cb) { adScreen().then(function () { cb(true); }); },
 

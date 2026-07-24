@@ -597,7 +597,19 @@ canvas#field-canvas {
 #ptitle-stamina {
   font-size: 12px; letter-spacing: 1px; color: #fff3cf;
   background: rgba(0,0,0,.28); border: 1px solid rgba(255,220,140,.45); border-radius: 16px;
-  padding: 4px 14px; margin-bottom: 16px; text-shadow: 0 1px 2px rgba(0,0,0,.5);
+  padding: 4px 14px; margin-bottom: 6px; text-shadow: 0 1px 2px rgba(0,0,0,.5);
+}
+/* best records line (score attack) */
+#ptitle-records {
+  font-size: 11px; letter-spacing: 1px; color: #cfe0ff;
+  background: rgba(0,0,0,.28); border: 1px solid rgba(140,170,255,.4); border-radius: 14px;
+  padding: 3px 12px; margin-bottom: 12px; text-shadow: 0 1px 2px rgba(0,0,0,.5);
+}
+/* review count badge on the 復習 button */
+#ptitle-menu .title-btn .badge:not(:empty) {
+  margin-left: auto; flex: none;
+  background: #e5484d; color: #fff; font-size: 12px; font-weight: bold;
+  border-radius: 12px; padding: 2px 9px; box-shadow: 0 1px 3px rgba(0,0,0,.4);
 }
 /* secondary "unlock" button */
 #ptitle-menu .title-btn, #pbtn-unlock { text-shadow: 0 1px 2px rgba(0,0,0,.35); }
@@ -616,7 +628,8 @@ canvas#field-canvas {
 #ptitle-screen.has-kv #ptitle-sub,
 #ptitle-screen.has-kv #title-copy { display: none; } /* the artwork carries the vibe */
 #ptitle-screen.has-kv #ptitle-logo.img img { max-width: 270px; }
-#ptitle-screen.has-kv #ptitle-stamina { margin: 2px 0 10px; }
+#ptitle-screen.has-kv #ptitle-stamina { margin: 2px 0 5px; }
+#ptitle-screen.has-kv #ptitle-records { margin-bottom: 8px; }
 #ptitle-screen.has-kv #ptitle-menu .title-btn { margin: 5px 0; padding: 11px 14px; background: linear-gradient(180deg, rgba(30,38,74,.95), rgba(10,13,32,.96)); border-color: #6a74a8; }
 #ptitle-screen.has-kv #ptitle-menu .title-btn.primary { padding: 13px 14px; margin-bottom: 6px; background: linear-gradient(180deg, #5647c2, #2a1f66); }
 #ptitle-screen.has-kv #pbtn-unlock.ghost {
@@ -882,8 +895,10 @@ canvas#field-canvas {
           <div id="ptitle-sub">〜 沈黙の四天王 〜</div>
           <div id="ptitle-start">▶ タップして スタート</div>
           <div id="ptitle-stamina"></div>
+          <div id="ptitle-records"></div>
           <div id="ptitle-menu">
             <button id="pbtn-arena" class="title-btn primary"><span class="ic">🏆</span><span class="tx">ことばの闘技場</span></button>
+            <button id="pbtn-review" class="title-btn"><span class="ic">📝</span><span class="tx">今日の復習</span><span class="badge" id="review-badge"></span></button>
             <button id="pbtn-diff" class="title-btn"><span class="ic">⚙</span><span class="tx">難易度：ふつう</span></button>
             <button id="pbtn-zukan" class="title-btn"><span class="ic">📖</span><span class="tx">単語帳</span></button>
           </div>
@@ -5136,6 +5151,8 @@ window.ITEM_DEFS = {
       if (r.s >= 3) r.g = 1;
     } else {
       r.wr++; r.s = 0;
+      // SRS: a missed word becomes due for review tomorrow (box back to 0)
+      r.box = 0; r.due = window.QUIZ_DNUM ? QUIZ_DNUM(1) : 0;
     }
     // ---- combo chain (persists across battles, reset on miss) ----
     var G = window.G;
@@ -5223,6 +5240,12 @@ window.ITEM_DEFS = {
     });
   }
 
+  // date-as-number helper (yyyymmdd) for the SRS scheduler — shared with the review mode
+  window.QUIZ_DNUM = function (offsetDays) {
+    var d = new Date(Date.now() + (offsetDays || 0) * 86400000);
+    return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  };
+
   window.QUIZ = { ask: ask, availableLevels: availableLevels, resolveLevel: resolveLevel };
 })();
 
@@ -5301,6 +5324,16 @@ window.ITEM_DEFS = {
     canPlay: function () { return state.premium || state.stamina > 0; },
     spendPlay: function () { if (!state.premium && state.stamina > 0) { state.stamina--; save(); } },
 
+    // daily review reward: +1 stamina, once per day (premium doesn't need it)
+    claimReviewBonus: function () {
+      if (state.premium) return false;
+      if (state.srsDay === today()) return false;
+      state.srsDay = today();
+      state.stamina = Math.min(MAX, state.stamina + 1);
+      save();
+      return true;
+    },
+
     // rewarded video. cb(true) on completed view. NATIVE OVERRIDES THIS.
     showRewarded: function (cb) { adScreen().then(function () { cb(true); }); },
 
@@ -5351,6 +5384,96 @@ window.ITEM_DEFS = {
     }
   };
   window.WQ2_STORE = api;
+})();
+
+</script>
+<script>
+// WORD QUEST - native bridge (Capacitor only; no-op on the web)
+// Overrides the WQ2_STORE mocks with real AdMob rewarded ads and the ¥600
+// non-consumable unlock (StoreKit / Play Billing via cordova-plugin-purchase).
+//
+// ── SETUP (fill these in when the AdMob / store consoles issue them) ──
+// 1) AdMob App IDs go in AndroidManifest.xml / Info.plist (see docs/NATIVE_WIRING.md)
+// 2) Rewarded ad-unit IDs + product ID below:
+(function () {
+  "use strict";
+
+  var CONFIG = {
+    // ★ AdMobのリワード広告ユニットID（あなたのIDに差し替え）
+    rewardedAndroid: "ca-app-pub-3940256099942544/5224354917", // ←テスト用ID（本番IDに差し替え）
+    rewardedIos:     "ca-app-pub-3940256099942544/1712485313", // ←テスト用ID（本番IDに差し替え）
+    // ★ アプリ内課金：全解放（¥600・非消費型）。両ストアで同じIDで登録すること
+    productId: "wordquest_unlock",
+    // 開発中は true（テスト広告のみ表示・誤タップBAN防止）。リリース時に false
+    testing: true
+  };
+
+  var cap = window.Capacitor;
+  if (!cap || !cap.isNativePlatform || !cap.isNativePlatform()) return; // web: keep mocks
+
+  var platform = cap.getPlatform ? cap.getPlatform() : "android";
+  var rewardedId = platform === "ios" ? CONFIG.rewardedIos : CONFIG.rewardedAndroid;
+
+  // ---------- AdMob rewarded (@capacitor-community/admob) ----------
+  var AdMob = cap.Plugins && cap.Plugins.AdMob;
+  if (AdMob) {
+    var adReady = false;
+    function prepare() {
+      AdMob.prepareRewardVideoAd({ adId: rewardedId, isTesting: CONFIG.testing })
+        .then(function () { adReady = true; })
+        .catch(function () { adReady = false; setTimeout(prepare, 30000); }); // retry (offline etc.)
+    }
+    AdMob.initialize({ initializeForTesting: CONFIG.testing }).then(prepare).catch(function () {});
+
+    // reward granted only when the video is actually completed
+    var rewardCb = null;
+    AdMob.addListener("onRewardedVideoAdReward", function () { if (rewardCb) { var cb = rewardCb; rewardCb = null; cb(true); } });
+    AdMob.addListener("onRewardedVideoAdClosed", function () {
+      // closed without reward -> no grant; either way, preload the next one
+      if (rewardCb) { var cb = rewardCb; rewardCb = null; cb(false); }
+      adReady = false; prepare();
+    });
+    AdMob.addListener("onRewardedVideoAdFailedToLoad", function () { adReady = false; setTimeout(prepare, 30000); });
+
+    window.WQ2_STORE.showRewarded = function (cb) {
+      if (!adReady) { cb(false); prepare(); return; } // no fill / offline: fail gracefully
+      rewardCb = cb;
+      AdMob.showRewardVideoAd().catch(function () { if (rewardCb) { var c = rewardCb; rewardCb = null; c(false); } });
+    };
+  }
+
+  // ---------- ¥600 unlock (cordova-plugin-purchase v13: window.CdvPurchase) ----------
+  document.addEventListener("deviceready", function () {
+    var CP = window.CdvPurchase;
+    if (!CP || !CP.store) return;
+    var store = CP.store;
+    var PLATFORM = platform === "ios" ? CP.Platform.APPLE_APPSTORE : CP.Platform.GOOGLE_PLAY;
+    store.register([{ id: CONFIG.productId, type: CP.ProductType.NON_CONSUMABLE, platform: PLATFORM }]);
+    store.when()
+      .approved(function (tx) { tx.verify(); })
+      .verified(function (receipt) { receipt.finish(); grantUnlock(); });
+    store.initialize([PLATFORM]).then(function () {
+      // restore: if already owned (reinstall/new device), unlock silently
+      var p = store.get(CONFIG.productId, PLATFORM);
+      if (p && p.owned) grantUnlock();
+    });
+
+    function grantUnlock() {
+      try {
+        var raw = JSON.parse(localStorage.getItem("wq2_store_v1") || "{}");
+        raw.premium = true;
+        localStorage.setItem("wq2_store_v1", JSON.stringify(raw));
+      } catch (e) {}
+      if (window.WQ2_STORE) window.WQ2_STORE._grantPremium && window.WQ2_STORE._grantPremium();
+      location.reload(); // simplest way to re-read premium state everywhere
+    }
+
+    window.WQ2_STORE.buyUnlock = function (cb) {
+      var offer = store.get(CONFIG.productId, PLATFORM) && store.get(CONFIG.productId, PLATFORM).getOffer();
+      if (!offer) { cb(false); return; }
+      offer.order().then(function () { cb(true); }).catch(function () { cb(false); });
+    };
+  });
 })();
 
 </script>
@@ -5645,6 +5768,7 @@ window.ITEM_DEFS = {
   }
 
   function chainBadge() {
+    if (window.ARENA_STATS && chain > (ARENA_STATS.maxChain || 0)) ARENA_STATS.maxChain = chain; // score attack
     var b = $("pchain-badge");
     if (chain >= 2) {
       b.textContent = "チェイン ×" + chain + "（ダメージ+" + Math.round((chainMult() - 1) * 100) + "%）";
@@ -7315,6 +7439,31 @@ window.ITEM_DEFS = {
     return { name: "トロフィーまであと少し", icon: "🔰", cls: "none", need: 0, next: 100 };
   };
 
+  // ---- SRS review: missed words come back on a schedule (1/2/4/7/15/30 days) ----
+  var SRS_GAP = [1, 2, 4, 7, 15, 30];
+  function srsDue() {
+    var words = (window.G.study && window.G.study.words) || {};
+    var today = QUIZ_DNUM(0), list = [];
+    for (var w in words) {
+      var r = words[w];
+      if (!r || !(r.wr > 0)) continue;              // only words missed at least once
+      if (r.due == null && r.s >= 2) continue;       // legacy word already re-mastered
+      if (r.due == null || r.due <= today) list.push({ w: w, r: r });
+    }
+    list.sort(function (a, b) { return (a.r.box || 0) - (b.r.box || 0) || (b.r.wr - a.r.wr); });
+    return list.slice(0, 20); // one session = up to 20 words
+  }
+
+  // ---- arena records (score attack) ----
+  function loadRec() {
+    try { return JSON.parse(localStorage.getItem("wq2_records_v1")) || {}; } catch (e) { return {}; }
+  }
+  function saveRec(r) { try { localStorage.setItem("wq2_records_v1", JSON.stringify(r)); } catch (e) {} }
+  function fmtMs(ms) {
+    var s = Math.round(ms / 1000);
+    return Math.floor(s / 60) + "分" + ("0" + (s % 60)).slice(-2) + "秒";
+  }
+
   function $(id) { return document.getElementById(id); }
 
   var FOE_SKILLS = {
@@ -7533,6 +7682,7 @@ window.ITEM_DEFS = {
     }
     if (window.WQ2_STORE) { WQ2_STORE.spendPlay(); refreshStamina(); }
 
+    window.ARENA_STATS = { t0: Date.now(), maxChain: 0 }; // score attack: clear time + max chain
     $("ptitle-screen").style.display = "none";
     arenaStartParty(); // Yu solo; companions join as the gauntlet goes
     var rounds = arenaRounds();
@@ -7547,6 +7697,9 @@ window.ITEM_DEFS = {
         var cont = window.WQ2_STORE ? await WQ2_STORE.offerContinue() : false;
         if (cont) { window.PBATTLE.fullHeal(); i--; continue; }
         var pg = window.studyProgress(), tr = window.trophyFor(pg.cleared);
+        // keep the best chain even on defeat
+        var st0 = window.ARENA_STATS || {}, rc0 = loadRec();
+        if ((st0.maxChain || 0) > (rc0.bestChain || 0)) { rc0.bestChain = st0.maxChain; saveRec(rc0); refreshRecords(); }
         await gsay("闘技場に 敗れた…。\nＬｖ" + window.PBATTLE.getParty()[0].lv + "／" + (i + 1) + "戦目でリタイア。\n\n" +
           "これまでに " + pg.cleared + " ／ " + pg.total + " 問クリア！" + (tr.icon ? "　" + tr.icon + tr.name : "") + "\n" +
           "（タイトルの「単語帳」で 復習できます）");
@@ -7577,6 +7730,16 @@ window.ITEM_DEFS = {
         bgEl.style.backgroundSize = "cover"; bgEl.style.backgroundPosition = "center top";
         var lv = window.PBATTLE.getParty()[0].lv;
         var pg = window.studyProgress(), tr = window.trophyFor(pg.cleared);
+        // score attack: save clear time + max chain, flag new records
+        var sst = window.ARENA_STATS || {};
+        var clearMs = sst.t0 ? Date.now() - sst.t0 : 0;
+        var rc = loadRec();
+        var newTime = clearMs > 0 && (!rc.bestMs || clearMs < rc.bestMs);
+        var newChain = (sst.maxChain || 0) > (rc.bestChain || 0);
+        if (newTime) rc.bestMs = clearMs;
+        if (newChain) rc.bestChain = sst.maxChain;
+        rc.clears = (rc.clears || 0) + 1;
+        saveRec(rc); refreshRecords();
         var ending = [
           "真・沈黙王ミュートスは\nまばゆい光の中へ 溶けて消えた…。",
           "『…ありがとう。\n　わたしは ことばに 傷つき、\n　ことばを 憎んでいた。』",
@@ -7584,7 +7747,10 @@ window.ITEM_DEFS = {
           "奪われていた ことばが\n世界へ 還っていく。\n人々の 声が、歌が、笑い声が、\n少しずつ 街に あふれ出した。",
           "ユウたちは たがいの顔を 見合わせ、\nどちらからともなく 笑った。\nもう 多くの言葉は いらなかった。",
           "——そして いつか。\nきみが おぼえた 一つ一つの単語が、\n誰かに 何かを 伝える日が くる。",
-          "【 冒険の記録 】\n　最終レベル … " + lv + "\n　おぼえた単語 … " + pg.cleared + " ／ " + pg.total + " 語" +
+          "【 冒険の記録 】\n　最終レベル … " + lv +
+            (clearMs ? "\n　クリアタイム … " + fmtMs(clearMs) + (newTime ? "　🎉新記録！" : "") : "") +
+            (sst.maxChain ? "\n　最大チェイン … ×" + sst.maxChain + (newChain ? "　🎉新記録！" : "") : "") +
+            "\n　おぼえた単語 … " + pg.cleared + " ／ " + pg.total + " 語" +
             (tr.icon ? "\n　称号 … " + tr.icon + " " + tr.name : ""),
           "〜 ことばの闘技場 制覇 〜\n\n★　ＷＯＲＤ　ＱＵＥＳＴ　・　完　★\n\nおめでとう！ そして ありがとう。",
           "（タイトルの「単語帳」で\n　出会った単語を いつでも 復習できます。\n　全3000語 制覇を めざそう！）"
@@ -7607,6 +7773,58 @@ window.ITEM_DEFS = {
     var tx = $("pbtn-diff").querySelector(".tx") || $("pbtn-diff");
     tx.textContent = "難易度：" + (window.WQ2_EASY ? "やさしい" : "ふつう");
   }
+  // ---- 今日の復習 (SRS session) ----
+  async function runReview() {
+    var due = srsDue();
+    $("ptitle-screen").style.display = "none";
+    var kv = (window.UI_ART && window.UI_ART.titlebg) || "../assets/ui/title_bg.png";
+    var bgEl = $("pbattle-bg");
+    bgEl.style.backgroundImage = "url('" + kv + "')";
+    bgEl.style.backgroundSize = "cover"; bgEl.style.backgroundPosition = "center top";
+    $("penemy-row").innerHTML = ""; $("pparty-strip").innerHTML = ""; $("pchain-badge").className = "";
+    if (!due.length) {
+      await gsay("【今日の復習】\n復習する単語は ありません！\n\n闘技場で ミスした単語が\n自動で ここに たまります。");
+    } else {
+      await gsay("【今日の復習】\nミスした単語 " + due.length + " 語に 再挑戦！\n正解するほど 次の出題は 先になります。");
+      var ok = 0;
+      for (var i = 0; i < due.length; i++) {
+        var r = due[i].r;
+        var res = await window.QUIZ.ask(r.l || 500, { time: 6, noCrit: true, entry: { w: due[i].w, m: r.m, p: r.p } });
+        if (res.correct) { // advance the SRS box: next review moves further out
+          ok++;
+          r.box = Math.min((r.box || 0) + 1, SRS_GAP.length - 1);
+          r.due = QUIZ_DNUM(SRS_GAP[r.box]);
+        } // on miss, record() already reset box=0 / due=tomorrow
+        saveStudy();
+      }
+      var msg = "復習おわり！　" + ok + " ／ " + due.length + " 問 正解。";
+      if (window.WQ2_STORE && WQ2_STORE.claimReviewBonus()) msg += "\n毎日の復習ボーナス！ ⚡スタミナ＋1";
+      msg += "\n（次は 忘れかけたころに また出題します）";
+      await gsay(msg);
+    }
+    $("pbattle-screen").style.display = "none";
+    $("ptitle-screen").style.display = "flex";
+    refreshStamina(); refreshReviewBtn();
+    if (window.BGM) BGM.playAny(["title"]);
+  }
+  function refreshReviewBtn() {
+    var n = srsDue().length;
+    var b = $("review-badge");
+    if (b) { b.textContent = n > 0 ? String(n) : ""; }
+  }
+  function refreshRecords() {
+    var el = $("ptitle-records");
+    if (!el) return;
+    var rc = loadRec();
+    if (!rc.bestMs && !rc.bestChain) { el.style.display = "none"; return; }
+    el.style.display = "";
+    el.innerHTML = "🏅 " +
+      (rc.bestMs ? "最速 " + fmtMs(rc.bestMs) : "") +
+      (rc.bestMs && rc.bestChain ? "　" : "") +
+      (rc.bestChain ? "最大チェイン ×" + rc.bestChain : "") +
+      (rc.clears ? "　制覇 " + rc.clears + "回" : "");
+  }
+
   function refreshStamina() {
     var el = $("ptitle-stamina"), ub = $("pbtn-unlock");
     if (!window.WQ2_STORE) { if (el) el.style.display = "none"; if (ub) ub.style.display = "none"; return; }
@@ -7630,6 +7848,7 @@ window.ITEM_DEFS = {
   });
 
   $("pbtn-arena").addEventListener("click", function () { $("pbtn-arena").blur(); runArena(); });
+  $("pbtn-review").addEventListener("click", function () { $("pbtn-review").blur(); runReview(); });
   $("pbtn-zukan").addEventListener("click", function () { $("pbtn-zukan").blur(); if (window.PFIELD) window.PFIELD.openZukan(); });
   // story mode is under construction: first tap warns, second tap (within 4s) opens the preview
   var fieldArmed = false;
@@ -7694,6 +7913,8 @@ window.ITEM_DEFS = {
   refreshBgmBtn();
   refreshDiffBtn();
   refreshStamina();
+  refreshReviewBtn();
+  refreshRecords();
 
   // Opening: browsers block audio until a user gesture, and the first tap is
   // usually a menu button that jumps straight into battle — so the title theme

@@ -33,6 +33,31 @@
     return { name: "トロフィーまであと少し", icon: "🔰", cls: "none", need: 0, next: 100 };
   };
 
+  // ---- SRS review: missed words come back on a schedule (1/2/4/7/15/30 days) ----
+  var SRS_GAP = [1, 2, 4, 7, 15, 30];
+  function srsDue() {
+    var words = (window.G.study && window.G.study.words) || {};
+    var today = QUIZ_DNUM(0), list = [];
+    for (var w in words) {
+      var r = words[w];
+      if (!r || !(r.wr > 0)) continue;              // only words missed at least once
+      if (r.due == null && r.s >= 2) continue;       // legacy word already re-mastered
+      if (r.due == null || r.due <= today) list.push({ w: w, r: r });
+    }
+    list.sort(function (a, b) { return (a.r.box || 0) - (b.r.box || 0) || (b.r.wr - a.r.wr); });
+    return list.slice(0, 20); // one session = up to 20 words
+  }
+
+  // ---- arena records (score attack) ----
+  function loadRec() {
+    try { return JSON.parse(localStorage.getItem("wq2_records_v1")) || {}; } catch (e) { return {}; }
+  }
+  function saveRec(r) { try { localStorage.setItem("wq2_records_v1", JSON.stringify(r)); } catch (e) {} }
+  function fmtMs(ms) {
+    var s = Math.round(ms / 1000);
+    return Math.floor(s / 60) + "分" + ("0" + (s % 60)).slice(-2) + "秒";
+  }
+
   function $(id) { return document.getElementById(id); }
 
   var FOE_SKILLS = {
@@ -251,6 +276,7 @@
     }
     if (window.WQ2_STORE) { WQ2_STORE.spendPlay(); refreshStamina(); }
 
+    window.ARENA_STATS = { t0: Date.now(), maxChain: 0 }; // score attack: clear time + max chain
     $("ptitle-screen").style.display = "none";
     arenaStartParty(); // Yu solo; companions join as the gauntlet goes
     var rounds = arenaRounds();
@@ -265,6 +291,9 @@
         var cont = window.WQ2_STORE ? await WQ2_STORE.offerContinue() : false;
         if (cont) { window.PBATTLE.fullHeal(); i--; continue; }
         var pg = window.studyProgress(), tr = window.trophyFor(pg.cleared);
+        // keep the best chain even on defeat
+        var st0 = window.ARENA_STATS || {}, rc0 = loadRec();
+        if ((st0.maxChain || 0) > (rc0.bestChain || 0)) { rc0.bestChain = st0.maxChain; saveRec(rc0); refreshRecords(); }
         await gsay("闘技場に 敗れた…。\nＬｖ" + window.PBATTLE.getParty()[0].lv + "／" + (i + 1) + "戦目でリタイア。\n\n" +
           "これまでに " + pg.cleared + " ／ " + pg.total + " 問クリア！" + (tr.icon ? "　" + tr.icon + tr.name : "") + "\n" +
           "（タイトルの「単語帳」で 復習できます）");
@@ -295,6 +324,16 @@
         bgEl.style.backgroundSize = "cover"; bgEl.style.backgroundPosition = "center top";
         var lv = window.PBATTLE.getParty()[0].lv;
         var pg = window.studyProgress(), tr = window.trophyFor(pg.cleared);
+        // score attack: save clear time + max chain, flag new records
+        var sst = window.ARENA_STATS || {};
+        var clearMs = sst.t0 ? Date.now() - sst.t0 : 0;
+        var rc = loadRec();
+        var newTime = clearMs > 0 && (!rc.bestMs || clearMs < rc.bestMs);
+        var newChain = (sst.maxChain || 0) > (rc.bestChain || 0);
+        if (newTime) rc.bestMs = clearMs;
+        if (newChain) rc.bestChain = sst.maxChain;
+        rc.clears = (rc.clears || 0) + 1;
+        saveRec(rc); refreshRecords();
         var ending = [
           "真・沈黙王ミュートスは\nまばゆい光の中へ 溶けて消えた…。",
           "『…ありがとう。\n　わたしは ことばに 傷つき、\n　ことばを 憎んでいた。』",
@@ -302,7 +341,10 @@
           "奪われていた ことばが\n世界へ 還っていく。\n人々の 声が、歌が、笑い声が、\n少しずつ 街に あふれ出した。",
           "ユウたちは たがいの顔を 見合わせ、\nどちらからともなく 笑った。\nもう 多くの言葉は いらなかった。",
           "——そして いつか。\nきみが おぼえた 一つ一つの単語が、\n誰かに 何かを 伝える日が くる。",
-          "【 冒険の記録 】\n　最終レベル … " + lv + "\n　おぼえた単語 … " + pg.cleared + " ／ " + pg.total + " 語" +
+          "【 冒険の記録 】\n　最終レベル … " + lv +
+            (clearMs ? "\n　クリアタイム … " + fmtMs(clearMs) + (newTime ? "　🎉新記録！" : "") : "") +
+            (sst.maxChain ? "\n　最大チェイン … ×" + sst.maxChain + (newChain ? "　🎉新記録！" : "") : "") +
+            "\n　おぼえた単語 … " + pg.cleared + " ／ " + pg.total + " 語" +
             (tr.icon ? "\n　称号 … " + tr.icon + " " + tr.name : ""),
           "〜 ことばの闘技場 制覇 〜\n\n★　ＷＯＲＤ　ＱＵＥＳＴ　・　完　★\n\nおめでとう！ そして ありがとう。",
           "（タイトルの「単語帳」で\n　出会った単語を いつでも 復習できます。\n　全3000語 制覇を めざそう！）"
@@ -325,6 +367,58 @@
     var tx = $("pbtn-diff").querySelector(".tx") || $("pbtn-diff");
     tx.textContent = "難易度：" + (window.WQ2_EASY ? "やさしい" : "ふつう");
   }
+  // ---- 今日の復習 (SRS session) ----
+  async function runReview() {
+    var due = srsDue();
+    $("ptitle-screen").style.display = "none";
+    var kv = (window.UI_ART && window.UI_ART.titlebg) || "../assets/ui/title_bg.png";
+    var bgEl = $("pbattle-bg");
+    bgEl.style.backgroundImage = "url('" + kv + "')";
+    bgEl.style.backgroundSize = "cover"; bgEl.style.backgroundPosition = "center top";
+    $("penemy-row").innerHTML = ""; $("pparty-strip").innerHTML = ""; $("pchain-badge").className = "";
+    if (!due.length) {
+      await gsay("【今日の復習】\n復習する単語は ありません！\n\n闘技場で ミスした単語が\n自動で ここに たまります。");
+    } else {
+      await gsay("【今日の復習】\nミスした単語 " + due.length + " 語に 再挑戦！\n正解するほど 次の出題は 先になります。");
+      var ok = 0;
+      for (var i = 0; i < due.length; i++) {
+        var r = due[i].r;
+        var res = await window.QUIZ.ask(r.l || 500, { time: 6, noCrit: true, entry: { w: due[i].w, m: r.m, p: r.p } });
+        if (res.correct) { // advance the SRS box: next review moves further out
+          ok++;
+          r.box = Math.min((r.box || 0) + 1, SRS_GAP.length - 1);
+          r.due = QUIZ_DNUM(SRS_GAP[r.box]);
+        } // on miss, record() already reset box=0 / due=tomorrow
+        saveStudy();
+      }
+      var msg = "復習おわり！　" + ok + " ／ " + due.length + " 問 正解。";
+      if (window.WQ2_STORE && WQ2_STORE.claimReviewBonus()) msg += "\n毎日の復習ボーナス！ ⚡スタミナ＋1";
+      msg += "\n（次は 忘れかけたころに また出題します）";
+      await gsay(msg);
+    }
+    $("pbattle-screen").style.display = "none";
+    $("ptitle-screen").style.display = "flex";
+    refreshStamina(); refreshReviewBtn();
+    if (window.BGM) BGM.playAny(["title"]);
+  }
+  function refreshReviewBtn() {
+    var n = srsDue().length;
+    var b = $("review-badge");
+    if (b) { b.textContent = n > 0 ? String(n) : ""; }
+  }
+  function refreshRecords() {
+    var el = $("ptitle-records");
+    if (!el) return;
+    var rc = loadRec();
+    if (!rc.bestMs && !rc.bestChain) { el.style.display = "none"; return; }
+    el.style.display = "";
+    el.innerHTML = "🏅 " +
+      (rc.bestMs ? "最速 " + fmtMs(rc.bestMs) : "") +
+      (rc.bestMs && rc.bestChain ? "　" : "") +
+      (rc.bestChain ? "最大チェイン ×" + rc.bestChain : "") +
+      (rc.clears ? "　制覇 " + rc.clears + "回" : "");
+  }
+
   function refreshStamina() {
     var el = $("ptitle-stamina"), ub = $("pbtn-unlock");
     if (!window.WQ2_STORE) { if (el) el.style.display = "none"; if (ub) ub.style.display = "none"; return; }
@@ -348,6 +442,7 @@
   });
 
   $("pbtn-arena").addEventListener("click", function () { $("pbtn-arena").blur(); runArena(); });
+  $("pbtn-review").addEventListener("click", function () { $("pbtn-review").blur(); runReview(); });
   $("pbtn-zukan").addEventListener("click", function () { $("pbtn-zukan").blur(); if (window.PFIELD) window.PFIELD.openZukan(); });
   // story mode is under construction: first tap warns, second tap (within 4s) opens the preview
   var fieldArmed = false;
@@ -412,6 +507,8 @@
   refreshBgmBtn();
   refreshDiffBtn();
   refreshStamina();
+  refreshReviewBtn();
+  refreshRecords();
 
   // Opening: browsers block audio until a user gesture, and the first tap is
   // usually a menu button that jumps straight into battle — so the title theme
