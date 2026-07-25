@@ -7,7 +7,7 @@ var path = require("path");
 var root = path.join(__dirname, "..");
 
 var ANDROID_APP_ID = "ca-app-pub-3056251560404390~1913457246"; // Bridge AI / WORD QUEST (Android)
-var IOS_APP_ID = "";      // ← iOSのAdMobアプリを作ったら ca-app-pub-...~... を入れる
+var IOS_APP_ID = "ca-app-pub-3056251560404390~6974212233";     // Bridge AI / WORD QUEST (iOS)
 
 // ---------- Android: AndroidManifest.xml ----------
 (function () {

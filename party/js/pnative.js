@@ -11,7 +11,7 @@
   var CONFIG = {
     // ★ AdMobのリワード広告ユニットID
     rewardedAndroid: "ca-app-pub-3056251560404390/5134516956", // 本番（Bridge AI / WORD QUEST Android）
-    rewardedIos:     "ca-app-pub-3940256099942544/1712485313", // ←iOSはまだテストID（AdMobでiOSアプリ登録後に差し替え）
+    rewardedIos:     "ca-app-pub-3056251560404390/7099435396", // 本番（Bridge AI / WORD QUEST iOS）
     // ★ アプリ内課金：全解放（¥600・非消費型）。両ストアで同じIDで登録すること
     productId: "wordquest_unlock",
     // 開発中は true（テスト広告のみ表示・誤タップBAN防止）。リリース時に false
