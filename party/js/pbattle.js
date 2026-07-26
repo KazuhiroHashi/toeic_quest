@@ -22,6 +22,10 @@
     } catch (e) {}
   }
 
+  // quiz.js expects window.SFX for its 正解/ミス/クリティカル sounds — without this shim
+  // those cues were silently skipped (the files exist; the caller was guarded by `if (window.SFX)`)
+  window.SFX = window.SFX || { play: sfx };
+
   // element-aware spell sound: play magic_<elem> if it exists, else the generic magic sfx
   function sfxEl(elem) {
     var name = elem ? "magic_" + elem : "magic";
@@ -129,7 +133,7 @@
     fullheal:  { name: "フルヒール",     mp: 14, type: "heal",  power: 9999, full: true, quizLv: 700, desc: "味方1人のHPを全回復する" },
     partyheal: { name: "パーティヒール",  mp: 14, type: "heal",  power: 50, all: true, quizLv: 600, desc: "味方全員のHPを50ほど回復する" },
     sanctuary: { name: "サンクチュアリ",  mp: 26, type: "heal",  power: 90, all: true, quizLv: 800, desc: "味方全員のHPを90ほど回復する" },
-    revive:    { name: "そせい",         mp: 18, type: "raise", power: 0.6, quizLv: 700, desc: "戦闘不能の味方をＨＰ6割で復活させる" },
+    revive:    { name: "蘇生",         mp: 18, type: "raise", power: 0.6, quizLv: 700, desc: "戦闘不能の味方をＨＰ6割で復活させる" },
     spark:     { name: "スパーク",       mp: 4,  type: "atk",   power: 26, elem: "thunder", quizLv: 400, desc: "敵1体に雷のダメージ" },
     fire:      { name: "フレイム",       mp: 4,  type: "atk",   power: 30, elem: "fire", quizLv: 400, desc: "敵1体に炎のダメージ" },
     frost:     { name: "フロスト",       mp: 5,  type: "atk",   power: 34, elem: "ice", quizLv: 450, desc: "敵1体に氷のダメージ" },
@@ -144,19 +148,19 @@
 
   // learn: { level: spellId | [spellId,...] } — casters gain more spells as they level up
   var CHARS = {
-    yu:   { name: "ユウ", role: "ゆうしゃ", quizOff: 0,
+    yu:   { name: "ユウ", role: "勇者", quizOff: 0,
             base: { hp: 36, mp: 10, atk: 12, def: 9, agi: 9 },
             grow: { hp: 9,  mp: 3,  atk: 3,  def: 2, agi: 2 },
             learn: { 3: "heal", 6: "spark", 10: "fireball", 14: "healmore", 20: "partyheal", 22: "fullheal", 26: "inferno" } },
-    gai:  { name: "ガイ", role: "せんし", quizOff: -100,
+    gai:  { name: "ガイ", role: "戦士", quizOff: -100,
             base: { hp: 48, mp: 0,  atk: 16, def: 12, agi: 6 },
             grow: { hp: 12, mp: 0,  atk: 4,  def: 3,  agi: 1 },
             learn: {} },
-    rina: { name: "リナ", role: "まほうつかい", quizOff: 100,
+    rina: { name: "リナ", role: "魔法使い", quizOff: 100,
             base: { hp: 26, mp: 18, atk: 7,  def: 6, agi: 8 },
             grow: { hp: 6,  mp: 6,  atk: 2,  def: 1, agi: 2 },
             learn: { 1: ["fire", "frost"], 6: "fira", 11: "thunder", 16: "frostnova", 20: "inferno", 25: "plasma" } },
-    mia:  { name: "ミア", role: "そうりょ", quizOff: 0,
+    mia:  { name: "ミア", role: "僧侶", quizOff: 0,
             base: { hp: 32, mp: 16, atk: 8,  def: 8, agi: 8 },
             grow: { hp: 7,  mp: 6,  atk: 2,  def: 2, agi: 2 },
             learn: { 1: "heal", 5: "partyheal", 9: "holy", 12: "revive", 16: "fullheal", 20: "sanctuary" } }
@@ -204,7 +208,7 @@
   // magic attack power — like atk, it scales with level so spells don't fall off.
   // mages scale hardest; warriors barely cast anyway.
   function magOf(m) {
-    var per = m.role === "まほうつかい" ? 3.6 : m.role === "そうりょ" ? 2.2 : m.role === "ゆうしゃ" ? 2.0 : 1.6;
+    var per = m.role === "魔法使い" ? 3.6 : m.role === "僧侶" ? 2.2 : m.role === "勇者" ? 2.0 : 1.6;
     return Math.round(m.lv * per);
   }
 
@@ -370,11 +374,11 @@
       renderParty(i);
       var spells = memberSpells(p);
       var c = await menu($("pbattle-cmd"), [
-        { label: "こうげき" },
-        { label: "まほう", disabled: !spells.length },
-        { label: "ぼうぎょ" },
-        { label: "どうぐ" },
-        { label: "にげる" }
+        { label: "攻撃" },
+        { label: "魔法", disabled: !spells.length },
+        { label: "防御" },
+        { label: "道具" },
+        { label: "逃げる" }
       ], p.name + "（Ｌｖ" + p.lv + "）");
       if (c === -1) {
         if (i === 0) continue;
@@ -391,7 +395,7 @@
         var opts = spells.map(function (s) {
           return { label: s.name + "　ＭＰ" + s.mp, disabled: p.mp < s.mp };
         });
-        var si = await menu($("pbattle-sub"), opts, "まほう");
+        var si = await menu($("pbattle-sub"), opts, "魔法");
         if (si === -1) continue;
         var sp = spells[si];
         var tgt = -1;
@@ -409,7 +413,7 @@
         if (counts.elixir) inv.push({ key: "elixir", label: "エナジーコーヒー ×" + counts.elixir });
         if (counts.espresso) inv.push({ key: "espresso", label: "エスプレッソ ×" + counts.espresso });
         if (!inv.length) { await say(p.name + "は 使える道具を持っていない！"); continue; }
-        var ii = await menu($("pbattle-sub"), inv, p.name + "の どうぐ");
+        var ii = await menu($("pbattle-sub"), inv, p.name + "の 道具");
         if (ii === -1) continue;
         var at = await pickAlly(false);
         if (at === -1) continue;
@@ -437,7 +441,7 @@
       if (ok) opts.push({ label: p.name + "　ＨＰ" + Math.max(0, p.hp) + "/" + p.maxhp, pi: i });
     });
     if (!opts.length) return Promise.resolve(-1);
-    return menu($("pbattle-sub"), opts, "だれに？").then(function (v) {
+    return menu($("pbattle-sub"), opts, "誰に？").then(function (v) {
       return v === -1 ? -1 : opts[v].pi;
     });
   }
@@ -466,7 +470,7 @@
       var ti = foes[a.target] && foes[a.target].hp > 0 ? a.target : firstAliveFoe();
       if (ti < 0) return;
       var f = foes[ti];
-      await say(p.name + "の こうげき！");
+      await say(p.name + "の 攻撃！");
       var q = await window.QUIZ.ask(atkQuizLv(p), { time: f.hasty ? 3.5 : 5 });
       if (q.entry) battleAsk.push({ w: q.entry.w, m: q.entry.m, ok: q.correct });
       if (q.correct) {
@@ -481,7 +485,7 @@
         await checkFoeDown(ti);
       } else {
         chain = 0; chainBadge();
-        await say(p.name + "の こうげきは 空振り！\n（チェインが途切れた）");
+        await say(p.name + "の 攻撃は 空振り！\n（チェインが途切れた）");
       }
       return;
     }
@@ -516,7 +520,7 @@
       }
       if (sp.type === "raise") {
         var rm = party[a.target];
-        if (rm.hp > 0) { await say("しかし 何も起こらなかった。\n（そせいは 戦闘不能の味方にだけ）"); return; }
+        if (rm.hp > 0) { await say("しかし 何も起こらなかった。\n（蘇生は 戦闘不能の味方にだけ）"); return; }
         rm.hp = Math.max(1, Math.round(rm.maxhp * sp.power));
         sfx("heal"); renderParty(-1);
         await say(rm.name + "が 生き返った！");
@@ -539,7 +543,7 @@
       }
       // one message listing each target's damage
       await say(lines.join("\n") + " のダメージ！" + (anyWeak ? "\n弱点を つらぬいた！" : ""));
-      for (var d2 = 0; d2 < targets.length; d2++) { if (foes[targets[d2]] && foes[targets[d2]].hp <= 0) await say(foes[targets[d2]].name + "を たおした！"); }
+      for (var d2 = 0; d2 < targets.length; d2++) { if (foes[targets[d2]] && foes[targets[d2]].hp <= 0) await say(foes[targets[d2]].name + "を 倒した！"); }
       if (aliveFoes().length) { var bossF = foes.filter(function (f) { return f.boss && f.hp > 0; })[0]; if (bossF && bossF.phases) await checkPhase(bossF); }
     }
   }
@@ -553,7 +557,7 @@
       void screenEl.offsetWidth;
       screenEl.classList.add("boss-down");
     }
-    await say(f.name + "を たおした！");
+    await say(f.name + "を 倒した！");
   }
   async function checkPhase(f) {
     var ratio = f.hp / f.maxhp;
@@ -669,7 +673,7 @@
       var t = party[ti];
       var dmg = Math.max(1, Math.round((f.atk - defOf(t) / 2 + rnd(6)) * (t.guard ? 0.5 : 1)));
       hitMember(ti, dmg);
-      await say(f.name + "の こうげき！\n" + t.name + "に " + dmg + " のダメージ！" + (t.guard ? "（防御で半減）" : ""));
+      await say(f.name + "の 攻撃！\n" + t.name + "に " + dmg + " のダメージ！" + (t.guard ? "（防御で半減）" : ""));
       if (t.hp <= 0) await say(t.name + "は 倒れてしまった！");
     }
   }
@@ -711,7 +715,7 @@
       }, 1000);
     }
     sfx(isBoss ? "boss" : "encounter");
-    await say(foes.map(function (f) { return f.name; }).join("と ") + "が あらわれた！");
+    await say(foes.map(function (f) { return f.name; }).join("と ") + "が 現れた！");
     if (encounter.intro) for (var ii = 0; ii < encounter.intro.length; ii++) await say(encounter.intro[ii]);
 
     var result = null;
@@ -724,6 +728,7 @@
       // flee attempt (party level)
       if (cmd.flee) {
         if (isBoss) { await say("ボスからは 逃げられない！"); continue; }
+        if (encounter.noFlee) { await say("闘技場では 逃げられない！\n（戦い抜くのみ！）"); continue; }
         var pAgi = aliveMembers().reduce(function (s, m) { return s + m.agi; }, 0) / Math.max(1, aliveMembers().length);
         var fAgi = aliveFoes().reduce(function (s, f) { return s + f.agi; }, 0) / Math.max(1, aliveFoes().length);
         if (Math.random() < clamp(0.5 + (pAgi - fAgi) * 0.015, 0.4, 0.62)) {
@@ -760,7 +765,7 @@
     if (result === "win") {
       if (window.BGM) BGM.stop();
       victoryJingle(); // 専用ファンファーレ victory.mp3（無ければ win.mp3 にフォールバック）
-      await say("たたかいに 勝った！");
+      await say("戦いに 勝った！");
       // learning recap: show this battle's missed words while the memory is fresh
       var missed = [], seenW = {};
       battleAsk.forEach(function (a) { if (!a.ok && !seenW[a.w]) { seenW[a.w] = 1; missed.push(a); } });
@@ -780,7 +785,7 @@
             sfx("level");
             await say(m.name + "は レベル " + res.ups[u].lv + " に上がった！");
             if (res.ups[u].learned.length) {
-              await say(m.name + "は 魔法『" + res.ups[u].learned.join("』『") + "』を おぼえた！");
+              await say(m.name + "は 魔法『" + res.ups[u].learned.join("』『") + "』を 覚えた！");
             }
           }
         }

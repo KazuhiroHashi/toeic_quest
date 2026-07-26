@@ -275,10 +275,10 @@
   // 11 rounds: zako(1-4) -> 中ボス竜(5) -> 四天王4連戦(6-9) -> ラスボス(10) -> 真ラスボス(11)
   function arenaRounds() {
     return [
-      { label: "第1戦", enc: { bg: "zone1", quizLv: 400, bgm: "arena1", enemies: [af("bee", 1.4), af("bat", 1.4)] } },        // Yu solo（スペルバード＝青 ＋ アルファベットひよこ＝黄）
-      { label: "第2戦", enc: { bg: "zone2", quizLv: 450, bgm: "arena2", enemies: [af("worm", 1.4), af("goblin", 1.4), af("rat", 1.4)] } }, // +Gai（ペンシルラビット登場）
-      { label: "第3戦", enc: { bg: "zone3", quizLv: 500, bgm: "arena3", enemies: [af("wolf", 1.5), af("ghost", 1.5), af("snake", 1.5)] } }, // +Rina
-      { label: "第4戦", enc: { bg: "zone4", quizLv: 550, bgm: "arena4", enemies: [af("mush", 1.9), af("owl", 1.9), af("ghost", 1.9), af("wolf", 1.9)] } },
+      { label: "第1戦", enc: { bg: "zone1", quizLv: 400, bgm: "arena1", noFlee: true, enemies: [af("bee", 1.4), af("bat", 1.4)] } },        // Yu solo（スペルバード＝青 ＋ アルファベットひよこ＝黄）
+      { label: "第2戦", enc: { bg: "zone2", quizLv: 450, bgm: "arena2", noFlee: true, enemies: [af("worm", 1.4), af("goblin", 1.4), af("rat", 1.4)] } }, // +Gai（ペンシルラビット登場）
+      { label: "第3戦", enc: { bg: "zone3", quizLv: 500, bgm: "arena3", noFlee: true, enemies: [af("wolf", 1.5), af("ghost", 1.5), af("snake", 1.5)] } }, // +Rina
+      { label: "第4戦", enc: { bg: "zone4", quizLv: 550, bgm: "arena4", noFlee: true, enemies: [af("mush", 1.9), af("owl", 1.9), af("ghost", 1.9), af("wolf", 1.9)] } },
       { label: "第5戦・中ボス 洞窟の古竜", enc: dragonEnc() }, // +Mia
       { label: "第6戦・四天王ハウル", enc: bossHowl() },
       { label: "第7戦・四天王ガグ", enc: bossGag() },
@@ -428,11 +428,11 @@
           "『けれど きみたちの声は\n　まっすぐで、あたたかかった。\n　その響きに、救われたよ。』",
           "奪われていた ことばが\n世界へ 還っていく。\n人々の 声が、歌が、笑い声が、\n少しずつ 街に あふれ出した。",
           "ユウたちは たがいの顔を 見合わせ、\nどちらからともなく 笑った。\nもう 多くの言葉は いらなかった。",
-          "——そして いつか。\nきみが おぼえた 一つ一つの単語が、\n誰かに 何かを 伝える日が くる。",
+          "——そして いつか。\nきみが 覚えた 一つ一つの単語が、\n誰かに 何かを 伝える日が くる。",
           "【 冒険の記録 】\n　最終レベル … " + lv +
             (clearMs ? "\n　クリアタイム … " + fmtMs(clearMs) + (newTime ? "　🎉新記録！" : "") : "") +
             (sst.maxChain ? "\n　最大チェイン … ×" + sst.maxChain + (newChain ? "　🎉新記録！" : "") : "") +
-            "\n　おぼえた単語 … " + pg.cleared + " ／ " + pg.total + " 語" +
+            "\n　覚えた単語 … " + pg.cleared + " ／ " + pg.total + " 語" +
             (tr.icon ? "\n　称号 … " + tr.icon + " " + tr.name : ""),
           "〜 ことばの闘技場 制覇 〜\n\n★　ＷＯＲＤ　ＱＵＥＳＴ　・　完　★\n\nおめでとう！ そして ありがとう。",
           "（タイトルの「単語帳」で\n　出会った単語を いつでも 復習できます。\n　全3000語 制覇を めざそう！）"
@@ -472,7 +472,7 @@
       b.mag = Math.round(b.atk * 1.05);
       foes = [b];
     }
-    return { bg: TOWER_BG[(floor - 1) % TOWER_BG.length], quizLv: qz, bgm: floor % 5 === 0 ? "midboss" : null, enemies: foes };
+    return { noFlee: true, bg: TOWER_BG[(floor - 1) % TOWER_BG.length], quizLv: qz, bgm: floor % 5 === 0 ? "midboss" : null, enemies: foes };
   }
   async function runTower() {
     if (window.WQ2_STORE && !WQ2_STORE.canPlay()) {
@@ -507,7 +507,7 @@
     if (isNew) { rc.bestFloor = reached; saveRec(rc); refreshRecords(); }
     var pg = window.studyProgress();
     await gsay("【挑戦の塔・結果】\n到達 … " + reached + "階" + (isNew ? "　🎉自己ベスト更新！" : "（自己ベスト " + best + "階）") +
-      "\nおぼえた単語 … " + pg.cleared + " ／ " + pg.total + " 語");
+      "\n覚えた単語 … " + pg.cleared + " ／ " + pg.total + " 語");
     if (window.BGM) BGM.stop();
     $("pbattle-screen").style.display = "none";
     $("ptitle-screen").style.display = "flex";
@@ -551,7 +551,7 @@
         '<div class="achv-lv">' + b + '</div><div class="achv-n">' + perBand[b] + '/500</div></div>';
     }).join("");
     var rows = [
-      ["📚 おぼえた単語", pg.cleared + " / " + pg.total + " 語"],
+      ["📚 覚えた単語", pg.cleared + " / " + pg.total + " 語"],
       ["🏆 総合称号", (tr.icon || "🔰") + " " + tr.name],
       ["⭐ 金★（3連続正解）", gold + " 語"],
       ["⚡ 銀★（2秒以内）", fast + " 語"],
@@ -567,7 +567,7 @@
       '<div class="wq2-store-h">🏅 称号・記録</div>' +
       '<div class="achv-medals">' + medals + '</div>' +
       '<div class="achv-list">' + rows + '</div>' +
-      '<div class="wq2-store-btns"><button class="wq2-store-btn primary">とじる</button></div></div>';
+      '<div class="wq2-store-btns"><button class="wq2-store-btn primary">閉じる</button></div></div>';
     wrap.querySelector("button").onclick = function (e) { e.preventDefault(); wrap.remove(); };
     $("screen").appendChild(wrap);
   }
@@ -597,7 +597,7 @@
         } // on miss, record() already reset box=0 / due=tomorrow
         saveStudy();
       }
-      var msg = "復習おわり！　" + ok + " ／ " + due.length + " 問 正解。";
+      var msg = "復習終了！　" + ok + " ／ " + due.length + " 問 正解。";
       if (window.WQ2_STORE && WQ2_STORE.claimReviewBonus()) msg += "\n毎日の復習ボーナス！ ⚡スタミナ＋1";
       msg += "\n（次は 忘れかけたころに また出題します）";
       await gsay(msg);
