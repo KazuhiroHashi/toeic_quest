@@ -25,6 +25,8 @@
   function screenEl() { return document.getElementById("screen") || document.body; }
 
   // ---- overlay with buttons -> Promise(key) ----
+  // Dialog. B button / Esc / tapping outside resolves with the "no" key
+  // (or the last button's key) so the player is never trapped.
   function overlay(html, buttons) {
     return new Promise(function (resolve) {
       var wrap = document.createElement("div");
@@ -34,13 +36,30 @@
       panel.innerHTML = html;
       var row = document.createElement("div");
       row.className = "wq2-store-btns";
+      var cancelKey = "no";
+      for (var i = 0; i < buttons.length; i++) if (buttons[i].key === "no") cancelKey = "no";
+      if (!buttons.some(function (b) { return b.key === "no"; })) cancelKey = buttons[buttons.length - 1].key;
+      var btnB = document.getElementById("btn-b");
+      function done(k) {
+        window.removeEventListener("keydown", onKey, true);
+        if (btnB) btnB.removeEventListener("pointerdown", onB, true);
+        wrap.remove();
+        resolve(k);
+      }
       buttons.forEach(function (b) {
         var el = document.createElement("button");
         el.className = "wq2-store-btn" + (b.primary ? " primary" : "");
         el.textContent = b.label;
-        el.onclick = function (e) { e.preventDefault(); wrap.remove(); resolve(b.key); };
+        el.onclick = function (e) { e.preventDefault(); done(b.key); };
         row.appendChild(el);
       });
+      function onKey(e) {
+        if (e.key === "Escape" || e.key === "x") { e.preventDefault(); e.stopPropagation(); done(cancelKey); }
+      }
+      function onB(e) { e.preventDefault(); e.stopPropagation(); done(cancelKey); }
+      wrap.onpointerdown = function (e) { if (e.target === wrap) { e.preventDefault(); done(cancelKey); } };
+      window.addEventListener("keydown", onKey, true);
+      if (btnB) btnB.addEventListener("pointerdown", onB, true);
       panel.appendChild(row);
       wrap.appendChild(panel);
       screenEl().appendChild(wrap);

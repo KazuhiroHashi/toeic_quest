@@ -296,6 +296,9 @@
   }
 
   // generic choice dialog -> Promise<index>
+  // Choice dialog. Resolves the chosen index, or -1 when cancelled
+  // (B button / Esc / タップで外側 / やめる). opts may set {cancel:true} on an
+  // entry to mark it as the cancel action.
   function choiceOverlay(title, opts) {
     return new Promise(function (resolve) {
       var wrap = document.createElement("div");
@@ -305,13 +308,27 @@
       panel.innerHTML = '<div class="wq2-store-h">' + title + "</div>";
       var row = document.createElement("div");
       row.className = "wq2-store-btns";
+      function done(v) {
+        window.removeEventListener("keydown", onKey, true);
+        $("btn-b").removeEventListener("pointerdown", onB, true);
+        wrap.remove();
+        resolve(v);
+      }
       opts.forEach(function (o, i) {
         var el = document.createElement("button");
         el.className = "wq2-store-btn" + (i === 0 ? " primary" : "");
         el.innerHTML = o.label;
-        el.onclick = function (e) { e.preventDefault(); wrap.remove(); resolve(i); };
+        el.onclick = function (e) { e.preventDefault(); done(i); };
         row.appendChild(el);
       });
+      function onKey(e) {
+        if (e.key === "Escape" || e.key === "x") { e.preventDefault(); e.stopPropagation(); done(-1); }
+      }
+      function onB(e) { e.preventDefault(); e.stopPropagation(); done(-1); }
+      // tapping the dark area outside the panel also cancels
+      wrap.onpointerdown = function (e) { if (e.target === wrap) { e.preventDefault(); done(-1); } };
+      window.addEventListener("keydown", onKey, true);
+      $("btn-b").addEventListener("pointerdown", onB, true);
       panel.appendChild(row);
       wrap.appendChild(panel);
       $("screen").appendChild(wrap);
@@ -568,7 +585,17 @@
       '<div class="achv-medals">' + medals + '</div>' +
       '<div class="achv-list">' + rows + '</div>' +
       '<div class="wq2-store-btns"><button class="wq2-store-btn primary">閉じる</button></div></div>';
-    wrap.querySelector("button").onclick = function (e) { e.preventDefault(); wrap.remove(); };
+    function closeAchv() {
+      window.removeEventListener("keydown", onKey, true);
+      $("btn-b").removeEventListener("pointerdown", onB, true);
+      wrap.remove();
+    }
+    function onKey(e) { if (e.key === "Escape" || e.key === "x") { e.preventDefault(); e.stopPropagation(); closeAchv(); } }
+    function onB(e) { e.preventDefault(); e.stopPropagation(); closeAchv(); }
+    wrap.onpointerdown = function (e) { if (e.target === wrap) { e.preventDefault(); closeAchv(); } };
+    window.addEventListener("keydown", onKey, true);
+    $("btn-b").addEventListener("pointerdown", onB, true);
+    wrap.querySelector("button").onclick = function (e) { e.preventDefault(); closeAchv(); };
     $("screen").appendChild(wrap);
   }
 
@@ -658,8 +685,10 @@
     if (r) {
       var pick = await choiceOverlay("中断した 挑戦が あります",
         [{ label: "▶ 続きから（" + Math.min(r.i + 1, 11) + "戦目・Ｌｖ" + r.party[0].lv + "）" },
-         { label: "🆕 最初から やり直す" }]);
+         { label: "🆕 最初から やり直す" },
+         { label: "もどる" }]);
       if (pick === 0) { runArena(r); return; }
+      if (pick !== 1) return;          // もどる / B / Esc: keep the saved run, stay on the title
       clearRun(); refreshArenaBtn();
     }
     runArena();
