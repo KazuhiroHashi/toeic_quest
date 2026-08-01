@@ -246,12 +246,6 @@
     void screenEl.offsetWidth;
     screenEl.classList.add(cls);
   }
-  function chainCheer() { // milestone celebration
-    if (chain === 5 || chain === 10 || chain === 15 || chain === 20) {
-      bpop("チェイン ×" + chain + "！！", "chainpop", null);
-      sfx("level");
-    }
-  }
 
   // normal attacks: base difficulty of THIS battle + the member's role offset
   function atkQuizLv(member) { return clamp(battleQuizLv + (member.quizOff || 0), 400, 900); }
@@ -452,7 +446,7 @@
     if (p.hp <= 0) return;
     if (a.kind === "guard") {
       p.guard = true; renderParty(-1);
-      await say(p.name + "は 身をまもっている。");
+      await say(p.name + "は 身を守っている。");
       return;
     }
     if (a.kind === "item") {
@@ -474,7 +468,7 @@
       var q = await window.QUIZ.ask(atkQuizLv(p), { time: f.hasty ? 3.5 : 5 });
       if (q.entry) battleAsk.push({ w: q.entry.w, m: q.entry.m, ok: q.correct });
       if (q.correct) {
-        chain++; chainBadge(); chainCheer();
+        chain++; chainBadge();
         var crit = q.elapsed <= 2;
         var dmg = Math.max(1, Math.round((atkOf(p) - defOf2(f) / 2 + rnd(6)) * chainMult()));
         if (crit) dmg *= 2;
@@ -485,7 +479,7 @@
         await checkFoeDown(ti);
       } else {
         chain = 0; chainBadge();
-        await say(p.name + "の こうげきは 空ぶり！\n（チェインが とぎれた）");
+        await say(p.name + "の こうげきは 空ぶり！\n（チェインが途切れた）");
       }
       return;
     }
@@ -493,15 +487,15 @@
       var sp = a.spell;
       if (p.mp < sp.mp) { await say("ＭＰが足りない！"); return; }
       p.mp -= sp.mp; renderParty(-1);
-      await say(p.name + "は じゅもん『" + sp.name + "』を となえた！");
+      await say(p.name + "は 魔法『" + sp.name + "』を となえた！");
       var qs = await window.QUIZ.ask(spellQuizLv(sp), { time: 5, noCrit: true });
       if (qs.entry) battleAsk.push({ w: qs.entry.w, m: qs.entry.m, ok: qs.correct });
       if (!qs.correct) {
         chain = 0; chainBadge();
-        await say("じゅもんは 不発に おわった…！\n（チェインが とぎれた）");
+        await say("魔法は 不発に おわった…！\n（チェインが途切れた）");
         return;
       }
-      chain++; chainBadge(); chainCheer();
+      chain++; chainBadge();
       if (sp.type === "heal") {
         sfx("heal");
         if (sp.all) {
@@ -588,7 +582,7 @@
     if (f.charging) {
       f.charging = false;
       if (f.magicCharge) {
-        await say(f.name + "の ためた 魔力が はじけた！！\n" + (f.chargeCry || "強大な じゅもんが さくれつする！"));
+        await say(f.name + "の ためた 魔力が はじけた！！\n" + (f.chargeCry || "強大な 魔法が さくれつする！"));
         sfx("ng");
       } else {
         await say(f.name + "の ためていた力が 解き放たれた！！");
@@ -673,7 +667,7 @@
       var t = party[ti];
       var dmg = Math.max(1, Math.round((f.atk - defOf(t) / 2 + rnd(6)) * (t.guard ? 0.5 : 1)));
       hitMember(ti, dmg);
-      await say(f.name + "の こうげき！\n" + t.name + "に " + dmg + " のダメージ！" + (t.guard ? "（ぼうぎょで はんげん）" : ""));
+      await say(f.name + "の こうげき！\n" + t.name + "に " + dmg + " のダメージ！" + (t.guard ? "（防御で半減）" : ""));
       if (t.hp <= 0) await say(t.name + "は たおれてしまった！");
     }
   }
