@@ -374,11 +374,11 @@
       renderParty(i);
       var spells = memberSpells(p);
       var c = await menu($("pbattle-cmd"), [
-        { label: "攻撃" },
-        { label: "魔法", disabled: !spells.length },
-        { label: "防御" },
-        { label: "道具" },
-        { label: "逃げる" }
+        { label: "こうげき" },
+        { label: "まほう", disabled: !spells.length },
+        { label: "ぼうぎょ" },
+        { label: "どうぐ" },
+        { label: "にげる" }
       ], p.name + "（Ｌｖ" + p.lv + "）");
       if (c === -1) {
         if (i === 0) continue;
@@ -395,7 +395,7 @@
         var opts = spells.map(function (s) {
           return { label: s.name + "　ＭＰ" + s.mp, disabled: p.mp < s.mp };
         });
-        var si = await menu($("pbattle-sub"), opts, "魔法");
+        var si = await menu($("pbattle-sub"), opts, "まほう");
         if (si === -1) continue;
         var sp = spells[si];
         var tgt = -1;
@@ -413,7 +413,7 @@
         if (counts.elixir) inv.push({ key: "elixir", label: "エナジーコーヒー ×" + counts.elixir });
         if (counts.espresso) inv.push({ key: "espresso", label: "エスプレッソ ×" + counts.espresso });
         if (!inv.length) { await say(p.name + "は 使える道具を持っていない！"); continue; }
-        var ii = await menu($("pbattle-sub"), inv, p.name + "の 道具");
+        var ii = await menu($("pbattle-sub"), inv, p.name + "の どうぐ");
         if (ii === -1) continue;
         var at = await pickAlly(false);
         if (at === -1) continue;
