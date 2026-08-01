@@ -5983,7 +5983,7 @@ window.ITEM_DEFS = {
       if (ok) opts.push({ label: p.name + "　ＨＰ" + Math.max(0, p.hp) + "/" + p.maxhp, pi: i });
     });
     if (!opts.length) return Promise.resolve(-1);
-    return menu($("pbattle-sub"), opts, "誰に？").then(function (v) {
+    return menu($("pbattle-sub"), opts, "だれに？").then(function (v) {
       return v === -1 ? -1 : opts[v].pi;
     });
   }
@@ -5994,7 +5994,7 @@ window.ITEM_DEFS = {
     if (p.hp <= 0) return;
     if (a.kind === "guard") {
       p.guard = true; renderParty(-1);
-      await say(p.name + "は 身を守っている。");
+      await say(p.name + "は 身をまもっている。");
       return;
     }
     if (a.kind === "item") {
@@ -6012,7 +6012,7 @@ window.ITEM_DEFS = {
       var ti = foes[a.target] && foes[a.target].hp > 0 ? a.target : firstAliveFoe();
       if (ti < 0) return;
       var f = foes[ti];
-      await say(p.name + "の 攻撃！");
+      await say(p.name + "の こうげき！");
       var q = await window.QUIZ.ask(atkQuizLv(p), { time: f.hasty ? 3.5 : 5 });
       if (q.entry) battleAsk.push({ w: q.entry.w, m: q.entry.m, ok: q.correct });
       if (q.correct) {
@@ -6027,7 +6027,7 @@ window.ITEM_DEFS = {
         await checkFoeDown(ti);
       } else {
         chain = 0; chainBadge();
-        await say(p.name + "の 攻撃は 空振り！\n（チェインが途切れた）");
+        await say(p.name + "の こうげきは 空ぶり！\n（チェインが とぎれた）");
       }
       return;
     }
@@ -6035,12 +6035,12 @@ window.ITEM_DEFS = {
       var sp = a.spell;
       if (p.mp < sp.mp) { await say("ＭＰが足りない！"); return; }
       p.mp -= sp.mp; renderParty(-1);
-      await say(p.name + "は 魔法『" + sp.name + "』を となえた！");
+      await say(p.name + "は じゅもん『" + sp.name + "』を となえた！");
       var qs = await window.QUIZ.ask(spellQuizLv(sp), { time: 5, noCrit: true });
       if (qs.entry) battleAsk.push({ w: qs.entry.w, m: qs.entry.m, ok: qs.correct });
       if (!qs.correct) {
         chain = 0; chainBadge();
-        await say("魔法は 不発に終わった…！\n（チェインが途切れた）");
+        await say("じゅもんは 不発に おわった…！\n（チェインが とぎれた）");
         return;
       }
       chain++; chainBadge(); chainCheer();
@@ -6085,7 +6085,7 @@ window.ITEM_DEFS = {
       }
       // one message listing each target's damage
       await say(lines.join("\n") + " のダメージ！" + (anyWeak ? "\n弱点を つらぬいた！" : ""));
-      for (var d2 = 0; d2 < targets.length; d2++) { if (foes[targets[d2]] && foes[targets[d2]].hp <= 0) await say(foes[targets[d2]].name + "を 倒した！"); }
+      for (var d2 = 0; d2 < targets.length; d2++) { if (foes[targets[d2]] && foes[targets[d2]].hp <= 0) await say(foes[targets[d2]].name + "を たおした！"); }
       if (aliveFoes().length) { var bossF = foes.filter(function (f) { return f.boss && f.hp > 0; })[0]; if (bossF && bossF.phases) await checkPhase(bossF); }
     }
   }
@@ -6099,7 +6099,7 @@ window.ITEM_DEFS = {
       void screenEl.offsetWidth;
       screenEl.classList.add("boss-down");
     }
-    await say(f.name + "を 倒した！");
+    await say(f.name + "を たおした！");
   }
   async function checkPhase(f) {
     var ratio = f.hp / f.maxhp;
@@ -6130,7 +6130,7 @@ window.ITEM_DEFS = {
     if (f.charging) {
       f.charging = false;
       if (f.magicCharge) {
-        await say(f.name + "の ためた魔力が はじけた！！\n" + (f.chargeCry || "強大な魔法が 炸裂する！"));
+        await say(f.name + "の ためた 魔力が はじけた！！\n" + (f.chargeCry || "強大な じゅもんが さくれつする！"));
         sfx("ng");
       } else {
         await say(f.name + "の ためていた力が 解き放たれた！！");
@@ -6199,13 +6199,13 @@ window.ITEM_DEFS = {
             sl.push(mt.name + "に " + sd2);
           }
           await say(sl.join("\n") + " のダメージ！");
-          for (var dz = 0; dz < living.length; dz++) { if (party[living[dz]].hp <= 0) await say(party[living[dz]].name + "は 倒れてしまった！"); }
+          for (var dz = 0; dz < living.length; dz++) { if (party[living[dz]].hp <= 0) await say(party[living[dz]].name + "は たおれてしまった！"); }
         } else {
           var ti2 = pickLiving(living), tg = party[ti2];
           var d2 = magDmg(f, tg, sk.power, tg.guard);
           hitMember(ti2, d2);
           await say(tg.name + "に " + d2 + " のダメージ！");
-          if (tg.hp <= 0) await say(tg.name + "は 倒れてしまった！");
+          if (tg.hp <= 0) await say(tg.name + "は たおれてしまった！");
         }
         continue;
       }
@@ -6215,8 +6215,8 @@ window.ITEM_DEFS = {
       var t = party[ti];
       var dmg = Math.max(1, Math.round((f.atk - defOf(t) / 2 + rnd(6)) * (t.guard ? 0.5 : 1)));
       hitMember(ti, dmg);
-      await say(f.name + "の 攻撃！\n" + t.name + "に " + dmg + " のダメージ！" + (t.guard ? "（防御で半減）" : ""));
-      if (t.hp <= 0) await say(t.name + "は 倒れてしまった！");
+      await say(f.name + "の こうげき！\n" + t.name + "に " + dmg + " のダメージ！" + (t.guard ? "（ぼうぎょで はんげん）" : ""));
+      if (t.hp <= 0) await say(t.name + "は たおれてしまった！");
     }
   }
 
@@ -6257,7 +6257,7 @@ window.ITEM_DEFS = {
       }, 1000);
     }
     sfx(isBoss ? "boss" : "encounter");
-    await say(foes.map(function (f) { return f.name; }).join("と ") + "が 現れた！");
+    await say(foes.map(function (f) { return f.name; }).join("と ") + "が あらわれた！");
     if (encounter.intro) for (var ii = 0; ii < encounter.intro.length; ii++) await say(encounter.intro[ii]);
 
     var result = null;
@@ -6269,15 +6269,15 @@ window.ITEM_DEFS = {
 
       // flee attempt (party level)
       if (cmd.flee) {
-        if (isBoss) { await say("ボスからは 逃げられない！"); continue; }
-        if (encounter.noFlee) { await say("闘技場では 逃げられない！\n（戦い抜くのみ！）"); continue; }
+        if (isBoss) { await say("ボスからは にげられない！"); continue; }
+        if (encounter.noFlee) { await say("闘技場では にげられない！\n（たたかい抜くのみ！）"); continue; }
         var pAgi = aliveMembers().reduce(function (s, m) { return s + m.agi; }, 0) / Math.max(1, aliveMembers().length);
         var fAgi = aliveFoes().reduce(function (s, f) { return s + f.agi; }, 0) / Math.max(1, aliveFoes().length);
         if (Math.random() < clamp(0.5 + (pAgi - fAgi) * 0.015, 0.4, 0.62)) {
-          await say("うまく 逃げ切った！");
+          await say("うまく にげ切った！");
           result = "flee"; break;
         } else {
-          await say("しかし 逃げ切れなかった！");
+          await say("しかし にげ切れなかった！");
           // enemies still act this turn
           var foeq = [];
           foes.forEach(function (f, i) { if (f.hp > 0) foeq.push(i); });
@@ -6307,7 +6307,7 @@ window.ITEM_DEFS = {
     if (result === "win") {
       if (window.BGM) BGM.stop();
       victoryJingle(); // 専用ファンファーレ victory.mp3（無ければ win.mp3 にフォールバック）
-      await say("戦いに 勝った！");
+      await say("たたかいに 勝った！");
       // learning recap: show this battle's missed words while the memory is fresh
       var missed = [], seenW = {};
       battleAsk.forEach(function (a) { if (!a.ok && !seenW[a.w]) { seenW[a.w] = 1; missed.push(a); } });
@@ -6327,14 +6327,14 @@ window.ITEM_DEFS = {
             sfx("level");
             await say(m.name + "は レベル " + res.ups[u].lv + " に上がった！");
             if (res.ups[u].learned.length) {
-              await say(m.name + "は 魔法『" + res.ups[u].learned.join("』『") + "』を 覚えた！");
+              await say(m.name + "は 魔法『" + res.ups[u].learned.join("』『") + "』を おぼえた！");
             }
           }
         }
       }
     } else if (result === "lose") {
       if (window.BGM) { BGM.stop(); BGM.playAny(["gameover"]); } // 全滅曲（無ければ無音）
-      await say("全滅してしまった…");
+      await say("ぜんめつしてしまった…");
     }
     screenEl.style.display = "none";
     return { result: result, exp: totalExp };
