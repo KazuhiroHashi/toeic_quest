@@ -31,10 +31,24 @@ Seedance 2.5 の出力解像度は**モデルではなくプラン（ティア�
 
 ## 共通スタイル指定（全カットの末尾に付ける）
 ```
-Style: anime JRPG cinematic, soft cel shading, vivid saturated colors, clean thick bold outlines, 2D illustration look (not 3D render), crisp and clean with no grain or noise. Keep every element large and readable. No text, no letters, no subtitles, no watermark, no UI.
+Style: anime JRPG cinematic, soft cel shading, vivid saturated colors, clean thick bold outlines, 2D illustration look (not 3D render), crisp and clean with no grain or noise. Keep every element large and readable. No subtitles, no captions, no watermark, no logos, no interface text.
 Faces: every character keeps normal anime eyes with clearly visible dark pupils, irises and small white highlights for the entire shot. Eyes never glow, never emit light, never turn white or blank. Facial features stay exactly as in the source image.
-Avoid: glowing eyes, white eyes, blank eyes, light emitting from faces, blown-out highlights on faces, lens flare over characters, warping faces, extra limbs, morphing characters, text artifacts, camera shake, photorealism.
+Avoid: glowing eyes, white eyes, blank eyes, light emitting from faces, blown-out highlights on faces, lens flare over characters, warping faces, extra limbs, morphing characters, malformed letterforms, words, sentences, camera shake, photorealism.
 ```
+
+### さらにカットごとに1行足す（重要）
+**文字を出すカット**（OP-1・OP-3・ED-2）:
+```
+Letters: the floating letters are isolated single capital letters such as A, B, C, Q, Z — large, simple, well separated and always at least one letter-width apart. They never line up in a row, never spell a word, and never form readable text of any kind.
+```
+**文字を出さないカット**（OP-2・ED-1・ED-3）:
+```
+Letters: no letters, numbers, runes or symbols anywhere in the frame.
+```
+
+> 旧版のスタイル指定は `No text, no letters` と書きながら、本文では「光る文字が舞う」と指示していた。
+> **この矛盾が原因で、Seedanceが単語のような崩れた文字を描いた**（ED-3の実測）。
+> どちらか一方に必ず倒すこと。
 
 ---
 
@@ -84,8 +98,9 @@ Large glowing golden letters rain gently down from the sky and scatter across th
 - **起点画像：`assets/bg/zone4.png`**
 
 ```
-Camera slowly pulls back and rises high above the world, revealing the vast peaceful landscape bathed in golden sunset light. A few large glowing letters drift lazily through the sky. Tiny hero silhouettes walk together down a path toward the horizon. Epic, hopeful, "the journey continues" final shot.
+Camera slowly pulls back and rises high above the world, revealing the vast peaceful landscape bathed in golden sunset light. Thin clouds drift across the warm sky and dust motes catch the light. Tiny hero silhouettes walk together down a path toward the horizon. Epic, hopeful, "the journey continues" final shot.
 ```
+> **このカットは文字を出さない**。装飾でしかなく、崩れるリスクだけが残るため。
 > ここに「★　ＷＯＲＤ　ＱＵＥＳＴ　・　完　★」を後乗せすると綺麗に締まる。
 
 ---
@@ -146,6 +161,19 @@ OP-3（英単語の剣）でも同じ症状を確認。こちらは **6.9秒か�
 
 > **HEVCで出力された場合は要変換。** App Storeのプレビュー動画は **H.264 か ProRes** のみ。
 > 上のコマンドは H.264 で書き出すので、通せば同時に解決する。
+
+## 空に崩れた文字が出る（実際に発生）
+2026-08-07 の ED-3 テスト生成で、**5.5秒あたりから**空に `ro nte` のような崩れた擬似単語が浮かんだ。
+
+**原因**：スタイル指定が `No text, no letters` と禁止しているのに、本文で「光る文字が舞う」と要求していた。
+矛盾をモデルが「文字らしきもの」で埋めた。AI動画は**読める文字を描くのが最も苦手**な領域。
+
+**対策**
+- スタイル指定から `no letters` を外し、`no subtitles, no captions, no watermark` に変更（禁止したかったのは字幕とウォーターマークであって、演出の文字ではない）
+- カットごとに **`Letters:` 行を必ず1本足す**（上記）。出す／出さないをはっきり倒す
+- 文字を出すカットは **バラバラの大文字1文字ずつ**と明示。並べると単語を書こうとして崩れる
+- 装飾でしかない文字は**そもそも出さない**。ED-3 は文字なしに変更済み
+- 撮り直せない場合は、**崩れ始める直前で切る**（ED-3 は 5.40秒でカット。`movie/cuts.json` に反映済み）
 
 ## 顔がゆがむ・体が伸びる
 - **motion strength は控えめ**に
