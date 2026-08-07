@@ -58,7 +58,7 @@ Slow ominous dolly forward down the red carpet toward the empty throne. Purple m
 - **起点画像：`assets/ui/icon.png`**（剣を掲げる主人公アイコン）
 
 ```
-The hero raises the glowing sword higher as large radiant golden English letters swirl upward around the blade, spinning faster and faster into a spiral of light. The camera slowly orbits around him. The blade flares with intense golden energy, then a burst of light expands outward filling the frame. Heroic, powerful, exhilarating.
+The hero raises the glowing sword higher as large radiant golden English letters swirl upward around the blade, spinning faster and faster into a spiral of light. The blade flares with intense golden energy, then bursts into a brilliant shockwave of big golden letters and sparks filling the frame. All the light comes from the sword and the letters only — never from his face. His eyes keep their normal blue irises, dark pupils and small white highlights the entire time; light never fills, enters or replaces his eyes. The camera slowly orbits around him. Heroic, powerful, exhilarating.
 ```
 > 上部にロゴを重ねる余白を意識して構図を選ぶ。
 
@@ -120,8 +120,11 @@ Camera slowly pulls back and rises high above the world, revealing the vast peac
 2. `glowing` が文中に複数あり、さらに**リナの手元に光る星の杖**がある。モデルが「glow」をシーン全体の性質と解釈して隣のキャラへ波及した
 3. **後半で振り向かせた**。振り向く＝顔を描き直す瞬間。720pで顔は縦55px程度しかなく、瞳のディテールを保てず「明るい塊」に潰れる
 
+OP-3（英単語の剣）でも同じ症状を確認。こちらは **6.9秒から**主人公の両目が金色に発光した。光が主役のカットほど出やすい。
+
 **対策**
 - 共通スタイルの **`Faces:` 行と `Avoid:` 行**（上に追加済み）。ポジティブ指定とネガティブ指定を両方入れるのが効く
+- 光が主役のカットは **「光の出どころ」を明示**する：`All the light comes from the sword and the letters only — never from his face.`
 - 「明るくなる」演出は **背景だけ**に限定する（`in the background sky only`）
 - **キャラを振り向かせない**。OP-1 は寄りだけの構図に変更済み
 - **光る小物をキャラの近くに置かない**
@@ -129,6 +132,20 @@ Camera slowly pulls back and rises high above the world, revealing the vast peac
   ```
   ffmpeg -t 8.30 -i in.mp4 -vf "setpts=1.2048*PTS,fps=30" -c:v libx264 -pix_fmt yuv420p -crf 17 -an out.mp4
   ```
+- 後半にクライマックスがあって単純に切れない場合は、**崩れる直前から後半へディゾルブでつなぐ**。光る区間だけ飛ばせる：
+  ```
+  ffmpeg -i in.mp4 -filter_complex "\
+  [0:v]trim=0:6.85,setpts=PTS-STARTPTS,scale=1080:1920,fps=30[a];\
+  [0:v]trim=8.55:10.04,setpts=PTS-STARTPTS,scale=1080:1920,fps=30[b];\
+  [a][b]xfade=transition=fade:duration=0.5:offset=6.35[v]" \
+  -map "[v]" -c:v libx264 -pix_fmt yuv420p -crf 18 -an out.mp4
+  ```
+
+> **カットの尺は編集時に揃えなくてよい。** 10秒は発注時のルールで、Appleが見るのは **OP全体で15〜30秒**。
+> 例：10秒＋10秒＋7.8秒＝27.8秒で問題なし。
+
+> **HEVCで出力された場合は要変換。** App Storeのプレビュー動画は **H.264 か ProRes** のみ。
+> 上のコマンドは H.264 で書き出すので、通せば同時に解決する。
 
 ## 顔がゆがむ・体が伸びる
 - **motion strength は控えめ**に
