@@ -32,7 +32,8 @@ Seedance 2.5 の出力解像度は**モデルではなくプラン（ティア�
 ## 共通スタイル指定（全カットの末尾に付ける）
 ```
 Style: anime JRPG cinematic, soft cel shading, vivid saturated colors, clean thick bold outlines, 2D illustration look (not 3D render), crisp and clean with no grain or noise. Keep every element large and readable. No text, no letters, no subtitles, no watermark, no UI.
-Avoid: warping faces, extra limbs, morphing characters, text artifacts, camera shake, photorealism.
+Faces: every character keeps normal anime eyes with clearly visible dark pupils, irises and small white highlights for the entire shot. Eyes never glow, never emit light, never turn white or blank. Facial features stay exactly as in the source image.
+Avoid: glowing eyes, white eyes, blank eyes, light emitting from faces, blown-out highlights on faces, lens flare over characters, warping faces, extra limbs, morphing characters, text artifacts, camera shake, photorealism.
 ```
 
 ---
@@ -43,14 +44,14 @@ Avoid: warping faces, extra limbs, morphing characters, text artifacts, camera s
 - **起点画像：`assets/ui/title_bg.png`**（勇者4人＋城のキービジュアル）
 
 ```
-Slow cinematic push-in toward the distant castle. Clouds drift gently across the blue sky, grass and flowers sway in a soft breeze, sunlight rays shimmer and grow brighter. The four chibi heroes stand still, capes and hair fluttering slightly in the wind. A handful of large glowing alphabet letters drift slowly upward around them. In the second half, the heroes turn toward the camera one after another with determined expressions. Calm and hopeful, building to heroic.
+Slow continuous cinematic push-in toward the distant castle across the sunlit valley. Clouds drift steadily across the blue sky, grass and flowers sway in a gentle breeze. Sunlight rays shimmer and grow brighter in the far background sky only — the lighting on the four chibi heroes stays constant and even from start to finish, their faces never brighten. A handful of large golden alphabet letters drift slowly upward through the air far behind them. The heroes stand still with capes and hair fluttering softly in the wind, facing away toward the castle the whole time. One single smooth camera move throughout, calm and majestic.
 ```
 
 ## OP-2「沈黙王の玉座」10秒
 - **起点画像：`assets/bg/maou.png`**（紫の玉座の間）
 
 ```
-Slow ominous dolly forward down the red carpet toward the empty throne. Purple magic flames flicker along the pillars, floating spellbooks rotate slowly in the air, dark energy pulses through the hall. A shadowy silhouette gradually forms sitting on the throne, growing more defined. Glowing letters in the air lose their light one by one and shatter into fading particles. Menacing, regal, tense.
+Slow ominous dolly forward down the red carpet toward the empty throne. Purple magic flames flicker along the pillars, floating spellbooks rotate slowly in the air, dark energy pulses through the hall. A shadowy silhouette gradually materializes sitting on the throne, its outline becoming sharper and more defined. Keep it a featureless dark silhouette with no visible face. Glowing letters in the air lose their light one by one and shatter into fading particles. Menacing, regal, tense.
 ```
 
 ## OP-3「英単語の剣」10秒 ★最優先
@@ -109,10 +110,32 @@ Camera slowly pulls back and rises high above the world, revealing the vast peac
 - iMovie / CapCut で 3カットを連結 → 元音声を消す → BGMを1本敷く
 - サビの位置に **OP-3（剣の一撃）／ED-2（ことばが還る）** を置くと決まる
 
-# ⚙️ うまくいかない時
-- **motion strength は控えめ**に（強いとキャラの顔が崩れる）
-- プロンプトを **「何が動くか」だけ**に絞る（例：`Clouds drift, grass sways, light glows brighter. Characters stay still.`）
-- 各カット2〜3回生成して良いものを採用
+# ⚙️ 崩れたときの対処
+
+## 目が光る／白目になる（実際に発生）
+2026-08-07 の OP-1 テスト生成で、リナ（魔法使い）の両目が **8.4秒から発光**して不気味になった。前の8.3秒は完璧だった。
+
+**原因（3つが重なる）**
+1. `sunlight rays shimmer and grow brighter` の「明るくなる」が、背景だけでなく**顔の中にも適用**された。ブルームが顔で最もコントラストの高い小さな部分＝目に集中して白飛びする
+2. `glowing` が文中に複数あり、さらに**リナの手元に光る星の杖**がある。モデルが「glow」をシーン全体の性質と解釈して隣のキャラへ波及した
+3. **後半で振り向かせた**。振り向く＝顔を描き直す瞬間。720pで顔は縦55px程度しかなく、瞳のディテールを保てず「明るい塊」に潰れる
+
+**対策**
+- 共通スタイルの **`Faces:` 行と `Avoid:` 行**（上に追加済み）。ポジティブ指定とネガティブ指定を両方入れるのが効く
+- 「明るくなる」演出は **背景だけ**に限定する（`in the background sky only`）
+- **キャラを振り向かせない**。OP-1 は寄りだけの構図に変更済み
+- **光る小物をキャラの近くに置かない**
+- どうしても直らなければ **崩れる直前で切る**。少しスローにすれば10秒に戻せる：
+  ```
+  ffmpeg -t 8.30 -i in.mp4 -vf "setpts=1.2048*PTS,fps=30" -c:v libx264 -pix_fmt yuv420p -crf 17 -an out.mp4
+  ```
+
+## 顔がゆがむ・体が伸びる
+- **motion strength は控えめ**に
+- プロンプトを **「何が動くか」だけ**に絞る（例：`Clouds drift, grass sways. Characters stay still.`）
+
+## 共通
+- 各カット2〜3回生成して良いものを採用。1回目で決めない
 
 ## 優先度（お試し枠が限られている場合）
 1. **OP-3**（英単語の剣＝ゲームの核。SNS拡散にも最強）
