@@ -51,11 +51,8 @@
     "tail": {
       "logo": "assets/ui/logo.png",
       "hold": 3.0,
-      "scale": 0.74,
-      "y": 0.36,
-      "text": "完",
-      "textSize": 96,
-      "textY": 0.6
+      "scale": 0.8,
+      "y": 0.42
     },
     "cuts": [
       {

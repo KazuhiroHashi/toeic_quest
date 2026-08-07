@@ -61,7 +61,7 @@ node tools/build_movie.js op     # OPだけ
 - `crossfade` — カット間のディゾルブ秒数
 - `bgm.start` — 曲のどこから使うか（サビを見せ場に合わせたい時に動かす）
 - `tail.hold` — 最後にロゴを出す秒数、`scrim` — ロゴを読ませるための背景の沈み具合
-- `tail.text` — ロゴの下に出す文字（EDの「完」に使用）
+- `tail.text` — ロゴの下に文字を出したい場合のみ指定（現在は未使用）
 
 ## 注意
 

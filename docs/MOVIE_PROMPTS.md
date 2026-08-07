@@ -27,7 +27,7 @@ Seedance 2.5 の出力解像度は**モデルではなくプラン（ティア�
 上位プランで **1080p / Portrait** が選べるようになったら、最優先の **OP-3** と **ED-2** の2本だけ撮り直せば拡大処理が不要になる。
 
 > **重要**：Seedance は画像内の文字を動かすと崩れるので、**ロゴは動画に焼き込まない**。
-> ロゴ・「完」の表示は、編集ソフトで静止画として後乗せするか、ゲーム側で表示する。
+> ロゴは静止画として後乗せする（`tools/build_movie.js` が自動でやる）。
 
 ## 共通スタイル指定（全カットの末尾に付ける）
 ```
@@ -101,7 +101,6 @@ Large glowing golden letters rain gently down from the sky and scatter across th
 Camera slowly pulls back and rises high above the world, revealing the vast peaceful landscape bathed in golden sunset light. Thin clouds drift across the warm sky and dust motes catch the light. Tiny hero silhouettes walk together down a path toward the horizon. Epic, hopeful, "the journey continues" final shot.
 ```
 > **このカットは文字を出さない**。装飾でしかなく、崩れるリスクだけが残るため。
-> ここに「★　ＷＯＲＤ　ＱＵＥＳＴ　・　完　★」を後乗せすると綺麗に締まる。
 
 ---
 
