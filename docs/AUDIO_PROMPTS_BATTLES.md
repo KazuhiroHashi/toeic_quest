@@ -4,9 +4,10 @@
 
 | タイプ | 何曲 | 割り当て先 |
 |---|---|---|
-| **A ザコ戦** | 5曲 | `arena1` `arena2` `arena3` `arena4` `arena5` |
-| **B 中ボス系**（`midboss.mp3` の再現） | 4曲 | `king1` `king2` `king3` `king4` |
-| **C ラスボス系**（`lastboss.mp3` の再現） | 2曲 | `boss` `lastboss` |
+| **A ザコ戦（ロック）** | 5曲 | `arena1` `arena2` `arena3` `arena4` `arena5` |
+| **B 中ボス系（ギャロップ）**（`midboss.mp3` の再現） | 4曲 | `king1` `king2` `king3` `king4` |
+| **C ラスボス系（ギャロップ）**（`lastboss.mp3` の再現） | 2曲 | `boss` `lastboss` |
+| **D エレクトロ** | 上の枠から3曲を差し替え | 単調さを崩す用。下の「混ぜ方」参照 |
 
 同じプロンプトを N 回まわして、出てきたものを**全部そのまま採用**する。
 似た曲が並ぶのが狙いなので、粒を揃えることを優先する。
@@ -91,6 +92,57 @@ slow, half-time, ballad, ambient, calm, gentle, quiet, sparse, breakdown, fade o
 
 ---
 
+# D. エレクトロ系 — ロック一辺倒を崩す用
+
+テンポは155前後に落とし、**16分のアルペジオ**で疾走感を出す。
+155 BPM の16分は毎分620音なので、体感はロックの175 BPMより速く聴こえる。
+**BPMを上げずに速さを作れる**のがエレクトロを混ぜる利点。
+
+## D-1 エレクトロ（ザコ戦向け）
+
+**スタイル欄**
+```
+155 BPM fast synthwave JRPG battle theme, retro-futuristic electro with a live edge. Punchy electronic drum kit with tight 16th-note hi-hat and a big gated snare, fat analog synth bass driving straight eighths, relentless 16th-note synth arpeggio running underneath the whole track, bright saw-lead melody on top, short orchestral brass hits and crunchy guitar power chords as accents. Neon, propulsive, confident, never lets up.
+```
+**除外欄**
+```
+slow, half-time, ballad, ambient, chillout, lo-fi, downtempo, build-up, drop, riser, breakdown, sparse, silence, calm, gentle, cute, chiptune, 8-bit, horror, sinister, creepy, fade out
+```
+
+## D-2 エレクトロ（ボス向け・少し重い）
+
+**スタイル欄**
+```
+160 BPM dark hybrid electro JRPG boss theme, orchestra fused with hard electronic production. Hard-hitting electronic drums with driving 16th-note hi-hat and heavy kick, growling distorted synth bass, urgent 16th-note arpeggio sequence, soaring lead melody shared by saw synth and brass section, staccato strings doubling the riff, occasional distorted guitar. Cold, precise, overwhelming, full intensity from bar one.
+```
+**除外欄**
+```
+slow, half-time, ballad, ambient, chillout, lo-fi, downtempo, build-up, drop, riser, breakdown, sparse, silence, calm, gentle, cute, chiptune, horror, demonic, creepy, whispering, fade out
+```
+
+> ⚠️ **エレクトロ特有の落とし穴**：`build-up` `drop` `riser` `breakdown` `silence` を必ず除外する。
+> エレクトロを指定すると Suno は EDM構成で「静かなビルドアップ→ドロップ」を作りがちで、
+> 戦闘中に音が薄くなる瞬間ができる。ゲームBGMでは致命的。
+
+## 混ぜ方（同系統を2つ続けない）
+
+| 曲 | タイプ |
+|---|---|
+| `arena1` | A ロック |
+| **`arena2`** | **D-1 エレクトロ** |
+| `arena3` | A ロック |
+| **`arena4`** | **D-1 エレクトロ** |
+| `arena5` | A ロック |
+| `king1` `king2` | B ギャロップ |
+| **`king3`** | **D-2 エレクトロ** |
+| `king4` | B ギャロップ |
+| `boss` `lastboss` | C ギャロップ |
+
+第1〜4戦がロック／エレクトロの交互になり、四天王4連戦も3戦目で色が変わる。
+全部エレクトロにすると今度はそれで飽きるので、**混ぜる**のが狙い。
+
+---
+
 ## 嫌いな方向に振れた時の直し方
 
 | 症状 | 対処 |
@@ -100,6 +152,7 @@ slow, half-time, ballad, ambient, calm, gentle, quiet, sparse, breakdown, fade o
 | **邪悪・ホラーっぽい** | `evil, sinister, demonic, horror, creepy, dissonant, whispering, chanting` を Exclude に。代わりに `heroic, defiant, dignified, noble` を本文へ |
 | **オーケストラ一色で速さが無い** | `orchestral` は消さなくてよい。代わりに本文の先頭を `170 BPM fast ... driving rock band` にして、drum kit / electric bass / distorted guitar を先に書く |
 | **遅い** | BPMを +10。`12/8 triplet shuffle gallop` が消えていないか確認 |
+| **エレクトロで途中が薄くなる** | `build-up, drop, riser, breakdown, silence` が除外欄に入っているか確認。本文に `no build-up, no drop, constant density` を足す |
 
 **同じプロンプトで2〜3回まわして、一番速く・一番密度の高いものを採る。1回目で決めない。**
 
