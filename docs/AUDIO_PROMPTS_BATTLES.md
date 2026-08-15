@@ -31,11 +31,24 @@
 
 ---
 
-## Suno の設定
+## Suno の設定 — 貼る欄を間違えないこと
 
-- **Instrumental：ON**
-- 長さ：150〜180秒
-- **「Exclude styles」欄があれば、各プロンプトの `Exclude:` 行をそこに貼る**。無ければスタイル欄の末尾に足す
+| Suno の欄 | 入れるもの |
+|---|---|
+| **スタイル** | 下の「スタイル欄」ブロックの文 |
+| **スタイルを除外** | 下の「除外欄」ブロックの単語だけ |
+| **歌詞** | **インスト** |
+| **奇抜さ** | **20〜30%**（同じ質感で複数曲を揃えたいので振れ幅は小さく） |
+
+> ⚠️ 除外リストを**スタイル欄**に貼ると、「オーケストラで・遅い・バラードを作れ」という指示になる。
+> 2026-08-15 に実際にこの取り違えが起きていた。オーケストラ寄りで遅い曲が続いた原因はこれ。
+
+### `orchestral` は除外しない
+Suno のライブラリに残っている `battle.mp3` のプロンプトは
+`Fast exciting orchestral JRPG battle theme, driving...`、Styles は `JRPG, orchestral, battle theme`。
+**気に入っていた曲は orchestral 入りで作られている。**
+問題は管弦楽そのものではなく、`Fast` `driving` `BPM` が無いと遅くなること。
+除外すべきは**テンポを落とす語だけ**にする。
 
 > ### 最も確実な再現方法
 > Suno に **`midboss.mp3` / `lastboss.mp3` そのものをアップロードして Cover / Persona 機能で回す**のが、
@@ -45,23 +58,35 @@
 
 # A. ザコ戦（5曲）— 第1〜4戦＋塔
 
+**スタイル欄**
 ```
-170 BPM fast JRPG battle theme, prog-rock band. Tight rock drum kit driving straight eighth notes on the hi-hat, punchy fingered electric bass locked to the kick, crunchy electric guitar riff, strong hummable lead melody played by synth and guitar in unison. Minor key but bright and confident. Pure forward momentum, full energy from the first bar to the last. Short brass stabs only as accents. Instrumental, seamless loop.
-Exclude: cute, playful, music box, nursery rhyme, chiptune, gentle, calm, quiet, sparse, ambient, evil, horror, sinister, creepy, orchestral, cinematic, epic trailer, choir, slow, half-time, ballad, breakdown, fade out.
+170 BPM fast exciting JRPG battle theme, driving prog-rock band with orchestral backing. Tight rock drum kit on straight eighth-note hi-hat, punchy electric bass locked to the kick, crunchy electric guitar riff, strong hummable lead melody on synth and strings in unison, short brass stabs on accents. Minor key but bright and confident, pure forward momentum, full energy from the first bar to the last.
+```
+**除外欄**
+```
+slow, half-time, ballad, ambient, calm, gentle, quiet, sparse, breakdown, fade out, cute, playful, music box, nursery rhyme, chiptune, horror, sinister, demonic, creepy
 ```
 
-# B. 中ボス系（4曲）— 四天王4連戦
+# B. 中ボス系（4曲）— 四天王4連戦 ★最優先
 
+**スタイル欄**
 ```
-116 BPM JRPG boss battle theme with a driving 12/8 triplet shuffle gallop — the rolling hard-rock gallop of a fast boss fight, never a slow song. Rock drum kit galloping on triplets with a hard backbeat, thick distorted electric guitar riff, growling electric bass doubling the riff, bold organ and brass melody riding on top of the groove. Powerful, dignified, relentless, stays at full intensity the whole way through. Instrumental, seamless loop.
-Exclude: cute, playful, music box, nursery rhyme, gentle, calm, quiet, sparse, ambient, evil, horror, sinister, demonic, creepy, whispering, chanting choir, cinematic, epic trailer, slow, half-time, ballad, breakdown, fade out.
+116 BPM driving JRPG boss battle theme in a 12/8 triplet shuffle gallop, fast rolling hard-rock gallop with orchestral backing. Rock drum kit galloping on triplets with a hard backbeat, thick distorted electric guitar riff, growling electric bass doubling the riff, bold organ and brass melody riding on top of the groove. Powerful, dignified, relentless, full intensity the whole way through.
+```
+**除外欄**
+```
+slow, half-time, ballad, ambient, calm, gentle, quiet, sparse, breakdown, fade out, cute, playful, music box, nursery rhyme, horror, sinister, demonic, creepy, whispering, chanting
 ```
 
 # C. ラスボス系（2曲）— 第10・11戦
 
+**スタイル欄**
 ```
-118 BPM final boss JRPG battle theme with a driving 12/8 triplet shuffle gallop, huge and heroic. Hard rock drum kit galloping on triplets, downtuned distorted guitar riff, heavy electric bass, soaring lead melody shared by organ, synth and brass, pipe organ underneath for weight. Grand, defiant, overwhelming — the sound of a fight you can win, not a horror scene. Full intensity from bar one, no quiet intro, no let-up. Instrumental, seamless loop.
-Exclude: cute, playful, gentle, calm, quiet, sparse, ambient, evil, horror, sinister, demonic, creepy, whispering, dissonant drone, cinematic, epic trailer, slow, half-time, ballad, breakdown, fade out.
+118 BPM driving final boss JRPG battle theme in a 12/8 triplet shuffle gallop, huge and heroic, hard rock band with full orchestra. Drum kit galloping on triplets, downtuned distorted guitar riff, heavy electric bass, soaring lead melody shared by organ, synth and brass, pipe organ underneath for weight. Grand and defiant, the sound of a fight you can win. Full intensity from bar one, no quiet intro.
+```
+**除外欄**
+```
+slow, half-time, ballad, ambient, calm, gentle, quiet, sparse, breakdown, fade out, cute, playful, horror, sinister, demonic, creepy, whispering, dissonant drone
 ```
 
 ---
@@ -73,7 +98,7 @@ Exclude: cute, playful, gentle, calm, quiet, sparse, ambient, evil, horror, sini
 | **妙に可愛い** | `music box, glockenspiel, celesta, nursery, playful, chiptune` を Exclude に足す。楽器を drum kit / bass / distorted guitar / organ の4つに削る |
 | **大人しい・薄い** | `full intensity from bar one, no quiet intro, no breakdown, dense arrangement` を足す。BPMを +8 |
 | **邪悪・ホラーっぽい** | `evil, sinister, demonic, horror, creepy, dissonant, whispering, chanting` を Exclude に。代わりに `heroic, defiant, dignified, noble` を本文へ |
-| **オーケストラになる** | `orchestral, cinematic, epic trailer, film score` を Exclude に。管弦の楽器名を本文から全部消す |
+| **オーケストラ一色で速さが無い** | `orchestral` は消さなくてよい。代わりに本文の先頭を `170 BPM fast ... driving rock band` にして、drum kit / electric bass / distorted guitar を先に書く |
 | **遅い** | BPMを +10。`12/8 triplet shuffle gallop` が消えていないか確認 |
 
 **同じプロンプトで2〜3回まわして、一番速く・一番密度の高いものを採る。1回目で決めない。**
