@@ -70,11 +70,16 @@ npm run build:www
 こう出れば成功です。
 
 ```
-  画像  78MB → 7.3MB  (WebP q82)
-  BGM   66MB → 45.0MB (128k)
+  ffmpeg: /opt/homebrew/bin/ffmpeg
+  WebP  : cwebp
+  画像  78MB → 7.6MB  (WebP q82)
+  BGM   66MB → 44.7MB (128k)
+  透過チェック: OK
   合計 63.9 MB → www/
   Google Play の上限200MB: OK
 ```
+
+数値は使うエンコーダで多少前後します。**「透過チェック: OK」と「上限200MB: OK」の2つ**が出ていれば成功です。
 
 原本は劣化させず、出力側だけ圧縮しています。未完成のストーリーモードは自動で除外されます。
 
@@ -170,6 +175,7 @@ testing: true      →      testing: false
 | `libfreetype` / `incompatible architecture` で落ちる | Anaconda の ffmpeg を掴んでいる。`FFMPEG=/opt/homebrew/bin/ffmpeg npm run build:www` |
 | `音声を変換できる ffmpeg が見つかりません` | `brew install ffmpeg` |
 | `WebP に変換できるツールが見つかりません` | `brew install webp` |
+| `透過が失われた画像が N 件あります` | 使用中のWebPエンコーダが透過を潰している。`CWEBP=/opt/homebrew/bin/cwebp npm run build:www -- --clean` |
 
 ---
 

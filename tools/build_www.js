@@ -137,6 +137,32 @@ function cached(src, key, produce) {
 }
 
 var stats = { imgIn: 0, imgOut: 0, audIn: 0, audOut: 0, copied: 0 };
+var alphaLost = [];
+
+// Enemy sprites and the logo are transparent PNGs. A WebP encoder that
+// silently flattens alpha would put black boxes behind every enemy, so the
+// conversion is checked rather than trusted (PATH may hand us any cwebp).
+function pngHasAlpha(file) {
+  var fd = fs.openSync(file, "r");
+  var buf = Buffer.alloc(4096);
+  var n = fs.readSync(fd, buf, 0, 4096, 0);
+  fs.closeSync(fd);
+  if (n < 26 || buf.toString("ascii", 1, 4) !== "PNG") return false;
+  var colorType = buf[25];                       // IHDR: 4 = gray+alpha, 6 = RGBA
+  if (colorType === 4 || colorType === 6) return true;
+  return buf.slice(0, n).includes("tRNS");        // palette transparency
+}
+function webpHasAlpha(file) {
+  var fd = fs.openSync(file, "r");
+  var buf = Buffer.alloc(32);
+  var n = fs.readSync(fd, buf, 0, 32, 0);
+  fs.closeSync(fd);
+  if (n < 24) return false;
+  var fourcc = buf.toString("ascii", 12, 16);
+  if (fourcc === "VP8X") return (buf[20] & 0x10) !== 0;   // extended header alpha flag
+  if (fourcc === "VP8L") return true;                     // lossless carries alpha
+  return false;
+}
 
 function placeAsset(src, dstDir, name) {
   var ext = path.extname(name).toLowerCase();
@@ -146,6 +172,7 @@ function placeAsset(src, dstDir, name) {
 
   if (ext === ".png" || ext === ".jpg" || ext === ".jpeg") {
     var w = cached(src, rel + ".webp", toWebp);
+    if (pngHasAlpha(src) && !webpHasAlpha(w)) alphaLost.push(rel);
     fs.copyFileSync(w, path.join(dstDir, stem + ".webp"));
     stats.imgIn += size; stats.imgOut += fs.statSync(w).size;
     return;
@@ -229,6 +256,17 @@ console.log("完了");
 console.log("    画像  " + (stats.imgIn / 1048576).toFixed(0) + "MB → " + (stats.imgOut / 1048576).toFixed(1) + "MB  (WebP q" + WEBP_QUALITY + ")");
 console.log("    BGM   " + (stats.audIn / 1048576).toFixed(0) + "MB → " + (stats.audOut / 1048576).toFixed(1) + "MB  (" + BGM_BITRATE + ")");
 console.log("    その他 " + (stats.copied / 1048576).toFixed(1) + "MB（効果音・動画はそのまま）");
+console.log("    透過チェック: " + (alphaLost.length ? alphaLost.length + "件 失敗" : "OK"));
+
+if (alphaLost.length) {
+  console.error("\n  ! 透過が失われた画像が " + alphaLost.length + " 件あります（敵の背景が黒くなります）:");
+  alphaLost.slice(0, 8).forEach(function (f) { console.error("    " + f); });
+  console.error("\n  使用中のWebPエンコーダが透過を潰しています: " +
+    (WEBP.kind === "cwebp" ? WEBP.bin : "ffmpeg -c:v " + WEBP.enc));
+  console.error("  別のものを指定して、キャッシュを作り直してください:");
+  console.error("    CWEBP=/opt/homebrew/bin/cwebp npm run build:www -- --clean\n");
+  process.exit(1);
+}
 
 // ---- verify no reference escapes the web root or points at a missing file
 var bad = [];
