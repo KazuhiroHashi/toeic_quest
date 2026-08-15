@@ -18,3 +18,16 @@ if (!fs.existsSync(src)) {
 fs.mkdirSync(wwwDir, { recursive: true });
 fs.copyFileSync(src, out);
 console.log("wrote " + out + " (" + Math.round(fs.statSync(out).size / 1024) + " KB) from " + path.basename(src));
+
+// OP/ED movies are not inlined (too big for a data URI); ship them as files
+// beside index.html — pmovie.js looks for movie/op.mp4 first.
+var movSrc = path.join(root, "assets", "movie");
+if (fs.existsSync(movSrc)) {
+  var movDst = path.join(wwwDir, "movie");
+  fs.mkdirSync(movDst, { recursive: true });
+  fs.readdirSync(movSrc).forEach(function (f) {
+    if (!/\.mp4$/.test(f)) return;
+    fs.copyFileSync(path.join(movSrc, f), path.join(movDst, f));
+    console.log("copied movie/" + f + " (" + Math.round(fs.statSync(path.join(movDst, f)).size / 1048576) + " MB)");
+  });
+}

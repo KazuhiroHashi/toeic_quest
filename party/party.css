@@ -373,3 +373,19 @@
   .pmember { font-size: 10px; }
   #ptitle-logo { font-size: 42px; }
 }
+
+/* ---- OP/ED movie overlay ---- */
+.pmovie-wrap {
+  position: fixed; inset: 0; z-index: 4000;
+  background: #000;
+  display: flex; align-items: center; justify-content: center;
+}
+.pmovie-wrap video { width: 100%; height: 100%; object-fit: contain; }
+.pmovie-skip {
+  position: absolute; right: 14px; bottom: 18px; z-index: 1;
+  font: inherit; font-size: 13px; font-weight: bold; color: #fff;
+  background: rgba(0, 0, 0, .55); border: 1px solid rgba(255, 255, 255, .7);
+  border-radius: 999px; padding: 8px 16px;
+  opacity: 0; pointer-events: none; transition: opacity .3s;
+}
+.pmovie-skip.show { opacity: 1; pointer-events: auto; }

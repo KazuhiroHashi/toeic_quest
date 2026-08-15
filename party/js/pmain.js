@@ -455,6 +455,8 @@
           "（タイトルの「単語帳」で\n　出会った単語を いつでも 復習できます。\n　全3000語 制覇を めざそう！）"
         ];
         for (var e = 0; e < ending.length; e++) await gsay(ending[e]);
+        // ending movie after the epilogue text (skippable; failures fall through)
+        if (window.PMOVIE) { if (window.BGM) BGM.stop(); await PMOVIE.play("ed"); }
       }
     }
     if (window.BGM) BGM.stop();
@@ -778,7 +780,16 @@
     function go() {
       t.removeEventListener("pointerdown", go);
       t.classList.remove("pre-start");
-      if (window.BGM) BGM.playAny(["title"]);
+      // first launch only: the opening movie rides on this tap's gesture so
+      // its audio is allowed. Skippable; any failure falls through to the title.
+      var seen = false;
+      try { seen = localStorage.getItem("wq2_op_seen") === "1"; } catch (e) {}
+      if (!seen && window.PMOVIE) {
+        try { localStorage.setItem("wq2_op_seen", "1"); } catch (e) {}
+        PMOVIE.play("op").then(function () { if (window.BGM) BGM.playAny(["title"]); });
+      } else {
+        if (window.BGM) BGM.playAny(["title"]);
+      }
     }
     t.addEventListener("pointerdown", go);
   })();
