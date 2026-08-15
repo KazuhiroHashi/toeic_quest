@@ -77,7 +77,7 @@
 | アイコン・ロゴ・キービジュアル | ✅ |
 | **OP ムービー 27.1秒** | ✅ 1080×1920 / H.264+AAC |
 | **ED ムービー 24.5秒** | ✅ 同上 |
-| プライバシーポリシー | ✅ 完成。wordquest-privacy リポジトリでGitHub Pages公開 |
+| プライバシーポリシー | ✅ https://bridge-ai-tokyo.com/wordquest/privacy.html |
 | ストア掲載文 | ✅ `docs/STORE_LISTING.md` |
 | 効果音 | ✅ 全参照ファイルが存在 |
 
