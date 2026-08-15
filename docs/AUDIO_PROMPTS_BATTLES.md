@@ -1,117 +1,123 @@
-# 全戦・別曲プロンプト（Suno 有料版）— 決定版
+# 戦闘曲プロンプト（Suno）— グルーヴ重視・改訂版
 
-「音楽はゲームの命」。全戦を別曲にします。**Sunoの設定**：
-- **Instrumental：ON**（歌詞なし）
-- 長さ：**150〜180秒**（Sunoが完璧にループしなくても、後でこちらが“きれいに繋がる区間”に整えます）
-- 生成後 **mp3でダウンロード** → GitHubの `assets/bgm/` にアップ
-- アップ先: https://github.com/KazuhiroHashi/toeic_quest/upload/claude/toeic-quest-game-8zva6k/assets/bgm
+## なぜオーケストラ寄りになっていたか
 
-**ゲーム側は配線済み**：保存名どおりに置けば、その戦いで自動で鳴ります（未アップは今の曲に自動フォールバック）。
-プロンプトは Suno の「**Style of Music / スタイル**」欄に貼ってください。
+旧プロンプトは楽器の指定がほぼ全部オーケストラだった。
 
-> 容量メモ：**製品版アプリは全曲フル音質でOK（容量制限は実質なし）**。16MB制限はclaude.aiプレビューだけなので、そこはこちらで一部だけ低ビットレート埋め込みにします。**曲は全力で作ってください。**
+> `Catchy heroic melody on **flute and strings**, light **brass** hits, **glockenspiel** sparkle`
+> `urgent **staccato strings**, bold **brass** melody, light **choir** accents`
 
----
+Sunoは**楽器名を最優先のシグナルとして読む**。ドラムもベースもギターも書いていなければ、
+出てくるのは映画音楽になる。さらに `cinematic` `epic` `heroic` `soaring` といった語が
+そろってテンポを落とす方向に引っ張っていた。`mid tempo` のような曖昧な指定も効かない。
 
-## ザコ戦（第1〜4戦・だんだん盛り上がる）
+## 気に入っていた曲の実測テンポ
 
-### 第1戦 —【保存名: arena1.mp3】冒険の幕開け
-```
-Bright, upbeat JRPG battle theme, the very first fight of a cheerful adventure. Catchy heroic melody on flute and strings over a bouncy rhythm, light brass hits, glockenspiel sparkle, optimistic and energetic, mid tempo, clean and hummable, instrumental, seamless loop, about 160 seconds
-```
+| ファイル | 実測 |
+|---|---|
+| `battle.mp3` | **約 169 BPM** |
+| `battle2.mp3` | **約 164 BPM** |
+| `boss.mp3` | 約 156 BPM |
 
-### 第2戦 —【保存名: arena2.mp3】仲間が増えて弾む
-```
-Energetic and playful JRPG battle theme, a party growing stronger together. Driving drums, plucky strings and a lively woodwind melody, cheerful brass counterpoint, a touch faster and more confident than a first battle, fun and bouncy, instrumental, seamless loop, about 160 seconds
-```
-
-### 第3戦 —【保存名: arena3.mp3】緊張が高まる
-```
-Determined JRPG battle theme with rising tension, enemies getting tougher. Faster galloping rhythm, urgent staccato strings, bold brass melody, light choir accents, heroic but pressured, instrumental, seamless loop, about 160 seconds
-```
-
-### 第4戦 —【保存名: arena4.mp3】強敵ラッシュ・ボス前
-```
-Intense, fast JRPG battle theme, a relentless wave of tough enemies just before a boss. Double-time percussion, aggressive driving strings, powerful brass stabs, soaring heroic melody, high energy and adrenaline, instrumental, seamless loop, about 150 seconds
-```
+**165〜170 BPM。** かなり速い。最近の生成物はおそらく110〜130程度に落ちている。
+**BPMを数字で書くのが一番効く。**
 
 ---
 
-## 中ボス
+## Suno の設定
 
-### 洞窟の古竜 —【保存名: midboss.mp3】威圧の中ボス
+- **Instrumental：ON**
+- 長さ：150〜180秒
+- **「Exclude styles」欄があれば、下の除外リストをそこに貼る。** 無ければスタイル欄の末尾に足す
+- 生成後 mp3 でダウンロード → `assets/bgm/` に**指定のファイル名で**アップ（コード変更は不要）
+
+### 全曲共通の除外リスト
 ```
-Imposing mid-boss battle theme for a fantasy JRPG, a mighty ancient dragon (heroic-fantasy, not horror). Pounding taiko and timpani, heavy low brass riffs, sweeping strings, a grand menacing melody with a sense of scale, driving and powerful, instrumental, seamless loop, about 160 seconds
-```
-
----
-
-## 四天王（沈黙の四天王・それぞれ性格が違う）
-
-### 四天王ハウル —【保存名: king1.mp3】誇り高き獅子・咆哮（聴覚を奪う者）
-```
-Proud, roaring boss battle theme for a lion-warrior lieutenant. Bold heroic brass fanfares, tribal war drums, powerful strings, a commanding melody full of pride and might, echoing and grand like a great roar, driving and majestic, instrumental, seamless loop, about 160 seconds
+orchestral, cinematic, epic trailer, film score, sweeping strings, choir, ambient, ballad, slow, half-time, rubato, lo-fi, chillout
 ```
 
-### 四天王ガグ —【保存名: king2.mp3】弁舌・沈黙の号令（話す力を奪う者）
-```
-Driving, cunning boss battle theme for a silver-tongued schemer. Relentless staccato low strings ostinato, sharp brass stabs, militaristic snare and taiko, an ominous but catchy minor melody, building pressure without letup, sly and dangerous, instrumental, seamless loop, about 155 seconds
-```
-
-### 四天王ブランク —【保存名: king3.mp3】白紙化・可愛いのに不穏（読む力を奪う者）
-```
-Eerie yet cute boss battle theme for a childlike villain who erases minds. A twinkling music-box and celesta melody turned slightly off-kilter, playful pizzicato strings, ticking percussion, a whimsical-but-unsettling waltz feel that builds into a driving dark-cute climax, instrumental, seamless loop, about 155 seconds
-```
-
-### 四天王イレイズ —【保存名: king4.mp3】最強格・消し去る（書く力を奪う者）
-```
-Heavy, menacing boss battle theme for the strongest lieutenant before the final boss. Pounding double-time percussion, distorted low brass and cello riffs, dark choir accents, a fierce blade-like driving melody, urgent, powerful and climactic, instrumental, seamless loop, about 155 seconds
-```
+### 書き方の原則
+1. **BPMを先頭に書く**
+2. **バンド楽器を先に、オーケストラは後ろに「味付け」として**書く
+3. リズムの形を具体的に指定する（`driving 16th-note hi-hat`、`syncopated bass`）
+4. `cinematic` `epic` `soaring` は使わない。テンポが落ちる
 
 ---
 
-## ラスボス（2段階）
+# ザコ戦（第1〜4戦）
 
-### 沈黙王ミュートス —【保存名: boss.mp3】魔王戦
+### 第1戦 —【`arena1.mp3`】冒険の幕開け
 ```
-Epic dark boss battle theme for the demon king of silence. Grand full orchestra with pipe organ and ominous low choir, thundering taiko and timpani, a majestic tragic melody over menacing brass, dramatic and overwhelming, powerful mid-high tempo, instrumental, seamless loop, about 170 seconds
+168 BPM fast JRPG battle theme, prog-rock band. Tight rock drum kit with driving eighth-note hi-hat, punchy fingered electric bass locked to the kick, bright clean electric guitar riff, catchy hummable lead melody on synth. Major key, optimistic, constant forward motion, no let-up. Light flute doubling the melody and short brass stabs only as accents. Instrumental, seamless loop.
 ```
 
-### 真・沈黙王ミュートス —【保存名: lastboss.mp3】最終決戦
+### 第2戦 —【`arena2.mp3`】仲間が増えて弾む
 ```
-Ultimate final boss theme, beyond the normal boss battle: a desperate, awe-inspiring last stand. Full orchestra with dark choir chanting, cathedral pipe organ, relentless taiko and timpani, a tragic soaring strings melody over menacing low brass, a brief quiet eerie interlude then an explosive climax, majestic and overwhelming, instrumental, seamless loop, about 175 seconds
+172 BPM upbeat JRPG battle theme, tight fusion band. Snappy drum kit with busy syncopated snare, slap-flavoured electric bass line that never stops moving, funky clean guitar chords on the off-beats, playful Hammond organ lead trading with the guitar. Bright, bouncy, groovy. Strings only as short background stabs. Instrumental, seamless loop.
+```
+
+### 第3戦 —【`arena3.mp3`】緊張が高まる
+```
+176 BPM driving JRPG battle theme in a minor key, hard rock band. Galloping kick pattern, relentless 16th-note hi-hat, aggressive palm-muted distorted guitar riff, growling electric bass doubling the riff, urgent organ lead. Tense and pressured but always fast and groovy. Brass stabs on accents only. Instrumental, seamless loop.
+```
+
+### 第4戦 —【`arena4.mp3`】強敵ラッシュ・ボス前
+```
+180 BPM relentless JRPG battle theme, prog metal band. Double-kick drums, thrashing distorted guitar riff in odd accents, aggressive picked bass, screaming organ and synth lead trading fast licks, brief shred solo. Maximum adrenaline, no slow section anywhere, drives from the first bar to the last. Instrumental, seamless loop.
 ```
 
 ---
 
-## 戦闘以外（必要なら差し替え／既にあるもの含む）
+# 四天王（それぞれ性格が違う）
 
-- タイトル —【保存名: title.mp3】※既存。作り直すなら:
+### ハウル —【`king1.mp3`】誇り高き獅子・咆哮
 ```
-Warm, adventurous JRPG title theme, hopeful and grand opening. Sweeping strings and noble brass melody, gentle harp and glockenspiel, a sense of a journey about to begin, mid-slow tempo, uplifting, instrumental, seamless loop, about 120 seconds
+170 BPM heavy JRPG boss theme, rock band with taiko. Thunderous drum kit layered with japanese taiko on the downbeats, thick distorted guitar power riff, driving low electric bass, defiant brass fanfare riding on top of the groove. Proud, roaring, muscular. Keeps the rock groove the whole time, never turns into a slow fanfare. Instrumental, seamless loop.
 ```
-- 勝利ファンファーレ —【保存名: victory.mp3】※既存（`docs/AUDIO_PROMPTS_3.md`）
-- 全滅 —【保存名: gameover.mp3】※プロンプトは `docs/AUDIO_PROMPTS_6.md`
-- エンディング —【保存名: ending.mp3】※既存。作り直すなら:
+
+### ガグ —【`king2.mp3`】弁舌・沈黙の号令
 ```
-Triumphant yet gentle JRPG ending theme, the words return to the world. A warm soaring main melody on strings and horn, hopeful piano and harp, a heartfelt grand finale that softens into peace, instrumental, about 150 seconds
+168 BPM sly JRPG boss theme, dark jazz-rock band. Tight shuffling drum kit with brushed snare accents, walking distorted electric bass, sharp muted guitar stabs on the off-beats, sleazy Hammond organ lead with chromatic runs, muted trumpet answering it. Confident, theatrical, feminine menace. Groove-driven, never rubato. Instrumental, seamless loop.
+```
+
+### ブランク —【`king3.mp3`】白紙化・可愛いのに不穏
+```
+174 BPM unsettling JRPG boss theme, breakbeat band. Chopped breakbeat drums, deep rubbery synth bass, detuned music-box melody over the top playing a nursery-rhyme phrase that keeps going slightly wrong, glitchy stutter edits, distorted guitar entering in the second half. Cute on the surface, wrong underneath, always fast and rhythmic. Instrumental, seamless loop.
+```
+
+### イレイズ —【`king4.mp3`】最強格・消し去る
+```
+178 BPM ferocious JRPG boss theme, dark prog metal band. Double-kick drums with tight 16th-note ride, downtuned crushing guitar riff, aggressive distorted bass, cold dissonant synth lead cutting through, harpsichord ostinato running underneath. Cruel, precise, overwhelming. Full speed from bar one, no breakdown, no slow bridge. Instrumental, seamless loop.
 ```
 
 ---
 
-## 割り当て早見表
-| 戦い | ファイル | 状態 |
+# うまくいかない時
+
+| 症状 | 直し方 |
+|---|---|
+| オーケストラになる | 楽器名を **drum kit / electric bass / distorted guitar / organ** の4つだけに削る。管弦は一旦全部消す |
+| 遅い | BPMを **+10** して書き直す。`fast` `driving` `relentless` を先頭付近に足す |
+| 途中で失速する | `no slow section anywhere, no breakdown, drives from the first bar to the last` を足す |
+| 壮大になりすぎる | `epic` `heroic` `soaring` `anthem` を消す。`tight` `punchy` `groovy` に置き換える |
+| ループが不自然 | 気にしなくてよい。こちらで繋がる区間に整える |
+
+**同じプロンプトで2〜3回まわして一番速いものを採る。** 1回目で決めない。
+
+---
+
+# 割り当て早見表
+
+| ファイル名 | 使われる場面 | 優先度 |
 |---|---|---|
-| 第1戦 | arena1.mp3 | ★作る |
-| 第2戦 | arena2.mp3 | ★作る |
-| 第3戦 | arena3.mp3 | ★作る |
-| 第4戦 | arena4.mp3 | ★作る |
-| 中ボス 洞窟の古竜 | midboss.mp3 | 既存あり／差し替え可 |
-| 四天王ハウル | king1.mp3 | ★作る |
-| 四天王ガグ | king2.mp3 | ★作る |
-| 四天王ブランク | king3.mp3 | ★作る |
-| 四天王イレイズ | king4.mp3 | ★作る |
-| ラスボス ミュートス | boss.mp3 | 既存あり／差し替え可 |
-| 真・ミュートス | lastboss.mp3 | 既存あり／差し替え可 |
+| `king1.mp3` | 第6戦 四天王ハウル | **★最優先** |
+| `king2.mp3` | 第7戦 四天王ガグ | **★最優先** |
+| `king3.mp3` | 第8戦 四天王ブランク | **★最優先** |
+| `king4.mp3` | 第9戦 四天王イレイズ | **★最優先** |
+| `arena1.mp3` | 第1戦 | 次点 |
+| `arena2.mp3` | 第2戦 | 次点 |
+| `arena3.mp3` | 第3戦 | 次点 |
+| `arena4.mp3` | 第4戦 | 次点 |
 
-作った分だけアップ → こちらで製品版（フル音質）＆プレビュー（一部）に取り込みます。一気に全部でも、数曲ずつでもOK。
+**king1〜4 が最優先。** いまは第6〜10戦の5連戦が全部 `boss.mp3` の1曲で鳴っている。
+この4曲が入るだけで、ゲームで一番長い区間の印象が変わる。
