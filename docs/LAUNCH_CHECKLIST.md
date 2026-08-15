@@ -53,8 +53,8 @@
 |---|---|---|
 | 🧑 | Apple Developer Program 登録 | ✅ 完了 |
 | 🧑 | Google Play Console 開設（$25）＋本人確認 | ⬜ 確認に数日かかる |
-| 🧑 | **サポート用メールアドレス**（公開される） | ⬜ `store/privacy.html` 65行目が空欄のまま |
-| 🧑 | **スクリーンショット** | ⬜ **1枚もない**。Appleは必須（動画は任意だがこれは必須） |
+| 🧑 | **サポート用メールアドレス**（公開される） | ✅ contact@bridge-ai-tokyo.com |
+| 🧑 | **スクリーンショット** | ✅ store/screenshots/ に5枚（1290×2796） |
 | 🧑 | Mac に Node.js ＋ Android Studio を導入 | ⬜ Xcodeは導入済み |
 | 🧑 | 署名付き AAB（Android）／ IPA（iOS）をビルド | ⬜ |
 | 🤖 | `party/js/pnative.js` の `testing: true` → `false` | ⬜ **ビルド直前に必ず**（忘れるとテスト広告のまま公開される） |
@@ -77,7 +77,7 @@
 | アイコン・ロゴ・キービジュアル | ✅ |
 | **OP ムービー 27.1秒** | ✅ 1080×1920 / H.264+AAC |
 | **ED ムービー 24.5秒** | ✅ 同上 |
-| プライバシーポリシー | ⚠️ メールアドレス以外は完成 |
+| プライバシーポリシー | ✅ 完成。wordquest-privacy リポジトリでGitHub Pages公開 |
 | ストア掲載文 | ✅ `docs/STORE_LISTING.md` |
 | 効果音 | ✅ 全参照ファイルが存在 |
 
