@@ -12,3 +12,6 @@ node_modules/
 
 # movie build intermediates
 /movie/tmp/
+
+# build cache
+/build/
