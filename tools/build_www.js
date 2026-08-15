@@ -20,7 +20,7 @@
 "use strict";
 var fs = require("fs");
 var path = require("path");
-var { execFileSync } = require("child_process");
+var { execFileSync, spawnSync } = require("child_process");
 
 var root = path.join(__dirname, "..");
 var www = path.join(root, "www");
@@ -37,8 +37,37 @@ var BGM_BITRATE = "128k";
 
 function rmrf(p) { fs.rmSync(p, { recursive: true, force: true }); }
 function mkdir(p) { fs.mkdirSync(p, { recursive: true }); }
+
+// Anaconda ships an ffmpeg that shadows Homebrew's on PATH and, on Apple
+// Silicon, is an x86_64 build whose dylibs fail to load. So don't trust PATH
+// alone: try each candidate and keep the first that actually runs AND can
+// encode WebP.
+var FFMPEG = (function () {
+  var tried = [];
+  var candidates = [process.env.FFMPEG, "/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg", "ffmpeg"]
+    .filter(Boolean);
+  for (var i = 0; i < candidates.length; i++) {
+    var bin = candidates[i];
+    var v = spawnSync(bin, ["-hide_banner", "-version"], { encoding: "utf8" });
+    if (v.error || v.status !== 0) { tried.push(bin + " … 起動できない"); continue; }
+    var e = spawnSync(bin, ["-hide_banner", "-encoders"], { encoding: "utf8" });
+    if (e.status !== 0 || (e.stdout || "").indexOf("libwebp") < 0) {
+      tried.push(bin + " … libwebp 非対応");
+      continue;
+    }
+    return bin;
+  }
+  console.error("\n使える ffmpeg が見つかりません。");
+  tried.forEach(function (t) { console.error("  - " + t); });
+  console.error("\n  Mac:   brew install ffmpeg");
+  console.error("  ※ Anaconda の ffmpeg は Apple Silicon で動きません。");
+  console.error("     Homebrew 版を明示するとその場で回避できます:");
+  console.error("       FFMPEG=/opt/homebrew/bin/ffmpeg npm run build:www\n");
+  process.exit(1);
+})();
+
 function ff(args) {
-  execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y"].concat(args), { stdio: "pipe" });
+  execFileSync(FFMPEG, ["-hide_banner", "-loglevel", "error", "-y"].concat(args), { stdio: "pipe" });
 }
 
 // Convert once, reuse until the source changes.
@@ -102,6 +131,7 @@ function copyScript(src, dst) {
 }
 
 console.log("\nwww/ を組み立てます" + (clean ? "（キャッシュ無視）" : ""));
+console.log("  ffmpeg: " + FFMPEG);
 rmrf(www);
 mkdir(www);
 mkdir(cacheDir);

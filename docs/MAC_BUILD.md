@@ -14,11 +14,25 @@ node -v          # v18 以上なら OK。「command not found」なら下でイ�
 xcodebuild -version   # Xcode は導入済みのはず
 ```
 
-### Node.js が無い場合
+### Node.js と ffmpeg
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-brew install node
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"   # Homebrew未導入なら
+brew install node ffmpeg
 ```
+
+> **ffmpeg は必須です。** ビルド時に画像をWebPへ、BGMを128kbpsへ変換するのに使います。
+>
+> **⚠️ Anaconda を入れている場合の注意**
+> Anaconda が同梱する ffmpeg は x86_64 ビルドで、Apple Silicon では
+> `incompatible architecture (have 'arm64', need 'x86_64')` で落ちます。
+> `which ffmpeg` が `anaconda3/bin/ffmpeg` を返す場合は、Homebrew版を明示してください：
+> ```bash
+> brew install ffmpeg
+> FFMPEG=/opt/homebrew/bin/ffmpeg npm run build:www
+> ```
+> ビルドスクリプトは動く ffmpeg を自動で探しますが、この指定が確実です。
+> 恒久的に直すなら `~/.zshrc` の Anaconda の PATH 追記より後ろに
+> `export PATH="/opt/homebrew/bin:$PATH"` を足します。
 
 ### Android Studio（Android版に必須）
 https://developer.android.com/studio からダウンロードしてインストール。
@@ -152,6 +166,8 @@ testing: true      →      testing: false
 | Xcode で "Signing requires a development team" | Signing & Capabilities で Team を選ぶ |
 | Archive がグレーで押せない | デバイス選択が実機/シミュレータになっている。**Any iOS Device** にする |
 | ビルドは通るが画面が真っ白 | `npm run build:www` を実行してから `npx cap sync` |
+| `libfreetype` / `incompatible architecture` で落ちる | Anaconda の ffmpeg を掴んでいる。`FFMPEG=/opt/homebrew/bin/ffmpeg npm run build:www` |
+| `使える ffmpeg が見つかりません` | `brew install ffmpeg` |
 
 ---
 
