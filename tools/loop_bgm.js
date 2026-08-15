@@ -69,7 +69,7 @@ function makeSeamless(src, opts) {
   ff(["-i", src, "-i", src, "-filter_complex",
       `[0:a]atrim=${xf.toFixed(3)}:${fadeAt.toFixed(3)},asetpts=N/SR/TB[a];` +
       `[1:a]atrim=0:${xf.toFixed(3)},asetpts=N/SR/TB[b];` +
-      `[a][b]acrossfade=d=${xf.toFixed(3)}:c1=tri:c2=tri` + (opts.gain ? `,volume=${opts.gain.toFixed(2)}dB` : "") + `[out]`,
+      `[a][b]acrossfade=d=${xf.toFixed(3)}:c1=tri:c2=tri` + (opts.gain ? `,volume=${opts.gain.toFixed(2)}dB` + (opts.gain > 0 ? ",alimiter=limit=0.977:attack=2:release=60:level=false" : "") : "") + `[out]`,
       "-map", "[out]", "-c:a", "libmp3lame", "-b:a", BITRATE, tmp]);
 
   let outLen = duration(tmp);
