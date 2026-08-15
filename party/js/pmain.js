@@ -701,7 +701,9 @@
   $("pbtn-zukan").addEventListener("click", function () { $("pbtn-zukan").blur(); if (window.PFIELD) window.PFIELD.openZukan(); });
   // story mode is under construction: first tap warns, second tap (within 4s) opens the preview
   var fieldArmed = false;
-  $("pbtn-field").addEventListener("click", function () {
+  // release builds strip this entry point (see tools/build_www.js), so it may be absent
+  var fieldBtn = $("pbtn-field");
+  if (fieldBtn) fieldBtn.addEventListener("click", function () {
     $("pbtn-field").blur();
     if (!fieldArmed) {
       fieldArmed = true;

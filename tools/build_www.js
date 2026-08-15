@@ -27,7 +27,11 @@ var www = path.join(root, "www");
 var cacheDir = path.join(root, "build", "cache");
 var clean = process.argv.includes("--clean");
 
-var SKIP_ASSET_DIRS = ["movie_src"];   // Seedance start frames; build-time only
+// movie_src: Seedance start frames, build-time only.
+// field: art for the unfinished story mode, which release builds do not expose.
+var SKIP_ASSET_DIRS = ["movie_src", "field"];
+// BGM used only by that story mode
+var SKIP_BGM = ["field", "town", "dungeon", "battle_dungeon"];
 var WEBP_QUALITY = 82;
 var BGM_BITRATE = "128k";
 
@@ -64,6 +68,7 @@ function placeAsset(src, dstDir, name) {
   }
   // BGM is long and loops; sfx are tiny one-shots not worth re-encoding
   if (ext === ".mp3" && rel.indexOf("bgm" + path.sep) === 0) {
+    if (SKIP_BGM.indexOf(stem) >= 0) return;
     var a = cached(src, rel, function (s, d) {
       ff(["-i", s, "-c:a", "libmp3lame", "-b:a", BGM_BITRATE, d]);
     });
@@ -104,6 +109,11 @@ mkdir(cacheDir);
 // ---- index.html + css ---------------------------------------------------
 var htmlSrc = path.join(root, "party", "index.html");
 var html = fs.readFileSync(htmlSrc, "utf8").replace(/(href|src)="\.\.\//g, '$1="');
+// drop the "ストーリーモードは制作中" entry — the mode is unfinished and its art
+// is excluded above, so it must not be reachable in a shipped build
+var footBefore = html;
+html = html.replace(/[ \t]*<div id="ptitle-foot">[\s\S]*?<\/div>\r?\n/, "");
+if (html === footBefore) { console.error("  ! ptitle-foot が見つかりません（index.html の構造が変わった？）"); process.exit(1); }
 fs.writeFileSync(path.join(www, "index.html"), html);
 fs.copyFileSync(path.join(root, "party", "party.css"), path.join(www, "party.css"));
 mkdir(path.join(www, "css"));
