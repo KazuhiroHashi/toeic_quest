@@ -69,7 +69,7 @@ function makeSeamless(src, opts) {
   ff(["-i", src, "-i", src, "-filter_complex",
       `[0:a]atrim=${xf.toFixed(3)}:${fadeAt.toFixed(3)},asetpts=N/SR/TB[a];` +
       `[1:a]atrim=0:${xf.toFixed(3)},asetpts=N/SR/TB[b];` +
-      `[a][b]acrossfade=d=${xf.toFixed(3)}:c1=tri:c2=tri[out]`,
+      `[a][b]acrossfade=d=${xf.toFixed(3)}:c1=tri:c2=tri` + (opts.gain ? `,volume=${opts.gain.toFixed(2)}dB` : "") + `[out]`,
       "-map", "[out]", "-c:a", "libmp3lame", "-b:a", BITRATE, tmp]);
 
   let outLen = duration(tmp);
@@ -101,11 +101,12 @@ function makeSeamless(src, opts) {
 
 function parseArgs() {
   const a = process.argv.slice(2);
-  const o = { files: [], xf: XF_DEFAULT, tol: 4, min: 0, out: null };
+  const o = { files: [], xf: XF_DEFAULT, tol: 4, min: 0, out: null, gain: 0 };
   for (let i = 0; i < a.length; i++) {
     if (a[i] === "--xf") o.xf = parseFloat(a[++i]);
     else if (a[i] === "--tol") o.tol = parseFloat(a[++i]);
     else if (a[i] === "--min") o.min = parseFloat(a[++i]);
+    else if (a[i] === "--gain") o.gain = parseFloat(a[++i]);
     else if (a[i] === "-o") o.out = a[++i];
     else o.files.push(a[i]);
   }
@@ -114,7 +115,7 @@ function parseArgs() {
 const args = parseArgs();
 
 if (!args.files.length) {
-  console.log("使い方: node tools/loop_bgm.js <mp3...> [--xf 1.2] [--min 150] [-o out.mp3]");
+  console.log("使い方: node tools/loop_bgm.js <mp3...> [--xf 1.2] [--min 150] [--gain -1.3] [-o out.mp3]");
   process.exit(1);
 }
 if (args.out && args.files.length > 1) {
