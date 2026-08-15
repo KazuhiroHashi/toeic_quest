@@ -17,10 +17,11 @@ xcodebuild -version   # Xcode は導入済みのはず
 ### Node.js と ffmpeg
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"   # Homebrew未導入なら
-brew install node ffmpeg
+brew install node ffmpeg webp
 ```
 
-> **ffmpeg は必須です。** ビルド時に画像をWebPへ、BGMを128kbpsへ変換するのに使います。
+> **ffmpeg は必須です。** ビルド時に BGM を128kbpsへ変換するのに使います。
+> `webp`（cwebp）も入れておくと、ffmpeg が WebP に対応していない場合の保険になります。
 >
 > **⚠️ Anaconda を入れている場合の注意**
 > Anaconda が同梱する ffmpeg は x86_64 ビルドで、Apple Silicon では
@@ -167,7 +168,8 @@ testing: true      →      testing: false
 | Archive がグレーで押せない | デバイス選択が実機/シミュレータになっている。**Any iOS Device** にする |
 | ビルドは通るが画面が真っ白 | `npm run build:www` を実行してから `npx cap sync` |
 | `libfreetype` / `incompatible architecture` で落ちる | Anaconda の ffmpeg を掴んでいる。`FFMPEG=/opt/homebrew/bin/ffmpeg npm run build:www` |
-| `使える ffmpeg が見つかりません` | `brew install ffmpeg` |
+| `音声を変換できる ffmpeg が見つかりません` | `brew install ffmpeg` |
+| `WebP に変換できるツールが見つかりません` | `brew install webp` |
 
 ---
 

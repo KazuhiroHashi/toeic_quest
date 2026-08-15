@@ -38,36 +38,93 @@ var BGM_BITRATE = "128k";
 function rmrf(p) { fs.rmSync(p, { recursive: true, force: true }); }
 function mkdir(p) { fs.mkdirSync(p, { recursive: true }); }
 
-// Anaconda ships an ffmpeg that shadows Homebrew's on PATH and, on Apple
-// Silicon, is an x86_64 build whose dylibs fail to load. So don't trust PATH
-// alone: try each candidate and keep the first that actually runs AND can
-// encode WebP.
+// Toolchain detection.
+//
+// Two things have bitten us here, so nothing is taken on trust:
+//   - Anaconda puts an x86_64 ffmpeg ahead of Homebrew's on PATH, and on Apple
+//     Silicon its dylibs fail to load.
+//   - Parsing `ffmpeg -encoders` for "libwebp" is unreliable across versions.
+// So each candidate is probed by actually encoding something tiny.
+
+var TMP = fs.mkdtempSync(path.join(require("os").tmpdir(), "wqbuild-"));
+process.on("exit", function () { try { rmrf(TMP); } catch (e) {} });
+
+function run(bin, args) {
+  return spawnSync(bin, args, { encoding: "utf8", maxBuffer: 1 << 26 });
+}
+function lastLines(r, n) {
+  var t = ((r.stderr || "") + (r.stdout || "")).trim().split("\n");
+  return t.slice(-(n || 3)).join("\n      ").trim() || (r.error ? String(r.error.message) : "(出力なし)");
+}
+
+// an ffmpeg that can actually transcode audio
 var FFMPEG = (function () {
   var tried = [];
-  var candidates = [process.env.FFMPEG, "/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg", "ffmpeg"]
-    .filter(Boolean);
-  for (var i = 0; i < candidates.length; i++) {
-    var bin = candidates[i];
-    var v = spawnSync(bin, ["-hide_banner", "-version"], { encoding: "utf8" });
-    if (v.error || v.status !== 0) { tried.push(bin + " … 起動できない"); continue; }
-    var e = spawnSync(bin, ["-hide_banner", "-encoders"], { encoding: "utf8" });
-    if (e.status !== 0 || (e.stdout || "").indexOf("libwebp") < 0) {
-      tried.push(bin + " … libwebp 非対応");
-      continue;
-    }
-    return bin;
+  var cands = [process.env.FFMPEG, "/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg", "ffmpeg"].filter(Boolean);
+  var seen = {};
+  for (var i = 0; i < cands.length; i++) {
+    var bin = cands[i];
+    if (seen[bin]) continue;
+    seen[bin] = 1;
+    var probe = path.join(TMP, "probe.mp3");
+    var r = run(bin, ["-hide_banner", "-loglevel", "error", "-y",
+      "-f", "lavfi", "-i", "sine=frequency=440:duration=0.1",
+      "-c:a", "libmp3lame", "-b:a", "64k", probe]);
+    if (r.status === 0 && fs.existsSync(probe)) return bin;
+    tried.push("  - " + bin + "\n      " + lastLines(r));
   }
-  console.error("\n使える ffmpeg が見つかりません。");
-  tried.forEach(function (t) { console.error("  - " + t); });
-  console.error("\n  Mac:   brew install ffmpeg");
-  console.error("  ※ Anaconda の ffmpeg は Apple Silicon で動きません。");
-  console.error("     Homebrew 版を明示するとその場で回避できます:");
-  console.error("       FFMPEG=/opt/homebrew/bin/ffmpeg npm run build:www\n");
+  console.error("\n音声を変換できる ffmpeg が見つかりません。");
+  tried.forEach(function (t) { console.error(t); });
+  console.error("\n  brew install ffmpeg");
+  console.error("  ※ Anaconda 同梱の ffmpeg は Apple Silicon では動きません。\n");
+  process.exit(1);
+})();
+
+// a way to produce WebP: ffmpeg's libwebp, ffmpeg's native webp, or cwebp
+var WEBP = (function () {
+  var png = path.join(TMP, "probe.png");
+  var r0 = run(FFMPEG, ["-hide_banner", "-loglevel", "error", "-y",
+    "-f", "lavfi", "-i", "color=c=red:s=16x16", "-frames:v", "1", png]);
+  if (r0.status !== 0) { console.error("テスト画像を作れません:\n  " + lastLines(r0)); process.exit(1); }
+
+  var tried = [];
+  var out = path.join(TMP, "probe.webp");
+  var encoders = ["libwebp", "webp"];
+  for (var e = 0; e < encoders.length; e++) {
+    try { fs.unlinkSync(out); } catch (err) {}
+    var r = run(FFMPEG, ["-hide_banner", "-loglevel", "error", "-y", "-i", png, "-c:v", encoders[e], out]);
+    if (r.status === 0 && fs.existsSync(out) && fs.statSync(out).size > 0) {
+      return { kind: "ffmpeg", enc: encoders[e] };
+    }
+    tried.push("  - ffmpeg -c:v " + encoders[e] + "\n      " + lastLines(r));
+  }
+
+  // cwebp ships with Homebrew's `webp` formula and is a fine standalone fallback
+  var cw = [process.env.CWEBP, "/opt/homebrew/bin/cwebp", "/usr/local/bin/cwebp", "cwebp"].filter(Boolean);
+  for (var i = 0; i < cw.length; i++) {
+    try { fs.unlinkSync(out); } catch (e) {}
+    var r2 = run(cw[i], ["-quiet", "-q", "80", png, "-o", out]);
+    if (r2.status === 0 && fs.existsSync(out) && fs.statSync(out).size > 0) return { kind: "cwebp", bin: cw[i] };
+    tried.push("  - " + cw[i] + "\n      " + lastLines(r2));
+  }
+
+  console.error("\nWebP に変換できるツールが見つかりません。試したもの:");
+  tried.forEach(function (t) { console.error(t); });
+  console.error("\n  どちらかを入れてください:");
+  console.error("    brew install webp        # cwebp（軽い・確実）");
+  console.error("    brew reinstall ffmpeg    # libwebp 付きで入れ直す\n");
   process.exit(1);
 })();
 
 function ff(args) {
   execFileSync(FFMPEG, ["-hide_banner", "-loglevel", "error", "-y"].concat(args), { stdio: "pipe" });
+}
+function toWebp(src, dst) {
+  if (WEBP.kind === "cwebp") {
+    execFileSync(WEBP.bin, ["-quiet", "-q", String(WEBP_QUALITY), src, "-o", dst], { stdio: "pipe" });
+  } else {
+    ff(["-i", src, "-c:v", WEBP.enc, "-quality", String(WEBP_QUALITY), "-compression_level", "6", dst]);
+  }
 }
 
 // Convert once, reuse until the source changes.
@@ -88,9 +145,7 @@ function placeAsset(src, dstDir, name) {
   var rel = path.relative(path.join(root, "assets"), src);
 
   if (ext === ".png" || ext === ".jpg" || ext === ".jpeg") {
-    var w = cached(src, rel + ".webp", function (s, d) {
-      ff(["-i", s, "-c:v", "libwebp", "-quality", String(WEBP_QUALITY), "-compression_level", "6", d]);
-    });
+    var w = cached(src, rel + ".webp", toWebp);
     fs.copyFileSync(w, path.join(dstDir, stem + ".webp"));
     stats.imgIn += size; stats.imgOut += fs.statSync(w).size;
     return;
@@ -132,6 +187,7 @@ function copyScript(src, dst) {
 
 console.log("\nwww/ を組み立てます" + (clean ? "（キャッシュ無視）" : ""));
 console.log("  ffmpeg: " + FFMPEG);
+console.log("  WebP  : " + (WEBP.kind === "cwebp" ? WEBP.bin : "ffmpeg -c:v " + WEBP.enc));
 rmrf(www);
 mkdir(www);
 mkdir(cacheDir);
