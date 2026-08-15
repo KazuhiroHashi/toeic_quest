@@ -5,6 +5,28 @@
 
 ---
 
+## ⚠️ Anaconda を使っている場合は最初にこれ
+
+プロンプトが `(base)` で始まるなら Anaconda が有効です。
+Anaconda は `ffmpeg` `cwebp` `curl` などを **x86_64ビルドで PATH の先頭に置く**ため、
+Apple Silicon では次々に失敗します（実際に3回踏みました）。
+
+```bash
+conda config --set auto_activate_base false
+```
+
+実行後に**ターミナルを開き直す**と `(base)` が消えます。
+Python を使うときだけ `conda activate base` すればよく、普段の開発に支障はありません。
+
+これをやらずに進めると、以下の場所で必ず止まります：
+
+| コマンド | 症状 |
+|---|---|
+| `npm run build:www` | `libfreetype` / `incompatible architecture` |
+| `npx cap sync` | `pod install` が `libssl.3.dylib` で失敗 |
+
+---
+
 ## 事前チェック
 
 ターミナルを開いて、まず今の状態を確認します。
@@ -96,6 +118,9 @@ npm run cap:sync      # www を同期 ＋ AdMob の App ID を注入
 
 `android/` と `ios/` は gitignore されているので、**このMac上にだけ**作られます。
 
+> `update ios - failed!` と出ても **Android 側は完了しています**（`✓ update android` を確認）。
+> iOS だけ上の Anaconda 対策をしてから `npx cap sync ios` を実行し直せば追いつきます。
+
 ---
 
 ## STEP 4：Android（AAB を作る）
@@ -168,7 +193,8 @@ testing: true      →      testing: false
 | 症状 | 対処 |
 |---|---|
 | `npx cap add android` で SDK が見つからない | Android Studio を一度起動してウィザードを完了させる |
-| `pod install` で失敗 | `brew install cocoapods` のあと `cd ios/App && pod install` |
+| `pod install` が `libssl.3.dylib` で失敗 | Anaconda の curl を掴んでいる。冒頭の `conda config --set auto_activate_base false` を実行。急ぐなら `cd ios/App && PATH="/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin" pod install` |
+| `pod install` がそれ以外で失敗 | `brew install cocoapods` のあと `cd ios/App && pod install` |
 | Xcode で "Signing requires a development team" | Signing & Capabilities で Team を選ぶ |
 | Archive がグレーで押せない | デバイス選択が実機/シミュレータになっている。**Any iOS Device** にする |
 | ビルドは通るが画面が真っ白 | `npm run build:www` を実行してから `npx cap sync` |
