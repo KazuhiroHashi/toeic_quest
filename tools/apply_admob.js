@@ -41,6 +41,12 @@ var IOS_APP_ID = "ca-app-pub-3056251560404390~6974212233";     // Bridge AI / WO
     s = s.replace(/<dict>/, "<dict>\n\t<key>GADApplicationIdentifier</key>\n\t<string>" + IOS_APP_ID + "</string>");
   }
   // ATT prompt text (required if personalised ads are used)
+  // Export compliance: the app only uses standard HTTPS, which is exempt.
+  // Declaring it here avoids being asked on every single upload.
+  if (!/ITSAppUsesNonExemptEncryption/.test(s)) {
+    s = s.replace(/<dict>/, "<dict>\n\t<key>ITSAppUsesNonExemptEncryption</key>\n\t<false/>");
+    console.log("ios: ITSAppUsesNonExemptEncryption = false");
+  }
   if (!/NSUserTrackingUsageDescription/.test(s)) {
     s = s.replace(/<dict>/, "<dict>\n\t<key>NSUserTrackingUsageDescription</key>\n\t<string>広告の最適化のために使用します。許可しない場合も、アプリはそのままご利用いただけます。</string>");
   }
