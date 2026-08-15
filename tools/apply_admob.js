@@ -47,9 +47,8 @@ var IOS_APP_ID = "ca-app-pub-3056251560404390~6974212233";     // Bridge AI / WO
     s = s.replace(/<dict>/, "<dict>\n\t<key>ITSAppUsesNonExemptEncryption</key>\n\t<false/>");
     console.log("ios: ITSAppUsesNonExemptEncryption = false");
   }
-  if (!/NSUserTrackingUsageDescription/.test(s)) {
-    s = s.replace(/<dict>/, "<dict>\n\t<key>NSUserTrackingUsageDescription</key>\n\t<string>広告の最適化のために使用します。許可しない場合も、アプリはそのままご利用いただけます。</string>");
-  }
-  fs.writeFileSync(f, s);
+  // No NSUserTrackingUsageDescription: the app never calls ATT and serves
+  // non-personalised ads only, so Apple's privacy answers stay "does not track".
+  s = s.replace(/\n?\t*<key>NSUserTrackingUsageDescription<\/key>\s*\n?\t*<string>[^<]*<\/string>/, "");
   console.log("ios: GADApplicationIdentifier set ->", IOS_APP_ID);
 })();

@@ -14,8 +14,11 @@
     rewardedIos:     "ca-app-pub-3056251560404390/7099435396", // 本番（Bridge AI / WORD QUEST iOS）
     // ★ アプリ内課金：全解放（¥600・非消費型）。両ストアで同じIDで登録すること
     productId: "wordquest_unlock",
-    // 開発中は true（テスト広告のみ表示・誤タップBAN防止）。リリース時に false
-    testing: true
+    // 開発中は true（テスト広告のみ表示・誤タップBAN防止）。本番公開時のみ false
+    testing: true,
+    // 非パーソナライズ広告で運用する。ATTの許可ダイアログを出さない代わりに
+    // 追跡は一切行わない（Appleへの申告も「追跡しない」で統一）
+    nonPersonalized: true
   };
 
   var cap = window.Capacitor;
@@ -29,7 +32,7 @@
   if (AdMob) {
     var adReady = false;
     function prepare() {
-      AdMob.prepareRewardVideoAd({ adId: rewardedId, isTesting: CONFIG.testing })
+      AdMob.prepareRewardVideoAd({ adId: rewardedId, isTesting: CONFIG.testing, npa: CONFIG.nonPersonalized })
         .then(function () { adReady = true; })
         .catch(function () { adReady = false; setTimeout(prepare, 30000); }); // retry (offline etc.)
     }
