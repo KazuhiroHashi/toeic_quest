@@ -25,8 +25,8 @@
                     midboss: 1, king1: 1, king2: 1, king3: 1, king4: 1,
                     boss: 1, lastboss: 1, ending: 1, gameover: 1 };
   var VOLUME = 0.55;
-  var STEP = 40;        // ms per fade tick
-  var FADE_IN = 0.30;   // seconds
+  var STEP = 40;        // ms per fade tick (fade-out only — a track always
+                        // starts at full volume, or its opening hit is lost)
 
   var enabled = true;
   try { enabled = localStorage.getItem("tq_bgm") !== "0"; } catch (e) {}
@@ -75,17 +75,6 @@
     if (el && loaded && !NO_RESUME[loaded]) { try { pos[loaded] = el.currentTime; } catch (e) {} }
   }
 
-  function fadeIn(a) {
-    clearInterval(ramp);
-    var v = 0, inc = VOLUME / (FADE_IN * 1000 / STEP);
-    a.volume = 0;
-    ramp = setInterval(function () {
-      v += inc;
-      if (v >= VOLUME) { clearInterval(ramp); ramp = null; a.volume = VOLUME; }
-      else a.volume = v;
-    }, STEP);
-  }
-
   function fadeOut() {
     if (!el) return;
     clearInterval(ramp);
@@ -100,9 +89,11 @@
   function startTrack(name) {
     if (!enabled || missing[name]) return;
     var a = audio();
+    clearInterval(ramp); ramp = null;   // cancel a fade-out still in progress
+    a.volume = VOLUME;
     if (loaded === name) {
       if (NO_RESUME[name]) { try { a.currentTime = 0; } catch (e) {} }
-      else if (!a.paused) { clearInterval(ramp); ramp = null; a.volume = VOLUME; return; }
+      else if (!a.paused) return;
     } else {
       remember();
       loaded = name;
@@ -116,7 +107,6 @@
         });
       }
     }
-    fadeIn(a);
     var p = a.play();
     if (p && p.catch) p.catch(function () { /* needs a gesture; retried on the next tap */ });
   }
