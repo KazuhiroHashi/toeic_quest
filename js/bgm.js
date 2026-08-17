@@ -1,9 +1,17 @@
-// TOEIC QUEST - BGM player (file-based)
-// Plays assets/bgm/<track>.mp3, looped, with a short fade on switch.
-// - field/town/dungeon/title resume from where they last stopped
-// - battle-type tracks (battle/battle2/battle_dungeon/midboss/boss) restart from 0
-// - playAny([..]) plays the first track that actually exists (missing files skip)
-// If a file is missing: silence (no fallback beeps).
+// TOEIC QUEST - BGM player (one shared <audio>, file- or data-URI-backed)
+// Plays assets/bgm/<track>.mp3, looped, with a short fade when switching.
+// - title/field/town/dungeon resume from where they last stopped
+// - battle-type tracks (battle/arena*/midboss/king*/boss/lastboss) restart from 0
+// - playAny([..]) plays the first track that actually exists (missing ones skip)
+// If a track is missing: silence (no fallback beeps).
+//
+// One element on purpose. iOS Safari only lets a media element begin playing
+// from a user gesture, and that permission sticks to the *element* — so the
+// element the player's first tap unlocked is the one that can later start the
+// battle theme, which begins on a timer rather than on a tap. For the same
+// reason nothing below waits for a load event before calling play(): iOS never
+// preloads, so canplaythrough does not fire until playback is asked for, and
+// waiting on it left the phone silent forever.
 (function () {
   "use strict";
 
@@ -17,95 +25,150 @@
                     midboss: 1, king1: 1, king2: 1, king3: 1, king4: 1,
                     boss: 1, lastboss: 1, ending: 1, gameover: 1 };
   var VOLUME = 0.55;
+  var STEP = 40;        // ms per fade tick
+  var FADE_IN = 0.30;   // seconds
 
   var enabled = true;
   try { enabled = localStorage.getItem("tq_bgm") !== "0"; } catch (e) {}
 
-  var cache = {};   // name -> HTMLAudioElement | "no"
-  var cur = null;   // current track name
-  var playing = null; // current Audio element
+  var el = null;      // the one audio element
+  var cur = null;     // track the game asked for
+  var loaded = null;  // track currently attached to the element
+  var missing = {};   // name -> true once its source failed to load
+  var pos = {};       // name -> seconds, for the resumable tracks
   var unlocked = false;
+  var onFail = null;  // playAny's "try the next one" continuation
+  var ramp = null;
 
-  function probe(name, cb) {
-    if (cache[name]) { cb(cache[name]); return; }
-    // inline/standalone build: only embedded tracks exist. Skip non-embedded ones
-    // instantly so playAny() falls back cleanly (a hosted relative path can stall
-    // instead of erroring, which previously caused silence for missing tracks).
-    if (window.BGM_ART && !window.BGM_ART[name]) { cache[name] = "no"; cb("no"); return; }
-    var a = new Audio();
-    a.preload = "auto";
-    a.loop = true;
-    a.volume = VOLUME;
-    a.oncanplaythrough = function () { a.oncanplaythrough = null; cache[name] = a; cb(a); };
-    a.onerror = function () { cache[name] = "no"; cb("no"); };
-    a.src = (window.BGM_ART && window.BGM_ART[name]) || (window.ASSET_BASE || "") + "assets/bgm/" + name + ".mp3";
+  function srcOf(name) {
+    return (window.BGM_ART && window.BGM_ART[name]) ||
+           (window.ASSET_BASE || "") + "assets/bgm/" + name + ".mp3";
   }
 
-  function fadeOut(a) {
-    if (!a) return;
-    var v = a.volume;
-    var iv = setInterval(function () {
-      v -= 0.08;
-      if (v <= 0) { clearInterval(iv); a.pause(); a.volume = VOLUME; }
+  // inline/standalone builds embed only some tracks, so a miss is known up front
+  function exists(name) {
+    if (missing[name]) return false;
+    if (window.BGM_ART && !window.BGM_ART[name]) { missing[name] = true; return false; }
+    return true;
+  }
+
+  function audio() {
+    if (el) return el;
+    el = new Audio();
+    el.preload = "auto";
+    el.loop = true;
+    el.volume = VOLUME;
+    el.addEventListener("error", function () {
+      var name = loaded;
+      if (!name) return;
+      missing[name] = true;
+      if (cur === name) {
+        cur = loaded = null;
+        var f = onFail; onFail = null;
+        if (f) f();   // fall through to the next candidate
+      }
+    });
+    return el;
+  }
+
+  function remember() {
+    if (el && loaded && !NO_RESUME[loaded]) { try { pos[loaded] = el.currentTime; } catch (e) {} }
+  }
+
+  function fadeIn(a) {
+    clearInterval(ramp);
+    var v = 0, inc = VOLUME / (FADE_IN * 1000 / STEP);
+    a.volume = 0;
+    ramp = setInterval(function () {
+      v += inc;
+      if (v >= VOLUME) { clearInterval(ramp); ramp = null; a.volume = VOLUME; }
       else a.volume = v;
-    }, 40);
+    }, STEP);
+  }
+
+  function fadeOut() {
+    if (!el) return;
+    clearInterval(ramp);
+    var a = el, v = a.volume;
+    ramp = setInterval(function () {
+      v -= 0.08;
+      if (v <= 0) { clearInterval(ramp); ramp = null; a.pause(); a.volume = VOLUME; }
+      else a.volume = v;
+    }, STEP);
   }
 
   function startTrack(name) {
-    probe(name, function (a) {
-      if (a === "no" || cur !== name || !enabled) return;
-      if (playing && playing !== a) fadeOut(playing);
-      playing = a;
-      a.volume = VOLUME;
+    if (!enabled || missing[name]) return;
+    var a = audio();
+    if (loaded === name) {
       if (NO_RESUME[name]) { try { a.currentTime = 0; } catch (e) {} }
-      var p = a.play();
-      if (p && p.catch) p.catch(function () { /* needs user gesture; retried on unlock */ });
-    });
+      else if (!a.paused) { clearInterval(ramp); ramp = null; a.volume = VOLUME; return; }
+    } else {
+      remember();
+      loaded = name;
+      a.src = srcOf(name);
+      var want = NO_RESUME[name] ? 0 : (pos[name] || 0);
+      if (want) {
+        // seeking before the metadata lands is ignored, so wait for just that
+        a.addEventListener("loadedmetadata", function once() {
+          a.removeEventListener("loadedmetadata", once);
+          if (loaded === name) { try { a.currentTime = want; } catch (e) {} }
+        });
+      }
+    }
+    fadeIn(a);
+    var p = a.play();
+    if (p && p.catch) p.catch(function () { /* needs a gesture; retried on the next tap */ });
   }
 
   function play(name) {
     if (TRACKS.indexOf(name) < 0) return;
+    onFail = null;   // a direct play() abandons any pending playAny fallback
     if (cur === name && !NO_RESUME[name]) {
-      if (enabled && unlocked && playing && playing.paused) startTrack(name);
+      if (enabled && unlocked && el && el.paused) startTrack(name);
       return;
     }
     cur = name;
     if (!enabled) return;
     if (unlocked) startTrack(name);
-    // if not unlocked yet, the gesture handler below starts it
+    // before the first gesture the handler at the bottom starts it
   }
 
-  // Play the first available track in the list (missing files are skipped).
+  // Play the first available track in the list (missing ones are skipped).
   function playAny(list) {
     var i = 0;
     (function tryNext() {
-      if (i >= list.length) return;
-      var name = list[i++];
-      if (TRACKS.indexOf(name) < 0) { tryNext(); return; }
-      probe(name, function (a) {
-        if (a === "no") { tryNext(); return; }
+      while (i < list.length) {
+        var name = list[i++];
+        if (TRACKS.indexOf(name) < 0 || !exists(name)) continue;
         play(name);
-      });
+        onFail = tryNext;   // a hosted file can still 404; error advances the list
+        return;
+      }
+      onFail = null;
     })();
   }
 
   function stop() {
-    if (playing) { fadeOut(playing); playing = null; }
+    onFail = null;
+    remember();
     cur = null;
+    fadeOut();
   }
 
   function setEnabled(v) {
     enabled = v;
     try { localStorage.setItem("tq_bgm", v ? "1" : "0"); } catch (e) {}
-    if (!v) stop();
+    if (!v) { var keep = cur; stop(); cur = keep; }  // keep it, so re-enabling resumes
     else if (cur) startTrack(cur);
   }
 
   // browsers require a user gesture before audio can start
   ["pointerdown", "keydown", "touchstart"].forEach(function (ev) {
     window.addEventListener(ev, function () {
+      var first = !unlocked;
       unlocked = true;
-      if (cur && enabled && (!playing || playing.paused)) startTrack(cur);
+      if (cur && enabled && (first || !el || el.paused)) startTrack(cur);
     }, { passive: true });
   });
 

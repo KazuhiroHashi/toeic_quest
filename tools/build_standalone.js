@@ -11,6 +11,12 @@ var root = path.join(__dirname, "..");
 var out = process.argv[2] || path.join(root, "dist", "toeic_quest.html");
 var artifactMode = process.argv.includes("--artifact");
 var noStory = process.argv.includes("--no-story");
+// OP/ED are 11MB of mp4 and are never embedded in a single-file build. Shipping
+// pmovie.js anyway meant the first tap went into a movie that could not load,
+// which swallowed that tap's user gesture — and on iOS the title theme then had
+// no gesture left to start on. Both call sites check window.PMOVIE, so dropping
+// the script simply skips the movies.
+var noMovie = process.argv.includes("--no-movie");
 var embedArg = process.argv.find(function (a) { return a.indexOf("--embed=") === 0; });
 var srcArg = process.argv.find(function (a) { return a.indexOf("--src=") === 0; });
 var srcHtml = srcArg ? path.resolve(srcArg.slice(6)) : path.join(root, "index.html");
@@ -36,6 +42,7 @@ if (noStory) {
 var scripts = [];
 var re = /<script src="([^"]+)"><\/script>/g, m;
 while ((m = re.exec(html))) {
+  if (noMovie && /pmovie\.js$/.test(m[1])) continue;
   scripts.push('<script>\n' + fs.readFileSync(path.join(srcDir, m[1]), "utf8") + "\n</script>");
 }
 if (embedArg) {
