@@ -10,6 +10,7 @@ var root = path.join(__dirname, "..");
 
 var out = process.argv[2] || path.join(root, "dist", "toeic_quest.html");
 var artifactMode = process.argv.includes("--artifact");
+var noStory = process.argv.includes("--no-story");
 var embedArg = process.argv.find(function (a) { return a.indexOf("--embed=") === 0; });
 var srcArg = process.argv.find(function (a) { return a.indexOf("--src=") === 0; });
 var srcHtml = srcArg ? path.resolve(srcArg.slice(6)) : path.join(root, "index.html");
@@ -25,6 +26,12 @@ while ((cm = cssRe.exec(html))) {
 
 // body content without the external script/link tags
 var body = html.match(/<body>([\s\S]*?)<script/)[1];
+if (noStory) {
+  // the story mode is unfinished and its art is not embedded — drop the entry
+  var b0 = body;
+  body = body.replace(/[ \t]*<div id="ptitle-foot">[\s\S]*?<\/div>\r?\n/, "");
+  if (body === b0) { console.error("! ptitle-foot が見つかりません"); process.exit(1); }
+}
 
 var scripts = [];
 var re = /<script src="([^"]+)"><\/script>/g, m;
@@ -37,8 +44,14 @@ if (embedArg) {
   scripts.unshift('<script>\n' + fs.readFileSync(path.resolve(embedArg.slice(8)), "utf8") + "\n</script>");
 }
 
+// artifact mode emits body content only, so the host supplies <head>; the game
+// still needs a phone viewport, so set it from script.
+var viewportFix = artifactMode
+  ? '<script>(function(){var m=document.querySelector(\'meta[name="viewport"]\')||document.head.appendChild(document.createElement("meta"));m.name="viewport";m.content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover";})();</script>\n'
+  : "";
+
 var core =
-  "<title>" + title + "</title>\n" +
+  "<title>" + title + "</title>\n" + viewportFix +
   "<style>\n" + css + "\n</style>\n" +
   body + "\n" +
   scripts.join("\n");
