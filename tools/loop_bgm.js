@@ -17,7 +17,7 @@ const fs = require("fs");
 const path = require("path");
 const { execFileSync, spawnSync } = require("child_process");
 
-const XF_DEFAULT = 1.2;   // seconds of tail→head crossfade
+const XF_DEFAULT = 0.6;   // seconds of tail→head crossfade
 const BITRATE = "192k";
 
 function ff(args) {
@@ -64,10 +64,16 @@ function makeSeamless(src, opts) {
   if (fadeAt < xf * 4) { console.error(`  ! ${path.basename(src)}: 短すぎて処理できません`); return null; }
 
   const tmp = path.join(require("os").tmpdir(), "loop_" + path.basename(src));
-  // body = [xf .. fadeAt]; its tail is crossfaded with the original head [0 .. xf],
-  // so playback wraps from the end of the file straight back onto [xf ...].
+  // body = [0 .. fadeAt]; its tail is crossfaded with the head [0 .. xf], so the
+  // end of the file flows back into its own beginning.
+  //
+  // Taking [xf .. fadeAt] instead gives a mathematically perfect seam — the file
+  // then wraps onto [xf ...] with no repeat — but it ROTATES the track: the song
+  // starts xf seconds in and its opening is only ever heard at the very end.
+  // That cost every battle theme its intro, which is heard on every encounter,
+  // to fix a seam that a player reaches once every few minutes. Never again.
   ff(["-i", src, "-i", src, "-filter_complex",
-      `[0:a]atrim=${xf.toFixed(3)}:${fadeAt.toFixed(3)},asetpts=N/SR/TB[a];` +
+      `[0:a]atrim=0:${fadeAt.toFixed(3)},asetpts=N/SR/TB[a];` +
       `[1:a]atrim=0:${xf.toFixed(3)},asetpts=N/SR/TB[b];` +
       `[a][b]acrossfade=d=${xf.toFixed(3)}:c1=tri:c2=tri` + (opts.gain ? `,volume=${opts.gain.toFixed(2)}dB` + (opts.gain > 0 ? ",alimiter=limit=0.977:attack=2:release=60:level=false" : "") : "") + `[out]`,
       "-map", "[out]", "-c:a", "libmp3lame", "-b:a", BITRATE, tmp]);
