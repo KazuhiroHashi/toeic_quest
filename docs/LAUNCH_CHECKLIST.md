@@ -58,7 +58,9 @@
 | 🧑 | Mac に Node.js ＋ Android Studio を導入 | ⬜ Xcodeは導入済み |
 | 🧑 | 署名付き AAB（Android）／ IPA（iOS）をビルド | ⬜ |
 | 🤖 | `party/js/pnative.js` の `testing: true` → `false` | ⬜ **ビルド直前に必ず**（忘れるとテスト広告のまま公開される） |
-| 🧑 | App Store Connect でアプリ登録＋ ¥600 の IAP `wordquest_unlock` 登録 | ⬜ |
+| 🧑 | App Store Connect / Play Console でアプリ登録 | ⬜ |
+| 🧑 | **サブスク `wordquest_premium_monthly`（月額¥500・自動更新）を両ストアに登録** | ⬜ Google Play は基本プラン（月額）も作る |
+| 🧑 | App Store Connect の「App情報」に**利用規約(EULA)のURL**を設定 | ⬜ https://bridge-ai-tokyo.com/wordquest/terms.html |
 | 🧑 | **Google Play クローズドテスト 12人 × 14日連続** | ⬜ **最長の待ち時間。ここが全体の締切を決める** |
 
 **12人×14日が critical path です。** 他が全部終わっていても、ここを始めてから最短2週間。
@@ -73,11 +75,12 @@
 | ゲーム本体（11戦＋挑戦の塔＋復習＋実績） | ✅ |
 | バンドルID `com.bridgeai.wordquest` | ✅ |
 | AdMob 広告ユニットID（Android / iOS 両方） | ✅ コードに反映済み |
-| 収益化（スタミナ5／広告で+3／¥600買い切り） | ✅ |
+| 収益化（スタミナ5／広告で+3／月額¥500サブスク） | ✅ |
 | アイコン・ロゴ・キービジュアル | ✅ |
 | **OP ムービー 27.1秒** | ✅ 1080×1920 / H.264+AAC |
 | **ED ムービー 24.5秒** | ✅ 同上 |
 | プライバシーポリシー | ✅ https://bridge-ai-tokyo.com/wordquest/privacy.html |
+| 利用規約（サブスク条件・解約方法を明記） | ✅ https://bridge-ai-tokyo.com/wordquest/terms.html |
 | ストア掲載文 | ✅ `docs/STORE_LISTING.md` |
 | 効果音 | ✅ 全参照ファイルが存在 |
 

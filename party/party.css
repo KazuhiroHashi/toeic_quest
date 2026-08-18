@@ -163,6 +163,14 @@
 .wq2-ad-bar > div { height: 100%; width: 0; background: linear-gradient(90deg, #ffd76a, #ff9f5a); animation: wq2adfill 1.6s linear forwards; }
 @keyframes wq2adfill { from { width: 0; } to { width: 100%; } }
 .wq2-ad-note { font-size: 10px; color: #8792b3; line-height: 1.5; }
+/* subscription disclosure — both stores require price, period, auto-renewal and
+   how to cancel to be legible on the screen that starts the purchase */
+.wq2-store-fine {
+  font-size: 10px; color: #a8b4d6; line-height: 1.6; text-align: left;
+  background: rgba(8, 11, 26, .6); border: 1px solid #2c3557; border-radius: 7px;
+  padding: 8px 10px; margin-bottom: 10px;
+}
+.wq2-store-fine a { color: #ffd76a; }
 
 /* ---------- 単語帳（word book）summary ---------- */
 .zk-total {

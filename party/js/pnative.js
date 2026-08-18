@@ -1,6 +1,6 @@
 // WORD QUEST - native bridge (Capacitor only; no-op on the web)
-// Overrides the WQ2_STORE mocks with real AdMob rewarded ads and the ¥600
-// non-consumable unlock (StoreKit / Play Billing via cordova-plugin-purchase).
+// Overrides the WQ2_STORE mocks with real AdMob rewarded ads and the ¥500/month
+// subscription (StoreKit / Play Billing via cordova-plugin-purchase).
 //
 // ── SETUP (fill these in when the AdMob / store consoles issue them) ──
 // 1) AdMob App IDs go in AndroidManifest.xml / Info.plist (see docs/NATIVE_WIRING.md)
@@ -12,8 +12,10 @@
     // ★ AdMobのリワード広告ユニットID
     rewardedAndroid: "ca-app-pub-3056251560404390/5134516956", // 本番（Bridge AI / WORD QUEST Android）
     rewardedIos:     "ca-app-pub-3056251560404390/7099435396", // 本番（Bridge AI / WORD QUEST iOS）
-    // ★ アプリ内課金：全解放（¥600・非消費型）。両ストアで同じIDで登録すること
-    productId: "wordquest_unlock",
+    // ★ アプリ内課金：プレミアム（月額¥500・自動更新サブスク）
+    //   両ストアで同じIDで登録すること。Google Play では基本プラン（月額）を
+    //   この商品の下に作る
+    productId: "wordquest_premium_monthly",
     // 開発中は true（テスト広告のみ表示・誤タップBAN防止）。本番公開時のみ false
     testing: true,
     // 非パーソナライズ広告で運用する。ATTの許可ダイアログを出さない代わりに
@@ -55,36 +57,55 @@
     };
   }
 
-  // ---------- ¥600 unlock (cordova-plugin-purchase v13: window.CdvPurchase) ----------
+  // ---------- ¥500/月 subscription (cordova-plugin-purchase v13: window.CdvPurchase) ----------
   document.addEventListener("deviceready", function () {
     var CP = window.CdvPurchase;
     if (!CP || !CP.store) return;
     var store = CP.store;
     var PLATFORM = platform === "ios" ? CP.Platform.APPLE_APPSTORE : CP.Platform.GOOGLE_PLAY;
-    store.register([{ id: CONFIG.productId, type: CP.ProductType.NON_CONSUMABLE, platform: PLATFORM }]);
-    store.when()
-      .approved(function (tx) { tx.verify(); })
-      .verified(function (receipt) { receipt.finish(); grantUnlock(); });
-    store.initialize([PLATFORM]).then(function () {
-      // restore: if already owned (reinstall/new device), unlock silently
-      var p = store.get(CONFIG.productId, PLATFORM);
-      if (p && p.owned) grantUnlock();
-    });
+    store.register([{ id: CONFIG.productId, type: CP.ProductType.PAID_SUBSCRIPTION, platform: PLATFORM }]);
 
-    function grantUnlock() {
+    // A subscription can lapse, so the receipt — not a stored flag — decides.
+    // Re-read it whenever the plugin reports a change and whenever the app comes
+    // back to the foreground (that is when a renewal or a cancellation lands).
+    function syncFromReceipt() {
+      var p = store.get(CONFIG.productId, PLATFORM);
+      var active = !!(p && p.owned);
+      var until = 0;
       try {
-        var raw = JSON.parse(localStorage.getItem("wq2_store_v1") || "{}");
-        raw.premium = true;
-        localStorage.setItem("wq2_store_v1", JSON.stringify(raw));
+        // expiry lives on the transaction; shape differs slightly per store
+        (store.localTransactions || []).forEach(function (tx) {
+          if (!tx.products || !tx.products.some(function (x) { return x.id === CONFIG.productId; })) return;
+          var e = tx.expirationDate || tx.expiryDate;
+          if (e) until = Math.max(until, new Date(e).getTime());
+        });
       } catch (e) {}
-      if (window.WQ2_STORE) window.WQ2_STORE._grantPremium && window.WQ2_STORE._grantPremium();
-      location.reload(); // simplest way to re-read premium state everywhere
+      if (window.WQ2_STORE && window.WQ2_STORE._setPremium) window.WQ2_STORE._setPremium(active, until);
+      return active;
     }
 
-    window.WQ2_STORE.buyUnlock = function (cb) {
-      var offer = store.get(CONFIG.productId, PLATFORM) && store.get(CONFIG.productId, PLATFORM).getOffer();
+    store.when()
+      .approved(function (tx) { tx.verify(); })
+      .verified(function (receipt) { receipt.finish(); syncFromReceipt(); })
+      .unverified(function () { syncFromReceipt(); })
+      .productUpdated(syncFromReceipt)
+      .receiptUpdated(syncFromReceipt);
+
+    store.initialize([PLATFORM]).then(syncFromReceipt);
+    document.addEventListener("resume", function () {
+      store.update().then(syncFromReceipt).catch(function () {});
+    }, false);
+
+    window.WQ2_STORE.buyPremium = function (cb) {
+      var p = store.get(CONFIG.productId, PLATFORM);
+      var offer = p && p.getOffer();
       if (!offer) { cb(false); return; }
-      offer.order().then(function () { cb(true); }).catch(function () { cb(false); });
+      offer.order().then(function () { cb(syncFromReceipt()); }).catch(function () { cb(false); });
+    };
+
+    // Apple requires an explicit restore path for subscriptions
+    window.WQ2_STORE.restore = function (cb) {
+      store.restorePurchases().then(function () { cb(syncFromReceipt()); }).catch(function () { cb(false); });
     };
   });
 })();

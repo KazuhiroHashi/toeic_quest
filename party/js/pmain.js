@@ -658,7 +658,7 @@
     var el = $("ptitle-stamina"), ub = $("pbtn-unlock");
     if (!window.WQ2_STORE) { if (el) el.style.display = "none"; if (ub) ub.style.display = "none"; return; }
     if (WQ2_STORE.isPremium()) {
-      if (el) el.innerHTML = "★ 全解放ずみ（広告オフ）";
+      if (el) el.innerHTML = "★ プレミアム加入中（広告オフ）";
       if (ub) ub.style.display = "none";
     } else {
       if (el) el.innerHTML = "⚡ 本日のプレイ　" + WQ2_STORE.stamina() + " ／ " + WQ2_STORE.max();
@@ -667,7 +667,7 @@
   }
   if ($("pbtn-unlock")) $("pbtn-unlock").addEventListener("click", function () {
     $("pbtn-unlock").blur();
-    if (window.WQ2_STORE) WQ2_STORE.buyUnlock(function (ok) { if (ok) refreshStamina(); });
+    if (window.WQ2_STORE) WQ2_STORE.buyPremium(function (ok) { if (ok) refreshStamina(); });
   });
   $("pbtn-diff").addEventListener("click", function () {
     $("pbtn-diff").blur();
