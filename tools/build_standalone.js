@@ -18,6 +18,9 @@ var noStory = process.argv.includes("--no-story");
 // the script simply skips the movies.
 var noMovie = process.argv.includes("--no-movie");
 var embedArg = process.argv.find(function (a) { return a.indexOf("--embed=") === 0; });
+// --stamp: show which build is actually running, so "直っていない" can be told
+// apart from "古いページがキャッシュされている" without guessing.
+var stampArg = process.argv.find(function (a) { return a.indexOf("--stamp=") === 0; });
 var srcArg = process.argv.find(function (a) { return a.indexOf("--src=") === 0; });
 var srcHtml = srcArg ? path.resolve(srcArg.slice(6)) : path.join(root, "index.html");
 var srcDir = path.dirname(srcHtml);
@@ -57,10 +60,17 @@ var viewportFix = artifactMode
   ? '<script>(function(){var m=document.querySelector(\'meta[name="viewport"]\')||document.head.appendChild(document.createElement("meta"));m.name="viewport";m.content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover";})();</script>\n'
   : "";
 
+var stamp = stampArg
+  ? '<div id="wq-build">' + stampArg.slice(8).replace(/[<&]/g, "") + "</div>\n" +
+    "<style>#wq-build{position:fixed;right:5px;bottom:3px;z-index:99999;" +
+    "font:10px/1.2 ui-monospace,monospace;color:#fff;opacity:.4;pointer-events:none;" +
+    "text-shadow:0 1px 2px #000}</style>\n"
+  : "";
+
 var core =
   "<title>" + title + "</title>\n" + viewportFix +
   "<style>\n" + css + "\n</style>\n" +
-  body + "\n" +
+  body + "\n" + stamp +
   scripts.join("\n");
 
 var doc = artifactMode ? core :

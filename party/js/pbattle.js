@@ -717,7 +717,7 @@
         else BGM.playAny(Math.random() < 0.5 ? ["battle", "battle2"] : ["battle2", "battle"]);
       };
       if (cue && cue.addEventListener) {
-        cue.addEventListener("ended", function () { setTimeout(startMusic, 300); }, { once: true });
+        cue.addEventListener("ended", function () { setTimeout(startMusic, 500); }, { once: true });
       }
       setTimeout(startMusic, 2200);
     }
