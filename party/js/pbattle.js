@@ -675,6 +675,16 @@
 
   // ================= main loop =================
   async function start(encounter) {
+    // free tier: a full-screen ad before every encounter. Premium skips it.
+    // Guarded by a timeout because a stalled ad SDK must never trap the player
+    // on a blank screen — if it has not returned in 6s the battle just starts.
+    if (window.WQ2_STORE && WQ2_STORE.adBeforeBattle) {
+      await Promise.race([
+        WQ2_STORE.adBeforeBattle(),
+        new Promise(function (r) { setTimeout(r, 6000); })
+      ]).catch(function () {});
+    }
+
     party = window.PBATTLE.getParty();
     foes = encounter.enemies.map(function (e) {
       var f = Object.assign({ phase: 0, charging: false, maxhp: e.hp }, e);

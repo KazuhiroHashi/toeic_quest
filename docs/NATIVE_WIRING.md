@@ -47,7 +47,7 @@ npm run cap:sync   # ネイティブに同期
 
 ## 実装の仕組み（参考）
 - `WQ2_STORE.showRewarded(cb)` … Webはデモ広告→cb(true)。ネイティブは
-  AdMobリワードを表示し、**動画を最後まで見た時だけ** cb(true)（＝復活/スタミナ+3）。
+  AdMobリワードを表示し、**動画を最後まで見た時だけ** cb(true)（＝復活/スタミナ+1）。
   在庫なし/オフライン時は cb(false)（UIは「今は見られない」扱いで安全に閉じる）。
 - `WQ2_STORE.buyPremium(cb)` … Webはデモ。ネイティブはストア購入シートを表示、
   購入検証→`premium=true` 保存→リロードで全画面に反映。

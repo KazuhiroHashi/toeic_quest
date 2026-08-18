@@ -10,8 +10,8 @@
 (function () {
   "use strict";
   var KEY = "wq2_store_v1";
-  var MAX = 5;        // 無料の1日あたり挑戦回数（スタミナ）
-  var AD_REFILL = 3;  // リワード広告1回で回復するスタミナ
+  var MAX = 1;        // 無料の1日あたり挑戦回数（スタミナ）
+  var AD_REFILL = 1;  // リワード広告1回で回復するスタミナ
   var PRICE = "¥500";
   // grace period after the cached expiry before premium is dropped, so a
   // renewal that has not been observed yet (offline, slow receipt refresh)
@@ -89,13 +89,13 @@
   }
 
   // ---- mock rewarded-ad playback screen (native build overrides showRewarded) ----
-  function adScreen() {
+  function adScreen(tag) {
     return new Promise(function (resolve) {
       var wrap = document.createElement("div");
       wrap.className = "wq2-store-ovl";
       wrap.innerHTML =
         '<div class="wq2-store-panel dq-window">' +
-        '<div class="wq2-ad-tag">広告（デモ）</div>' +
+        '<div class="wq2-ad-tag">' + (tag || "広告") + '（デモ）</div>' +
         '<div class="wq2-ad-body">📺 動画広告を 再生中…</div>' +
         '<div class="wq2-ad-bar"><div></div></div>' +
         '<div class="wq2-ad-note">※実際の広告は 公開版で表示されます</div>' +
@@ -133,6 +133,17 @@
 
     // rewarded video. cb(true) on completed view. NATIVE OVERRIDES THIS.
     showRewarded: function (cb) { adScreen().then(function () { cb(true); }); },
+
+    // full-screen interstitial, shown between battles on the free tier.
+    // NATIVE OVERRIDES THIS. Must never block: if no ad is ready the callback
+    // fires straight away and the battle starts as normal.
+    showInterstitial: function (cb) { adScreen("広告").then(function () { cb(); }); },
+
+    // called by the battle engine before every encounter
+    adBeforeBattle: function () {
+      if (premiumActive()) return Promise.resolve();
+      return new Promise(function (r) { api.showInterstitial(function () { r(); }); });
+    },
 
     // monthly subscription. cb(true) on success. NATIVE OVERRIDES THIS.
     // Both stores require the price, the renewal period, the auto-renewal notice

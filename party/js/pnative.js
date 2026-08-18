@@ -12,6 +12,12 @@
     // ★ AdMobのリワード広告ユニットID
     rewardedAndroid: "ca-app-pub-3056251560404390/5134516956", // 本番（Bridge AI / WORD QUEST Android）
     rewardedIos:     "ca-app-pub-3056251560404390/7099435396", // 本番（Bridge AI / WORD QUEST iOS）
+    // ★★ 未設定：インタースティシャル（戦闘前に出す全画面広告）のユニットID。
+    //   いまは Google 公式のテスト用IDが入っている。AdMob の管理画面で
+    //   「インタースティシャル」を Android / iOS それぞれ作成して差し替えること。
+    //   差し替えないまま testing:false にすると広告収益が発生しない。
+    interstitialAndroid: "ca-app-pub-3940256099942544/1033173712", // Google テスト用
+    interstitialIos:     "ca-app-pub-3940256099942544/4411468910", // Google テスト用
     // ★ アプリ内課金：プレミアム（月額¥500・自動更新サブスク）
     //   両ストアで同じIDで登録すること。Google Play では基本プラン（月額）を
     //   この商品の下に作る
@@ -28,6 +34,7 @@
 
   var platform = cap.getPlatform ? cap.getPlatform() : "android";
   var rewardedId = platform === "ios" ? CONFIG.rewardedIos : CONFIG.rewardedAndroid;
+  var interstitialId = platform === "ios" ? CONFIG.interstitialIos : CONFIG.interstitialAndroid;
 
   // ---------- AdMob rewarded (@capacitor-community/admob) ----------
   var AdMob = cap.Plugins && cap.Plugins.AdMob;
@@ -54,6 +61,32 @@
       if (!adReady) { cb(false); prepare(); return; } // no fill / offline: fail gracefully
       rewardCb = cb;
       AdMob.showRewardVideoAd().catch(function () { if (rewardCb) { var c = rewardCb; rewardCb = null; c(false); } });
+    };
+
+    // ---------- interstitial (free tier: one before every battle) ----------
+    var interReady = false, interCb = null;
+    function prepareInter() {
+      AdMob.prepareInterstitial({ adId: interstitialId, isTesting: CONFIG.testing, npa: CONFIG.nonPersonalized })
+        .then(function () { interReady = true; })
+        .catch(function () { interReady = false; setTimeout(prepareInter, 30000); });
+    }
+    prepareInter();
+
+    function interDone() {
+      if (interCb) { var c = interCb; interCb = null; c(); }
+      interReady = false;
+      prepareInter();   // load the next one for the following battle
+    }
+    AdMob.addListener("interstitialAdDismissed", interDone);
+    AdMob.addListener("interstitialAdFailedToShow", interDone);
+    AdMob.addListener("interstitialAdFailedToLoad", function () { interReady = false; setTimeout(prepareInter, 30000); });
+
+    window.WQ2_STORE.showInterstitial = function (cb) {
+      // nothing loaded (offline, no fill, first battle after launch): do not
+      // make the player wait — start the battle and load one for next time
+      if (!interReady) { cb(); prepareInter(); return; }
+      interCb = cb;
+      AdMob.showInterstitial().catch(interDone);
     };
   }
 
