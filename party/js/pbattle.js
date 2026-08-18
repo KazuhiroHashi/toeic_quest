@@ -19,6 +19,7 @@
       if (!a) { a = sfxCache[name] = new Audio(src); a.volume = 0.7; }
       a.currentTime = 0;
       var p = a.play(); if (p && p.catch) p.catch(function () {});
+      return a;
     } catch (e) {}
   }
 
@@ -699,16 +700,27 @@
     renderEnemies(); renderParty(-1); chainBadge();
 
     var isBoss = anyBoss();
+    var cue = sfx(isBoss ? "boss" : "encounter");
     if (window.BGM) {
       BGM.stop();
-      setTimeout(function () {
+      // Let the appearance cue finish before the music comes in, then leave a
+      // beat of silence — otherwise the cue's tail sits on top of the track's
+      // intro and the first bar is lost. The timer is the fallback for when the
+      // cue never loads (its "ended" would never fire).
+      var armed = false;
+      var startMusic = function () {
+        if (armed) return;
+        armed = true;
         if (screenEl.style.display === "none") return;
         if (encounter.bgm) BGM.playAny(isBoss ? [encounter.bgm, "boss", "midboss"] : [encounter.bgm, "battle", "battle2"]); // missing files fall back
         else if (isBoss) BGM.playAny(["midboss", "boss"]);
         else BGM.playAny(Math.random() < 0.5 ? ["battle", "battle2"] : ["battle2", "battle"]);
-      }, 1000);
+      };
+      if (cue && cue.addEventListener) {
+        cue.addEventListener("ended", function () { setTimeout(startMusic, 300); }, { once: true });
+      }
+      setTimeout(startMusic, 2200);
     }
-    sfx(isBoss ? "boss" : "encounter");
     await say(foes.map(function (f) { return f.name; }).join("と ") + "が あらわれた！");
     if (encounter.intro) for (var ii = 0; ii < encounter.intro.length; ii++) await say(encounter.intro[ii]);
 

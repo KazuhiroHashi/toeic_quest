@@ -25,7 +25,7 @@ var IMG = {
 };
 var BGM_SECONDS = 60;      // one loop is plenty for a preview
 var BGM_BITRATE = "48k";
-var BGM_XF = 1.2;          // tail->head crossfade so the short loop still joins
+var BGM_XF = 0.6;          // tail->head crossfade so the short loop still joins
 var SFX_BITRATE = "48k";
 
 var FFMPEG = (function () {
@@ -70,10 +70,12 @@ function music(src) {
     total += fs.statSync(dst).size;
     return dataUri(dst, "audio/mpeg");
   }
-  var d = Math.min(BGM_SECONDS + BGM_XF, len);
-  // [xf..d] with the head faded in over its tail, so looping the clip joins cleanly
+  // [0..len] with the head mixed into its own tail, so the clip both starts on
+  // the real intro and joins when it loops. Taking [xf..len] instead would give
+  // a perfect seam, but it rotates the track — every battle theme then began a
+  // bar late, with its opening moved to the end.
   ff(["-i", src, "-i", src, "-filter_complex",
-      "[0:a]atrim=" + BGM_XF + ":" + d.toFixed(2) + ",asetpts=N/SR/TB[a];" +
+      "[0:a]atrim=0:" + BGM_SECONDS + ",asetpts=N/SR/TB[a];" +
       "[1:a]atrim=0:" + BGM_XF + ",asetpts=N/SR/TB[b];" +
       "[a][b]acrossfade=d=" + BGM_XF + ":c1=tri:c2=tri[o]",
       "-map", "[o]", "-ac", "1", "-c:a", "libmp3lame", "-b:a", BGM_BITRATE, dst]);
