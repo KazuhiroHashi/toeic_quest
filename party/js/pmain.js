@@ -7,12 +7,15 @@
 
   // minimal state for quiz.js (study log + combo)
   window.G = { study: { missed: {}, answered: 0, correct: 0 }, combo: 0 };
+  // 学習記録は出題範囲ごとに別々。TOEICで覚えた語と中学の語を同じ記録に
+  // 混ぜると、単語帳も称号も何を表しているのか読めなくなる
+  function studyKey() { return window.WQ2_MODE ? WQ2_MODE.studyKey() : "wq2_study_v1"; }
   try {
-    var st = localStorage.getItem("wq2_study_v1");
+    var st = localStorage.getItem(studyKey());   // TOEICは従来キーのまま＝既存の記録を引き継ぐ
     if (st) window.G.study = JSON.parse(st);
   } catch (e) {}
   function saveStudy() {
-    try { localStorage.setItem("wq2_study_v1", JSON.stringify(window.G.study)); } catch (e) {}
+    try { localStorage.setItem(studyKey(), JSON.stringify(window.G.study)); } catch (e) {}
   }
 
   // total distinct words cleared (answered correctly at least once) out of all 3000
@@ -462,7 +465,7 @@
     if (window.BGM) BGM.stop();
     $("pbattle-screen").style.display = "none"; // clear the battle layer so the title/zukan show cleanly
     $("ptitle-screen").style.display = "flex";
-    refreshStamina(); refreshArenaBtn(); refreshReviewBtn(); refreshTowerBtn();
+    refreshStamina(); refreshArenaBtn(); refreshReviewBtn(); refreshTowerBtn(); refreshModeBtn();
     if (window.BGM) BGM.playAny(["title"]);
   }
 
@@ -566,8 +569,10 @@
     var tr = window.trophyFor(pg.cleared);
     var medals = [400, 500, 600, 700, 800, 900].map(function (b) {
       var t = window.trophyFor(perBand[b]);
+      var nm = window.WQ2_MODE ? WQ2_MODE.bandName(b) : String(b);
+      var sz = window.WQ2_MODE ? WQ2_MODE.bandSize(b) : 500;
       return '<div class="achv-medal ' + t.cls + '"><div class="achv-ic">' + (t.icon || "🔒") + '</div>' +
-        '<div class="achv-lv">' + b + '</div><div class="achv-n">' + perBand[b] + '/500</div></div>';
+        '<div class="achv-lv">' + nm + '</div><div class="achv-n">' + perBand[b] + '/' + (sz || 500) + '</div></div>';
     }).join("");
     var rows = [
       ["📚 覚えた単語", pg.cleared + " / " + pg.total + " 語"],
@@ -669,6 +674,15 @@
     $("pbtn-unlock").blur();
     if (window.WQ2_STORE) WQ2_STORE.buyPremium(function (ok) { if (ok) refreshStamina(); });
   });
+  function refreshModeBtn() {
+    var b = $("pbtn-mode");
+    if (!b || !window.WQ2_MODE) return;
+    b.querySelector(".tx").textContent = "出題：" + WQ2_MODE.label();
+  }
+  if ($("pbtn-mode")) $("pbtn-mode").addEventListener("click", function () {
+    $("pbtn-mode").blur();
+    if (window.WQ2_MODE) WQ2_MODE.open().then(refreshModeBtn);
+  });
   $("pbtn-diff").addEventListener("click", function () {
     $("pbtn-diff").blur();
     window.WQ2_EASY = !window.WQ2_EASY;
@@ -769,6 +783,7 @@
   refreshStreak();
   refreshArenaBtn();
   refreshTowerBtn();
+  refreshModeBtn();
 
   // Opening: browsers block audio until a user gesture, and the first tap is
   // usually a menu button that jumps straight into battle — so the title theme

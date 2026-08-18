@@ -407,3 +407,9 @@
   opacity: 0; pointer-events: none; transition: opacity .3s;
 }
 .pmovie-skip.show { opacity: 1; pointer-events: auto; }
+/* 出題範囲の選択（学年ボタンの補足行） */
+.wq2-mode-sub {
+  display: block; margin-top: 3px; font-size: 10px; letter-spacing: 0;
+  color: #9fb0d8; font-weight: normal;
+}
+.wq2-store-btn.primary .wq2-mode-sub { color: #ffe6b0; }
