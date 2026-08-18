@@ -674,8 +674,12 @@
   }
 
   // ================= main loop =================
+  // damage carried into a continue: { enc, frac[] } — remaining HP of each foe
+  // as a fraction of its max, captured at the moment the party fell
+  var carry = null;
+
   async function start(encounter) {
-    // free tier: a full-screen ad before every encounter. Premium skips it.
+    // free tier: a full-screen ad every few battles. Premium skips it.
     // Guarded by a timeout because a stalled ad SDK must never trap the player
     // on a blank screen — if it has not returned in 6s the battle just starts.
     if (window.WQ2_STORE && WQ2_STORE.adBeforeBattle) {
@@ -686,6 +690,12 @@
     }
 
     party = window.PBATTLE.getParty();
+    // Continuing after a defeat: the enemies keep HALF the damage they had
+    // already taken, so a boss you had nearly finished comes back at ~50% HP
+    // and never any lower. Stored as a fraction of max so it survives the
+    // easy-mode HP scaling applied below.
+    var keep = (carry && carry.enc === encounter) ? carry.frac : null;
+    carry = null;
     foes = encounter.enemies.map(function (e) {
       var f = Object.assign({ phase: 0, charging: false, maxhp: e.hp }, e);
       if (window.WQ2_EASY) { // やさしいモード: 敵の攻撃とHPを控えめに
@@ -694,6 +704,10 @@
         if (f.mag) f.mag = Math.round(f.mag * 0.72);
       }
       return f;
+    });
+    if (keep) foes.forEach(function (f, i) {
+      // frac 0 (was defeated) -> half HP; frac 1 (untouched) -> full HP
+      f.hp = Math.max(1, Math.ceil(f.maxhp * (1 + (keep[i] || 0)) / 2));
     });
     // base difficulty of normal attacks this battle (spells set their own)
     battleQuizLv = encounter.quizLv || (foes[0] ? foes[0].lv : 500);
@@ -807,6 +821,8 @@
         }
       }
     } else if (result === "lose") {
+      // remember how far the party got, for the half-damage continue
+      carry = { enc: encounter, frac: foes.map(function (f) { return Math.max(0, f.hp) / f.maxhp; }) };
       if (window.BGM) { BGM.stop(); BGM.playAny(["gameover"]); } // 全滅曲（無ければ無音）
       await say("ぜんめつしてしまった…");
     }

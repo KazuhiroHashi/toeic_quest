@@ -12,6 +12,7 @@
   var KEY = "wq2_store_v1";
   var MAX = 1;        // 無料の1日あたり挑戦回数（スタミナ）
   var AD_REFILL = 1;  // リワード広告1回で回復するスタミナ
+  var AD_EVERY = 2;   // 無料版で全画面広告を出す間隔（何戦ごとか）
   var PRICE = "¥500";
   // grace period after the cached expiry before premium is dropped, so a
   // renewal that has not been observed yet (offline, slow receipt refresh)
@@ -43,6 +44,8 @@
     }
     return true;
   }
+
+  var skipNextAd = false;   // set after a rewarded revive, so two ads never stack
 
   function screenEl() { return document.getElementById("screen") || document.body; }
 
@@ -139,9 +142,17 @@
     // fires straight away and the battle starts as normal.
     showInterstitial: function (cb) { adScreen("広告").then(function () { cb(); }); },
 
-    // called by the battle engine before every encounter
+    // Called by the battle engine before every encounter. Shows a full-screen ad
+    // once every AD_EVERY battles — the first battle starts straight away, then
+    // one before every second battle after that. The counter is persisted so
+    // quitting and relaunching does not reset the cadence.
     adBeforeBattle: function () {
       if (premiumActive()) return Promise.resolve();
+      state.battles = (state.battles || 0) + 1;
+      // never stack an interstitial straight after a rewarded revive
+      if (skipNextAd) { skipNextAd = false; save(); return Promise.resolve(); }
+      save();
+      if (state.battles % AD_EVERY !== 0) return Promise.resolve();
       return new Promise(function (r) { api.showInterstitial(function () { r(); }); });
     },
 
@@ -189,19 +200,31 @@
 
     // defeat -> offer a continue. resolves true if the player continues.
     offerContinue: function () {
+      // The revive rule is only ever read here, so spell it out plainly:
+      // the player keeps half of the damage they had already dealt.
+      var rule =
+        '<div class="wq2-store-rule">' +
+        '<div class="wq2-store-rule-h">復活すると こうなります</div>' +
+        '・パーティは <b>全回復</b><br>' +
+        '・敵は <b>あたえた ダメージの 半分</b>を<br>　受けたままで 再開<br>' +
+        '<div class="wq2-store-rule-n">あと一歩まで 追いつめた 相手ほど<br>' +
+        '弱った状態から 始まります。<br>敵のHPは 最大でも 半分までしか 戻りません。</div>' +
+        '</div>';
       if (premiumActive()) {
         return overlay(
           '<div class="wq2-store-h">たおれてしまった…</div>' +
-          '<div class="wq2-store-p">その場で 全回復して<br>もう一度 挑みますか？</div>',
+          '<div class="wq2-store-p">その場で もう一度 挑みますか？</div>' + rule,
           [{ key: "yes", label: "コンティニュー", primary: true }, { key: "no", label: "タイトルへ" }]
         ).then(function (k) { return k === "yes"; });
       }
       return overlay(
         '<div class="wq2-store-h">たおれてしまった…</div>' +
-        '<div class="wq2-store-p">広告を見れば その場で<br>全回復して 続けられます。</div>',
+        '<div class="wq2-store-p">広告を見れば その場で 復活できます。</div>' + rule,
         [{ key: "ad", label: "📺 広告を見て 復活", primary: true }, { key: "no", label: "タイトルへ" }]
       ).then(function (k) {
-        if (k === "ad") return new Promise(function (r) { api.showRewarded(function () { r(true); }); });
+        if (k === "ad") return new Promise(function (r) {
+          api.showRewarded(function () { skipNextAd = true; r(true); });
+        });
         return false;
       });
     }
