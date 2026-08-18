@@ -61,7 +61,16 @@ function image(src, cfg) {
 }
 function music(src) {
   var dst = path.join(TMP, "a.mp3");
-  var d = Math.min(BGM_SECONDS + BGM_XF, duration(src));
+  var len = duration(src);
+  // A track already short enough needs no cut, and rotating it by BGM_XF would
+  // only move its opening to the end — which is exactly what it did to the 6秒
+  // victory fanfare, so the fanfare came in 1.2s late with no attack.
+  if (len <= BGM_SECONDS) {
+    ff(["-i", src, "-ac", "1", "-c:a", "libmp3lame", "-b:a", BGM_BITRATE, dst]);
+    total += fs.statSync(dst).size;
+    return dataUri(dst, "audio/mpeg");
+  }
+  var d = Math.min(BGM_SECONDS + BGM_XF, len);
   // [xf..d] with the head faded in over its tail, so looping the clip joins cleanly
   ff(["-i", src, "-i", src, "-filter_complex",
       "[0:a]atrim=" + BGM_XF + ":" + d.toFixed(2) + ",asetpts=N/SR/TB[a];" +
