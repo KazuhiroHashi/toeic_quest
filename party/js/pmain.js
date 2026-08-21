@@ -679,6 +679,17 @@
     if (!b || !window.WQ2_MODE) return;
     b.querySelector(".tx").textContent = "出題：" + WQ2_MODE.label();
   }
+  // 出題範囲が変わったとき pvocab.js から呼ばれる。学習記録は範囲ごとに
+  // 別なので読み直し、タイトルの表示を作り直す（画面の再読み込みはしない）
+  window.WQ2_ON_MODE_CHANGE = function () {
+    window.G.study = { missed: {}, answered: 0, correct: 0 };
+    try {
+      var s = localStorage.getItem(studyKey());
+      if (s) window.G.study = JSON.parse(s);
+    } catch (e) {}
+    refreshModeBtn(); refreshStamina(); refreshArenaBtn();
+    refreshReviewBtn(); refreshTowerBtn(); refreshRecords();
+  };
   if ($("pbtn-mode")) $("pbtn-mode").addEventListener("click", function () {
     $("pbtn-mode").blur();
     if (window.WQ2_MODE) WQ2_MODE.open().then(refreshModeBtn);

@@ -134,8 +134,8 @@
     );
   }
 
-  // 変更したら読み込み直す。学習記録も出題語も総取り替えになるので、
-  // 画面ごとに差分を当てるより確実
+  // 変更はその場で反映する。以前は location.reload() していたが、読み込み直すと
+  // タイトル画像が出るまでの背景グラデーションが一瞬見えてしまう
   function open() {
     return chooseMode().then(function (m) {
       if (m === "toeic") return { mode: "toeic", grade: state.grade };
@@ -146,14 +146,24 @@
     }).then(function (next) {
       if (!next) return false;
       var changed = next.mode !== state.mode || (next.mode === "student" && next.grade !== state.grade);
+      var first = !chosen;
       state = next;
+      chosen = true;
       try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
-      if (changed || !chosen) { chosen = true; location.reload(); return true; }
-      return false;
+      if (changed || first) {
+        apply();
+        // 学習記録は範囲ごとに別ファイルなので、pmain 側で読み直してもらう
+        if (window.WQ2_ON_MODE_CHANGE) window.WQ2_ON_MODE_CHANGE();
+      }
+      return changed;
     });
   }
 
   apply();
+
+  // 初回起動：まだ選んでいなければ出題範囲をたずねる。pmain.js が
+  // タイトルを組み立て終わってから出したいので1tick遅らせる
+  if (!chosen) setTimeout(function () { open(); }, 0);
 
   window.WQ2_MODE = {
     get: function () { return { mode: state.mode, grade: state.grade }; },
