@@ -45,9 +45,27 @@
     return null;
   }
 
-  // 6段階に k個のプールを均等に割り当てる（k=1なら全段階が同じ、k=3なら2段階ずつ）
-  function poolForBand(pools, i) {
-    return pools[Math.min(pools.length - 1, Math.floor(i * pools.length / BANDS.length))];
+  // 各段階の配合。1段階＝1学年にすると、出題範囲が狭いうえに、闘技場が実際に
+  // 使う段階が下寄り（400×2 500×2 600×3 700×3 800×1 900×0）なので、選んだ学年の
+  // 単語が最終戦にしか出なかった。そこで段階ごとに「選んだ学年」と「その下」を
+  // 混ぜ、進むほど選んだ学年の比率を上げる。
+  //   数値は目標学年からの距離ぶん：[その学年, 1つ下, 2つ下]
+  var MIX = [
+    [0.20, 0.40, 0.40],   // 段階400（第1・2戦）
+    [0.35, 0.40, 0.25],   // 段階500（第3・4戦）
+    [0.55, 0.33, 0.12],   // 段階600（第5〜7戦）
+    [0.70, 0.22, 0.08],   // 段階700（第8〜10戦）
+    [0.80, 0.15, 0.05],   // 段階800（第11戦）
+    [0.90, 0.10, 0.00]    // 段階900（挑戦の塔の高層）
+  ];
+
+  // 使えるプールが3つ未満なら、届かないぶんの比率を一番下のプールへ寄せる
+  function mixFor(k, bandIndex) {
+    var raw = MIX[bandIndex], w = [], d;
+    for (d = 0; d < k; d++) w[d] = raw[Math.min(d, raw.length - 1)];
+    for (d = k; d < raw.length; d++) w[k - 1] += raw[d];
+    var sum = w.reduce(function (a, b) { return a + b; }, 0);
+    return w.map(function (x) { return x / sum; });
   }
 
   var state = { mode: "toeic", grade: "j3" };
@@ -57,22 +75,47 @@
     if (raw && raw.mode) { state = raw; chosen = true; }
   } catch (e) {}
 
-  var bandName = {};   // 400..900 -> 表示名
+  var bandName = {};   // 400..900 -> 表示名（その段階で主役になる学年）
+  var bandTotal = {};  // 400..900 -> 主役の学年の語数（称号の分母）
+  var allWords = 0;    // その出題範囲で出うる単語の総数（重複なし）
 
   function apply() {
     window.VOCAB = window.VOCAB || {};
-    bandName = {};
+    window.VOCAB_W = window.VOCAB_W || {};
+    bandName = {}; bandTotal = {}; allWords = 0;
+
     if (state.mode === "student") {
       var g = gradeById(state.grade) || GRADES[2];
+      var pools = g.pools, k = pools.length;
+      var seen = {};
       BANDS.forEach(function (b, i) {
-        var key = poolForBand(g.pools, i);
-        window.VOCAB[b] = POOL[key].get();
-        bandName[b] = POOL[key].name;
+        var mix = mixFor(k, i);
+        var words = [], weights = [], top = 0;
+        // 距離d = 0 がその学年。pools は易しい順なので末尾が目標
+        for (var d = 0; d < k; d++) {
+          var pool = POOL[pools[k - 1 - d]].get();
+          if (!pool.length) continue;
+          // 1語あたりの出やすさ＝そのプールの取り分 ÷ 語数
+          var per = mix[d] / pool.length;
+          for (var n = 0; n < pool.length; n++) { words.push(pool[n]); weights.push(per); }
+          if (mix[d] > mix[top]) top = d;
+        }
+        window.VOCAB[b] = words;
+        window.VOCAB_W[b] = weights;
+        var lead = POOL[pools[k - 1 - top]];
+        bandName[b] = lead.name;
+        bandTotal[b] = lead.get().length;
+      });
+      pools.forEach(function (key) {
+        POOL[key].get().forEach(function (e) { if (!seen[e.w]) { seen[e.w] = 1; allWords++; } });
       });
     } else {
       BANDS.forEach(function (b) {
         window.VOCAB[b] = TOEIC[b] || [];
+        window.VOCAB_W[b] = null;      // TOEICは1段階＝1スコア帯なので配合しない
         bandName[b] = "スコア" + b;
+        bandTotal[b] = (TOEIC[b] || []).length;
+        allWords += (TOEIC[b] || []).length;
       });
     }
     // 出題語が変わるので、この周回の「出題済み」記録は捨てる
@@ -119,7 +162,6 @@
       '<div class="wq2-store-h">学年を えらぶ</div>' +
       '<div class="wq2-store-p">受ける学年に あわせた単語が 出ます。</div>',
       GRADES.map(function (g) {
-        var last = POOL[g.pools[g.pools.length - 1]].name;
         return { key: g.id, label: g.name + '<span class="wq2-mode-sub">' + g.pools.map(function (k) { return POOL[k].name; }).join(" → ") + '</span>', primary: g.id === state.grade };
       }).concat([{ key: "back", label: "もどる" }])
     );
@@ -171,7 +213,8 @@
     chosen: function () { return chosen; },
     label: label,
     bandName: function (lv) { return bandName[lv] || String(lv); },
-    bandSize: function (lv) { return (window.VOCAB && window.VOCAB[lv] ? window.VOCAB[lv].length : 0); },
+    bandSize: function (lv) { return bandTotal[lv] || 0; },
+    totalWords: function () { return allWords; },
     studyKey: studyKey,
     open: open
   };

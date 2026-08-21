@@ -23,8 +23,9 @@
     var words = (window.G && window.G.study && window.G.study.words) || {};
     var cleared = 0;
     for (var k in words) { if (words[k] && words[k].c > 0) cleared++; }
-    var total = 0;
-    [400, 500, 600, 700, 800, 900].forEach(function (l) { total += (window.VOCAB && window.VOCAB[l] ? window.VOCAB[l].length : 0); });
+    // 学生版は1つの段階に複数学年が混ざる＝段階の語数を足すと重複するので、
+    // 出題範囲そのものが持つ単語数（重複なし）を使う
+    var total = window.WQ2_MODE ? WQ2_MODE.totalWords() : 0;
     return { cleared: cleared, total: total || 3000 };
   };
   // trophy tier for a cleared count: 100 bronze / 200 silver / 300 gold / 500 platinum

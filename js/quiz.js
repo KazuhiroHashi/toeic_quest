@@ -50,6 +50,9 @@
   // words already asked this run are heavily de-prioritised (weight 0.02)
   function pickEntry(level) {
     var pool = window.VOCAB[level];
+    // 学生版では1つの段階に複数学年が混ざるので、語ごとの出やすさが渡される
+    // （pvocab.js が学年ごとの取り分を語数で割ったもの）。TOEIC版では null
+    var pw = (window.VOCAB_W || {})[level];
     var st = studyRec();
     var missed = st ? st.missed : {};
     var weights = [], total = 0;
@@ -57,6 +60,7 @@
       var e = pool[i];
       var m = missed[e.w];
       var w = (m && m.wrong > 0 && (m.correctStreak || 0) < 2) ? 4 : 1;
+      if (pw) w *= pw[i];
       if (runSeen[e.w]) w *= 0.02; // asked already this run: only reuse if nothing else is left
       total += w; weights.push(total);
     }
