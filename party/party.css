@@ -413,3 +413,139 @@
   color: #9fb0d8; font-weight: normal;
 }
 .wq2-store-btn.primary .wq2-mode-sub { color: #ffe6b0; }
+
+/* =========================================================================
+   戦闘画面テーマ「ガラスとオーロラ」（デザイン案09）
+   ─ 面は枠線ではなく、すりガラス＋影で層を作る
+   ─ 色は水色と藤色の2色。赤は危険のときだけ
+
+   案の見本は暗い地で描いたが、実際のゾーン絵は昼の空や草原で明るい。
+   白い半透明のガラスをそのまま乗せたら文字が読めなかったので、
+   ガラスの下地を濃紺にし、オーロラ自体を「下half を沈める幕」として使う。
+   読みやすさを稼ぐ層と、案の見せ場を同じ1枚で兼ねている。
+   ========================================================================= */
+#pbattle-screen {
+  --wq-cyan: #5adcff;
+  --wq-lilac: #b478ff;
+  --wq-glass: linear-gradient(180deg, rgba(16, 26, 56, .74), rgba(8, 14, 34, .82));
+  --wq-edge: rgba(190, 214, 255, .22);
+  --wq-ink: #e8effb;
+}
+
+/* 背景は2枚。::before で下半分を沈め、::after のオーロラをその上に光らせる。
+   （擬似要素は ::after が後に描かれるので、光らせたい方を ::after にする）
+   明るい昼のゾーン絵の上でも文字が読めて、かつオーロラが見えるのはこの順序だけ。 */
+#pbattle-bg::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg,
+    rgba(4, 9, 24, 0) 24%,
+    rgba(5, 10, 26, .40) 46%,
+    rgba(5, 10, 26, .74) 68%,
+    rgba(4, 8, 22, .92) 100%);
+}
+/* 加算合成なので、昼の草原でも夜の城でも「光」として乗る */
+#pbattle-bg::after {
+  mix-blend-mode: screen;
+  background:
+    radial-gradient(54% 28% at 28% 62%, rgba(70, 200, 255, .58), transparent 68%),
+    radial-gradient(52% 26% at 76% 72%, rgba(160, 100, 255, .54), transparent 66%),
+    radial-gradient(76% 20% at 50% 86%, rgba(50, 130, 255, .40), transparent 72%);
+  animation: wqaurora 15s ease-in-out infinite alternate;
+}
+@keyframes wqaurora {
+  0%   { transform: translate3d(-3%, 1%, 0) scale(1.00); opacity: .72; }
+  100% { transform: translate3d(3%, -2%, 0) scale(1.10); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) { #pbattle-bg::after { animation: none; } }
+
+/* 面：枠線をやめてガラスに */
+#pbattle-screen .dq-window,
+#pbattle-msg, #pbattle-cmd, #pbattle-sub {
+  background: var(--wq-glass);
+  border: 1px solid var(--wq-edge);
+  border-radius: 18px;
+  color: var(--wq-ink);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, .46), inset 0 1px 0 rgba(255, 255, 255, .13);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  backdrop-filter: blur(14px) saturate(1.3);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+}
+#pbattle-screen .menu-item.sel {
+  background: rgba(90, 220, 255, .20);
+  color: #d9f6ff;
+  border-radius: 9px;
+}
+
+/* パーティ表示 */
+#pparty-strip .pmember {
+  background: linear-gradient(180deg, rgba(16, 26, 56, .78), rgba(8, 14, 34, .86));
+  border: 1px solid var(--wq-edge);
+  border-radius: 14px;
+  color: #c8d8f2;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .4);
+}
+#pparty-strip .pmember .pname { color: #f0f6ff; text-shadow: 0 1px 3px rgba(0,0,0,.7); }
+#pparty-strip .pmember.active {
+  border-color: rgba(90, 220, 255, .8);
+  box-shadow: 0 0 20px rgba(90, 220, 255, .42), 0 8px 22px rgba(0,0,0,.4);
+}
+
+/* 敵：名前は明るい空の上でも読めるよう、暗いチップに乗せる */
+.penemy .ptag {
+  display: inline-block; padding: 1px 8px; border-radius: 11px;
+  background: rgba(6, 12, 30, .66);
+  border: 1px solid rgba(190, 214, 255, .2);
+  color: #d6e6ff; letter-spacing: .06em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .9);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.penemy .phpbar {
+  background: rgba(6, 12, 30, .6); border-radius: 4px; overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(190, 214, 255, .22);
+}
+.penemy .phpbar > div { background: linear-gradient(90deg, var(--wq-cyan), var(--wq-lilac)); }
+
+/* ---- クイズ ---- */
+#quiz-overlay {
+  background: linear-gradient(180deg, rgba(4, 9, 24, .10) 0%, rgba(4, 9, 24, .42) 55%, rgba(4, 9, 24, .62) 100%);
+}
+#quiz-box {
+  background: linear-gradient(180deg, rgba(16, 26, 56, .80), rgba(7, 13, 32, .88));
+  border: 1px solid rgba(190, 214, 255, .24);
+  border-radius: 22px;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, .5), inset 0 1px 0 rgba(255,255,255,.14);
+  -webkit-backdrop-filter: blur(18px) saturate(1.35);
+  backdrop-filter: blur(18px) saturate(1.35);
+}
+#quiz-level-tag { color: #5adcff; letter-spacing: .2em; font-size: 12px; }
+#quiz-word {
+  font-family: "WQ Display", "Hiragino Sans", system-ui, sans-serif;
+  font-weight: 300;
+  letter-spacing: .015em;
+  color: #fff;
+  text-shadow: 0 2px 18px rgba(90, 220, 255, .28), 0 2px 6px rgba(0,0,0,.6);
+}
+#quiz-hint { color: #9fb2d4; }
+#timer-bar-wrap { background: rgba(255,255,255,.12); border-radius: 4px; overflow: hidden; }
+#timer-bar { background: linear-gradient(90deg, #5adcff, #b478ff); }
+.quiz-choice {
+  background: rgba(255, 255, 255, .07);
+  border: 1px solid rgba(190, 214, 255, .26);
+  border-radius: 14px;
+  color: #eaf1fc;
+  transition: background .12s, border-color .12s;
+}
+.quiz-choice .num { color: #7fa8d8; }
+.quiz-choice:active { background: rgba(90, 220, 255, .24); border-color: rgba(90,220,255,.75); }
+.quiz-choice.correct {
+  background: rgba(90, 220, 255, .28); border-color: rgba(90, 220, 255, .9); color: #fff;
+  box-shadow: 0 0 24px rgba(90, 220, 255, .5);
+}
+.quiz-choice.wrong {
+  background: rgba(255, 70, 90, .24); border-color: rgba(255, 90, 110, .72);
+}
+#quiz-result { font-family: "WQ Display", system-ui, sans-serif; font-weight: 300; letter-spacing: .12em; }
+#quiz-result.ok { color: #9fe9ff; text-shadow: 0 0 24px rgba(90,220,255,.75); }
+#quiz-result.ng { color: #ff8a9c; }
