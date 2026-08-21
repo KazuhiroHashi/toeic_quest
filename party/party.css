@@ -505,7 +505,9 @@
   background: rgba(6, 12, 30, .6); border-radius: 4px; overflow: hidden;
   box-shadow: inset 0 0 0 1px rgba(190, 214, 255, .22);
 }
-.penemy .phpbar > div { background: linear-gradient(90deg, var(--wq-cyan), var(--wq-lilac)); }
+/* 残りHPは赤→橙のまま。水色→藤色にしたら「減っている」という意味が
+   読めなくなったので、ここだけ元の色に戻す */
+.penemy .phpbar > div { background: linear-gradient(90deg, #e33, #f96); }
 
 /* ---- クイズ ---- */
 #quiz-overlay {
