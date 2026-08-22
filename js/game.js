@@ -869,14 +869,22 @@
     if (busyEvent || moving || !G || screenMode !== "field") return;
     busyEvent = true;
     var bgmOn = window.BGM ? BGM.isEnabled() : false;
+    var voiceOn = window.VOICE ? VOICE.isEnabled() : false;
     var c = await UI.menu($("cmd-win"), [
       { label: "つよさ" }, { label: "どうぐ" }, { label: "じゅもん" },
       { label: "たんごちょう" }, { label: "セーブ" },
-      { label: "ＢＧＭ：" + (bgmOn ? "ＯＮ" : "ＯＦＦ") }, { label: "とじる" }
+      { label: "ＢＧＭ：" + (bgmOn ? "ＯＮ" : "ＯＦＦ") },
+      { label: "えいごの おんせい：" + (voiceOn ? "ＯＮ" : "ＯＦＦ") }, { label: "とじる" }
     ], "メニュー");
     if (c === 5) {
       if (window.BGM) BGM.setEnabled(!bgmOn);
       await UI.say("ＢＧＭを " + (!bgmOn ? "ＯＮ" : "ＯＦＦ") + " にした。");
+      busyEvent = false;
+      return;
+    }
+    if (c === 6) {
+      if (window.VOICE) VOICE.setEnabled(!voiceOn);
+      await UI.say("えいごの おんせいを " + (!voiceOn ? "ＯＮ" : "ＯＦＦ") + " にした。");
       busyEvent = false;
       return;
     }
@@ -1119,8 +1127,10 @@
     var premium = false;
     try { premium = localStorage.getItem("tq_premium") === "1"; } catch (e) {}
     var bgmOn = window.BGM ? BGM.isEnabled() : true;
+    var voiceOn = window.VOICE ? VOICE.isEnabled() : true;
     var c = await UI.menu($("cmd-win"), [
       { label: "ＢＧＭ： " + (bgmOn ? "ＯＮ" : "ＯＦＦ") },
+      { label: "えいごの おんせい： " + (voiceOn ? "ＯＮ" : "ＯＦＦ") },
       { label: "広告除去： " + (premium ? "ＯＮ（購入済み扱い）" : "ＯＦＦ") },
       { label: "がくしゅうきろくを けす" },
       { label: "デバッグ開始（Ｌｖ２５）" },
@@ -1131,8 +1141,13 @@
       await UI.say("ＢＧＭを " + (!bgmOn ? "ＯＮ" : "ＯＦＦ") + " にした。");
       return;
     }
-    if (c === 3) { await debugStart(); return; }
-    c = c - 1;
+    if (c === 1) {
+      if (window.VOICE) VOICE.setEnabled(!voiceOn);
+      await UI.say("えいごの おんせいを " + (!voiceOn ? "ＯＮ" : "ＯＦＦ") + " にした。");
+      return;
+    }
+    if (c === 4) { await debugStart(); return; }
+    c = c - 2;
     if (c === 0) {
       try { localStorage.setItem("tq_premium", premium ? "0" : "1"); } catch (e) {}
       refreshAd();

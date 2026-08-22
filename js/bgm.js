@@ -25,6 +25,7 @@
                     midboss: 1, king1: 1, king2: 1, king3: 1, king4: 1,
                     boss: 1, lastboss: 1, ending: 1, gameover: 1 };
   var VOLUME = 0.55;
+  var DUCK = 0.35;      // 読み上げ中のBGM音量（VOLUMEに対する比）
   var STEP = 40;        // ms per fade tick (fade-out only — a track always
                         // starts at full volume, or its opening hit is lost)
 
@@ -81,7 +82,7 @@
     var a = el, v = a.volume;
     ramp = setInterval(function () {
       v -= 0.08;
-      if (v <= 0) { clearInterval(ramp); ramp = null; a.pause(); a.volume = VOLUME; }
+      if (v <= 0) { clearInterval(ramp); ramp = null; a.pause(); a.volume = ducked ? VOLUME * DUCK : VOLUME; }
       else a.volume = v;
     }, STEP);
   }
@@ -90,7 +91,7 @@
     if (!enabled || missing[name]) return;
     var a = audio();
     clearInterval(ramp); ramp = null;   // cancel a fade-out still in progress
-    a.volume = VOLUME;
+    a.volume = ducked ? VOLUME * DUCK : VOLUME;
     if (loaded === name) {
       if (NO_RESUME[name]) { try { a.currentTime = 0; } catch (e) {} }
       else if (!a.paused) return;
@@ -146,6 +147,15 @@
     fadeOut();
   }
 
+  // 単語の読み上げを重ねるあいだだけ音量を下げる。止めると戦闘の緊張が切れる
+  var ducked = false;
+  function duck(on) {
+    if (ducked === !!on) return;
+    ducked = !!on;
+    if (!el || ramp) return;          // フェード中は触らない（取り合いになる）
+    el.volume = ducked ? VOLUME * DUCK : VOLUME;
+  }
+
   function setEnabled(v) {
     enabled = v;
     try { localStorage.setItem("tq_bgm", v ? "1" : "0"); } catch (e) {}
@@ -162,5 +172,6 @@
     }, { passive: true });
   });
 
-  window.BGM = { play: play, playAny: playAny, stop: stop, setEnabled: setEnabled, isEnabled: function () { return enabled; } };
+  window.BGM = { play: play, playAny: playAny, stop: stop, duck: duck,
+                 setEnabled: setEnabled, isEnabled: function () { return enabled; } };
 })();

@@ -15,6 +15,7 @@
 #   pip install kokoro-onnx soundfile
 #   curl -L -o build/kokoro-v1.0.onnx https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx
 #   curl -L -o build/voices-v1.0.bin  https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin
+#   （mp3変換に ffmpeg を使う。無ければ pip install imageio-ffmpeg でも可）
 #   （音が出ない・語が飛ぶときは brew install espeak-ng）
 import argparse, json, os, subprocess, sys, time, wave, struct, math
 
@@ -26,7 +27,7 @@ OUTDIR = os.path.join(ROOT, "assets", "voice")
 # 22人に12語ずつ読ませて選んだ声。どちらも一度も語尾が上がらなかった（0/12）。
 # TOEIC本番が米英まざるので、女性=米・男性=英にしてある。
 FEMALE = "af_kore"     # 語尾リフト 中央値 -4.7半音、最悪でも -0.7半音。ピーク -2.5dBFS
-MALE   = "bm_george"   # 語尾リフト 中央値 -8.5半音、最悪でも -0.6半音。ピーク -4.8dBFS
+MALE   = "am_fenrir"   # 語尾リフト 中央値 -5.5半音、最悪 -1.8半音。0/11。2026-08-22 確定
 PEAK   = 0.89          # 正規化のねらい（-1.0dBFS。歪ませず、BGMに埋もれない）
 BITRATE = "32k"
 SR = 24000
@@ -51,6 +52,18 @@ def trim_and_normalize(samples, sr, th_db=-45.0, pad=0.04):
     return [x * g for x in seg]
 
 
+def find_ffmpeg():
+    """PATH になければ pip の imageio-ffmpeg が持っているものを使う（brew 不要）"""
+    r = subprocess.run(["which", "ffmpeg"], capture_output=True, text=True)
+    if r.returncode == 0:
+        return r.stdout.strip()
+    try:
+        import imageio_ffmpeg
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        return None
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--female", default=FEMALE)
@@ -66,9 +79,10 @@ def main():
         if not os.path.exists(f):
             sys.exit("モデルがありません: %s\n  ファイル冒頭の curl 2行を実行してください。" % f)
 
-    have_ffmpeg = subprocess.run(["which", "ffmpeg"], capture_output=True).returncode == 0
-    if not a.wav and not have_ffmpeg:
-        sys.exit("ffmpeg が見つかりません。brew install ffmpeg するか --wav を付けてください。")
+    ffmpeg = find_ffmpeg()
+    if not a.wav and not ffmpeg:
+        sys.exit("ffmpeg が見つかりません。brew install ffmpeg するか\n"
+                 "pip install imageio-ffmpeg するか、--wav を付けてください。")
 
     plan = json.load(open(os.path.join(ROOT, "build", "voice_plan.json")))
     assign = plan["assign"]
@@ -111,7 +125,7 @@ def main():
         tmp = dst if a.wav else dst[:-4] + ".tmp.wav"
         sf.write(tmp, s, sr)
         if not a.wav:
-            r = subprocess.run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+            r = subprocess.run([ffmpeg, "-y", "-hide_banner", "-loglevel", "error",
                                 "-i", tmp, "-ac", "1", "-ar", str(SR), "-b:a", BITRATE, dst],
                                capture_output=True)
             os.remove(tmp)

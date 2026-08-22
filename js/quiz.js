@@ -143,6 +143,7 @@
 
       levelTag.textContent = (window.LEVEL_NAME ? window.LEVEL_NAME(lv) : (window.LEVEL_LABEL || "TOEIC ") + lv) + " レベル";
       wordEl.textContent = entry.w;
+      if (window.VOICE) VOICE.say(entry.w);   // 出題と同時に読み上げ（無い語は黙って飛ぶ）
       hintEl.textContent = "【" + (POS_LABEL[entry.p] || "?") + "】 意味は？";
       resultEl.textContent = ""; resultEl.className = "";
       choicesEl.innerHTML = "";
@@ -172,6 +173,7 @@
       window.addEventListener("keydown", keyHandler);
 
       function finish(correct, timeout) {
+        if (window.VOICE) VOICE.stop();
         if (done) return;
         done = true;
         cancelAnimationFrame(raf);

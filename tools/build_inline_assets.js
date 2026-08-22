@@ -95,7 +95,9 @@ function stems(dir, filter) {
     .map(function (f) { return f.slice(0, f.lastIndexOf(".")); });
 }
 
-var art = { UI_ART: {}, BG_ART: {}, ENEMY_ART: {}, SFX_ART: {}, BGM_ART: {} };
+// VOICE_ART は空のまま。単語音声は17MBあり、16MBのアーティファクト上限に収まらない。
+// 空で出しておくと voice.js が「無い」と判断して、404を取りにいかずに黙る
+var art = { UI_ART: {}, BG_ART: {}, ENEMY_ART: {}, SFX_ART: {}, BGM_ART: {}, VOICE_ART: {} };
 
 process.stdout.write("画像… ");
 // pmain.js looks these up by role name, not filename
