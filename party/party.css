@@ -551,3 +551,5 @@
 #quiz-result { font-family: "WQ Display", system-ui, sans-serif; font-weight: 300; letter-spacing: .12em; }
 #quiz-result.ok { color: #9fe9ff; text-shadow: 0 0 24px rgba(90,220,255,.75); }
 #quiz-result.ng { color: #ff8a9c; }
+/* 音声トグル。BGMボタンの左隣に置く */
+#pbtn-voice { right: 62px; font-size: 18px; }

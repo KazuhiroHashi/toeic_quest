@@ -466,7 +466,7 @@
     if (window.BGM) BGM.stop();
     $("pbattle-screen").style.display = "none"; // clear the battle layer so the title/zukan show cleanly
     $("ptitle-screen").style.display = "flex";
-    refreshStamina(); refreshArenaBtn(); refreshReviewBtn(); refreshTowerBtn(); refreshModeBtn();
+    refreshStamina(); refreshArenaBtn(); refreshReviewBtn(); refreshTowerBtn(); refreshModeBtn(); refreshVoiceBtn();
     if (window.BGM) BGM.playAny(["title"]);
   }
 
@@ -675,6 +675,19 @@
     $("pbtn-unlock").blur();
     if (window.WQ2_STORE) WQ2_STORE.buyPremium(function (ok) { if (ok) refreshStamina(); });
   });
+  // 英語の読み上げ ON/OFF（BGMとは別に切れる。曲だけ聴きたい人と、
+  // 発音だけ聴きたい人がどちらもいる）
+  function refreshVoiceBtn() {
+    var b = $("pbtn-voice");
+    if (!b) return;
+    if (!window.VOICE) { b.style.display = "none"; return; }
+    b.classList.toggle("off", !VOICE.isEnabled());
+  }
+  if ($("pbtn-voice")) $("pbtn-voice").addEventListener("click", function () {
+    if (window.VOICE) VOICE.setEnabled(!VOICE.isEnabled());
+    refreshVoiceBtn();
+  });
+
   function refreshModeBtn() {
     var b = $("pbtn-mode");
     if (!b || !window.WQ2_MODE) return;
@@ -796,6 +809,7 @@
   refreshArenaBtn();
   refreshTowerBtn();
   refreshModeBtn();
+  refreshVoiceBtn();
 
   // Opening: browsers block audio until a user gesture, and the first tap is
   // usually a menu button that jumps straight into battle — so the title theme
