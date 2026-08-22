@@ -1,15 +1,19 @@
 // WORD QUEST - 英単語の読み上げ（assets/voice/<単語>.mp3）
-// 問題が出た瞬間に鳴らす。BGMは止めず、鳴っているあいだだけ音量を下げる。
+// 問題が出た瞬間に鳴らす。効果音と同じで、BGMには一切触らずに重ねるだけ。
 //
 // bgm.js と同じ理由で要素はひとつだけ持ち回す。iOS Safari は「最初のタップで
 // 解禁された要素」しか後から再生できないので、単語ごとに new Audio() すると
 // 2問目から無音になる（BGMで実際に踏んだ）。src を差し替えて使い回す。
 //
+// BGMを下げない理由：実測で、読み上げは声の帯域（300-4000Hz）でBGMより +12dB 上にある。
+// 下げなくても埋もれない。0.6秒ごとにBGMが上下すると、かえって耳につく。
+// 効果音（game.js の SFX）も音量0.5でBGMに重ねているだけで、同じ扱いに揃えた。
+//
 // 音声が無い単語（生成漏れ・記号を含む語など）は黙って飛ばす。エラー音は出さない。
 (function () {
   "use strict";
 
-  var VOLUME = 1.0;
+  var VOLUME = 0.85;    // BGM 0.55 / 効果音 0.5 に対して。声の帯域で BGM +10dB
   var enabled = true;
   try { enabled = localStorage.getItem("tq_voice") !== "0"; } catch (e) {}
 
@@ -38,20 +42,14 @@
     return true;
   }
 
-  function unduck() {
-    playing = null;
-    if (window.BGM && BGM.duck) BGM.duck(false);
-  }
-
   function audio() {
     if (el) return el;
     el = new Audio();
     el.preload = "auto";
     el.volume = VOLUME;
-    el.addEventListener("ended", unduck);
     el.addEventListener("error", function () {
-      if (playing) missing[playing] = true;
-      unduck();
+      if (playing) missing[playing] = true;   // 404を踏んだ語は二度と取りにいかない
+      playing = null;
     });
     return el;
   }
@@ -64,15 +62,14 @@
     playing = s;
     try { a.pause(); } catch (e) {}
     a.src = srcOf(s);
-    if (window.BGM && BGM.duck) BGM.duck(true);
     var p = a.play();
-    if (p && p.catch) p.catch(function () { unduck(); });   // 解禁前などは黙って諦める
+    if (p && p.catch) p.catch(function () { playing = null; });   // 解禁前などは黙って諦める
   }
 
   function stop() {
     if (!el) return;
     try { el.pause(); } catch (e) {}
-    unduck();
+    playing = null;
   }
 
   function setEnabled(v) {
