@@ -13,7 +13,7 @@
 (function () {
   "use strict";
 
-  var VOLUME = 0.85;    // BGM 0.55 / 効果音 0.5 に対して。声の帯域で BGM +10dB
+  var VOLUME = 0.95;    // BGM 0.55 / 効果音 0.5 に対して。2026-08-22 に耳で決めた値
   var enabled = true;
   try { enabled = localStorage.getItem("tq_voice") !== "0"; } catch (e) {}
 
