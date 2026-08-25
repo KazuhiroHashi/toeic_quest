@@ -71,4 +71,51 @@ This app is not affiliated with, endorsed by, or sponsored by ETS.
 - 一般向け（学習）。暴力・性的表現なし。IARC/Apple質問票は概ね **全年齢〜12+** に収まる。子ども（13歳未満）主対象ではない旨を選択。
 
 ### 必須リンク
-- **プライバシーポリシーURL**：`store/privacy.html` を公開ホスティングしたURL（両ストアで必須）。連絡先メールを本文に記入すること。
+- **プライバシーポリシーURL**：https://bridge-ai-tokyo.com/wordquest/privacy.html （公開済み）
+- **利用規約URL**：https://bridge-ai-tokyo.com/wordquest/terms.html （公開済み）
+- **サポートURL**：https://bridge-ai-tokyo.com/support.html
+
+---
+
+## App Store Connect 貼り付け用（2026-08-22）
+
+そのままコピーして使えます。カッコ内はAppleの上限文字数。
+
+| 欄 | 内容 |
+|---|---|
+| **App名**（30字） | `WORD QUEST 〜沈黙の四天王〜` |
+| **サブタイトル**（30字） | `早押し英単語RPG｜中学から大学入試まで` |
+| **キーワード**（100字） | `英単語,英語,単語,ボキャブラリー,受験,高校入試,大学受験,中学英語,高校英語,暗記,リスニング,発音,勉強,学習,クイズ,RPG,ゲーム,スキマ時間` |
+| **プロモーションテキスト**（170字） | `1日1回、無料で挑戦。4人パーティで11連戦を駆け抜けよう。2秒以内の正解でクリティカル！中学1年から大学入試まで、学年を選べば範囲に合った単語だけが出ます。全4,883語に読み上げ音声つき。` |
+| **サポートURL** | `https://bridge-ai-tokyo.com/support.html` |
+| **プライバシーポリシーURL** | `https://bridge-ai-tokyo.com/wordquest/privacy.html` |
+| **利用規約（EULA）URL** | `https://bridge-ai-tokyo.com/wordquest/terms.html` |
+| **カテゴリ** | 教育（第2カテゴリ：ゲーム／ワード） |
+
+### サブスクリプション
+
+| 欄 | 内容 |
+|---|---|
+| 製品ID | `wordquest_premium_monthly` |
+| 参照名（社内用） | `WORD QUEST Premium Monthly` |
+| **表示名**（30字） | `WORD QUEST プレミアム` |
+| **説明**（45字） | `スタミナ制限なしで遊び放題。広告も表示されなくなります。` |
+| 期間 | 1か月・自動更新 |
+| 価格 | ¥500 |
+| 審査用スクリーンショット | `store/screenshots/07_subscription.png` |
+
+### スクリーンショットの順番
+
+**1枚目は `02_quiz.png`。** ストアでは1枚目しか見られないことが多く、
+このゲームの差別化点（単語クイズで攻撃する）が一目で伝わるのはこの絵だけです。
+
+`02_quiz` → `03_boss` → `01_title` → `06_grades` → `04_wordbook` → `05_records`
+
+### ★ TOEIC という語について
+
+**App名・サブタイトル・キーワードには入れていません。**ETSの登録商標で、
+メタデータでの使用は審査で止められることがあるためです。
+説明文の中でのみ、免責表記つきで言及しています。
+
+検索での露出は落ちますが、**商標のリスクを取るより安全側に倒しています。**
+方針を変える場合はここを見直してください。
