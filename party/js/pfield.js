@@ -975,7 +975,7 @@
   }
 
   // ---------- 単語帳 (word encyclopedia, ported from game 1) ----------
-  var zukanBand = 400;
+  var zukanBand = 0;   // 単語帳のタブ位置（WQ2_MODE.groups() のインデックス）
   function starOf(r) {
     if (!r || !r.c) return "none";
     if (r.g) return "gold";
@@ -985,16 +985,23 @@
   function renderZukan() {
     var study = (window.G && window.G.study) || {};
     var words = study.words || {};
+    // タブは出題の6段階ではなく語彙のまとまり。学生版は1つの段階に複数学年が
+    // 混ざるので、段階でタブを作ると中身が重複し、数字も意味を持たない
+    var gs = (window.WQ2_MODE && WQ2_MODE.groups) ? WQ2_MODE.groups() : [];
+    if (!gs.length) gs = [400, 500, 600, 700, 800, 900].map(function (b) {
+      return { name: String(b), words: window.VOCAB[b] || [] };
+    });
+    if (zukanBand >= gs.length) zukanBand = 0;
     var tabs = $("zukan-tabs");
     tabs.innerHTML = "";
-    [400, 500, 600, 700, 800, 900].forEach(function (b) {
+    gs.forEach(function (g, i) {
       var t = document.createElement("div");
-      t.className = "ztab" + (b === zukanBand ? " on" : "");
-      t.textContent = b;
-      t.onpointerdown = function (e) { e.preventDefault(); zukanBand = b; renderZukan(); };
+      t.className = "ztab" + (i === zukanBand ? " on" : "");
+      t.textContent = g.name;
+      t.onpointerdown = function (e) { e.preventDefault(); zukanBand = i; renderZukan(); };
       tabs.appendChild(t);
     });
-    var pool = (window.VOCAB[zukanBand] || []).slice().sort(function (a, b) { return a.w < b.w ? -1 : 1; });
+    var pool = gs[zukanBand].words.slice().sort(function (a, b) { return a.w < b.w ? -1 : 1; });
     var nB = 0, nS = 0, nG = 0, weakN = 0;
     var rows = pool.map(function (e) {
       var r = words[e.w];

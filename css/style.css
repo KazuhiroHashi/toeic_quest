@@ -520,3 +520,15 @@ canvas#field-canvas {
 #combo-badge .cm { display: block; font-size: 11px; color: #ffab5c; margin-top: 1px; }
 #combo-badge.bump { animation: combobump .3s; }
 @keyframes combobump { 40% { transform: scale(1.35); } }
+
+/* 下部バナー広告のぶんだけ画面を上げる。操作ボタンに重ならないようにするため、
+   バナーの実寸が分かった時点で JS が --wq-banner を書き込む（無料版のみ） */
+:root { --wq-banner: 0px; }
+#app { padding-bottom: var(--wq-banner); }
+#wq2-banner {
+  position: fixed; left: 0; right: 0; bottom: 0; height: var(--wq-banner);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; letter-spacing: 2px; color: #7a839c;
+  background: #0b0e16; border-top: 1px solid rgba(120, 150, 220, .22);
+  z-index: 95; pointer-events: none;
+}

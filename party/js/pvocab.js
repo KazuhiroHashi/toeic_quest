@@ -75,6 +75,11 @@
     if (raw && raw.mode) { state = raw; chosen = true; }
   } catch (e) {}
 
+  // 単語帳と称号の「まとまり」。出題の6段階とは別物にする。
+  // 学生版は1つの段階に複数学年が混ざるので、段階ごとに数えると
+  // 同じ学年名の欄が並び、数も中身とずれる（実際にそうなっていた）。
+  // 見せるときは語彙のプール（中1/中2/中3）で数える。
+  var groups = [];     // [{ name, words }]
   var bandName = {};   // 400..900 -> 表示名（その段階で主役になる学年）
   var bandTotal = {};  // 400..900 -> 主役の学年の語数（称号の分母）
   var allWords = 0;    // その出題範囲で出うる単語の総数（重複なし）
@@ -82,7 +87,7 @@
   function apply() {
     window.VOCAB = window.VOCAB || {};
     window.VOCAB_W = window.VOCAB_W || {};
-    bandName = {}; bandTotal = {}; allWords = 0;
+    bandName = {}; bandTotal = {}; allWords = 0; groups = [];
 
     if (state.mode === "student") {
       var g = gradeById(state.grade) || GRADES[2];
@@ -108,6 +113,7 @@
       });
       pools.forEach(function (key) {
         POOL[key].get().forEach(function (e) { if (!seen[e.w]) { seen[e.w] = 1; allWords++; } });
+        groups.push({ name: POOL[key].name, words: POOL[key].get() });
       });
     } else {
       BANDS.forEach(function (b) {
@@ -116,6 +122,7 @@
         bandName[b] = "スコア" + b;
         bandTotal[b] = (TOEIC[b] || []).length;
         allWords += (TOEIC[b] || []).length;
+        groups.push({ name: String(b), words: TOEIC[b] || [] });
       });
     }
     // 出題語が変わるので、この周回の「出題済み」記録は捨てる
@@ -214,6 +221,7 @@
     label: label,
     bandName: function (lv) { return bandName[lv] || String(lv); },
     bandSize: function (lv) { return bandTotal[lv] || 0; },
+    groups: function () { return groups; },
     totalWords: function () { return allWords; },
     studyKey: studyKey,
     open: open

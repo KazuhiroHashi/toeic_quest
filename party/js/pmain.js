@@ -556,24 +556,28 @@
   // ---- 称号・記録 (achievements) ----
   function showAchievements() {
     var rc = loadRec(), pg = window.studyProgress(), words = (window.G.study && window.G.study.words) || {};
-    var perBand = { 400: 0, 500: 0, 600: 0, 700: 0, 800: 0, 900: 0 };
     var gold = 0, fast = 0;
     for (var k in words) {
       var r = words[k];
       if (!r) continue;
-      if (r.c > 0 && perBand[r.l] != null) perBand[r.l]++;
       if (r.g) gold++;
       if (r.f) fast++;
     }
     var streak = 0;
     try { var s = JSON.parse(localStorage.getItem("wq2_streak") || "{}"); if (s.last === dayKey(0) || s.last === dayKey(-1)) streak = s.n || 0; } catch (e) {}
     var tr = window.trophyFor(pg.cleared);
-    var medals = [400, 500, 600, 700, 800, 900].map(function (b) {
-      var t = window.trophyFor(perBand[b]);
-      var nm = window.WQ2_MODE ? WQ2_MODE.bandName(b) : String(b);
-      var sz = window.WQ2_MODE ? WQ2_MODE.bandSize(b) : 500;
+    // 出題の段階ではなく語彙のまとまりで数える。学生版は1つの段階に
+    // 複数学年が混ざるので、段階ごとに数えると同じ学年名が並んでしまう
+    var gs = (window.WQ2_MODE && WQ2_MODE.groups) ? WQ2_MODE.groups() : [];
+    var medals = gs.map(function (g) {
+      var n = 0;
+      for (var i = 0; i < g.words.length; i++) {
+        var rec = words[g.words[i].w];
+        if (rec && rec.c > 0) n++;
+      }
+      var t = window.trophyFor(n);
       return '<div class="achv-medal ' + t.cls + '"><div class="achv-ic">' + (t.icon || "🔒") + '</div>' +
-        '<div class="achv-lv">' + nm + '</div><div class="achv-n">' + perBand[b] + '/' + (sz || 500) + '</div></div>';
+        '<div class="achv-lv">' + g.name + '</div><div class="achv-n">' + n + '/' + g.words.length + '</div></div>';
     }).join("");
     var rows = [
       ["📚 覚えた単語", pg.cleared + " / " + pg.total + " 語"],
@@ -810,6 +814,8 @@
   refreshTowerBtn();
   refreshModeBtn();
   refreshVoiceBtn();
+  // 無料版だけ。プレミアムなら showBanner が自分で何もしない
+  if (window.WQ2_STORE && WQ2_STORE.showBanner) WQ2_STORE.showBanner();
 
   // Opening: browsers block audio until a user gesture, and the first tap is
   // usually a menu button that jumps straight into battle — so the title theme

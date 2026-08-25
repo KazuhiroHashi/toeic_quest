@@ -13,6 +13,7 @@
   var MAX = 1;        // 無料の1日あたり挑戦回数（スタミナ）
   var AD_REFILL = 1;  // リワード広告1回で回復するスタミナ
   var AD_EVERY = 2;   // 無料版で全画面広告を出す間隔（何戦ごとか）
+  var BANNER_H = 50;  // 下部バナーの高さ。実機では読み込み後の実寸に差し替える
   var PRICE = "¥500";
   // grace period after the cached expiry before premium is dropped, so a
   // renewal that has not been observed yet (offline, slow receipt refresh)
@@ -122,6 +123,7 @@
       state.premium = !!active;
       state.premiumUntil = active ? (untilMs || 0) : 0;
       save();
+      if (premiumActive()) api.hideBanner(); else api.showBanner();
     },
 
     // daily review reward: +1 stamina, once per day (premium doesn't need it)
@@ -142,6 +144,25 @@
     // fires straight away and the battle starts as normal.
     showInterstitial: function (cb) { adScreen("広告").then(function () { cb(); }); },
 
+    // 画面下に出しっぱなしにするバナー。操作ボタンに重ならないよう、
+    // 高さぶんだけ #app の下に余白を作って、そこへ表示する。
+    // NATIVE OVERRIDES THIS（実機はネイティブのビューが重なる）。
+    // Web版は同じ高さの枠を描いて、レイアウトへの影響を確かめられるようにする。
+    showBanner: function () {
+      if (premiumActive()) return;
+      document.documentElement.style.setProperty("--wq-banner", BANNER_H + "px");
+      if (document.getElementById("wq2-banner")) return;
+      var el = document.createElement("div");
+      el.id = "wq2-banner";
+      el.textContent = "広告（デモ）";
+      document.body.appendChild(el);
+    },
+    hideBanner: function () {
+      document.documentElement.style.setProperty("--wq-banner", "0px");
+      var el = document.getElementById("wq2-banner");
+      if (el) el.remove();
+    },
+
     // Called by the battle engine before every encounter. Shows a full-screen ad
     // once every AD_EVERY battles — the first battle starts straight away, then
     // one before every second battle after that. The counter is persisted so
@@ -152,7 +173,9 @@
       // never stack an interstitial straight after a rewarded revive
       if (skipNextAd) { skipNextAd = false; save(); return Promise.resolve(); }
       save();
-      if (state.battles % AD_EVERY !== 0) return Promise.resolve();
+      // 第3・5・7・9・11戦の前＝第2・4・6・8・10戦を終えた直後に出す。
+      // 序盤2戦は広告なしで通す（最初の数分で離脱されると課金導線に乗らない）
+      if (state.battles <= AD_EVERY || (state.battles - 1) % AD_EVERY !== 0) return Promise.resolve();
       return new Promise(function (r) { api.showInterstitial(function () { r(); }); });
     },
 

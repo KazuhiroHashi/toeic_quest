@@ -18,6 +18,10 @@
     //   差し替えないまま testing:false にすると広告収益が発生しない。
     interstitialAndroid: "ca-app-pub-3940256099942544/1033173712", // Google テスト用
     interstitialIos:     "ca-app-pub-3940256099942544/4411468910", // Google テスト用
+    // ★★ 未設定：画面下に出しっぱなしにするバナーのユニットID。
+    //   これも「バナー」という別の広告枠なので、上の2つとは別に作る必要がある
+    bannerAndroid: "ca-app-pub-3940256099942544/6300978111", // Google テスト用
+    bannerIos:     "ca-app-pub-3940256099942544/2934735716", // Google テスト用
     // ★ アプリ内課金：プレミアム（月額¥500・自動更新サブスク）
     //   両ストアで同じIDで登録すること。Google Play では基本プラン（月額）を
     //   この商品の下に作る
@@ -35,6 +39,7 @@
   var platform = cap.getPlatform ? cap.getPlatform() : "android";
   var rewardedId = platform === "ios" ? CONFIG.rewardedIos : CONFIG.rewardedAndroid;
   var interstitialId = platform === "ios" ? CONFIG.interstitialIos : CONFIG.interstitialAndroid;
+  var bannerId = platform === "ios" ? CONFIG.bannerIos : CONFIG.bannerAndroid;
 
   // ---------- AdMob rewarded (@capacitor-community/admob) ----------
   var AdMob = cap.Plugins && cap.Plugins.AdMob;
@@ -80,6 +85,33 @@
     AdMob.addListener("interstitialAdDismissed", interDone);
     AdMob.addListener("interstitialAdFailedToShow", interDone);
     AdMob.addListener("interstitialAdFailedToLoad", function () { interReady = false; setTimeout(prepareInter, 30000); });
+
+    // ---------- banner (free tier: pinned to the bottom) ----------
+    // 操作ボタンに重ならないよう、読み込まれた実寸だけ #app の下に余白を作る。
+    // 高さは端末と広告で変わるので、決め打ちせず SizeChanged を待つ。
+    AdMob.addListener("bannerAdSizeChanged", function (size) {
+      var h = (size && size.height) || 0;
+      document.documentElement.style.setProperty("--wq-banner", h > 0 ? h + "px" : "0px");
+    });
+
+    window.WQ2_STORE.showBanner = function () {
+      if (window.WQ2_STORE.isPremium && window.WQ2_STORE.isPremium()) return;
+      AdMob.showBanner({
+        adId: bannerId,
+        adSize: "ADAPTIVE_BANNER",
+        position: "BOTTOM_CENTER",
+        margin: 0,
+        isTesting: CONFIG.testing,
+        npa: CONFIG.nonPersonalized
+      }).catch(function () {
+        document.documentElement.style.setProperty("--wq-banner", "0px");
+      });
+    };
+    window.WQ2_STORE.hideBanner = function () {
+      document.documentElement.style.setProperty("--wq-banner", "0px");
+      if (AdMob.removeBanner) AdMob.removeBanner().catch(function () {});
+      else if (AdMob.hideBanner) AdMob.hideBanner().catch(function () {});
+    };
 
     window.WQ2_STORE.showInterstitial = function (cb) {
       // nothing loaded (offline, no fill, first battle after launch): do not
