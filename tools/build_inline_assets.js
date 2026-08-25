@@ -95,8 +95,12 @@ function stems(dir, filter) {
     .map(function (f) { return f.slice(0, f.lastIndexOf(".")); });
 }
 
-// VOICE_ART は空のまま。単語音声は17MBあり、16MBのアーティファクト上限に収まらない。
-// 空で出しておくと voice.js が「無い」と判断して、404を取りにいかずに黙る
+// 単語音声は全部で14MBあり、16MBのアーティファクト上限に収まらない。
+// そこで序盤の戦いで出る語だけを、残り容量いっぱいまで入れる。
+// 入らなかった語は VOICE_ART に載らず、voice.js が「無い」と判断して黙る
+// （404を取りにいかない）。プレビューは音を確かめるためのもので、
+// 本番ビルドには4,883語すべて入る。
+var VOICE_BUDGET = 3.4 * 1048576;   // 素材ベース。base64で約4.5MBになる
 var art = { UI_ART: {}, BG_ART: {}, ENEMY_ART: {}, SFX_ART: {}, BGM_ART: {}, VOICE_ART: {} };
 
 process.stdout.write("画像… ");
@@ -129,6 +133,42 @@ stems("bgm", /\.mp3$/).filter(function (s) { return SKIP_BGM.indexOf(s) < 0; }).
   art.BGM_ART[s] = music(path.join(root, "assets", "bgm", s + ".mp3"));
 });
 console.log(((total - before) / 1048576).toFixed(1) + "MB  (" + Object.keys(art.BGM_ART).length + "曲 × " + BGM_SECONDS + "秒)");
+
+// 読み上げ：序盤の段階から順に、予算いっぱいまで
+before = total;
+process.stdout.write("読み上げ… ");
+(function () {
+  var dir = path.join(root, "assets", "voice");
+  if (!fs.existsSync(dir)) { console.log("なし"); return; }
+  // voice.js / build_voice_list.js と同じ規則
+  function slug(w) {
+    return String(w).toLowerCase().replace(/['’]/g, "")
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+  // 序盤の戦いで引かれる段階から埋める。TOEIC版と学生版の両方が
+  // 最初の数戦を音つきで試せるように、中学の語も混ぜる
+  var g = global.window || (global.window = {});
+  ["400", "500"].forEach(function (f) {
+    eval(fs.readFileSync(path.join(root, "data", "vocab_" + f + ".js"), "utf8"));
+  });
+  eval(fs.readFileSync(path.join(root, "data", "vocab_jhs.js"), "utf8"));
+  var order = []
+    .concat(g.VOCAB[400] || [], g.VOCAB[500] || [], (g.VOCAB_JHS || {}).g1 || []);
+  var used = 0, n = 0, seenSlug = {};
+  for (var i = 0; i < order.length; i++) {
+    var s = slug(order[i].w);
+    if (!s || seenSlug[s]) continue;
+    var f = path.join(dir, s + ".mp3");
+    if (!fs.existsSync(f)) continue;
+    var sz = fs.statSync(f).size;
+    if (used + sz > VOICE_BUDGET) break;
+    seenSlug[s] = 1;
+    art.VOICE_ART[s] = dataUri(f, "audio/mpeg");
+    used += sz; n++;
+  }
+  total += used;
+  console.log((used / 1048576).toFixed(1) + "MB  (" + n + "語ぶん。残りは無音)");
+})();
 
 var js = Object.keys(art).map(function (k) {
   return "window." + k + " = " + JSON.stringify(art[k]) + ";";
