@@ -295,4 +295,26 @@ function dirSize(p) {
 var total = dirSize(www) / 1048576;
 console.log("\n  合計 " + total.toFixed(1) + " MB → www/");
 console.log("  Google Play の上限200MB: " + (total < 200 ? "OK" : "超過！") );
+
+// 本番モード（testing:false）なのに Google のテスト用広告IDが残っていたら止める。
+// 見落とすと「公開したのに広告収入がゼロ」になり、しかも気づきにくい
+(function () {
+  var f = path.join(root, "party", "js", "pnative.js");
+  if (!fs.existsSync(f)) return;
+  var s = fs.readFileSync(f, "utf8");
+  var line = /^(\s*testing:\s*)(?:true|false)(\s*,)/m.exec(s);
+  var live = !!(line && /false/.test(line[0]));
+  var ids = s.match(/^\s*\w+(?:Android|Ios):\s*"ca-app-pub-[^"]+"/gm) || [];
+  var testIds = ids.filter(function (x) { return x.indexOf("ca-app-pub-3940256099942544") >= 0; })
+                   .map(function (x) { return x.trim().split(":")[0]; });
+  if (live && testIds.length) {
+    console.error("\n  ! 本番モード（testing: false）なのに Googleのテスト用広告IDが残っています");
+    testIds.forEach(function (n) { console.error("      " + n); });
+    console.error("    このまま公開すると、その枠の広告収入はゼロになります。");
+    console.error("    node tools/set_ads.js --show で確認してください\n");
+    process.exit(1);
+  }
+  console.log("  広告  " + (live ? "本番モード" : "テストモード") +
+    (testIds.length ? "（テスト用ID " + testIds.length + "件。テスト中なので問題なし）" : "（本番IDが揃っています）"));
+})();
 console.log("  次: npx cap sync && npm run admob\n");

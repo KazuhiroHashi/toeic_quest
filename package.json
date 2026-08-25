@@ -9,7 +9,10 @@
     "cap:sync": "npm run build:www && npx cap sync && npm run admob",
     "assets": "npx @capacitor/assets generate --assetPath appicon --iconBackgroundColor '#0b1230' --iconBackgroundColorDark '#0b1230'",
     "open:android": "npm run cap:sync && npx cap open android",
-    "open:ios": "npm run cap:sync && npx cap open ios"
+    "open:ios": "npm run cap:sync && npx cap open ios",
+    "ads": "node tools/set_ads.js --show",
+    "ads:live": "node tools/set_ads.js --live",
+    "ads:test": "node tools/set_ads.js --test"
   },
   "dependencies": {
     "@capacitor-community/admob": "^6.0.0",
