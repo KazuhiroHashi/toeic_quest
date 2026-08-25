@@ -163,7 +163,7 @@
     setTimeout(function () { sp.classList.remove("hit"); }, 120);
     e.hp = Math.max(0, e.hp - dmg);
     setEnemyHp(e);
-    if (crit) await bsay("かいしんの いちげき！！\n" + e.name + "に " + dmg + " のダメージ！");
+    if (crit) await bsay("クリティカルヒット！！\n" + e.name + "に " + dmg + " のダメージ！");
     else await bsay(e.name + "に " + dmg + " のダメージ！");
   }
 
@@ -274,7 +274,7 @@
             await bsay("じゃくてんを ついた！");
           }
           var fxc = spell.elem === "fire" ? "rgba(255,150,60,.9)" : spell.elem === "thunder" ? "rgba(255,230,90,.9)" : "rgba(200,160,255,.9)";
-          // spells never show かいしん — speed/weakness only affect damage numbers
+          // spells never show a critical — speed/weakness only affect damage numbers
           await playerHit(e, sd, false, fxc);
         }
       } else if (cmd === 2) {
