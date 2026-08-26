@@ -307,14 +307,27 @@ console.log("  Google Play の上限200MB: " + (total < 200 ? "OK" : "超過！"
   var ids = s.match(/^\s*\w+(?:Android|Ios):\s*"ca-app-pub-[^"]+"/gm) || [];
   var testIds = ids.filter(function (x) { return x.indexOf("ca-app-pub-3940256099942544") >= 0; })
                    .map(function (x) { return x.trim().split(":")[0]; });
-  if (live && testIds.length) {
-    console.error("\n  ! 本番モード（testing: false）なのに Googleのテスト用広告IDが残っています");
-    testIds.forEach(function (n) { console.error("      " + n); });
+  // 使われるIDはプラットフォームごとに分かれている（pnative.js が
+  // platform === "ios" で振り分ける）。iOSを先に出すので、iOS側が
+  // テスト用のままなら止め、Android側は警告にとどめる。
+  // 両方で止めると、Androidを作っていない段階でiOSが出せなくなる
+  var iosTest = testIds.filter(function (n) { return /Ios$/.test(n); });
+  var androidTest = testIds.filter(function (n) { return /Android$/.test(n); });
+  if (live && iosTest.length) {
+    console.error("\n  ! 本番モード（testing: false）なのに iOSの広告IDが Googleのテスト用のままです");
+    iosTest.forEach(function (n) { console.error("      " + n); });
     console.error("    このまま公開すると、その枠の広告収入はゼロになります。");
     console.error("    node tools/set_ads.js --show で確認してください\n");
     process.exit(1);
   }
   console.log("  広告  " + (live ? "本番モード" : "テストモード") +
-    (testIds.length ? "（テスト用ID " + testIds.length + "件。テスト中なので問題なし）" : "（本番IDが揃っています）"));
+    (testIds.length ? "" : "（全プラットフォーム 本番IDが揃っています）"));
+  if (testIds.length) {
+    console.log("        iOS " + (iosTest.length ? "★テスト用 " + iosTest.length + "件" : "本番ID") +
+                " ／ Android " + (androidTest.length ? "テスト用 " + androidTest.length + "件" : "本番ID"));
+    if (live && androidTest.length) {
+      console.log("        ※ Android版を出すときは、上の枠のIDを作って差し替えること");
+    }
+  }
 })();
 console.log("  次: npx cap sync && npm run admob\n");
