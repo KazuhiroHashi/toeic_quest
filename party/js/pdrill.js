@@ -60,7 +60,7 @@
       n: 0, correct: 0, wrong: 0, timeSum: 0, timeN: 0,
       state: { fresh: 0, weak: 0, vague: 0, solid: 0 },
       group: [], weak: [], vague: [], due: 0, total: 0,
-      daily: daily(), missRate: []
+      daily: daily(), missCount: []
     };
     var groups = (window.WQ2_MODE && WQ2_MODE.groups) ? WQ2_MODE.groups() : [];
     var inGroup = {};
@@ -90,16 +90,14 @@
         if (r.c > 0) ge.learned++;
       }
     }
-    // 誤答率＝間違えた回数 ÷ 出会った回数。1回だけの語は分母が小さすぎて
-    // 100%にも0%にもなるので、2回以上出会った語だけを対象にする
+    // 間違えた回数の多い順。同数なら、出会った回数が少ないほうを上にする
+    // （5回中3回間違いのほうが、10回中3回より定着していない）
     for (var k2 in w) {
       var r2 = w[k2];
-      if (!r2) continue;
-      var tries = (r2.c || 0) + (r2.wr || 0);
-      if (tries < 2 || !(r2.wr > 0)) continue;
-      out.missRate.push({ w: k2, r: r2, rate: (r2.wr || 0) / tries, tries: tries });
+      if (!r2 || !(r2.wr > 0)) continue;
+      out.missCount.push({ w: k2, r: r2, wr: r2.wr, tries: (r2.c || 0) + (r2.wr || 0) });
     }
-    out.missRate.sort(function (a, b) { return b.rate - a.rate || b.tries - a.tries; });
+    out.missCount.sort(function (a, b) { return b.wr - a.wr || a.tries - b.tries; });
 
     out.weak.sort(function (a, b) { return (b.r.wr || 0) - (a.r.wr || 0); });
     out.vague.sort(function (a, b) {
@@ -259,13 +257,13 @@
       '</div>';
 
     // ---- 誤答率（重要）----
-    if (a.missRate.length) {
-      h += '<div class="dr-h">誤答率の高い単語</div><div class="dr-list">';
-      a.missRate.slice(0, 10).forEach(function (x) {
+    if (a.missCount.length) {
+      h += '<div class="dr-h">誤答回数の多い単語</div><div class="dr-list">';
+      a.missCount.slice(0, 10).forEach(function (x) {
         h += '<div><span class="dr-w">' + x.w + '</span><span class="dr-m">' + (x.r.m || "") + '</span>' +
-             '<span class="dr-c">' + Math.round(x.rate * 100) + '%<small>' + x.tries + '回</small></span></div>';
+             '<span class="dr-c">' + x.wr + '回<small>/' + x.tries + '</small></span></div>';
       });
-      h += '</div><div class="dr-note">2回以上 出会った語のみ。分母が小さい語は 除外しています。</div>';
+      h += '</div>';
     }
 
     // ---- 範囲別 ----
