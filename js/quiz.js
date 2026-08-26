@@ -48,7 +48,21 @@
 
   // weighted pick: words answered wrong recently appear ~4x more often,
   // words already asked this run are heavily de-prioritised (weight 0.02)
-  function pickEntry(level) {
+  // 同じデータを、ゲームと勉強で逆向きに使う。
+  //   闘技場（bias:"easy"）… 知っている語を多めに。勝たせて気持ちよくするのが目的で、
+  //     ここで苦手な語を突くと「クリアできないゲーム」になる
+  //   復習・試験対策       … 苦手な語を名指しで出す（呼び出し側が entry を渡す）
+  // 既定（bias なし）は従来どおり、間違えた語を4倍出す
+  function biasWeight(bias, r) {
+    if (bias !== "easy") return 1;
+    if (!r || !r.c) return 1;                       // 未学習はふつう
+    if ((r.wr || 0) >= (r.c || 0)) return 0.35;     // 苦手な語はゲームでは控えめに
+    var avg = r.t && r.c ? r.t / r.c : null;
+    if (avg != null && avg <= 2.0) return 3;        // 即答できる語を多めに
+    return r.g ? 2.5 : 1.6;
+  }
+
+  function pickEntry(level, opts) {
     var pool = window.VOCAB[level];
     // 学生版では1つの段階に複数学年が混ざるので、語ごとの出やすさが渡される
     // （pvocab.js が学年ごとの取り分を語数で割ったもの）。TOEIC版では null
@@ -59,7 +73,9 @@
     for (var i = 0; i < pool.length; i++) {
       var e = pool[i];
       var m = missed[e.w];
-      var w = (m && m.wrong > 0 && (m.correctStreak || 0) < 2) ? 4 : 1;
+      var bias = opts && opts.bias;
+      var w = (m && m.wrong > 0 && (m.correctStreak || 0) < 2) ? (bias === "easy" ? 0.5 : 4) : 1;
+      w *= biasWeight(bias, (st && st.words) ? st.words[e.w] : null);
       if (pw) w *= pw[i];
       if (runSeen[e.w]) w *= 0.02; // asked already this run: only reuse if nothing else is left
       total += w; weights.push(total);
@@ -115,11 +131,16 @@
       r.c++; r.s++;
       if (elapsed <= 2) r.f = 1;
       if (r.s >= 3) r.g = 1;
+      // 正解までの秒数を足しこむ。r.t / r.c が平均で、これがあると
+      // 「即答できる」と「思い出すのに時間がかかる」を分けられる。
+      // 分析はこの差でしか語れないので、フラグ(r.f)だけでは足りない
+      r.t = (r.t || 0) + elapsed;
     } else {
       r.wr++; r.s = 0;
       // SRS: a missed word becomes due for review tomorrow (box back to 0)
       r.box = 0; r.due = window.QUIZ_DNUM ? QUIZ_DNUM(1) : 0;
     }
+    r.d = window.QUIZ_DNUM ? QUIZ_DNUM(0) : 0;   // 最終学習日（忘却の目安）
     // ---- combo chain (persists across battles, reset on miss) ----
     var G = window.G;
     if (G) G.combo = correct ? (G.combo || 0) + 1 : 0;
@@ -134,7 +155,7 @@
     var lv = resolveLevel(level);
     return new Promise(function (resolve) {
       if (lv == null) { resolve({ correct: true, elapsed: 0, entry: null }); return; }
-      var entry = opts.entry || pickEntry(lv);
+      var entry = opts.entry || pickEntry(lv, opts);
       var choices = pickChoices(lv, entry);
       var time = (opts.time || 5) * 1000;
       var done = false;

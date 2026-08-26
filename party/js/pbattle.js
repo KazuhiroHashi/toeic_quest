@@ -466,7 +466,7 @@
       if (ti < 0) return;
       var f = foes[ti];
       await say(p.name + "の こうげき！");
-      var q = await window.QUIZ.ask(atkQuizLv(p), { time: f.hasty ? 3.5 : 5 });
+      var q = await window.QUIZ.ask(atkQuizLv(p), { time: f.hasty ? 3.5 : 5, bias: "easy" });
       if (q.entry) battleAsk.push({ w: q.entry.w, m: q.entry.m, ok: q.correct });
       if (q.correct) {
         chain++; chainBadge();
@@ -489,7 +489,7 @@
       if (p.mp < sp.mp) { await say("ＭＰが足りない！"); return; }
       p.mp -= sp.mp; renderParty(-1);
       await say(p.name + "は 魔法『" + sp.name + "』を となえた！");
-      var qs = await window.QUIZ.ask(spellQuizLv(sp), { time: 5, noCrit: true });
+      var qs = await window.QUIZ.ask(spellQuizLv(sp), { time: 5, noCrit: true, bias: "easy" });
       if (qs.entry) battleAsk.push({ w: qs.entry.w, m: qs.entry.m, ok: qs.correct });
       if (!qs.correct) {
         chain = 0; chainBadge();

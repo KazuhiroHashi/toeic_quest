@@ -554,3 +554,56 @@
 /* 音声トグル。BGMボタンの左隣。絵文字だと端末によって出ないことがあるので、
    必ず表示できて意味も直に伝わる「英」を使う */
 #pbtn-voice { right: 62px; font-size: 17px; font-weight: bold; letter-spacing: 0; }
+
+/* ---------- 試験対策・弱点分析 ---------- */
+.dr-ovl { align-items: flex-start; padding-top: 14px; overflow-y: auto; }
+.dr-panel { max-width: 340px; text-align: left; max-height: calc(100% - 20px); overflow-y: auto; }
+.dr-panel .wq2-store-h { text-align: center; }
+.dr-h {
+  font-size: 11px; letter-spacing: .18em; color: #9fb0d8; margin: 14px 0 6px;
+  border-bottom: 1px solid rgba(190,214,255,.18); padding-bottom: 4px;
+}
+.dr-empty { font-size: 12px; line-height: 1.9; color: #dfe6f6; text-align: center; padding: 10px 4px; }
+.dr-empty b { color: #ffd76a; }
+.dr-note { font-size: 10px; line-height: 1.7; color: #93a1c4; margin-top: 8px; }
+.dr-note b { color: #ffd76a; }
+
+/* 数字は等幅にして、桁が揺れないようにする */
+.dr-kpi { display: flex; gap: 6px; margin: 10px 0 4px; font-variant-numeric: tabular-nums; }
+.dr-kpi > div {
+  flex: 1; text-align: center; padding: 8px 2px; border-radius: 10px;
+  background: rgba(255,255,255,.06); border: 1px solid rgba(190,214,255,.16);
+}
+.dr-kpi b { display: block; font-size: 20px; color: #fff; line-height: 1.2; font-weight: 500; }
+.dr-kpi b i { font-size: 11px; font-style: normal; color: #9fb0d8; margin-left: 1px; }
+.dr-kpi span { font-size: 9.5px; color: #93a1c4; letter-spacing: .04em; }
+
+.dr-state { display: flex; gap: 6px; font-variant-numeric: tabular-nums; }
+.dr-state > div {
+  flex: 1; text-align: center; font-size: 9.5px; color: #c6d2ea;
+  padding: 7px 2px; border-radius: 9px; border: 1px solid transparent;
+}
+.dr-state b { display: block; font-size: 17px; font-weight: 500; line-height: 1.3; }
+.dr-state .s-solid { background: rgba(90,220,255,.14); border-color: rgba(90,220,255,.4); }
+.dr-state .s-solid b { color: #7fe4ff; }
+.dr-state .s-vague { background: rgba(255,200,90,.13); border-color: rgba(255,200,90,.38); }
+.dr-state .s-vague b { color: #ffd76a; }
+.dr-state .s-weak  { background: rgba(255,90,110,.13); border-color: rgba(255,90,110,.38); }
+.dr-state .s-weak b { color: #ff8a9c; }
+
+.dr-row { display: flex; align-items: center; gap: 8px; margin: 5px 0; font-variant-numeric: tabular-nums; }
+.dr-lab { flex: 0 0 68px; font-size: 11px; color: #dfe6f6; }
+.dr-bar { flex: 1; height: 7px; border-radius: 4px; background: rgba(255,255,255,.10); overflow: hidden; }
+.dr-bar > i { display: block; height: 100%; background: linear-gradient(90deg, #5adcff, #b478ff); }
+.dr-num { flex: 0 0 62px; text-align: right; font-size: 11px; color: #fff; }
+.dr-num small { display: block; font-size: 8.5px; color: #8494b8; }
+
+.dr-list { font-size: 11px; }
+.dr-list > div {
+  display: flex; align-items: baseline; gap: 6px; padding: 4px 2px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.dr-w { flex: 0 0 auto; color: #fff; font-family: "WQ Display", system-ui, sans-serif; }
+.dr-m { flex: 1; color: #a9b6d4; font-size: 10.5px; }
+.dr-c { flex: 0 0 auto; color: #ff8a9c; font-size: 10px; }
+.wq2-store-btn.dr-off { opacity: .45; }

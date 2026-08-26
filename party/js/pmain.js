@@ -17,6 +17,7 @@
   function saveStudy() {
     try { localStorage.setItem(studyKey(), JSON.stringify(window.G.study)); } catch (e) {}
   }
+  window.WQ2_SAVE_STUDY = saveStudy;   // pdrill.js から呼ぶ
 
   // total distinct words cleared (answered correctly at least once) out of all 3000
   window.studyProgress = function () {
@@ -741,6 +742,14 @@
   $("pbtn-review").addEventListener("click", function () { $("pbtn-review").blur(); runReview(); });
   $("pbtn-tower").addEventListener("click", function () { $("pbtn-tower").blur(); runTower(); });
   $("pbtn-achv").addEventListener("click", function () { $("pbtn-achv").blur(); showAchievements(); });
+  if ($("pbtn-drill")) $("pbtn-drill").addEventListener("click", function () {
+    $("pbtn-drill").blur();
+    if (window.PDRILL) PDRILL.open().then(function () { refreshStamina(); refreshReviewBtn(); });
+  });
+  if ($("pbtn-analysis")) $("pbtn-analysis").addEventListener("click", function () {
+    $("pbtn-analysis").blur();
+    if (window.PDRILL) PDRILL.analysis();
+  });
   $("pbtn-zukan").addEventListener("click", function () { $("pbtn-zukan").blur(); if (window.PFIELD) window.PFIELD.openZukan(); });
   // story mode is under construction: first tap warns, second tap (within 4s) opens the preview
   var fieldArmed = false;
