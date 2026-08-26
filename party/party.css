@@ -607,3 +607,25 @@
 .dr-m { flex: 1; color: #a9b6d4; font-size: 10.5px; }
 .dr-c { flex: 0 0 auto; color: #ff8a9c; font-size: 10px; }
 .wq2-store-btn.dr-off { opacity: .45; }
+
+/* ---------- 推移グラフ ---------- */
+.dr-chart { width: 100%; height: auto; display: block; margin: 4px 0 2px; overflow: visible; }
+.dr-grid { stroke: rgba(190, 214, 255, .16); stroke-width: 1; }
+/* 棒は文脈。折れ線より必ず後ろに退かせる */
+.dr-barmark { fill: rgba(190, 214, 255, .22); }
+.dr-line { fill: none; stroke: #5adcff; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.dr-dot { fill: #5adcff; stroke: #0b1226; stroke-width: 1.2; }
+.dr-ax { font-size: 8px; fill: #8494b8; }
+.dr-ax-l { text-anchor: end; }
+.dr-tip { font-size: 9px; fill: #9fe9ff; font-weight: 500; }
+.dr-legend {
+  display: flex; gap: 12px; justify-content: center; font-size: 9.5px; color: #93a1c4; margin-top: 2px;
+}
+.dr-legend i { display: inline-block; margin-right: 4px; vertical-align: 1px; }
+.dr-legend .lg-bar { width: 8px; height: 8px; border-radius: 2px; background: rgba(190,214,255,.34); }
+.dr-legend .lg-line { width: 12px; height: 2px; background: #5adcff; vertical-align: 4px; }
+.dr-c small { display: block; font-size: 8.5px; color: #8494b8; }
+/* 誤答率リストは件数が多いので、1行に収めて詰める */
+.dr-list > div { padding: 3px 2px; line-height: 1.5; }
+.dr-c { text-align: right; min-width: 46px; }
+.dr-c small { display: inline; margin-left: 4px; }

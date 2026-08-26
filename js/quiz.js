@@ -141,6 +141,17 @@
       r.box = 0; r.due = window.QUIZ_DNUM ? QUIZ_DNUM(1) : 0;
     }
     r.d = window.QUIZ_DNUM ? QUIZ_DNUM(0) : 0;   // 最終学習日（忘却の目安）
+
+    // 日ごとの解答数と正解数。単語ごとの記録からは「いつ何問解いたか」を
+    // 復元できない（最終学習日しか残らない）ので、別に積む。
+    // これが推移グラフの元データになる
+    if (window.QUIZ_DNUM) {
+      st.daily = st.daily || {};
+      var day = QUIZ_DNUM(0);
+      var d = st.daily[day] || (st.daily[day] = { a: 0, c: 0 });
+      d.a++;
+      if (correct) d.c++;
+    }
     // ---- combo chain (persists across battles, reset on miss) ----
     var G = window.G;
     if (G) G.combo = correct ? (G.combo || 0) + 1 : 0;
