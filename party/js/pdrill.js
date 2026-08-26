@@ -1,7 +1,9 @@
-// WORD QUEST - 試験対策モードと弱点分析
+// WORD QUEST - 学習の記録（弱点分析）
 //
-// 闘技場は「遊び」で、こちらは「勉強」。戦闘も広告も挟まず、選んだ範囲の単語を
-// 続けて出す。終わったらその場で結果を返す。
+// タイトルから開くのは PDRILL.analysis() だけ。
+// PDRILL.open()（試験対策の連続出題）は動く状態で残してあるが、画面には
+// 出していない。モードを増やしても遊びの手応えが増えない、という判断のため。
+// 要望が出たら index.html にボタンを戻すだけで復活する。
 //
 // 分析は G.study.words に貯まっている実データだけで組む。持っていない数字は
 // 出さない。持っていない数字を推測で埋めない。
@@ -220,7 +222,7 @@
     var a = analyse();
     if (a.n < 10) {
       return panel(
-        '<div class="wq2-store-h">弱点分析</div>' +
+        '<div class="wq2-store-h">学習の記録</div>' +
         '<div class="dr-empty">記録は まだ ' + a.n + ' 語分です。<br><br>' +
         '闘技場か 試験対策を 少し進めると、<br>毎日の推移と 苦手な単語を<br>ここに表示します。<br><br>' +
         '<b>あと ' + (10 - a.n) + ' 語</b>で 表示できます。</div>',
@@ -229,7 +231,7 @@
     }
     var attempts = a.correct + a.wrong;
     var avg = a.timeN ? (a.timeSum / a.timeN) : null;
-    var h = '<div class="wq2-store-h">弱点分析</div>';
+    var h = '<div class="wq2-store-h">学習の記録</div>';
 
     h += '<div class="dr-kpi">' +
       '<div><b>' + pct(a.correct, attempts) + '%</b><span>正答率</span></div>' +
@@ -255,8 +257,6 @@
       '<div class="s-vague"><b>' + a.state.vague + '</b>曖昧</div>' +
       '<div class="s-weak"><b>' + a.state.weak + '</b>苦手</div>' +
       '</div>';
-    h += '<div class="dr-note">「曖昧」は 正解はするが ' + SLOW + '秒より 時間が掛かる語。<br>' +
-         '試験本番で 出てこない層です。</div>';
 
     // ---- 誤答率（重要）----
     if (a.missRate.length) {
@@ -276,15 +276,10 @@
         h += bar(g.name, g.correct, g.correct + g.wrong, g.learned + "/" + g.total + "語");
       });
     }
-    if (a.due) h += '<div class="dr-note">復習期限が来た単語が <b>' + a.due + '</b> あります。</div>';
-
-    return panel(h, [
-      { key: "drill", label: "この結果で 試験対策", primary: true },
-      { key: "no", label: "閉じる" }
-    ]).then(function (k) { if (k === "drill") return open(); });
+    return panel(h, [{ key: "no", label: "閉じる" }]);
   }
 
-  // ---------- 試験対策（ドリル） ----------
+  // ---------- 試験対策（現在は画面に出していない。上の注記を参照）----------
   function pickList(kind, limit) {
     var a = analyse(), w = words(), today = window.QUIZ_DNUM ? QUIZ_DNUM(0) : 0, list = [];
     if (kind === "weak") {

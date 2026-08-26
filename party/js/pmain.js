@@ -647,7 +647,11 @@
     refreshStamina(); refreshReviewBtn();
     if (window.BGM) BGM.playAny(["title"]);
   }
+  // 今日の復習モードは画面から外した（モードを増やしても遊びの density が
+  // 上がらない、という判断）。仕組みと記録は残してあるので、要望が出たら
+  // index.html にボタンを戻すだけで復活する
   function refreshReviewBtn() {
+    if (!$("pbtn-review")) return;
     var n = srsDue().length;
     var b = $("review-badge");
     if (b) { b.textContent = n > 0 ? String(n) : ""; }
@@ -739,13 +743,8 @@
     }
     runArena();
   });
-  $("pbtn-review").addEventListener("click", function () { $("pbtn-review").blur(); runReview(); });
   $("pbtn-tower").addEventListener("click", function () { $("pbtn-tower").blur(); runTower(); });
   $("pbtn-achv").addEventListener("click", function () { $("pbtn-achv").blur(); showAchievements(); });
-  if ($("pbtn-drill")) $("pbtn-drill").addEventListener("click", function () {
-    $("pbtn-drill").blur();
-    if (window.PDRILL) PDRILL.open().then(function () { refreshStamina(); refreshReviewBtn(); });
-  });
   if ($("pbtn-analysis")) $("pbtn-analysis").addEventListener("click", function () {
     $("pbtn-analysis").blur();
     if (window.PDRILL) PDRILL.analysis();
