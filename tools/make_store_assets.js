@@ -6,7 +6,13 @@
 // 「はみ出させてから中央で切る」で合わせる。0.2% ぶんの切り落としなので見た目は変わらない。
 //
 // App プレビュー（動画）は 15〜30秒・30fps でないと弾かれる。OP は 27.1秒なので
-// そのまま通る。1080×1920 は 6.9/6.5 どちらの枠でも受け付けられるサイズ。
+// 長さは問題ない。寸法は 886×1920（縦）か 1920×886（横）だけで、**1080×1920 は
+// 受け付けられない**。App Store Connect に「1個以上のプレビューの寸法が正しく
+// ありません」と出て気づいた。
+//
+// OP は 1080×1920（9:16）なので、左右を 97px ずつ落として 886×1920 にする。
+// 引き伸ばすと人物が縦長になるし、上下に黒帯を足すと自動再生で目立つ。
+// 全カットの構図が中央寄りで、タイトルロゴも切らずに収まることを確認済み。
 //
 //   node tools/make_store_assets.js
 "use strict";
@@ -53,10 +59,11 @@ SIZES.forEach(function (sz) {
   if (!fs.existsSync(src)) { console.log("skip preview (movie/out/OP.mp4 が無い)"); return; }
   var dir = path.join(OUT, "preview");
   fs.mkdirSync(dir, { recursive: true });
-  var dst = path.join(dir, "op_preview_1080x1920.mp4");
+  var dst = path.join(dir, "op_preview_886x1920.mp4");
   // 音声も残す。プレビューは既定で消音再生だが、音を出す人もいる
   cp.execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-i", src,
     "-t", "29.5", "-r", "30",
+    "-vf", "crop=886:1920:97:0",
     "-c:v", "libx264", "-profile:v", "high", "-pix_fmt", "yuv420p", "-crf", "20",
     "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", dst]);
   var d = cp.execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration",
