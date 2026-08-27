@@ -37,10 +37,12 @@ TOEIC®テスト頻出レベルの語彙で遊ぶこともできます。
 すべての単語に読み上げ音声がついています。
 
 ■ 苦手がわかります
-日ごとの正答率の推移と、間違えた回数の多い単語を確認できます。
+覚えた単語が「即答・曖昧・苦手」の3つに分かれて見えます。
+日ごとの正答率の推移と、間違えた回数の多い単語は、プレミアムで表示されます。
 
 無料で遊べます。アプリ内に広告が表示されます。
-プレミアム（自動更新サブスクリプション）に登録すると、広告が表示されなくなります。
+プレミアム（自動更新サブスクリプション）に登録すると、広告が表示されなくなり、
+学習の記録をすべて見られます。
 
 利用規約 https://bridge-ai-tokyo.com/wordquest/terms.html
 プライバシーポリシー https://bridge-ai-tokyo.com/wordquest/privacy.html
@@ -124,7 +126,7 @@ This app is not affiliated with, endorsed by, or sponsored by ETS.
 | 製品ID | `wordquest_premium_monthly` |
 | 参照名（社内用） | `WORD QUEST Premium Monthly` |
 | **表示名**（30字） | `WORD QUEST プレミアム` |
-| **説明**（45字） | `スタミナ制限なしで遊び放題。広告も表示されなくなります。` |
+| **説明**（45字） | `広告なし・回数制限なし。学習の記録もすべて見られます。` |
 | 期間 | 1か月・自動更新 |
 | 価格 | ¥500 |
 | 審査用スクリーンショット | `store/screenshots/07_subscription.png` |

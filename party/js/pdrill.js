@@ -216,6 +216,32 @@
   }
 
   // ---------- 分析 ----------
+  // 無料とプレミアムの線引き（2026-08-27）
+  //   無料      正答率・平均反応・学習語数・定着度・範囲別
+  //   プレミアム ＋ 毎日の推移グラフ ＋ 誤答回数の多い単語
+  // 全部を隠さないのは、この画面が「ゲームなのにちゃんと分析してくれる」という
+  // 評判を取りに行く機能だから。無料でも自分の苦手が3種類に分かれて見えるところ
+  // までは見せる。一方で、鍵のかかった中身が目の前にあるほうが「広告が消える」
+  // より強い購入動機になるので、いちばん知りたい2つを伏せている。
+  function isPremium() {
+    return !!(window.WQ2_STORE && WQ2_STORE.isPremium && WQ2_STORE.isPremium());
+  }
+
+  // 伏せ字。実際の単語をDOMに置いたままぼかすと、開発者ツールで読めてしまう。
+  // 見た目の行数と文字数だけ残して、中身は入れない
+  function masked(n) {
+    var s = "";
+    for (var i = 0; i < n; i++) s += "●";
+    return s;
+  }
+
+  function locked(inner) {
+    return '<div class="dr-lock">' +
+      '<div class="dr-lock-body">' + inner + '</div>' +
+      '<div class="dr-lock-tag">🔒 プレミアム</div>' +
+      '</div>';
+  }
+
   function showAnalysis() {
     var a = analyse();
     if (a.n < 10) {
@@ -229,6 +255,7 @@
     }
     var attempts = a.correct + a.wrong;
     var avg = a.timeN ? (a.timeSum / a.timeN) : null;
+    var pro = isPremium();
     var h = '<div class="wq2-store-h">学習の記録</div>';
 
     h += '<div class="dr-kpi">' +
@@ -238,14 +265,20 @@
       '</div>';
 
     // ---- 推移（最重要）----
+    var activeDays = a.daily.filter(function (d) { return d.a > 0; });
+    var sumA = a.daily.reduce(function (s2, d) { return s2 + d.a; }, 0);
     h += '<div class="dr-h">毎日の学習量と正答率</div>';
-    h += chart(a.daily);
-    h += '<div class="dr-legend">' +
+    var legend = '<div class="dr-legend">' +
       '<span><i class="lg-bar"></i>解答数（右目盛）</span>' +
       '<span><i class="lg-line"></i>正答率（左目盛・%）</span>' +
       '</div>';
-    var activeDays = a.daily.filter(function (d) { return d.a > 0; });
-    var sumA = a.daily.reduce(function (s2, d) { return s2 + d.a; }, 0);
+    if (pro) {
+      h += chart(a.daily) + legend;
+    } else {
+      // グラフの形そのものは秘密ではないので、実データを描いてぼかす。
+      // 「自分の記録が確かに溜まっている」が伝わるほうが効く
+      h += locked(chart(a.daily) + legend);
+    }
     h += '<div class="dr-note">直近14日で <b>' + activeDays.length + '日</b>学習、合計 <b>' + sumA + '問</b>。</div>';
 
     // ---- 定着度 ----
@@ -256,14 +289,25 @@
       '<div class="s-weak"><b>' + a.state.weak + '</b>苦手</div>' +
       '</div>';
 
-    // ---- 誤答率（重要）----
+    // ---- 誤答回数（重要）----
     if (a.missCount.length) {
-      h += '<div class="dr-h">誤答回数の多い単語</div><div class="dr-list">';
-      a.missCount.slice(0, 10).forEach(function (x) {
-        h += '<div><span class="dr-w">' + x.w + '</span><span class="dr-m">' + (x.r.m || "") + '</span>' +
-             '<span class="dr-c">' + x.wr + '回<small>/' + x.tries + '</small></span></div>';
+      h += '<div class="dr-h">誤答回数の多い単語</div>';
+      // 伏せてあるときに10行も並べても、読めない帯が長くなるだけ。
+      // リストが在ることが伝わればいいので5行に詰める
+      var rows = a.missCount.slice(0, pro ? 10 : 5);
+      var list = '<div class="dr-list">';
+      rows.forEach(function (x) {
+        // 回数は本物のまま出す。伏せるのは「どの単語か」だけ
+        var w = pro ? x.w : masked(Math.min(Math.max(x.w.length, 4), 9));
+        var m = pro ? (x.r.m || "") : masked(4);
+        list += '<div><span class="dr-w">' + w + '</span><span class="dr-m">' + m + '</span>' +
+                '<span class="dr-c">' + x.wr + '回<small>/' + x.tries + '</small></span></div>';
       });
-      h += '</div>';
+      list += '</div>';
+      h += pro ? list : locked(list);
+      if (!pro) {
+        h += '<div class="dr-note">間違えた回数の多い単語が <b>' + a.missCount.length + '語</b> 見つかっています。</div>';
+      }
     }
 
     // ---- 範囲別 ----
@@ -274,7 +318,23 @@
         h += bar(g.name, g.correct, g.correct + g.wrong, g.learned + "/" + g.total + "語");
       });
     }
-    return panel(h, [{ key: "no", label: "閉じる" }]);
+
+    var btns = [{ key: "no", label: "閉じる" }];
+    if (!pro) {
+      h += '<div class="dr-sell">グラフと 苦手な単語の 一覧は<br>' +
+           'プレミアム（月額' +
+           (window.WQ2_STORE && WQ2_STORE.price ? WQ2_STORE.price() : "") +
+           '）で 見られます。</div>';
+      btns.unshift({ key: "buy", primary: true, label: "★ プレミアムで すべて見る" });
+    }
+    return panel(h, btns).then(function (k) {
+      if (k !== "buy" || !window.WQ2_STORE) return;
+      return new Promise(function (r) { WQ2_STORE.buyPremium(r); }).then(function (ok) {
+        // 買えたら開き直す。何を買ったのかがその場で見えないと、
+        // 「払ったのに変わらない」という体験になる
+        if (ok) return showAnalysis();
+      });
+    });
   }
 
   // ---------- 試験対策（現在は画面に出していない。上の注記を参照）----------

@@ -185,7 +185,9 @@
     buyPremium: function (cb) {
       overlay(
         '<div class="wq2-store-h">★ プレミアム（月額）</div>' +
-        '<div class="wq2-store-p">月額' + PRICE + 'で<br>スタミナ制限なし＋広告オフ。<br>毎日 好きなだけ 遊べます。</div>' +
+        '<div class="wq2-store-p">月額' + PRICE + 'で<br>' +
+        '・スタミナ制限なし<br>・広告オフ<br>' +
+        '・学習の記録を すべて表示<br>　（毎日の推移グラフ／苦手な単語）</div>' +
         '<div class="wq2-store-fine">お支払いは 月額' + PRICE + '（税込）。<br>' +
         '解約しないかぎり 自動更新されます。<br>' +
         '解約は App Store／Google Play の<br>サブスクリプション設定から いつでも できます。<br>' +

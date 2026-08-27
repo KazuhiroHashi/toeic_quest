@@ -677,7 +677,12 @@
       if (ub) ub.style.display = "none";
     } else {
       if (el) el.innerHTML = "⚡ 本日のプレイ　" + WQ2_STORE.stamina() + " ／ " + WQ2_STORE.max();
-      if (ub) ub.style.display = "";
+      if (ub) {
+        // 金額は pstore.js の PRICE ひとつだけを見る。index.html にも書いてあると
+        // 値段を変えたときに片方だけ古いまま残る
+        ub.textContent = "★ プレミアム（月額" + WQ2_STORE.price() + "・広告オフ）";
+        ub.style.display = "";
+      }
     }
   }
   if ($("pbtn-unlock")) $("pbtn-unlock").addEventListener("click", function () {
