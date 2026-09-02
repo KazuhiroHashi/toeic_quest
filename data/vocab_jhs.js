@@ -303,7 +303,6 @@ window.VOCAB_JHS["g1"] = [
 {w:"news",m:"ニュース",p:"n"},
 {w:"newspaper",m:"新聞",p:"n"},
 {w:"next",m:"次の",p:"adj"},
-{w:"nice",m:"すてきな",p:"adj"},
 {w:"night",m:"夜",p:"n"},
 {w:"noon",m:"正午",p:"n"},
 {w:"nose",m:"鼻",p:"n"},
