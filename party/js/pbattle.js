@@ -255,6 +255,9 @@
   function enemyImg(id) {
     return (window.ENEMY_ART && window.ENEMY_ART[id]) || "../assets/enemies/" + id + ".png";
   }
+  function partyImg(id) {
+    return (window.PARTY_ART && window.PARTY_ART[id]) || "../assets/party/" + id + ".png";
+  }
 
   function renderEnemies() {
     var row = $("penemy-row");
@@ -293,6 +296,7 @@
       d.className = cls;
       d.id = "pmember-" + i;
       d.innerHTML =
+        '<img class="portrait" src="' + partyImg(p.id) + '" alt="" draggable="false">' +
         '<div class="pname">' + p.name + '<span class="plv">L' + p.lv + "</span></div>" +
         '<div class="phv">HP <b>' + Math.max(0, p.hp) + "</b>/" + p.maxhp + "</div>" +
         '<div class="pmv">MP ' + p.mp + "/" + p.maxmp + "</div>" +

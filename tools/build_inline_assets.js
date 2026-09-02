@@ -21,7 +21,8 @@ var out = process.argv[2] || path.join(root, "build", "inline_assets.js");
 var IMG = {
   enemies: { max: 512, q: 68 },
   bg:      { max: 900, q: 66 },
-  ui:      { max: 900, q: 72 }
+  ui:      { max: 900, q: 72 },
+  party:   { max: 240, q: 70 }   // バトルの顔アイコン。小さくしか出ないので粗くていい
 };
 var BGM_SECONDS = 60;      // one loop is plenty for a preview
 var BGM_BITRATE = "48k";
@@ -101,7 +102,7 @@ function stems(dir, filter) {
 // （404を取りにいかない）。プレビューは音を確かめるためのもので、
 // 本番ビルドには4,883語すべて入る。
 var VOICE_BUDGET = 3.4 * 1048576;   // 素材ベース。base64で約4.5MBになる
-var art = { UI_ART: {}, BG_ART: {}, ENEMY_ART: {}, SFX_ART: {}, BGM_ART: {}, VOICE_ART: {} };
+var art = { UI_ART: {}, BG_ART: {}, ENEMY_ART: {}, PARTY_ART: {}, SFX_ART: {}, BGM_ART: {}, VOICE_ART: {} };
 
 process.stdout.write("画像… ");
 // pmain.js looks these up by role name, not filename
@@ -115,6 +116,9 @@ stems("bg", /\.png$/).forEach(function (s) {
 });
 stems("enemies", /\.png$/).forEach(function (s) {
   art.ENEMY_ART[s] = image(path.join(root, "assets", "enemies", s + ".png"), IMG.enemies);
+});
+stems("party", /\.png$/).forEach(function (s) {
+  art.PARTY_ART[s] = image(path.join(root, "assets", "party", s + ".png"), IMG.party);
 });
 console.log((total / 1048576).toFixed(1) + "MB");
 
