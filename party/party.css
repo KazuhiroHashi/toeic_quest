@@ -344,21 +344,25 @@
   flex: 1; min-width: 0;
   background: rgba(4, 6, 16, .92);
   border: 2px solid #fff; border-radius: 8px;
-  padding: 4px 5px 5px 36px;
+  padding: 4px 5px 5px;
   font-size: 11px; line-height: 1.5;
   transition: border-color .2s, box-shadow .2s;
 }
-/* 顔アイコン。誰の番かは行動選択中の renderParty(i) だけが .active を付ける
-   （pbattle.js pickCommands）。選ばれていない3人は暗く沈め、選ばれた1人だけ
-   素の明るさに戻し、ちょこっと跳ねさせて「いまこの人」と分かるようにする */
+/* 顔アイコン。カードの右上、上辺をまたぐ位置に置いて「ひょこっと顔を出す」形にする。
+   誰の番かは行動選択中の renderParty(i) だけが .active を付ける（pbattle.js
+   pickCommands）。選ばれていない3人は暗く沈め、選ばれた1人だけ素の明るさに戻し、
+   ちょこっと跳ねさせて「いまこの人」と分かるようにする */
 .pmember .portrait {
-  position: absolute; left: 4px; top: 4px;
-  width: 28px; height: 28px;
+  position: absolute; right: 5px; top: 0;
+  transform: translateY(-52%);
+  width: 34px; height: 34px;
   border-radius: 50%;
   object-fit: cover; object-position: center 35%;
   border: 1.5px solid rgba(255, 255, 255, .3);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, .45);
   filter: brightness(.5) saturate(.7);
   transition: filter .18s, border-color .18s;
+  z-index: 2;
 }
 .pmember.active .portrait {
   filter: none;
@@ -367,11 +371,11 @@
 }
 .pmember.dead .portrait { filter: brightness(.35) grayscale(1); }
 @keyframes portrait-hop {
-  0%   { transform: translateY(0) scale(1); }
-  35%  { transform: translateY(-5px) scale(1.08); }
-  60%  { transform: translateY(1px) scale(.97); }
-  80%  { transform: translateY(-1px) scale(1.02); }
-  100% { transform: translateY(0) scale(1); }
+  0%   { transform: translateY(-52%) scale(1); }
+  35%  { transform: translateY(calc(-52% - 6px)) scale(1.08); }
+  60%  { transform: translateY(calc(-52% + 1px)) scale(.97); }
+  80%  { transform: translateY(calc(-52% - 1px)) scale(1.02); }
+  100% { transform: translateY(-52%) scale(1); }
 }
 .pmember .pname { color: #ffe08a; font-weight: bold; font-size: 12px; white-space: nowrap; overflow: hidden; text-shadow: 1px 1px 0 #000; }
 .pmember .plv { color: #9ab; font-size: 9.5px; margin-left: 3px; font-weight: normal; }
