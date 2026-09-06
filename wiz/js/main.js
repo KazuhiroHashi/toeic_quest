@@ -315,7 +315,7 @@
       '<button class="mbtn ghost" style="width:100%" id="btn-premium">広告除去: ' + (premium ? "ON（購入済み扱い）" : "OFF") + "</button>" +
       '<button class="mbtn ghost" style="width:100%;margin-top:8px" id="btn-title">タイトルへ戻る</button>' +
       '<button class="mbtn ghost" style="width:100%;margin-top:8px;color:#ff8fa3" id="btn-reset">データをリセット</button></div>' +
-      '<div class="rate-note">姉妹作「TOEIC QUEST（ドラクエ風）」も同リポジトリで遊べます</div>';
+      '<div class="rate-note">姉妹作「TOEIC QUEST」も同リポジトリで遊べます</div>';
     $("btn-premium").onclick = function () {
       try { localStorage.setItem("tq_premium", premium ? "0" : "1"); } catch (e) {}
       refreshAd(); renderEtc();

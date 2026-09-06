@@ -664,7 +664,7 @@
           text: ["いらっしゃい！\n旅立ちの装備はここで。"] },
         { type: "npc", x: 17, y: 20, icon: "🧴",
           shop: { kind: "item", items: ["herb", "wing"] },
-          text: ["やくそうは多めに持っていきな。"] },
+          text: ["回復の道具は 多めに持っていきな。"] },
         { type: "npc", x: 27, y: 20, icon: "🛏️", inn: { price: 10 }, text: [] },
         { type: "npc", x: 13, y: 24, icon: "👦",
           text: ["ぼくのママ 声が出なくなっちゃった…。\nはやく元にもどしてね。"] },

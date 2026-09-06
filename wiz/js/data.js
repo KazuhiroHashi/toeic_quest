@@ -45,7 +45,7 @@
   var C = [
     // fire
     { id: "hinoko",   name: "ヒノコ",       sp: "fox",     elem: "fire",    r: 1, as: "speed",  ss: "nuke",   flavor: "しっぽの火は ぜったいに消えない。" },
-    { id: "merabit",  name: "メラビット",   sp: "rabbit",  elem: "fire",    r: 2, as: "crit",   ss: "chain5", flavor: "跳ねるたびに 火の粉がまう。" },
+    { id: "flarebit",  name: "フレアビット",   sp: "rabbit",  elem: "fire",    r: 2, as: "crit",   ss: "chain5", flavor: "跳ねるたびに 火の粉がまう。" },
     { id: "frenya",   name: "フレニャ",     sp: "cat",     elem: "fire",    r: 3, as: "speed",  ss: "buff",   flavor: "早口ことばが とくいな火猫。" },
     { id: "volca",    name: "ヴォルカ",     sp: "dragon",  elem: "fire",    r: 4, as: "slayer", ss: "aoe",    flavor: "ちいさな体に 火山のちから。" },
     { id: "phoenixia",name: "フェニクシア", sp: "bird",    elem: "fire",    r: 5, as: "chain",  ss: "nuke",   flavor: "何度でも 燃えあがる不死鳥。" },

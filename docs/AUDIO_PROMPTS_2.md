@@ -50,7 +50,7 @@ Emotional grand JRPG ending theme, warm strings swelling with gratitude, gentle 
 いまの encounter.mp3 がイマイチとのことなので、方向性を変えた3案です。
 気に入ったものを1つ生成して **encounter.mp3** の名前で assets/sfx へ上書きアップしてください。
 
-### 案1: 王道オーケストラ・スティング（ドラクエ的な「ジャーン！」）
+### 案1: 王道オーケストラ・スティング（王道RPG的な「ジャーン！」）
 ```
 Short dramatic orchestral sting for a JRPG random encounter, a sharp full-orchestra hit followed by a fast upward string rush, startling and urgent, tight ending, 1.5 seconds
 ```

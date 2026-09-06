@@ -842,7 +842,7 @@
       totalExp = foes.reduce(function (s, f) { return s + (f.exp || 0); }, 0);
       if (totalExp > 0) {
         await say("パーティは " + totalExp + " の 経験値を得た！");
-        // each surviving member earns the full exp, DQ-style
+        // 生き残った全員が満額の経験値をもらう（頭割りにしない）
         for (var pi = 0; pi < party.length; pi++) {
           var m = party[pi];
           if (m.hp <= 0) continue;

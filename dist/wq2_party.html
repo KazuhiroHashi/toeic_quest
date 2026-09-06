@@ -8,7 +8,7 @@
 <body>
 <title>WORD QUEST - 英単語バトルRPG</title>
 <style>
-/* TOEIC QUEST - DQ1-style retro RPG styling */
+/* WORD QUEST - レトロRPG風の見た目 */
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 :root {
@@ -61,7 +61,7 @@ canvas#field-canvas {
   image-rendering: crisp-edges;
 }
 
-/* ---------- DQ-style windows ---------- */
+/* ---------- メッセージ枠 ---------- */
 .dq-window {
   background:
     linear-gradient(160deg, rgba(90, 110, 200, 0.10), rgba(0, 0, 0, 0) 45%),
@@ -4815,7 +4815,7 @@ window.ITEM_DEFS = {
           text: ["いらっしゃい！\n旅立ちの装備はここで。"] },
         { type: "npc", x: 17, y: 20, icon: "🧴",
           shop: { kind: "item", items: ["herb", "wing"] },
-          text: ["やくそうは多めに持っていきな。"] },
+          text: ["回復の道具は 多めに持っていきな。"] },
         { type: "npc", x: 27, y: 20, icon: "🛏️", inn: { price: 10 }, text: [] },
         { type: "npc", x: 13, y: 24, icon: "👦",
           text: ["ぼくのママ 声が出なくなっちゃった…。\nはやく元にもどしてね。"] },
@@ -6325,7 +6325,7 @@ window.ITEM_DEFS = {
       totalExp = foes.reduce(function (s, f) { return s + (f.exp || 0); }, 0);
       if (totalExp > 0) {
         await say("パーティは " + totalExp + " の 経験値を得た！");
-        // each surviving member earns the full exp, DQ-style
+        // 生き残った全員が満額の経験値をもらう（頭割りにしない）
         for (var pi = 0; pi < party.length; pi++) {
           var m = party[pi];
           if (m.hp <= 0) continue;
