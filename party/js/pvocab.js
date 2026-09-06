@@ -68,12 +68,36 @@
     return w.map(function (x) { return x / sum; });
   }
 
-  var state = { mode: "toeic", grade: "j3" };
+  // lock: プレミアム限定。指定した1つのレベルの単語だけを出す。
+  //   TOEIC   … "400".."900"（スコア帯）
+  //   学生    … "g1".."lv3"（プールのキー）
+  //   null    … 固定しない（段階が上がるほど難しくなる、これまでの動き）
+  // 解約された状態でも値は残す。入り直したときに設定し直さなくて済むように
+  var state = { mode: "toeic", grade: "j3", lock: null };
   var chosen = false;
   try {
     var raw = JSON.parse(localStorage.getItem(KEY) || "null");
     if (raw && raw.mode) { state = raw; chosen = true; }
   } catch (e) {}
+  if (state.lock === undefined) state.lock = null;
+
+  function premium() {
+    return !!(window.WQ2_STORE && WQ2_STORE.isPremium && WQ2_STORE.isPremium());
+  }
+  // 固定の順番。Object.keys に頼ると並びが暗黙になるので明示する
+  var LOCKS_STUDENT = ["g1", "g2", "g3", "lv1", "lv2", "lv3"];
+  function lockName(v) {
+    if (v == null) return null;
+    if (POOL[v]) return POOL[v].name;
+    return "スコア" + v;
+  }
+  // いま実際に効いている固定。解約中は効かせない
+  function activeLock() {
+    if (state.lock == null || !premium()) return null;
+    if (state.mode === "student") return POOL[state.lock] ? state.lock : null;
+    var b = +state.lock;
+    return (TOEIC[b] && TOEIC[b].length) ? b : null;
+  }
 
   // 単語帳と称号の「まとまり」。出題の6段階とは別物にする。
   // 学生版は1つの段階に複数学年が混ざるので、段階ごとに数えると
@@ -125,6 +149,26 @@
         groups.push({ name: String(b), words: TOEIC[b] || [] });
       });
     }
+    // ---- レベル固定（プレミアム）----
+    // 差し替えるのは「クイズに出る単語」だけにする。単語帳の並び（groups）と
+    // 称号の分母（bandTotal）は固定していないときと同じにしておく。
+    // ここまで固定すると、固定を切り替えるたびに単語帳の中身と達成率が
+    // 動いてしまい、何を覚えたのか読めなくなる。
+    // 段階の表示名（bandName）だけは固定側に合わせる。出る単語と
+    // 「スコア400レベル」の表示が食い違うのを避けるため。
+    var lk = activeLock();
+    if (lk != null) {
+      var words = state.mode === "student" ? POOL[lk].get() : (TOEIC[lk] || []);
+      if (words.length) {
+        var nm = lockName(lk);
+        BANDS.forEach(function (b) {
+          window.VOCAB[b] = words;
+          window.VOCAB_W[b] = null;
+          bandName[b] = nm;
+        });
+      }
+    }
+
     // 出題語が変わるので、この周回の「出題済み」記録は捨てる
     if (window.QUIZ && window.QUIZ.resetRunSeen) window.QUIZ.resetRunSeen();
   }
@@ -136,9 +180,13 @@
   }
 
   function label() {
-    if (state.mode !== "student") return "TOEIC";
-    var g = gradeById(state.grade);
-    return g ? g.name : "学生";
+    var base = "TOEIC";
+    if (state.mode === "student") {
+      var g = gradeById(state.grade);
+      base = g ? g.name : "学生";
+    }
+    var lk = activeLock();
+    return lk == null ? base : base + "・" + lockName(lk) + "だけ";
   }
 
   // ---------- 選択画面 ----------
@@ -183,6 +231,33 @@
     );
   }
 
+  // 出題レベルの固定（プレミアム）。mode は「これから決まる方」を渡す
+  function chooseLevel(mode) {
+    var pro = premium();
+    var opts = mode === "student"
+      ? LOCKS_STUDENT.map(function (k) { return { key: k, name: POOL[k].name }; })
+      : BANDS.map(function (b) { return { key: String(b), name: "スコア" + b }; });
+    var cur = state.lock == null ? "all" : String(state.lock);
+    var btns = [{
+      key: "all", primary: cur === "all",
+      label: 'すべて<span class="wq2-mode-sub">進むほど 難しくなる（おすすめ）</span>'
+    }];
+    opts.forEach(function (o) {
+      btns.push({
+        key: o.key, primary: pro && cur === o.key,
+        label: (pro ? "" : "🔒 ") + o.name + 'だけ'
+      });
+    });
+    btns.push({ key: "back", label: "もどる" });
+    return panel(
+      '<div class="wq2-store-h">出題レベル</div>' +
+      '<div class="wq2-store-p">' + (pro
+        ? "えらんだレベルの単語だけが 出ます。<br>苦手な範囲を 集中して やりたいときに。"
+        : "1つのレベルだけを 練習する機能です。<br>プレミアムで つかえます。") +
+      '</div>',
+      btns);
+  }
+
   // 変更はその場で反映する。以前は location.reload() していたが、読み込み直すと
   // タイトル画像が出るまでの背景グラデーションが一瞬見えてしまう
   function open() {
@@ -192,9 +267,31 @@
         if (g === "back") return open();
         return { mode: "student", grade: g };
       });
+    }).then(function (base) {
+      if (!base) return null;
+      // 初回起動は「範囲を選ぶ」だけで通す。遊び始める前に3枚も選ばせない。
+      // レベルの固定は、あとからタイトルの「出題：〜」でいつでも設定できる
+      if (!chosen) { base.lock = null; return base; }
+      // 鍵つきを押されたら購入へ。買えたらそのまま選び直させる
+      function askLevel() {
+        return chooseLevel(base.mode).then(function (k) {
+          if (k === "back") return askLevel();
+          if (k === "all") { base.lock = null; return base; }
+          if (premium()) { base.lock = k; return base; }
+          return new Promise(function (r) {
+            window.WQ2_STORE.buyPremium(function (ok) { r(ok); });
+          }).then(function (ok) {
+            if (!ok) { base.lock = null; return base; }   // 買わなかった：固定なしで進む
+            base.lock = k; return base;
+          });
+        });
+      }
+      return askLevel();
     }).then(function (next) {
       if (!next) return false;
-      var changed = next.mode !== state.mode || (next.mode === "student" && next.grade !== state.grade);
+      var changed = next.mode !== state.mode ||
+        (next.mode === "student" && next.grade !== state.grade) ||
+        String(next.lock) !== String(state.lock);
       var first = !chosen;
       state = next;
       chosen = true;
@@ -215,7 +312,7 @@
   if (!chosen) setTimeout(function () { open(); }, 0);
 
   window.WQ2_MODE = {
-    get: function () { return { mode: state.mode, grade: state.grade }; },
+    get: function () { return { mode: state.mode, grade: state.grade, lock: activeLock() }; },
     isStudent: function () { return state.mode === "student"; },
     chosen: function () { return chosen; },
     label: label,

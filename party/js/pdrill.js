@@ -123,6 +123,13 @@
       var box = document.createElement("div");
       box.className = "wq2-store-panel dq-window dr-panel";
       box.innerHTML = html;
+      // 左上の×。中身が長いと下の「閉じる」までスクロールしないと届かない
+      var x = document.createElement("button");
+      x.className = "wq2-x";
+      x.textContent = "✕";
+      x.setAttribute("aria-label", "閉じる");
+      x.onclick = function (e) { e.preventDefault(); wrap.remove(); resolve("no"); };
+      box.appendChild(x);
       var row = document.createElement("div");
       row.className = "wq2-store-btns";
       buttons.forEach(function (b) {

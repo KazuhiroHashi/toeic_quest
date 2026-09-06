@@ -1088,6 +1088,7 @@
         $("dpad-left").removeEventListener("pointerdown", tapLeft, true);
         $("dpad-right").removeEventListener("pointerdown", tapRight, true);
         $("zukan-close").onpointerdown = null;
+        if ($("zukan-x")) $("zukan-x").onpointerdown = null;
         $("zukan").classList.remove("on");
         resolve();
       }
@@ -1099,6 +1100,8 @@
       $("dpad-left").addEventListener("pointerdown", tapLeft, true);
       $("dpad-right").addEventListener("pointerdown", tapRight, true);
       $("zukan-close").onpointerdown = function (e) { e.preventDefault(); close(); };
+      // 左上の丸い×。一覧をスクロールしてもここは動かない
+      if ($("zukan-x")) $("zukan-x").onpointerdown = function (e) { e.preventDefault(); close(); };
     });
   }
 

@@ -617,6 +617,13 @@
     window.addEventListener("keydown", onKey, true);
     $("btn-b").addEventListener("pointerdown", onB, true);
     wrap.querySelector("button").onclick = function (e) { e.preventDefault(); closeAchv(); };
+    // 左上の×。メダルが増えると下の「閉じる」が画面外に出ることがある
+    var x = document.createElement("button");
+    x.className = "wq2-x";
+    x.textContent = "✕";
+    x.setAttribute("aria-label", "閉じる");
+    x.onclick = function (e) { e.preventDefault(); closeAchv(); };
+    wrap.querySelector(".wq2-store-panel").appendChild(x);
     $("screen").appendChild(wrap);
   }
 

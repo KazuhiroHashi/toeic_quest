@@ -455,6 +455,21 @@
   opacity: 0; pointer-events: none; transition: opacity .25s;
 }
 .pmovie-tap.show { opacity: 1; pointer-events: auto; }
+/* パネル左上の閉じるボタン。下に並ぶ「閉じる」だけだと、内容が長いときに
+   スクロールしないと見つからない。位置を固定して、いつでも同じ場所で閉じられる */
+.wq2-x {
+  position: absolute; left: 8px; top: 8px; z-index: 3;
+  width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+  font-family: inherit; font-size: 17px; line-height: 1; color: #eef2ff;
+  background: rgba(8, 10, 24, .82); border: 2px solid rgba(255, 255, 255, .38);
+  border-radius: 50%; cursor: pointer; padding: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .45);
+}
+.wq2-x:active { transform: scale(.92); background: rgba(40, 48, 90, .95); }
+/* ×を置くパネルは、位置の基準になっている必要がある */
+.wq2-store-panel { position: relative; }
+.wq2-store-panel .wq2-store-h { padding-left: 34px; padding-right: 34px; }
+
 /* 出題範囲の選択（学年ボタンの補足行） */
 .wq2-mode-sub {
   display: block; margin-top: 3px; font-size: 10px; letter-spacing: 0;

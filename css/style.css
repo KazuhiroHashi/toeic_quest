@@ -494,6 +494,18 @@ canvas#field-canvas {
 }
 #zukan-title { font-size: 17px; font-weight: bold; color: var(--accent); letter-spacing: 2px; }
 #zukan-close { font-size: 13px; color: #9ab; padding: 6px 10px; border: 1px solid #445; border-radius: 8px; cursor: pointer; }
+/* 左上の丸い×。ヘッダの「✕ 閉じる」は一覧をスクロールすると視界から外れるので、
+   画面に貼り付いたまま動かない閉じ口を別に用意する */
+#zukan-x {
+  position: absolute; left: 8px; top: 8px; z-index: 3;
+  width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+  font-family: inherit; font-size: 17px; line-height: 1; color: #eef2ff;
+  background: rgba(8, 10, 24, .82); border: 2px solid rgba(255, 255, 255, .38);
+  border-radius: 50%; cursor: pointer; padding: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .45);
+}
+#zukan-x:active { transform: scale(.92); background: rgba(40, 48, 90, .95); }
+#zukan-head { padding-left: 50px; }
 #zukan-close:active { background: #234; }
 #zukan-tabs { flex: none; display: flex; gap: 6px; padding: 8px 10px; overflow-x: auto; }
 .ztab {

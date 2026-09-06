@@ -49,6 +49,8 @@
 
       <!-- word encyclopedia -->
       <div id="zukan">
+        <!-- 一覧をスクロールしてもヘッダごと流れてしまうので、画面に固定した閉じ口を別に置く -->
+        <button id="zukan-x" aria-label="閉じる">✕</button>
         <div id="zukan-head">
           <div id="zukan-title">単語帳</div>
           <div id="zukan-close">✕ 閉じる</div>
@@ -86,7 +88,7 @@
         <!-- どのビルドが端末に入っているかを、道具なしで確かめられるようにする。
              cap sync の掛け忘れやXcodeのキャッシュで古いコードが動いていたことが
              実際にあり、ウェブインスペクタを開かないと分からない状態だった -->
-        <div id="ptitle-build">build 2026-09-06d</div>
+        <div id="ptitle-build">build 2026-09-06e</div>
         </div>
         <!-- OPは初回に1回だけ自動再生される。もう一度見たい人のための入口。
              左上に置いたのは、右上の2つ（音声・BGM）が設定の切り替えで、
