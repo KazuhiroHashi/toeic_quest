@@ -160,16 +160,53 @@
       store.update().then(syncFromReceipt).catch(function () {});
     }, false);
 
+    // 購入は必ず確認パネルを挟んでから StoreKit / Play Billing に渡す。
+    //
+    // 以前はここでいきなり offer.order() を呼んでいた。そうすると pstore.js の
+    // 確認パネルが実機で一度も表示されず、
+    //   ・価格／期間／自動更新／解約方法／規約とプライバシーのリンク（Apple 3.1.2）
+    //   ・「購入を復元」への導線（Apple 3.1.1）
+    // のどちらも画面に出ない状態になっていた。restore 自体は下で定義済みなのに、
+    // それを押せる場所がアプリのどこにも無かった。審査で落ちる。
+    // パネルの文言は pstore.js の premiumPanel に集約してある。
+    var buying = false;
     window.WQ2_STORE.buyPremium = function (cb) {
-      var p = store.get(CONFIG.productId, PLATFORM);
-      var offer = p && p.getOffer();
-      if (!offer) { cb(false); return; }
-      offer.order().then(function () { cb(syncFromReceipt()); }).catch(function () { cb(false); });
+      if (buying) { cb(false); return; }   // 二重タップでシートが二枚出るのを防ぐ
+      buying = true;
+      function done(ok) { buying = false; cb(ok); }
+
+      window.WQ2_STORE.premiumPanel(false).then(function (k) {
+        if (k === "restore") { window.WQ2_STORE.restore(done); return; }
+        if (k !== "buy") { done(false); return; }
+
+        var p = store.get(CONFIG.productId, PLATFORM);
+        var offer = p && p.getOffer();
+        // 商品が取れないのは、ストア側の登録が未完了か通信できないとき。
+        // 黙って閉じると「押しても何も起きない」になるので理由を出す
+        if (!offer) {
+          window.WQ2_STORE.note("いまは 手続きできません。\n通信環境を確かめて、\nしばらくしてから お試しください。");
+          done(false);
+          return;
+        }
+        offer.order()
+          .then(function () { done(syncFromReceipt()); })
+          .catch(function () { done(false); });   // ユーザーがシートを閉じた場合もここ
+      });
     };
 
     // Apple requires an explicit restore path for subscriptions
     window.WQ2_STORE.restore = function (cb) {
-      store.restorePurchases().then(function () { cb(syncFromReceipt()); }).catch(function () { cb(false); });
+      store.restorePurchases()
+        .then(function () {
+          var ok = syncFromReceipt();
+          window.WQ2_STORE.note(ok ? "プレミアムを 復元しました。"
+                                   : "復元できる 購入が 見つかりませんでした。");
+          cb(ok);
+        })
+        .catch(function () {
+          window.WQ2_STORE.note("復元に 失敗しました。\nしばらくしてから お試しください。");
+          cb(false);
+        });
     };
   });
 })();

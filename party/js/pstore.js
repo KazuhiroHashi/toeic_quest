@@ -179,25 +179,45 @@
       return new Promise(function (r) { api.showInterstitial(function () { r(); }); });
     },
 
-    // monthly subscription. cb(true) on success. NATIVE OVERRIDES THIS.
-    // Both stores require the price, the renewal period, the auto-renewal notice
-    // and how to cancel to be visible on the screen that starts the purchase.
-    buyPremium: function (cb) {
-      overlay(
+    // 短い結果表示。復元できた／できなかった、のように、押した結果を必ず何か返す
+    // ために使う。黙って閉じると「反応しない」と受け取られる
+    note: function (text) {
+      return overlay('<div class="wq2-store-p">' + String(text).replace(/\n/g, "<br>") + '</div>',
+        [{ key: "no", label: "とじる", primary: true }]);
+    },
+
+    // 購入前に必ず出す確認パネル。Promise("buy" | "restore" | "no") を返す。
+    //
+    // ここは飾りではなく、両ストアの審査要件そのもの。名称・期間・価格・自動更新・
+    // 解約方法・規約とプライバシーのリンクを、購入を始める画面に出さないと通らない
+    // （Apple 3.1.2）。「購入を復元」も必須（Apple 3.1.1）。
+    //
+    // ネイティブ側（pnative.js）は buyPremium を丸ごと差し替えるが、このパネルは
+    // 共有して使う。以前は差し替えでパネルごと消えてしまい、実機では開示も復元も
+    // 出ない状態だった。表示は1か所にまとめて、二度と食い違わないようにする。
+    premiumPanel: function (demo) {
+      return overlay(
         '<div class="wq2-store-h">★ プレミアム（月額）</div>' +
         '<div class="wq2-store-p">月額' + PRICE + 'で<br>' +
         '・スタミナ制限なし<br>・広告オフ<br>' +
         '・学習の記録を すべて表示<br>　（毎日の推移グラフ／苦手な単語）</div>' +
         '<div class="wq2-store-fine">お支払いは 月額' + PRICE + '（税込）。<br>' +
+        '購入を確定すると Apple ID に請求されます。<br>' +
         '解約しないかぎり 自動更新されます。<br>' +
         '解約は App Store／Google Play の<br>サブスクリプション設定から いつでも できます。<br>' +
         '<a href="https://bridge-ai-tokyo.com/wordquest/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>　' +
         '<a href="https://bridge-ai-tokyo.com/wordquest/terms.html" target="_blank" rel="noopener">利用規約</a></div>' +
-        '<div class="wq2-ad-note">※デモ版：実際の課金は 公開版で有効になります</div>',
-        [{ key: "buy", label: "登録する（デモ）", primary: true },
+        (demo ? '<div class="wq2-ad-note">※デモ版：実際の課金は 公開版で有効になります</div>' : ''),
+        [{ key: "buy", label: demo ? "登録する（デモ）" : "登録する", primary: true },
          { key: "restore", label: "購入を復元" },
          { key: "no", label: "やめる" }]
-      ).then(function (k) {
+      );
+    },
+
+    // monthly subscription. cb(true) on success. NATIVE OVERRIDES THIS
+    // （パネルの表示だけは premiumPanel を共有する）。
+    buyPremium: function (cb) {
+      api.premiumPanel(true).then(function (k) {
         if (k === "buy") { api._setPremium(true, 0); cb(true); }
         else if (k === "restore") { api.restore(function (ok) { cb(ok); }); }
         else cb(false);
