@@ -23,9 +23,9 @@
                    "boss", "encounter", "chest", "stairs",
                    "magic", "magic_fire", "magic_ice", "magic_thunder", "magic_holy"];
   // 実機での以前の聞こえ方は 1.0（iOS の <audio> は volume を受け付けないので、
-  // コードに 0.7 と書いてあっても効いていなかった）。そこから1割下げて 0.9。
-  // 読み上げが埋もれないように、BGM(0.81) と揃えて下げている
-  var SFX_LEVEL = 0.9;
+  // コードに 0.7 と書いてあっても効いていなかった）。読み上げが埋もれないよう、
+  // BGM と同じ割合で下げている。 1.0 → 0.9 → 0.81
+  var SFX_LEVEL = 0.81;
   var VICTORY = "#victory";
 
   function sfxUrl(name) {

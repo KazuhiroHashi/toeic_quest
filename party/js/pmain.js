@@ -842,7 +842,8 @@
       if (shown) return;
       shown = true;
       clearTimeout(guard);
-      t.classList.remove("art-wait");
+      t.style.opacity = "";              // index.html に直接書いてあるぶん
+      t.classList.remove("art-wait");    // party.css のぶん
     }
     function one() { if (--left <= 0) reveal(); }
 

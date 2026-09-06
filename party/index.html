@@ -64,11 +64,13 @@
       <div id="fade-layer"></div>
 
       <!-- title screen -->
-      <!-- art-wait は最初から付けておく。ここを空にすると、pmain.js が動き出す
+      <!-- art-wait は最初から付けておく。JSで後から付けると、pmain.js が動き出す
            までの十数フレーム、絵の入っていないタイトルが素で見えてしまう
-           （実機で「別のタイトルが一瞬出る」と見えていた）。外すのは絵が
-           そろってから／遅くとも2.5秒後で、pmain.js がやる -->
-      <div id="ptitle-screen" class="art-wait">
+           （実機で「別のタイトルが一瞬出る」と見えていた）。
+           style にも直接書いてあるのは、party.css が届くより前の数フレームを
+           塞ぐため。class だけだと、そこがすり抜ける。
+           どちらも外すのは絵がそろってから／遅くとも2.5秒後で、pmain.js がやる -->
+      <div id="ptitle-screen" class="art-wait" style="opacity:0">
         <div id="ptitle-inner">
           <div id="ptitle-badge">英単語 × RPG</div>
           <div id="ptitle-logo">WORD QUEST</div>
@@ -93,7 +95,7 @@
         <!-- どのビルドが端末に入っているかを、道具なしで確かめられるようにする。
              cap sync の掛け忘れやXcodeのキャッシュで古いコードが動いていたことが
              実際にあり、ウェブインスペクタを開かないと分からない状態だった -->
-        <div id="ptitle-build">build 2026-09-06v</div>
+        <div id="ptitle-build">build 2026-09-06x</div>
         </div>
         <!-- OPは初回に1回だけ自動再生される。もう一度見たい人のための入口。
              左上に置いたのは、右上の2つ（音声・BGM）が設定の切り替えで、
