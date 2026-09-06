@@ -704,18 +704,10 @@
     $("pbtn-unlock").blur();
     if (window.WQ2_STORE) WQ2_STORE.buyPremium(function (ok) { if (ok) refreshStamina(); });
   });
-  // 英語の読み上げ ON/OFF（BGMとは別に切れる。曲だけ聴きたい人と、
-  // 発音だけ聴きたい人がどちらもいる）
-  function refreshVoiceBtn() {
-    var b = $("pbtn-voice");
-    if (!b) return;
-    if (!window.VOICE) { b.style.display = "none"; return; }
-    b.classList.toggle("off", !VOICE.isEnabled());
-  }
-  if ($("pbtn-voice")) $("pbtn-voice").addEventListener("click", function () {
-    if (window.VOICE) VOICE.setEnabled(!VOICE.isEnabled());
-    refreshVoiceBtn();
-  });
+  // 読み上げの ON/OFF ボタンは廃止した。単語の発音はこのアプリの中身そのもので、
+  // 切れるようにしておくと、消したまま使って「音が出ない」と受け取られる。
+  // 呼び出し側を全部消して回るより、何もしない関数を1つ残すほうが安全
+  function refreshVoiceBtn() {}
 
   function refreshModeBtn() {
     var b = $("pbtn-mode");

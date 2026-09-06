@@ -616,7 +616,6 @@
 #quiz-result.ng { color: #ff8a9c; }
 /* 音声トグル。BGMボタンの左隣。絵文字だと端末によって出ないことがあるので、
    必ず表示できて意味も直に伝わる「英」を使う */
-#pbtn-voice { right: 62px; font-size: 17px; font-weight: bold; letter-spacing: 0; }
 /* オープニング再生。右上の2つはロゴに寄って窮屈なので左上に置く。
    最初のタップ（BGM解禁の関門）の最中は押せないように隠す */
 #pbtn-movie { left: 12px; right: auto; font-size: 18px; }

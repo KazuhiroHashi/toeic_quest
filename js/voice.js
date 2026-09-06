@@ -13,9 +13,13 @@
 (function () {
   "use strict";
 
-  var VOLUME = 0.95;    // BGM 0.55 / 効果音 0.5 に対して。2026-08-22 に耳で決めた値
+  // 1.0 は <audio> の上限。これ以上は要素側では上げられないので、
+  // 相対的にもう一段はっきりさせるぶんは BGM を下げて確保している（bgm.js）
+  var VOLUME = 1.0;
+  // 読み上げは常にオン。切れるようにしていたが、消したまま使って
+  // 「音が出ない」と受け取られるほうが損なので、設定ごと廃止した。
+  // setEnabled / isEnabled は game.js など呼び出し側が残っているので形だけ保つ
   var enabled = true;
-  try { enabled = localStorage.getItem("tq_voice") !== "0"; } catch (e) {}
 
   var el = null;
   var unlocked = false;
@@ -72,11 +76,7 @@
     playing = null;
   }
 
-  function setEnabled(v) {
-    enabled = !!v;
-    try { localStorage.setItem("tq_voice", enabled ? "1" : "0"); } catch (e) {}
-    if (!enabled) stop();
-  }
+  function setEnabled() { /* 廃止。常にオン */ }
 
   ["pointerdown", "keydown", "touchstart"].forEach(function (ev) {
     window.addEventListener(ev, function () { unlocked = true; }, { passive: true });
