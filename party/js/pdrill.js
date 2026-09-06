@@ -257,7 +257,7 @@
         '<div class="dr-empty">記録は まだ ' + a.n + ' 語分です。<br><br>' +
         '闘技場か 試験対策を 少し進めると、<br>毎日の推移と 苦手な単語を<br>ここに表示します。<br><br>' +
         '<b>あと ' + (10 - a.n) + ' 語</b>で 表示できます。</div>',
-        [{ key: "no", label: "閉じる" }]
+        []
       );
     }
     var attempts = a.correct + a.wrong;
@@ -326,7 +326,7 @@
       });
     }
 
-    var btns = [{ key: "no", label: "閉じる" }];
+    var btns = [];   // 閉じるのは左上の×だけ
     if (!pro) {
       h += '<div class="dr-sell">グラフと 苦手な単語の 一覧は<br>' +
            'プレミアム（月額' +
@@ -400,7 +400,7 @@
     if (!list.length) {
       await panel('<div class="wq2-store-h">試験対策</div>' +
         '<div class="dr-empty">出題できる単語が ありません。<br>闘技場を 少し進めてから どうぞ。</div>',
-        [{ key: "no", label: "閉じる" }]);
+        []);
       return;
     }
     var title = $("ptitle-screen"), battle = $("pbattle-screen");
@@ -449,7 +449,7 @@
     battle.style.display = "none";
     title.style.display = "flex";
     if (window.BGM) BGM.playAny(["title"]);
-    await panel(h, [{ key: "no", label: "閉じる" }]);
+    await panel(h, []);
   }
 
   window.PDRILL = { open: open, analysis: showAnalysis, analyse: analyse, stateOf: stateOf };

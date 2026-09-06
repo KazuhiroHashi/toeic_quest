@@ -1032,7 +1032,7 @@
         '<div class="zk-trophy ' + tr.cls + '">' + (tr.icon || "🔰") + '</div>' +
         '<div class="zk-rank">' + gs[zukanBand].name + '</div>' +
         '<div class="zk-count"><span class="big-num">' + nB + '</span>' +
-          '<span class="zk-slash"> ／ ' + total + ' 語おぼえた</span></div>' +
+          '<span class="zk-slash"> ／ ' + total + ' 語</span></div>' +
         '<div class="zk-tier ' + tr.cls + '">' + tierLine + '</div>' +
         '<div class="zk-bar"><div style="width:' + pct + '%"></div></div>' +
       '</div>';
@@ -1083,7 +1083,7 @@
         $("dpad-down").removeEventListener("pointerdown", tapDown, true);
         $("dpad-left").removeEventListener("pointerdown", tapLeft, true);
         $("dpad-right").removeEventListener("pointerdown", tapRight, true);
-        $("zukan-close").onpointerdown = null;
+        if ($("zukan-close")) $("zukan-close").onpointerdown = null;
         if ($("zukan-x")) $("zukan-x").onpointerdown = null;
         $("zukan").classList.remove("on");
         resolve();
@@ -1095,7 +1095,7 @@
       $("dpad-down").addEventListener("pointerdown", tapDown, true);
       $("dpad-left").addEventListener("pointerdown", tapLeft, true);
       $("dpad-right").addEventListener("pointerdown", tapRight, true);
-      $("zukan-close").onpointerdown = function (e) { e.preventDefault(); close(); };
+      if ($("zukan-close")) $("zukan-close").onpointerdown = function (e) { e.preventDefault(); close(); };
       // 左上の丸い×。一覧をスクロールしてもここは動かない
       if ($("zukan-x")) $("zukan-x").onpointerdown = function (e) { e.preventDefault(); close(); };
     });

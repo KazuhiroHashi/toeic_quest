@@ -612,8 +612,7 @@
     wrap.innerHTML = '<div class="wq2-store-panel dq-window achv-panel">' +
       '<div class="wq2-store-h">🏅 称号・記録</div>' +
       '<div class="achv-medals">' + medals + '</div>' +
-      '<div class="achv-list">' + rows + '</div>' +
-      '<div class="wq2-store-btns"><button class="wq2-store-btn primary">閉じる</button></div></div>';
+      '<div class="achv-list">' + rows + '</div></div>';
     function closeAchv() {
       window.removeEventListener("keydown", onKey, true);
       $("btn-b").removeEventListener("pointerdown", onB, true);
@@ -624,8 +623,8 @@
     wrap.onpointerdown = function (e) { if (e.target === wrap) { e.preventDefault(); closeAchv(); } };
     window.addEventListener("keydown", onKey, true);
     $("btn-b").addEventListener("pointerdown", onB, true);
-    wrap.querySelector("button").onclick = function (e) { e.preventDefault(); closeAchv(); };
-    // 左上の×。メダルが増えると下の「閉じる」が画面外に出ることがある
+    // 閉じ口は左上の×ひとつ。下にも「閉じる」を置いていたが、
+    // 同じ働きのものが2つあると、どちらを押すのか迷わせるだけだった
     var x = document.createElement("button");
     x.className = "wq2-x";
     x.textContent = "✕";

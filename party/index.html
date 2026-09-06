@@ -51,9 +51,10 @@
       <div id="zukan">
         <!-- 一覧をスクロールしてもヘッダごと流れてしまうので、画面に固定した閉じ口を別に置く -->
         <button id="zukan-x" aria-label="閉じる">✕</button>
+        <!-- 閉じ口は左上の丸い×ひとつ。右上にも「✕ 閉じる」を出していたが、
+             同じ働きのものが2つ並ぶと、どちらを押すのか迷わせるだけだった -->
         <div id="zukan-head">
           <div id="zukan-title">単語帳</div>
-          <div id="zukan-close">✕ 閉じる</div>
         </div>
         <div id="zukan-tabs"></div>
         <div id="zukan-summary"></div>
@@ -88,7 +89,7 @@
         <!-- どのビルドが端末に入っているかを、道具なしで確かめられるようにする。
              cap sync の掛け忘れやXcodeのキャッシュで古いコードが動いていたことが
              実際にあり、ウェブインスペクタを開かないと分からない状態だった -->
-        <div id="ptitle-build">build 2026-09-06j</div>
+        <div id="ptitle-build">build 2026-09-06k</div>
         </div>
         <!-- OPは初回に1回だけ自動再生される。もう一度見たい人のための入口。
              左上に置いたのは、右上の2つ（音声・BGM）が設定の切り替えで、
