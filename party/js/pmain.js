@@ -795,8 +795,7 @@
     refreshBgmBtn();
   });
 
-  // オープニングをもう一度見る。初回は最初のタップに乗せて自動再生するが、
-  // 二度目以降はここからでないと見られなかった。
+  // オープニングを見る。自動再生はしないので、見る手段はこのボタンだけ。
   // pointerdown で止めているのは、タイトル画面が同じイベントを拾って
   // 別の処理を始めるのを防ぐため。連打で二重に開かないよう playing で塞ぐ
   (function () {
@@ -880,16 +879,10 @@
     function go() {
       t.removeEventListener("pointerdown", go);
       t.classList.remove("pre-start");
-      // first launch only: the opening movie rides on this tap's gesture so
-      // its audio is allowed. Skippable; any failure falls through to the title.
-      var seen = false;
-      try { seen = localStorage.getItem("wq2_op_seen") === "1"; } catch (e) {}
-      if (!seen && window.PMOVIE) {
-        try { localStorage.setItem("wq2_op_seen", "1"); } catch (e) {}
-        PMOVIE.play("op").then(function () { if (window.BGM) BGM.playAny(["title"]); });
-      } else {
-        if (window.BGM) BGM.playAny(["title"]);
-      }
+      // 初回起動でオープニングを自動再生していたが、やめた。アプリを開いて
+      // 最初の数十秒は「遊べるかどうか」を見る時間で、そこにムービーを挟む
+      // 価値はない。見たい人は左上の 🎬 ボタンからいつでも見られる。
+      if (window.BGM) BGM.playAny(["title"]);
     }
     t.addEventListener("pointerdown", go);
   })();
