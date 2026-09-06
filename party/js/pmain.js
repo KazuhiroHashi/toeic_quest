@@ -696,14 +696,16 @@
     var el = $("ptitle-stamina"), ub = $("pbtn-unlock");
     if (!window.WQ2_STORE) { if (el) el.style.display = "none"; if (ub) ub.style.display = "none"; return; }
     if (WQ2_STORE.isPremium()) {
-      if (el) el.innerHTML = "★ プレミアム加入中（広告オフ）";
+      if (el) el.innerHTML = "★ プレミアム加入中（広告オフ・学習機能プラス）";
       if (ub) ub.style.display = "none";
     } else {
       if (el) el.innerHTML = "⚡ 本日のプレイ　" + WQ2_STORE.stamina() + " ／ " + WQ2_STORE.max();
       if (ub) {
         // 金額は pstore.js の PRICE ひとつだけを見る。index.html にも書いてあると
         // 値段を変えたときに片方だけ古いまま残る
-        ub.textContent = "★ プレミアム（月額" + WQ2_STORE.price() + "・広告オフ）";
+        // 「広告が消える」だけだと、学べることが増える点が伝わらない。
+        // 実際に増えるのは 出題レベルの固定 と 学習の記録の全表示
+        ub.textContent = "★ プレミアム（月額" + WQ2_STORE.price() + "・広告オフ・学習機能プラス）";
         ub.style.display = "";
       }
     }
