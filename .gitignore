@@ -13,6 +13,10 @@ node_modules/
 # movie build intermediates
 /movie/tmp/
 
+# 受け取った動画素材の原本を置く場所。GitHubは1ファイル100MBまでで、
+# 撮って出しの動画はすぐ超える。原本はここに置き、変換後だけをコミットする
+/movie/raw/
+
 # build cache
 /build/
 /dist/
