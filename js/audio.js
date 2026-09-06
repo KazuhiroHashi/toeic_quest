@@ -128,6 +128,53 @@
 
   function ready(name) { return !!buffers[name]; }
 
+  // ---- 読み上げのように「その場で決まる音」を、待たずに鳴らすための入口 ----
+  // <audio> に src を入れて play() すると、再生の仕組みを毎回組み直すぶん
+  // 実機で 0.2 秒ほど遅れる。読み込んで展開したものを鳴らせばその間が消える。
+  // 単語は 4,883 語あるので全部は持てない。使った順に少しだけ覚えておく
+  var VOICE_CACHE = 60;
+  var byUrl = {};       // url -> AudioBuffer
+  var order = [];       // 使った順（古いものから捨てる）
+  var loading = {};     // url -> Promise（同じ語を二重に取りにいかない）
+
+  function buffer(url) {
+    var c = context();
+    if (!c) return Promise.reject();
+    var hit = byUrl[url];
+    if (hit) return Promise.resolve(hit);
+    if (loading[url]) return loading[url];
+    var q = fetch(url)
+      .then(function (r) { return r.ok ? r.arrayBuffer() : Promise.reject(r.status); })
+      .then(function (ab) {
+        return new Promise(function (ok, ng) {
+          var d = c.decodeAudioData(ab, ok, ng);
+          if (d && d.then) d.then(ok, ng);
+        });
+      })
+      .then(function (buf) {
+        delete loading[url];
+        byUrl[url] = buf;
+        order.push(url);
+        while (order.length > VOICE_CACHE) delete byUrl[order.shift()];
+        return buf;
+      }, function (e) { delete loading[url]; throw e; });
+    loading[url] = q;
+    return q;
+  }
+
+  // 鳴らして、止めるためのノードを返す（止めないなら捨ててよい）
+  function source(buf, busName) {
+    var c = context();
+    if (!c || !buf || !resume()) return null;
+    try {
+      var s = c.createBufferSource();
+      s.buffer = buf;
+      s.connect(bus(busName || "sfx"));
+      s.start(0);
+      return s;
+    } catch (e) { return null; }
+  }
+
   // ---- <audio> を Web Audio の経路に繋ぐ（BGM用）----
   // 繋いだ要素の音は GainNode を通るようになるので、el.volume ではなく
   // setLevel() で音量を変える。一度しか繋げないので印を付けておく
@@ -153,6 +200,8 @@
     play: play,
     ready: ready,
     connect: connect,
+    buffer: buffer,
+    source: source,
     setLevel: setLevel,
     getLevel: getLevel
   };

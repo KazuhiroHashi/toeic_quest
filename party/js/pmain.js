@@ -827,31 +827,50 @@
     img.src = src;
   })();
 
-  // optional title key-visual: assets/ui/title_bg.png (GPT-image). Falls back to the CSS gradient.
+  // タイトルの絵（背景とロゴ）。どちらも無ければ CSS のグラデーションと
+  // 文字のロゴのまま成立する作りにしてある。
+  //
+  // ただし、以前は「まず文字ロゴ＋グラデーションで出し、絵が読めたら差し替える」
+  // 順番だったので、実機では別のタイトル画面が一瞬見えてから本物に変わっていた。
+  // 両方そろうまで（読めない絵があっても2.5秒で見切る）隠しておき、一度だけ出す。
   (function () {
-    var src = (window.UI_ART && window.UI_ART.titlebg) || "../assets/ui/title_bg.png";
-    var img = new Image();
-    img.onload = function () {
-      var t = $("ptitle-screen");
-      // light top scrim (logo/buttons pop against the bright sky); keep the heroes at the bottom bright
-      t.style.backgroundImage = "linear-gradient(180deg, rgba(8,10,30,.28) 0%, rgba(8,10,30,0) 34%, rgba(8,10,30,0) 82%, rgba(8,10,30,.30) 100%), url('" + src + "')";
+    var t = $("ptitle-screen");
+    t.classList.add("art-wait");
+    var left = 2, shown = false;
+    var guard = setTimeout(reveal, 2500);   // 絵が無い・遅いときも必ず出す
+    function reveal() {
+      if (shown) return;
+      shown = true;
+      clearTimeout(guard);
+      t.classList.remove("art-wait");
+    }
+    function one() { if (--left <= 0) reveal(); }
+
+    // 背景の絵
+    var bgSrc = (window.UI_ART && window.UI_ART.titlebg) || "../assets/ui/title_bg.png";
+    var bg = new Image();
+    bg.onload = function () {
+      // 上に薄い暗幕（明るい空でもロゴとボタンが読める）。下の仲間は暗くしない
+      t.style.backgroundImage = "linear-gradient(180deg, rgba(8,10,30,.28) 0%, rgba(8,10,30,0) 34%, rgba(8,10,30,0) 82%, rgba(8,10,30,.30) 100%), url('" + bgSrc + "')";
       t.style.backgroundSize = "cover";
       t.style.backgroundPosition = "center top";
       t.classList.add("has-kv");
+      one();
     };
-    img.src = src;
-  })();
+    bg.onerror = one;
+    bg.src = bgSrc;
 
-  // optional title logo image: assets/ui/logo.png (GPT-image). Falls back to the text logo.
-  (function () {
-    var src = (window.UI_ART && window.UI_ART.logo) || "../assets/ui/logo.png";
-    var img = new Image();
-    img.onload = function () {
-      var lg = $("ptitle-logo");
-      lg.innerHTML = '<img src="' + src + '" alt="WORD QUEST">';
-      lg.classList.add("img");
+    // ロゴの絵
+    var lgSrc = (window.UI_ART && window.UI_ART.logo) || "../assets/ui/logo.png";
+    var lg = new Image();
+    lg.onload = function () {
+      var box = $("ptitle-logo");
+      box.innerHTML = '<img src="' + lgSrc + '" alt="WORD QUEST">';
+      box.classList.add("img");
+      one();
     };
-    img.src = src;
+    lg.onerror = one;
+    lg.src = lgSrc;
   })();
 
   refreshBgmBtn();

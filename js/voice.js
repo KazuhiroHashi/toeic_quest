@@ -71,24 +71,21 @@
     return el;
   }
 
-  // Web Audio の経路に繋いで音量を上げる。
-  // 繋いだ要素の音は AudioContext を通るようになるので、context が動いて
-  // いないと逆に無音になる。動いていることを確かめてからでないと繋がない。
-  // 繋げなければ今まで通り el.volume（=1.0）で鳴る
-  function route(a) {
-    if (routed || !window.WQAUDIO) return;
-    if (!WQAUDIO.resume()) return;                 // まだ最初の操作の前
-    WQAUDIO.setLevel("voice", BOOST);
-    if (WQAUDIO.connect(a, "voice")) routed = true;
+  // ---- 鳴らし方は2通り ----
+  // Web Audio：先に読み込んで展開してから鳴らす。待ち時間がほぼ無い。
+  // <audio>  ：src を入れて play()。実機では毎回 0.2 秒ほど遅れて聞こえる
+  //            （再生の仕組みを都度組み直すため）。Web Audio が使えないときの控え。
+  var node = null;      // Web Audio で鳴らしている最中のもの
+  var seq = 0;          // 読み込んでいる間に次の単語が来たら、古いほうは捨てる
+
+  function stopNode() {
+    if (!node) return;
+    try { node.stop(); } catch (e) {}
+    node = null;
   }
 
-  function say(word) {
-    if (!enabled || !unlocked || !word) return;
-    var s = slug(word);
-    if (!s || !exists(s)) return;
+  function sayViaElement(s) {
     var a = audio();
-    route(a);
-    if (routed) WQAUDIO.resume();                  // 中断から戻ったときのため
     playing = s;
     try { a.pause(); } catch (e) {}
     a.src = srcOf(s);
@@ -96,9 +93,38 @@
     if (p && p.catch) p.catch(function () { playing = null; });   // 解禁前などは黙って諦める
   }
 
+  function say(word) {
+    if (!enabled || !unlocked || !word) return;
+    var s = slug(word);
+    if (!s || !exists(s)) return;
+
+    if (window.WQAUDIO && WQAUDIO.resume()) {
+      if (!routed) { WQAUDIO.setLevel("voice", BOOST); routed = true; }
+      var token = ++seq;
+      stopNode();
+      playing = s;
+      WQAUDIO.buffer(srcOf(s)).then(function (buf) {
+        if (token !== seq) return;                 // 次の単語に追い越された
+        node = WQAUDIO.source(buf, "voice");
+        if (!node) sayViaElement(s);               // 念のため
+      }, function () {
+        // 読み込めなかった。ここで「無い語」と決めつけてはいけない。
+        // file:// のように fetch だけが通らない環境があり、そう決めると
+        // 読み上げが二度と鳴らなくなる。今まで通りの鳴らし方に落とす。
+        // 本当に無い語なら、<audio> 側の error で missing に入る
+        if (token !== seq) return;
+        sayViaElement(s);
+      });
+      return;
+    }
+
+    sayViaElement(s);
+  }
+
   function stop() {
-    if (!el) return;
-    try { el.pause(); } catch (e) {}
+    seq++;                     // 読み込み中のものも無効にする
+    stopNode();
+    if (el) { try { el.pause(); } catch (e) {} }
     playing = null;
   }
 

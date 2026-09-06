@@ -125,6 +125,13 @@
 #pbtn-unlock.ghost:active { background: rgba(255, 215, 120, .28); }
 /* when a key-visual image is present: anchor content to the top so the heroes
    at the bottom of the artwork stay visible, and make buttons readable over art */
+/* タイトルの絵（背景・ロゴ）がそろうまで隠す。
+   以前は文字ロゴ＋グラデーションで先に出してから絵に差し替えていたので、
+   実機では別のタイトル画面が一瞬見えていた。そろってから一度だけ出す。
+   絵が読めないときも pmain.js が2.5秒で見切って外すので、出ないままにはならない */
+#ptitle-screen.art-wait { opacity: 0; transition: none; }
+#ptitle-screen { transition: opacity .28s ease; }
+
 #ptitle-screen.has-kv { align-items: flex-start; }
 #ptitle-screen.has-kv #ptitle-inner { padding-top: 10px; padding-bottom: 4px; }
 #ptitle-screen.has-kv #ptitle-badge,
