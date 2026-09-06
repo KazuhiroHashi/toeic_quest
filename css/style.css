@@ -45,11 +45,20 @@ html, body {
   -webkit-user-select: none;
 }
 
+/* セーフエリアは CSS 側で確保する。
+   以前は capacitor.config.json の ios.contentInset = "always" に任せていたが、
+   あれは WebView のスクロールビューに余白を足す仕組みで、このアプリのように
+   全体が position:fixed の中にある構成だと、描画位置とタップ判定がずれる
+   （実機で「押した場所と反応する場所が違う」「十字キーと閉じるが効かない」
+   という形で出た。Safari には contentInset が無いので再現しなかった）。
+   contentInset は never にして、上下の逃げはここで取る。
+   ノッチの無い端末やブラウザでは env() が 0 になるだけで影響しない。 */
 #app {
   position: fixed; inset: 0;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   background: #000;
+  padding-top: env(safe-area-inset-top);
 }
 
 #game-wrap {
