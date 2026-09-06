@@ -5,9 +5,13 @@
 // 解禁された要素」しか後から再生できないので、単語ごとに new Audio() すると
 // 2問目から無音になる（BGMで実際に踏んだ）。src を差し替えて使い回す。
 //
-// 音量について：読み上げは <audio> の上限(1.0)まで出しているので、これ以上は
-// 上げられない。実機で聞き取りにくいという声があったので、BGM側を 1.0 から
-// 0.9 に下げて差を作った（js/bgm.js）。効果音は以前の聞こえ方のまま 1.0。
+// 音量について：iOS の <audio> は volume を受け付けないので、実機ではBGMも
+// 効果音も読み上げも、ずっと 1.0 で鳴っていた。Web Audio に移して初めて
+// 音量差が作れるようになった（js/audio.js）。それでも読み上げが埋もれる
+// という声があったので、こう置いている。
+//     BGM     0.81   （js/bgm.js）
+//     効果音   0.9    （party/js/pbattle.js）
+//     読み上げ 1.10   （下の BOOST。音源の余裕いっぱい）
 // 読み上げの間だけBGMを下げる手（ダッキング）は採らない。0.6秒ごとに音量が
 // 上下すると、かえって耳につくため。下げるなら一律で下げる。
 //
@@ -15,10 +19,16 @@
 (function () {
   "use strict";
 
-  // 1.0 は <audio> の音量の上限。これ以上大きくするには Web Audio のゲインを
-  // 噛ませるか、音声ファイルを録り直すしかない。上限に張り付いているので、
-  // 聞き取りやすさの調整は BGM 側（js/bgm.js の VOLUME）で行う
+  // 1.0 は <audio> の音量の上限。ただし Web Audio の経路に繋げば、そこから
+  // さらに上げられる（js/audio.js）。
+  //
+  // どこまで上げてよいかは音源が決める。読み上げのmp3を測ったところ、
+  // 統合ラウドネス -17〜-15 LUFS、いちばん大きいものでピーク -0.9 dBFS。
+  // 1.10倍（+0.83dB）で -0.07 dBFS に収まり、割れない。ここが上限。
+  // それ以上ほしければ、mp3そのものを録り直す（音を潰す）しかない。
   var VOLUME = 1.0;
+  var BOOST = 1.10;      // Web Audio に繋げたときだけ効く
+  var routed = false;
   // 読み上げは常にオン。切れるようにしていたが、消したまま使って
   // 「音が出ない」と受け取られるほうが損なので、設定ごと廃止した。
   // setEnabled / isEnabled は game.js など呼び出し側が残っているので形だけ保つ
@@ -61,11 +71,24 @@
     return el;
   }
 
+  // Web Audio の経路に繋いで音量を上げる。
+  // 繋いだ要素の音は AudioContext を通るようになるので、context が動いて
+  // いないと逆に無音になる。動いていることを確かめてからでないと繋がない。
+  // 繋げなければ今まで通り el.volume（=1.0）で鳴る
+  function route(a) {
+    if (routed || !window.WQAUDIO) return;
+    if (!WQAUDIO.resume()) return;                 // まだ最初の操作の前
+    WQAUDIO.setLevel("voice", BOOST);
+    if (WQAUDIO.connect(a, "voice")) routed = true;
+  }
+
   function say(word) {
     if (!enabled || !unlocked || !word) return;
     var s = slug(word);
     if (!s || !exists(s)) return;
     var a = audio();
+    route(a);
+    if (routed) WQAUDIO.resume();                  // 中断から戻ったときのため
     playing = s;
     try { a.pause(); } catch (e) {}
     a.src = srcOf(s);
