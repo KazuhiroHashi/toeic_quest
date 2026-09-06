@@ -259,35 +259,39 @@
   }
 
   // 変更はその場で反映する。以前は location.reload() していたが、読み込み直すと
-  // タイトル画像が出るまでの背景グラデーションが一瞬見えてしまう
+  // タイトル画像が出るまでの背景グラデーションが一瞬見えてしまう。
+  //
+  // 「もどる」は必ず step() を呼び直して最初の画面（出題範囲）から選ばせる。
+  // 以前はレベル画面の「もどる」が同じレベル画面を開き直すだけで、押しても
+  // 何も起きないように見えていた。学年画面の「もどる」も open() を丸ごと
+  // 呼び直しており、その戻り値（真偽値）が state に入って設定を壊しうる形だった。
   function open() {
-    return chooseMode().then(function (m) {
-      if (m === "toeic") return { mode: "toeic", grade: state.grade };
-      return chooseGrade().then(function (g) {
-        if (g === "back") return open();
-        return { mode: "student", grade: g };
-      });
-    }).then(function (base) {
-      if (!base) return null;
-      // 初回起動は「範囲を選ぶ」だけで通す。遊び始める前に3枚も選ばせない。
-      // レベルの固定は、あとからタイトルの「出題：〜」でいつでも設定できる
-      if (!chosen) { base.lock = null; return base; }
-      // 鍵つきを押されたら購入へ。買えたらそのまま選び直させる
-      function askLevel() {
+    function step() {
+      return chooseMode().then(function (m) {
+        if (m === "toeic") return { mode: "toeic", grade: state.grade };
+        return chooseGrade().then(function (g) {
+          return g === "back" ? null : { mode: "student", grade: g };
+        });
+      }).then(function (base) {
+        if (!base) return step();                      // 学年で もどる
+        // 初回起動は「範囲を選ぶ」だけで通す。遊び始める前に3枚も選ばせない。
+        // レベルの固定は、あとからタイトルの「出題：〜」でいつでも設定できる
+        if (!chosen) { base.lock = null; return base; }
         return chooseLevel(base.mode).then(function (k) {
-          if (k === "back") return askLevel();
+          if (k === "back") return step();             // レベルで もどる
           if (k === "all") { base.lock = null; return base; }
           if (premium()) { base.lock = k; return base; }
+          // 鍵つきを押された：購入へ。買わなければ固定なしで進む
           return new Promise(function (r) {
             window.WQ2_STORE.buyPremium(function (ok) { r(ok); });
           }).then(function (ok) {
-            if (!ok) { base.lock = null; return base; }   // 買わなかった：固定なしで進む
-            base.lock = k; return base;
+            base.lock = ok ? k : null;
+            return base;
           });
         });
-      }
-      return askLevel();
-    }).then(function (next) {
+      });
+    }
+    return step().then(function (next) {
       if (!next) return false;
       var changed = next.mode !== state.mode ||
         (next.mode === "student" && next.grade !== state.grade) ||
