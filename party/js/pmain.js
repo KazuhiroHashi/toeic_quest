@@ -779,6 +779,28 @@
     refreshBgmBtn();
   });
 
+  // オープニングをもう一度見る。初回は最初のタップに乗せて自動再生するが、
+  // 二度目以降はここからでないと見られなかった。
+  // pointerdown で止めているのは、タイトル画面が同じイベントを拾って
+  // 別の処理を始めるのを防ぐため。連打で二重に開かないよう playing で塞ぐ
+  (function () {
+    var btn = $("pbtn-movie");
+    if (!btn) return;
+    var playing = false;
+    btn.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (playing || !window.PMOVIE) return;
+      playing = true;
+      btn.classList.add("off");
+      PMOVIE.play("op").then(function () {
+        playing = false;
+        btn.classList.remove("off");
+        if (window.BGM) BGM.playAny(["title"]);
+      });
+    });
+  })();
+
   // ornate UI frame auto-detection (shared with game 1)
   (function () {
     var src = (window.UI_ART && window.UI_ART.frame) || "../assets/ui/frame.png";
