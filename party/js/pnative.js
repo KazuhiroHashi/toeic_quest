@@ -58,14 +58,35 @@
     // テスト広告では必ず読み込みに成功するため、この不具合はテストでは絶対に出ない。
     // 本番IDに切り替えて初めて出る。
     //
-    // 対策：予約も実行中も1本に限る。二重に失敗を知らされても予約は増やさない。
-    // 失敗が続くほど間隔を延ばし、8分で頭打ちにする。
-    function Loader(start) {
-      var self = this, pending = false, timer = 0, fails = 0;
+    // 対策は2段構え。
+    //   1) 予約も実行中も1本に限る。二重に失敗を知らされても予約は増やさない。
+    //      失敗が続くほど間隔を延ばし、8分で頭打ちにする。
+    //   2) それでも増えたときのために、起動1回あたりの読み込み回数に上限を置く。
+    //      上限に達したらその広告枠はあきらめ、アプリを閉じるまで二度と試さない。
+    //      1) の理屈を間違えても、2) がある限り暴走はできない。
+    //      広告が出なくなるだけで、ゲームは普通に遊べる。
+    var MAX_LOADS = 20;
+
+    // 診断用。Safariのウェブインスペクタのコンソールで WQ2_ADS と打つと、
+    // どのビルドが入っていて、何回読み込んだかが分かる。
+    // 「修正が入ったビルドを試しているのか」を毎回このコマンドで確かめられる
+    window.WQ2_ADS = { build: "2026-09-06c", max: MAX_LOADS, loaders: {} };
+
+    function Loader(name, start) {
+      var self = this, pending = false, timer = 0, fails = 0, loads = 0, dead = false;
       self.ready = false;
+      window.WQ2_ADS.loaders[name] = self;
+      self.stats = function () {
+        return { loads: loads, fails: fails, ready: self.ready, dead: dead, pending: pending, scheduled: !!timer };
+      };
       self.load = function () {
-        if (pending || timer || self.ready) return;   // すでに動いている／予約済み
-        pending = true;
+        if (dead || pending || timer || self.ready) return;   // すでに動いている／予約済み／打ち切り
+        if (loads >= MAX_LOADS) {                              // 安全弁
+          dead = true;
+          if (window.console) console.warn("[WQ2] " + name + " の読み込みを打ち切りました（" + loads + "回）");
+          return;
+        }
+        loads++; pending = true;
         start().then(
           function () { pending = false; self.ready = true; fails = 0; },
           function () { pending = false; self.retry(); }
@@ -73,7 +94,7 @@
       };
       self.retry = function () {
         self.ready = false;
-        if (pending || timer) return;                 // 二重通知はここで捨てる
+        if (dead || pending || timer) return;                 // 二重通知はここで捨てる
         fails++;
         var wait = Math.min(30000 * Math.pow(2, Math.min(fails - 1, 4)), 480000);
         timer = setTimeout(function () { timer = 0; self.load(); }, wait);
@@ -83,10 +104,10 @@
       };
     }
 
-    var rewarded = new Loader(function () {
+    var rewarded = new Loader("rewarded", function () {
       return AdMob.prepareRewardVideoAd({ adId: rewardedId, isTesting: CONFIG.testing, npa: CONFIG.nonPersonalized });
     });
-    var inter = new Loader(function () {
+    var inter = new Loader("interstitial", function () {
       return AdMob.prepareInterstitial({ adId: interstitialId, isTesting: CONFIG.testing, npa: CONFIG.nonPersonalized });
     });
 
