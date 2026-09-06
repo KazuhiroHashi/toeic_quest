@@ -20,6 +20,17 @@
   // never locks out a paying player mid-session
   var GRACE_MS = 3 * 24 * 60 * 60 * 1000;
 
+  // 課金の開示文はストアごとに書き分ける。iOS版の画面に「Google Play」と書くと、
+  // 他プラットフォームへの誘導・言及として審査で指摘されうる。逆も同じなので、
+  // 実行中のプラットフォームの言い方だけを出す
+  function storeWords() {
+    var cap = window.Capacitor;
+    var p = (cap && cap.getPlatform) ? cap.getPlatform() : "web";
+    if (p === "ios") return { account: "Apple ID", store: "App Store" };
+    if (p === "android") return { account: "Google アカウント", store: "Google Play" };
+    return { account: "Apple ID", store: "App Store" }; // ブラウザのデモ表示
+  }
+
   function today() {
     var d = new Date();
     return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
@@ -196,15 +207,16 @@
     // 共有して使う。以前は差し替えでパネルごと消えてしまい、実機では開示も復元も
     // 出ない状態だった。表示は1か所にまとめて、二度と食い違わないようにする。
     premiumPanel: function (demo) {
+      var W = storeWords();
       return overlay(
         '<div class="wq2-store-h">★ プレミアム（月額）</div>' +
         '<div class="wq2-store-p">月額' + PRICE + 'で<br>' +
         '・スタミナ制限なし<br>・広告オフ<br>' +
         '・学習の記録を すべて表示<br>　（毎日の推移グラフ／苦手な単語）</div>' +
         '<div class="wq2-store-fine">お支払いは 月額' + PRICE + '（税込）。<br>' +
-        '購入を確定すると Apple ID に請求されます。<br>' +
+        '購入を確定すると ' + W.account + ' に請求されます。<br>' +
         '解約しないかぎり 自動更新されます。<br>' +
-        '解約は App Store／Google Play の<br>サブスクリプション設定から いつでも できます。<br>' +
+        '解約は ' + W.store + ' の<br>サブスクリプション設定から いつでも できます。<br>' +
         '<a href="https://bridge-ai-tokyo.com/wordquest/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>　' +
         '<a href="https://bridge-ai-tokyo.com/wordquest/terms.html" target="_blank" rel="noopener">利用規約</a></div>' +
         (demo ? '<div class="wq2-ad-note">※デモ版：実際の課金は 公開版で有効になります</div>' : ''),
