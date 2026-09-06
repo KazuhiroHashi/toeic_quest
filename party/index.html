@@ -83,6 +83,10 @@
           <!-- 文言と金額は pmain.js の refreshStamina() が pstore.js の PRICE から入れる -->
           <button id="pbtn-unlock" class="title-btn ghost">★ プレミアム</button>
           <div id="ptitle-foot"><span id="pbtn-field">※ ストーリーモードは 制作中です</span></div>
+        <!-- どのビルドが端末に入っているかを、道具なしで確かめられるようにする。
+             cap sync の掛け忘れやXcodeのキャッシュで古いコードが動いていたことが
+             実際にあり、ウェブインスペクタを開かないと分からない状態だった -->
+        <div id="ptitle-build">build 2026-09-06c</div>
         </div>
         <div id="pbtn-voice" class="title-corner" title="えいごの おんせい">英</div>
         <div id="pbtn-bgm" class="title-corner" title="BGM">🔊</div>
