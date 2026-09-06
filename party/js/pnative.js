@@ -43,13 +43,57 @@
   // ---------- AdMob rewarded (@capacitor-community/admob) ----------
   var AdMob = cap.Plugins && cap.Plugins.AdMob;
   if (AdMob) {
-    var adReady = false;
-    function prepare() {
-      AdMob.prepareRewardVideoAd({ adId: rewardedId, isTesting: CONFIG.testing, npa: CONFIG.nonPersonalized })
-        .then(function () { adReady = true; })
-        .catch(function () { adReady = false; setTimeout(prepare, 30000); }); // retry (offline etc.)
+
+    // 広告の読み込みを管理する。同時に動くのは常に1本だけ。
+    //
+    // ここは一度こわれている。読み込み失敗の合図は2か所から来る
+    //   ・prepare... の Promise が reject する
+    //   ・FailedToLoad イベントが飛ぶ
+    // 以前はその両方が別々に「30秒後に再試行」を仕掛けていた。つまり1回の失敗で
+    // 再試行が2本になり、その2本がまた失敗して4本、8本…と30秒ごとに倍に増えた。
+    // 広告が返ってこない状態（AdMobの審査待ち・在庫なし・圏外）だと失敗し続けるので、
+    // 10分ほどでネイティブ呼び出しが100万件を超え、アプリが固まる。
+    // 実機で prepareInterstitial の呼び出しIDが267万に達しているのを確認した。
+    //
+    // テスト広告では必ず読み込みに成功するため、この不具合はテストでは絶対に出ない。
+    // 本番IDに切り替えて初めて出る。
+    //
+    // 対策：予約も実行中も1本に限る。二重に失敗を知らされても予約は増やさない。
+    // 失敗が続くほど間隔を延ばし、8分で頭打ちにする。
+    function Loader(start) {
+      var self = this, pending = false, timer = 0, fails = 0;
+      self.ready = false;
+      self.load = function () {
+        if (pending || timer || self.ready) return;   // すでに動いている／予約済み
+        pending = true;
+        start().then(
+          function () { pending = false; self.ready = true; fails = 0; },
+          function () { pending = false; self.retry(); }
+        );
+      };
+      self.retry = function () {
+        self.ready = false;
+        if (pending || timer) return;                 // 二重通知はここで捨てる
+        fails++;
+        var wait = Math.min(30000 * Math.pow(2, Math.min(fails - 1, 4)), 480000);
+        timer = setTimeout(function () { timer = 0; self.load(); }, wait);
+      };
+      self.consumed = function () {                   // 表示し終わった。次を読む
+        self.ready = false; fails = 0; self.load();
+      };
     }
-    AdMob.initialize({ initializeForTesting: CONFIG.testing }).then(prepare).catch(function () {});
+
+    var rewarded = new Loader(function () {
+      return AdMob.prepareRewardVideoAd({ adId: rewardedId, isTesting: CONFIG.testing, npa: CONFIG.nonPersonalized });
+    });
+    var inter = new Loader(function () {
+      return AdMob.prepareInterstitial({ adId: interstitialId, isTesting: CONFIG.testing, npa: CONFIG.nonPersonalized });
+    });
+
+    // 初期化前に読み込むと確実に失敗するので、終わってから両方を仕込む
+    AdMob.initialize({ initializeForTesting: CONFIG.testing })
+      .then(function () { rewarded.load(); inter.load(); })
+      .catch(function () {});
 
     // reward granted only when the video is actually completed
     var rewardCb = null;
@@ -57,33 +101,25 @@
     AdMob.addListener("onRewardedVideoAdClosed", function () {
       // closed without reward -> no grant; either way, preload the next one
       if (rewardCb) { var cb = rewardCb; rewardCb = null; cb(false); }
-      adReady = false; prepare();
+      rewarded.consumed();
     });
-    AdMob.addListener("onRewardedVideoAdFailedToLoad", function () { adReady = false; setTimeout(prepare, 30000); });
+    AdMob.addListener("onRewardedVideoAdFailedToLoad", function () { rewarded.retry(); });
 
     window.WQ2_STORE.showRewarded = function (cb) {
-      if (!adReady) { cb(false); prepare(); return; } // no fill / offline: fail gracefully
+      if (!rewarded.ready) { cb(false); rewarded.load(); return; } // no fill / offline: fail gracefully
       rewardCb = cb;
       AdMob.showRewardVideoAd().catch(function () { if (rewardCb) { var c = rewardCb; rewardCb = null; c(false); } });
     };
 
     // ---------- interstitial (free tier: one before every battle) ----------
-    var interReady = false, interCb = null;
-    function prepareInter() {
-      AdMob.prepareInterstitial({ adId: interstitialId, isTesting: CONFIG.testing, npa: CONFIG.nonPersonalized })
-        .then(function () { interReady = true; })
-        .catch(function () { interReady = false; setTimeout(prepareInter, 30000); });
-    }
-    prepareInter();
-
+    var interCb = null;
     function interDone() {
       if (interCb) { var c = interCb; interCb = null; c(); }
-      interReady = false;
-      prepareInter();   // load the next one for the following battle
+      inter.consumed();   // load the next one for the following battle
     }
     AdMob.addListener("interstitialAdDismissed", interDone);
     AdMob.addListener("interstitialAdFailedToShow", interDone);
-    AdMob.addListener("interstitialAdFailedToLoad", function () { interReady = false; setTimeout(prepareInter, 30000); });
+    AdMob.addListener("interstitialAdFailedToLoad", function () { inter.retry(); });
 
     // ---------- banner (free tier: pinned to the bottom) ----------
     // 操作ボタンに重ならないよう、読み込まれた実寸だけ #app の下に余白を作る。
@@ -115,7 +151,7 @@
     window.WQ2_STORE.showInterstitial = function (cb) {
       // nothing loaded (offline, no fill, first battle after launch): do not
       // make the player wait — start the battle and load one for next time
-      if (!interReady) { cb(); prepareInter(); return; }
+      if (!inter.ready) { cb(); inter.load(); return; }
       interCb = cb;
       AdMob.showInterstitial().catch(interDone);
     };
