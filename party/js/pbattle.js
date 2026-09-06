@@ -759,26 +759,20 @@
 
       var cmd = await pickCommands();
 
-      // flee attempt (party level)
+      // にげる＝中断してタイトルへ戻る道。ボス戦以外は必ず成功する。
+      // 以前は素早さ勝負で 4〜6割しか成功せず、しかも闘技場と塔は noFlee で
+      // 完全に封じてあったので、始めたら最後までやめられなかった。
+      // やめ時を作れないと、時間が無いときに起動しづらくなる。
+      // 誤って押しても run は消さないので、「続きから」で同じ戦いに戻れる。
       if (cmd.flee) {
         if (isBoss) { await say("ボスからは にげられない！"); continue; }
-        if (encounter.noFlee) { await say("闘技場では にげられない！\n（たたかい抜くのみ！）"); continue; }
-        var pAgi = aliveMembers().reduce(function (s, m) { return s + m.agi; }, 0) / Math.max(1, aliveMembers().length);
-        var fAgi = aliveFoes().reduce(function (s, f) { return s + f.agi; }, 0) / Math.max(1, aliveFoes().length);
-        if (Math.random() < clamp(0.5 + (pAgi - fAgi) * 0.015, 0.4, 0.62)) {
-          await say("うまく にげ切った！");
-          result = "flee"; break;
-        } else {
-          await say("しかし にげ切れなかった！");
-          // enemies still act this turn
-          var foeq = [];
-          foes.forEach(function (f, i) { if (f.hp > 0) foeq.push(i); });
-          for (var fq = 0; fq < foeq.length; fq++) {
-            await execFoeAction(foeq[fq]);
-            if (!aliveMembers().length) { result = "lose"; break; }
-          }
-          continue;
-        }
+        if (encounter.noFlee) { await say("ここからは にげられない！"); continue; }
+        var sub = $("pbattle-sub");
+        sub.style.display = "block";
+        var yn = await menu(sub, [{ label: "もどる" }, { label: "つづける" }], "タイトルに もどる？");
+        if (yn !== 0) continue;
+        await say("戦いから 離脱した。");
+        result = "flee"; break;
       }
 
       var acts = cmd.acts;

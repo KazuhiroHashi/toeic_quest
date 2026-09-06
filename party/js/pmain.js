@@ -280,10 +280,10 @@
   // 11 rounds: zako(1-4) -> 中ボス竜(5) -> 四天王4連戦(6-9) -> ラスボス(10) -> 真ラスボス(11)
   function arenaRounds() {
     return [
-      { label: "第1戦", enc: { bg: "zone1", quizLv: 400, bgm: "arena1", noFlee: true, enemies: [af("bee", 1.4), af("bat", 1.4)] } },        // Yu solo（スペルバード＝青 ＋ アルファベットひよこ＝黄）
-      { label: "第2戦", enc: { bg: "zone2", quizLv: 450, bgm: "arena2", noFlee: true, enemies: [af("worm", 1.4), af("goblin", 1.4), af("rat", 1.4)] } }, // +Gai（ペンシルラビット登場）
-      { label: "第3戦", enc: { bg: "zone3", quizLv: 500, bgm: "arena3", noFlee: true, enemies: [af("wolf", 1.5), af("ghost", 1.5), af("snake", 1.5)] } }, // +Rina
-      { label: "第4戦", enc: { bg: "zone4", quizLv: 550, bgm: "arena4", noFlee: true, enemies: [af("mush", 1.9), af("owl", 1.9), af("ghost", 1.9), af("wolf", 1.9)] } },
+      { label: "第1戦", enc: { bg: "zone1", quizLv: 400, bgm: "arena1", enemies: [af("bee", 1.4), af("bat", 1.4)] } },        // Yu solo（スペルバード＝青 ＋ アルファベットひよこ＝黄）
+      { label: "第2戦", enc: { bg: "zone2", quizLv: 450, bgm: "arena2", enemies: [af("worm", 1.4), af("goblin", 1.4), af("rat", 1.4)] } }, // +Gai（ペンシルラビット登場）
+      { label: "第3戦", enc: { bg: "zone3", quizLv: 500, bgm: "arena3", enemies: [af("wolf", 1.5), af("ghost", 1.5), af("snake", 1.5)] } }, // +Rina
+      { label: "第4戦", enc: { bg: "zone4", quizLv: 550, bgm: "arena4", enemies: [af("mush", 1.9), af("owl", 1.9), af("ghost", 1.9), af("wolf", 1.9)] } },
       { label: "第5戦・中ボス 洞窟の古竜", enc: dragonEnc() }, // +Mia
       { label: "第6戦・四天王ハウル", enc: bossHowl() },
       { label: "第7戦・四天王ガグ", enc: bossGag() },
@@ -394,6 +394,12 @@
       if (i < 10) await gsay("【ことばの闘技場】\n" + r.label + "（" + (i + 1) + "／10）\nＡボタンで 開始！");
       var res = await window.PBATTLE.start(r.enc);
       saveStudy();
+      if (res.result === "flee") {
+        // 中断してタイトルへ。直前に saveRun(i) を打ってあるので、
+        // 「続きから」でこの戦いから再開できる。負けたことにはしない
+        await gsay("闘技場から 引き上げた。\n\n（タイトルの「続きから」で\n　この戦いから 再開できます）");
+        break;
+      }
       if (res.result !== "win") {
         // rewarded-ad continue: full-heal and retry this same battle
         var cont = window.WQ2_STORE ? await WQ2_STORE.offerContinue() : false;
@@ -504,7 +510,7 @@
       b.mag = Math.round(b.atk * 1.05);
       foes = [b];
     }
-    return { noFlee: true, bg: TOWER_BG[(floor - 1) % TOWER_BG.length], quizLv: qz, bgm: floor % 5 === 0 ? "midboss" : "arena" + (((floor - 1) % 5) + 1), enemies: foes };
+    return { bg: TOWER_BG[(floor - 1) % TOWER_BG.length], quizLv: qz, bgm: floor % 5 === 0 ? "midboss" : "arena" + (((floor - 1) % 5) + 1), enemies: foes };
   }
   async function runTower() {
     if (window.WQ2_STORE && !WQ2_STORE.canPlay()) {
@@ -529,6 +535,8 @@
       await gsay("【挑戦の塔】" + floor + "階" + (floor % 5 === 0 ? "　★守護者の間★" : ""));
       var res = await window.PBATTLE.start(towerFloorEnc(floor));
       saveStudy();
+      // にげた場合も、その階は突破していないので到達は1つ下。
+      // 塔は途中再開のしくみが無いので、結果まで進んで記録を残す
       if (res.result !== "win") { reached = floor - 1; break; }
       reached = floor;
       if (floor % 5 === 0) { window.PBATTLE.fullHeal(); await gsay(floor + "階を 突破！\nパーティは 全回復した。"); }
