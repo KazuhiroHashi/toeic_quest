@@ -103,7 +103,8 @@
   // 学生版は1つの段階に複数学年が混ざるので、段階ごとに数えると
   // 同じ学年名の欄が並び、数も中身とずれる（実際にそうなっていた）。
   // 見せるときは語彙のプール（中1/中2/中3）で数える。
-  var groups = [];     // [{ name, words }]
+  var groups = [];     // [{ name, words }] 学習の記録・称号が数える範囲（選んだ学年のぶんだけ）
+  var allGroups = [];  // 単語帳に並べる全まとまり。学年に関係なく中1〜難関大の6つ
   var bandName = {};   // 400..900 -> 表示名（その段階で主役になる学年）
   var bandTotal = {};  // 400..900 -> 主役の学年の語数（称号の分母）
   var allWords = 0;    // その出題範囲で出うる単語の総数（重複なし）
@@ -111,7 +112,7 @@
   function apply() {
     window.VOCAB = window.VOCAB || {};
     window.VOCAB_W = window.VOCAB_W || {};
-    bandName = {}; bandTotal = {}; allWords = 0; groups = [];
+    bandName = {}; bandTotal = {}; allWords = 0; groups = []; allGroups = [];
 
     if (state.mode === "student") {
       var g = gradeById(state.grade) || GRADES[2];
@@ -139,6 +140,11 @@
         POOL[key].get().forEach(function (e) { if (!seen[e.w]) { seen[e.w] = 1; allWords++; } });
         groups.push({ name: POOL[key].name, words: POOL[key].get() });
       });
+      // 単語帳は辞書なので、選んだ学年に関係なく6つ全部を並べる。
+      // 中1を選んでいても、この先どんな単語が出るのかは見たい
+      LOCKS_STUDENT.forEach(function (key) {
+        allGroups.push({ name: POOL[key].name, words: POOL[key].get() });
+      });
     } else {
       BANDS.forEach(function (b) {
         window.VOCAB[b] = TOEIC[b] || [];
@@ -147,6 +153,7 @@
         bandTotal[b] = (TOEIC[b] || []).length;
         allWords += (TOEIC[b] || []).length;
         groups.push({ name: String(b), words: TOEIC[b] || [] });
+        allGroups.push({ name: "スコア" + b, words: TOEIC[b] || [] });
       });
     }
     // ---- レベル固定（プレミアム）----
@@ -323,6 +330,7 @@
     bandName: function (lv) { return bandName[lv] || String(lv); },
     bandSize: function (lv) { return bandTotal[lv] || 0; },
     groups: function () { return groups; },
+    allGroups: function () { return allGroups.length ? allGroups : groups; },
     totalWords: function () { return allWords; },
     studyKey: studyKey,
     open: open

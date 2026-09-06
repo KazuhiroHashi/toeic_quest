@@ -987,7 +987,10 @@
     var words = study.words || {};
     // タブは出題の6段階ではなく語彙のまとまり。学生版は1つの段階に複数学年が
     // 混ざるので、段階でタブを作ると中身が重複し、数字も意味を持たない
-    var gs = (window.WQ2_MODE && WQ2_MODE.groups) ? WQ2_MODE.groups() : [];
+    // 単語帳は辞書なので、選んだ学年に関係なく6つ全部を並べる（allGroups）。
+    // 学習の記録・称号が数える範囲（groups）とは別物
+    var gs = (window.WQ2_MODE && WQ2_MODE.allGroups) ? WQ2_MODE.allGroups()
+           : (window.WQ2_MODE && WQ2_MODE.groups) ? WQ2_MODE.groups() : [];
     if (!gs.length) gs = [400, 500, 600, 700, 800, 900].map(function (b) {
       return { name: String(b), words: window.VOCAB[b] || [] };
     });
@@ -1017,40 +1020,33 @@
         '<div class="zm' + (known ? "" : " hidden-m") + '">' + (known ? e.m : "？？？") + "</div>" +
         (weak ? '<div class="zweak">！</div>' : "") + "</div>";
     });
-    // ---- per-rank trophy: cleared out of this rank's 500 questions ----
-    var perBand = { 400: 0, 500: 0, 600: 0, 700: 0, 800: 0, 900: 0 };
-    for (var k in words) { var rr = words[k]; if (rr && rr.c > 0 && perBand[rr.l] != null) perBand[rr.l]++; }
-    var total = pool.length; // 500
+    // ---- このまとまりのトロフィー ----
+    var total = pool.length;
     var tr = window.trophyFor ? window.trophyFor(nB) : { name: "", icon: "", cls: "none", next: 100 };
-    var pct = Math.min(100, Math.round(100 * nB / (total || 500)));
+    var pct = Math.min(100, Math.round(100 * nB / (total || 1)));
     var toNext = tr.next ? Math.max(0, tr.next - nB) : 0;
     var tierLine = tr.cls === "none" ? "ブロンズまで あと " + toNext + " 問"
       : tr.name + "トロフィー" + (tr.next ? "（次まで あと " + toNext + "）" : "（コンプリート！）");
     var head =
       '<div class="zk-total">' +
         '<div class="zk-trophy ' + tr.cls + '">' + (tr.icon || "🔰") + '</div>' +
-        '<div class="zk-rank">スコア' + zukanBand + ' ランク</div>' +
+        '<div class="zk-rank">' + gs[zukanBand].name + '</div>' +
         '<div class="zk-count"><span class="big-num">' + nB + '</span>' +
-          '<span class="zk-slash"> ／ ' + total + ' 問クリア</span></div>' +
+          '<span class="zk-slash"> ／ ' + total + ' 語おぼえた</span></div>' +
         '<div class="zk-tier ' + tr.cls + '">' + tierLine + '</div>' +
         '<div class="zk-bar"><div style="width:' + pct + '%"></div></div>' +
       '</div>';
-    // per-rank medal strip (all 6 ranks at a glance)
-    var strip = '<div class="zk-strip">' + [400, 500, 600, 700, 800, 900].map(function (bd) {
-      var t = window.trophyFor(perBand[bd]);
-      return '<div class="zk-chip ' + t.cls + (bd === zukanBand ? " on" : "") + '">' +
-        '<div class="zk-chip-ic">' + (t.icon || "🔒") + '</div>' +
-        '<div class="zk-chip-lv">' + bd + '</div></div>';
-    }).join("") + '</div>';
-    var bandLine = '<div class="zk-band">このランク：発見 <b>' + nB + '</b> ／ ' + total +
+    // 以前ここに 400〜900 の数字が並んだ帯を出していたが、押せない飾りで、
+    // しかも学生版では意味を持たない数字だった。タブが同じ役目をするので消した
+    var bandLine = '<div class="zk-band">このまとまり：発見 <b>' + nB + '</b> ／ ' + total +
       '　<span style="color:#cfd8e6">★' + nS + "</span>" +
       '　<span style="color:#ffd54a">★' + nG + "</span>" +
       (weakN ? '　<span style="color:#ff5a5a">苦手 ' + weakN + "</span>" : "") + "</div>";
-    var legend = '<div class="zk-legend">★＝正解ずみ／銀★＝2秒以内で正解／金★＝3連続正解　｜　各ランク500問：🥉100 🥈200 🥇300 🏆500</div>';
+    var legend = '<div class="zk-legend">★＝正解ずみ／銀★＝2秒以内で正解／金★＝3連続正解　｜　🥉100 🥈200 🥇300 🏆500 問クリアで トロフィー</div>';
     // Keep only the rank tabs fixed: put the summary INSIDE the scroll area so
     // the word list gets the full remaining height.
     $("zukan-summary").style.display = "none";
-    $("zukan-list").innerHTML = '<div class="zk-summary-inner">' + head + strip + bandLine + legend + '</div>' + rows.join("");
+    $("zukan-list").innerHTML = '<div class="zk-summary-inner">' + head + bandLine + legend + '</div>' + rows.join("");
     $("zukan-list").scrollTop = 0;
   }
   // Self-contained zukan (own listeners) so it works from field OR the title screen.
