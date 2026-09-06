@@ -11,86 +11,55 @@
   function healJitter(p) { return Math.max(1, p + rnd(7) - 3); }
 
   // ================= SFX =================
-  // iOS は「利用者の操作の中で一度でも再生した要素」しか、あとからタイマーで
-  // 鳴らせない。この決まりは要素ごとに付く。bgm.js と voice.js が <audio> を
-  // ひとつだけ持ち回しているのはそのためで、効果音だけがその規則を外れていた。
+  // 効果音は Web Audio で鳴らす（js/audio.js）。<audio> には iOS で
+  //  ・音量を受け付けない（BGMとの音量差が作れない）
+  //  ・「操作の中で一度でも再生した要素」しか後から鳴らせない（要素ごと）
+  // という制約があり、効果音は18種類あって鳴る場面の多くが演出中＝操作から
+  // 離れた場所なので、この2つ目にまともにぶつかっていた。詳しくは js/audio.js。
   //
-  // 効果音は「鳴らしたい瞬間に new Audio() する」作りだった。カーソル音は
-  // ボタンを押した流れの中で作られるので解禁されるが、斬撃・被弾・レベルアップ・
-  // ボス登場などは演出の待ち時間のあとに鳴る。操作から離れた場所で作られた
-  // 要素は iOS に拒まれ、握りつぶしていたので無音のまま二度と鳴らなかった。
-  //
-  // 操作の直後の短い猶予に間に合うかどうかは端末の速さ次第で、速い端末ほど
-  // たまたま通る。「機種によって鳴ったり鳴らなかったりする」のはこれが理由。
-  //
-  // 対策：最初のタップの中で全部の効果音を音量0で一度鳴らして解禁しておく。
-  // 拒まれたものは解禁済みにせず、次のタップでまた試す。広告の動画などに
-  // 音声の権利を奪われて鳴らなくなった場合も、これで次の操作で戻る。
+  // Web Audio ならどちらの制約も無い。読み込みに失敗する環境（file:// で
+  // fetch が通らない場合など）だけ、今まで通り <audio> で鳴らす。
   var SFX_NAMES = ["cursor", "slash", "crit", "hit", "heal", "level", "win", "ng", "ok",
                    "boss", "encounter", "chest", "stairs",
                    "magic", "magic_fire", "magic_ice", "magic_thunder", "magic_holy"];
-  var sfxCache = {};
-  var sfxReady = {};
+  var SFX_LEVEL = 0.7;
+  var VICTORY = "#victory";
 
+  function sfxUrl(name) {
+    if (name === VICTORY) return (window.BGM_ART && window.BGM_ART.victory) || "../assets/bgm/victory.mp3";
+    return (window.SFX_ART && window.SFX_ART[name]) || "../assets/sfx/" + name + ".mp3";
+  }
+
+  if (window.WQAUDIO && WQAUDIO.available()) {
+    WQAUDIO.setLevel("sfx", SFX_LEVEL);
+    SFX_NAMES.concat([VICTORY]).forEach(function (n) { WQAUDIO.load(n, sfxUrl(n)); });
+  }
+
+  // ---- 以下は Web Audio が使えないときの控え ----
+  // 要素は使い回す。作るのは実際に必要になったときだけ
+  var sfxCache = {};
   function sfxAudio(name) {
     var a = sfxCache[name];
     if (!a) {
-      var src = (window.SFX_ART && window.SFX_ART[name]) || "../assets/sfx/" + name + ".mp3";
-      a = sfxCache[name] = new Audio(src);
+      a = sfxCache[name] = new Audio(sfxUrl(name));
       a.preload = "auto";
-      a.volume = 0.7;
+      a.volume = SFX_LEVEL;
     }
     return a;
   }
-
-  // 勝利のファンファーレ（assets/bgm/victory.mp3）。効果音と同じく先に解禁しておく
-  var victoryAudio = null;
-  function victoryAudioEl() {
-    if (!victoryAudio) {
-      var src = (window.BGM_ART && window.BGM_ART.victory) || "../assets/bgm/victory.mp3";
-      victoryAudio = new Audio(src);
-      victoryAudio.preload = "auto";
-      victoryAudio.volume = 0.7;
-    }
-    return victoryAudio;
-  }
-
-  function primeOne(a, done) {
-    var vol = a.volume, p;
-    a.volume = 0;
-    try { p = a.play(); } catch (e) { a.volume = vol; done(false); return; }
-    function settle(ok) {
-      try { a.pause(); a.currentTime = 0; } catch (e) {}
-      a.volume = vol;
-      done(ok);
-    }
-    if (p && p.then) p.then(function () { settle(true); }, function () { settle(false); });
-    else settle(true);   // 旧仕様の同期 play()
-  }
-
-  function primeSfx() {
-    SFX_NAMES.forEach(function (name) {
-      if (sfxReady[name]) return;
-      primeOne(sfxAudio(name), function (ok) { if (ok) sfxReady[name] = true; });
-    });
-    if (!sfxReady["#victory"]) {
-      primeOne(victoryAudioEl(), function (ok) { if (ok) sfxReady["#victory"] = true; });
-    }
-  }
-  // 解禁できなかったものを拾い直すため、外さずに毎回聞く（済んだ音は素通り）
-  ["pointerdown", "touchstart", "keydown"].forEach(function (ev) {
-    window.addEventListener(ev, primeSfx, { passive: true });
-  });
-
-  function sfx(name) {
+  function sfxFallback(name) {
     try {
       var a = sfxAudio(name);
       try { a.currentTime = 0; } catch (e) {}   // 読み込み前は無視されるだけ
       var p = a.play();
-      // 拒まれたらもう一度解禁からやり直す（次のタップで primeSfx が拾う）
-      if (p && p.catch) p.catch(function () { sfxReady[name] = false; });
+      if (p && p.catch) p.catch(function () {});
       return a;
     } catch (e) {}
+  }
+
+  function sfx(name) {
+    if (window.WQAUDIO && WQAUDIO.play(name, "sfx")) return;
+    sfxFallback(name);
   }
 
   // quiz.js expects window.SFX for its 正解/ミス/クリティカル sounds — without this shim
@@ -108,11 +77,12 @@
 
   // 勝利のファンファーレ。鳴らせなければ win の効果音で代える
   function victoryJingle() {
+    if (window.WQAUDIO && WQAUDIO.play(VICTORY, "sfx")) return;
     try {
-      var a = victoryAudioEl();
+      var a = sfxAudio(VICTORY);
       try { a.currentTime = 0; } catch (e) {}
       var p = a.play();
-      if (p && p.catch) p.catch(function () { sfxReady["#victory"] = false; sfx("win"); });
+      if (p && p.catch) p.catch(function () { sfx("win"); });
     } catch (e) { sfx("win"); }
   }
 

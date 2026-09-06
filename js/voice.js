@@ -81,30 +81,14 @@
 
   function setEnabled() { /* 廃止。常にオン */ }
 
-  // iOS の「操作の中で一度でも再生した要素だけが、あとから鳴らせる」規則は
-  // 要素ごとに付く。読み上げは問題が出た瞬間＝操作から離れた場所で始まるので、
-  // 要素の用意だけを最初のタップの中で済ませ、無音の音で一度鳴らして解禁する。
-  // src は後から差し替えるが、解禁は要素に付いたまま残る（bgm.js と同じ手）。
-  var SILENT = "data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQIAAAAAAA==";
-  var primed = false;
-  function prime() {
-    if (primed) return;
-    var a = audio(), vol = a.volume, p;
-    a.volume = 0;
-    a.src = SILENT;
-    try { p = a.play(); } catch (e) { a.volume = vol; return; }
-    function settle(ok) {
-      // 解禁の最中に単語の読み上げが始まっていたら、それは止めない
-      if (a.src === SILENT) { try { a.pause(); } catch (e) {} }
-      a.volume = vol;
-      primed = !!ok;      // 拒まれたら次のタップでやり直す
-    }
-    if (p && p.then) p.then(function () { settle(true); }, function () { settle(false); });
-    else settle(true);
-  }
-
+  // 読み上げの要素は解禁処理を入れない。
+  // 一度は入れたが、無音の音を鳴らして解禁しようとすると、その再生が
+  // すぐ次の単語の読み上げに割り込まれて失敗し、失敗するたびに再挑戦して
+  // 読み上げそのものを横取りしてしまった（実機で読み上げが止まった）。
+  // 元々この要素はタップの流れの中で作られていて問題が出ていないので、
+  // 触らないのが正しい。効果音（pbattle.js）とは事情が違う。
   ["pointerdown", "keydown", "touchstart"].forEach(function (ev) {
-    window.addEventListener(ev, function () { unlocked = true; prime(); }, { passive: true });
+    window.addEventListener(ev, function () { unlocked = true; }, { passive: true });
   });
 
   window.VOICE = { say: say, stop: stop, slug: slug,

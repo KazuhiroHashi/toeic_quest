@@ -24,10 +24,20 @@
                     arena1: 1, arena2: 1, arena3: 1, arena4: 1, arena5: 1,
                     midboss: 1, king1: 1, king2: 1, king3: 1, king4: 1,
                     boss: 1, lastboss: 1, ending: 1, gameover: 1 };
-  // 0.55 → 0.45。読み上げは <audio> の音量上限(1.0)まで出していてこれ以上
-  // 上げられないので、聞き取りやすさはBGM側を下げて確保する。
-  // （実機で家族に試してもらった結果の判断。以前は「BGMは下げない」方針だった）
+  // 0.55 → 0.45。読み上げは音量の上限で鳴らしていてこれ以上上げられないので、
+  // 聞き取りやすさはBGM側を下げて確保する（実機で家族に試してもらった判断。
+  // 以前は「BGMは下げない」方針だった）。
+  //
+  // iOS の <audio> は volume を受け付けない。曲は長いので <audio> のまま
+  // 鳴らすが、音量だけは Web Audio の GainNode で取る（js/audio.js）。
+  // 繋げなかった環境では今まで通り el.volume を使う。
   var VOLUME = 0.45;
+  var routed = false;   // Web Audio の経路に繋げたか
+
+  function setVol(v) {
+    if (routed) { window.WQAUDIO.setLevel("bgm", v); return; }
+    if (el) el.volume = v;
+  }
   var STEP = 40;        // ms per fade tick (fade-out only — a track always
                         // starts at full volume, or its opening hit is lost)
 
@@ -71,6 +81,10 @@
         if (f) f();   // fall through to the next candidate
       }
     });
+    if (window.WQAUDIO && WQAUDIO.connect(el, "bgm")) {
+      routed = true;
+      WQAUDIO.setLevel("bgm", VOLUME);   // 以降 el.volume は 1 のまま触らない
+    }
     return el;
   }
 
@@ -81,11 +95,11 @@
   function fadeOut() {
     if (!el) return;
     clearInterval(ramp);
-    var a = el, v = a.volume;
+    var a = el, v = VOLUME;
     ramp = setInterval(function () {
-      v -= 0.08;
-      if (v <= 0) { clearInterval(ramp); ramp = null; a.pause(); a.volume = VOLUME; }
-      else a.volume = v;
+      v -= VOLUME * 0.15;
+      if (v <= 0) { clearInterval(ramp); ramp = null; a.pause(); setVol(VOLUME); }
+      else setVol(v);
     }, STEP);
   }
 
@@ -93,7 +107,7 @@
     if (!enabled || missing[name]) return;
     var a = audio();
     clearInterval(ramp); ramp = null;   // cancel a fade-out still in progress
-    a.volume = VOLUME;
+    setVol(VOLUME);
     if (loaded === name) {
       if (NO_RESUME[name]) { try { a.currentTime = 0; } catch (e) {} }
       else if (!a.paused) return;
