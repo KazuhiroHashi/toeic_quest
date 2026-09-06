@@ -95,6 +95,20 @@
 
 ---
 
+# 4.5 Android版を出すときに必ず見ること
+
+**iOS版のために iOS 寄りにしてある箇所がある。** Android版のビルド前に、ここを上から順に確認すること。
+
+| | 項目 | いまの状態 |
+|---|---|---|
+| 1 | **`party/js/pnative.js` の `interstitialAndroid` / `bannerAndroid`** | ❗ **Google のテスト用IDのまま。** AdMob で Android 用のインタースティシャルとバナーを作って差し替える。忘れるとその枠の収益がゼロになる（`rewardedAndroid` だけは本番IDが入っている） |
+| 2 | **課金の開示文（`party/js/pstore.js` の `storeWords()`）** | ✅ 自動。`Capacitor.getPlatform()` を見て Android では「Google アカウントに請求」「解約は Google Play の設定から」に切り替わる。**手で書き換えないこと。** iOS版の画面に「Google Play」と書いてあると審査で指摘されるため、この分岐を消してはいけない |
+| 3 | Google Play にサブスク `wordquest_premium_monthly` を登録 | ⬜ iOS と同じIDで作り、その下に**基本プラン（月額）**を作る |
+| 4 | `npm run ads:live` を実行してから AAB をビルド | ⬜ `node tools/set_ads.js --show` で本番モードとID一覧を確認できる |
+| 5 | クローズドテスト 12人 × 14日連続 | ⬜ ここが Android の critical path |
+
+---
+
 # 5. 私がすぐ着手できること
 
 言っていただければ今日中に片付きます。
