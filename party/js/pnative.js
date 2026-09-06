@@ -25,8 +25,15 @@
     //   両ストアで同じIDで登録すること。Google Play では基本プラン（月額）を
     //   この商品の下に作る
     productId: "wordquest_premium_monthly",
-    // 開発中は true（テスト広告のみ表示・誤タップBAN防止）。本番公開時のみ false
-    testing: true,
+    // 本番の広告を出す。ここは false のままコミットしてある。
+    //   以前は true をコミットし、ビルド前に npm run ads:live で false に書き換える
+    //   運用にしていた。そのせいでこのファイルが常に「変更あり」の状態になり、
+    //   git pull が「Please commit your changes... Aborting」で毎回止まっていた。
+    //   本人はpullできたつもりで、修正が一度も端末に届かないまま何時間もテストした。
+    //   出荷する値をそのままコミットしておけば、この事故は起きない。
+    //   テスト広告で確かめたいときだけ npm run ads:test で true にし、
+    //   終わったら git checkout -- party/js/pnative.js で必ず戻すこと。
+    testing: false,
     // 非パーソナライズ広告で運用する。ATTの許可ダイアログを出さない代わりに
     // 追跡は一切行わない（Appleへの申告も「追跡しない」で統一）
     nonPersonalized: true
