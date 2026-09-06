@@ -444,6 +444,17 @@
   opacity: 0; pointer-events: none; transition: opacity .3s;
 }
 .pmovie-skip.show { opacity: 1; pointer-events: auto; }
+/* iOS が自動再生を拒否したときだけ出す。押されるまで待つので、画面の真ん中に
+   はっきり見える大きさで置く */
+.pmovie-tap {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 2;
+  font: inherit; font-size: 17px; font-weight: bold; letter-spacing: 1px; color: #fff;
+  background: rgba(20, 26, 56, .88); border: 2px solid rgba(255, 255, 255, .75);
+  border-radius: 999px; padding: 14px 28px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .5);
+  opacity: 0; pointer-events: none; transition: opacity .25s;
+}
+.pmovie-tap.show { opacity: 1; pointer-events: auto; }
 /* 出題範囲の選択（学年ボタンの補足行） */
 .wq2-mode-sub {
   display: block; margin-top: 3px; font-size: 10px; letter-spacing: 0;

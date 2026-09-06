@@ -456,9 +456,17 @@
             (sst.maxChain ? "\n　最大チェイン … ×" + sst.maxChain + (newChain ? "　🎉新記録！" : "") : "") +
             "\n　覚えた単語 … " + pg.cleared + " ／ " + pg.total + " 語" +
             (tr.icon ? "\n　称号 … " + tr.icon + " " + tr.name : ""),
-          "〜 ことばの闘技場 制覇 〜\n\n★　ＷＯＲＤ　ＱＵＥＳＴ　・　完　★\n\nおめでとう！ そして ありがとう。",
+          "〜 ことばの闘技場 制覇 〜\n\n★　ＷＯＲＤ　ＱＵＥＳＴ　★\n\nおめでとう！ そして ありがとう。",
           "（タイトルの「単語帳」で\n　出会った単語を いつでも 復習できます。\n　全3000語 制覇を めざそう！）"
         ];
+        // 挑戦の塔は初回クリアで開放される（refreshTowerBtn がボタンを出す）。
+        // これまで何も知らせていなかったので、遊べる場所が増えたことに
+        // 気づけなかった。初回だけ伝える（2回目以降は新しい報せではない）
+        if (rc.clears === 1) {
+          ending.splice(ending.length - 1, 0,
+            "🗼　挑戦の塔が 開放された！\n\nタイトルの「挑戦の塔」から のぼれる。\n" +
+            "レベルは固定、道具もなし。\nどこまで のぼれるか——腕だめしの場だ。");
+        }
         for (var e = 0; e < ending.length; e++) await gsay(ending[e]);
         // ending movie after the epilogue text (skippable; failures fall through)
         if (window.PMOVIE) { if (window.BGM) BGM.stop(); await PMOVIE.play("ed"); }
