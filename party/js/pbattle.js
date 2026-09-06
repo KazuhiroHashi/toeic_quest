@@ -11,14 +11,84 @@
   function healJitter(p) { return Math.max(1, p + rnd(7) - 3); }
 
   // ================= SFX =================
+  // iOS は「利用者の操作の中で一度でも再生した要素」しか、あとからタイマーで
+  // 鳴らせない。この決まりは要素ごとに付く。bgm.js と voice.js が <audio> を
+  // ひとつだけ持ち回しているのはそのためで、効果音だけがその規則を外れていた。
+  //
+  // 効果音は「鳴らしたい瞬間に new Audio() する」作りだった。カーソル音は
+  // ボタンを押した流れの中で作られるので解禁されるが、斬撃・被弾・レベルアップ・
+  // ボス登場などは演出の待ち時間のあとに鳴る。操作から離れた場所で作られた
+  // 要素は iOS に拒まれ、握りつぶしていたので無音のまま二度と鳴らなかった。
+  //
+  // 操作の直後の短い猶予に間に合うかどうかは端末の速さ次第で、速い端末ほど
+  // たまたま通る。「機種によって鳴ったり鳴らなかったりする」のはこれが理由。
+  //
+  // 対策：最初のタップの中で全部の効果音を音量0で一度鳴らして解禁しておく。
+  // 拒まれたものは解禁済みにせず、次のタップでまた試す。広告の動画などに
+  // 音声の権利を奪われて鳴らなくなった場合も、これで次の操作で戻る。
+  var SFX_NAMES = ["cursor", "slash", "crit", "hit", "heal", "level", "win", "ng", "ok",
+                   "boss", "encounter", "chest", "stairs",
+                   "magic", "magic_fire", "magic_ice", "magic_thunder", "magic_holy"];
   var sfxCache = {};
+  var sfxReady = {};
+
+  function sfxAudio(name) {
+    var a = sfxCache[name];
+    if (!a) {
+      var src = (window.SFX_ART && window.SFX_ART[name]) || "../assets/sfx/" + name + ".mp3";
+      a = sfxCache[name] = new Audio(src);
+      a.preload = "auto";
+      a.volume = 0.7;
+    }
+    return a;
+  }
+
+  // 勝利のファンファーレ（assets/bgm/victory.mp3）。効果音と同じく先に解禁しておく
+  var victoryAudio = null;
+  function victoryAudioEl() {
+    if (!victoryAudio) {
+      var src = (window.BGM_ART && window.BGM_ART.victory) || "../assets/bgm/victory.mp3";
+      victoryAudio = new Audio(src);
+      victoryAudio.preload = "auto";
+      victoryAudio.volume = 0.7;
+    }
+    return victoryAudio;
+  }
+
+  function primeOne(a, done) {
+    var vol = a.volume, p;
+    a.volume = 0;
+    try { p = a.play(); } catch (e) { a.volume = vol; done(false); return; }
+    function settle(ok) {
+      try { a.pause(); a.currentTime = 0; } catch (e) {}
+      a.volume = vol;
+      done(ok);
+    }
+    if (p && p.then) p.then(function () { settle(true); }, function () { settle(false); });
+    else settle(true);   // 旧仕様の同期 play()
+  }
+
+  function primeSfx() {
+    SFX_NAMES.forEach(function (name) {
+      if (sfxReady[name]) return;
+      primeOne(sfxAudio(name), function (ok) { if (ok) sfxReady[name] = true; });
+    });
+    if (!sfxReady["#victory"]) {
+      primeOne(victoryAudioEl(), function (ok) { if (ok) sfxReady["#victory"] = true; });
+    }
+  }
+  // 解禁できなかったものを拾い直すため、外さずに毎回聞く（済んだ音は素通り）
+  ["pointerdown", "touchstart", "keydown"].forEach(function (ev) {
+    window.addEventListener(ev, primeSfx, { passive: true });
+  });
+
   function sfx(name) {
     try {
-      var src = (window.SFX_ART && window.SFX_ART[name]) || "../assets/sfx/" + name + ".mp3";
-      var a = sfxCache[name];
-      if (!a) { a = sfxCache[name] = new Audio(src); a.volume = 0.7; }
-      a.currentTime = 0;
-      var p = a.play(); if (p && p.catch) p.catch(function () {});
+      var a = sfxAudio(name);
+      try { a.currentTime = 0; } catch (e) {}   // 読み込み前は無視されるだけ
+      var p = a.play();
+      // 拒まれたらもう一度解禁からやり直す（次のタップで primeSfx が拾う）
+      if (p && p.catch) p.catch(function () { sfxReady[name] = false; });
       return a;
     } catch (e) {}
   }
@@ -27,27 +97,22 @@
   // those cues were silently skipped (the files exist; the caller was guarded by `if (window.SFX)`)
   window.SFX = window.SFX || { play: sfx };
 
-  // element-aware spell sound: play magic_<elem> if it exists, else the generic magic sfx
+  // 属性つきの呪文音。magic_<属性> があればそれを、無ければ magic を鳴らす。
+  // 属性ファイルは4つとも SFX_NAMES に入れて解禁済みなので、ここは sfx() に任せる
   function sfxEl(elem) {
     var name = elem ? "magic_" + elem : "magic";
-    if (window.SFX_ART) { sfx(window.SFX_ART[name] ? name : "magic"); return; } // inline build
-    try { // file build: try the element file, fall back to generic on 404
-      var a = sfxCache[name] || (sfxCache[name] = new Audio("../assets/sfx/" + name + ".mp3"));
-      a.volume = 0.7; a.onerror = function () { sfx("magic"); };
-      a.currentTime = 0;
-      var p = a.play(); if (p && p.catch) p.catch(function () { sfx("magic"); });
-    } catch (e) { sfx("magic"); }
+    if (window.SFX_ART && !window.SFX_ART[name]) name = "magic";       // インライン版
+    if (SFX_NAMES.indexOf(name) < 0) name = "magic";                   // 未知の属性
+    sfx(name);
   }
 
-  // one-shot victory fanfare (assets/bgm/victory.mp3); falls back to the win SFX
-  var victoryAudio = null;
+  // 勝利のファンファーレ。鳴らせなければ win の効果音で代える
   function victoryJingle() {
-    var src = (window.BGM_ART && window.BGM_ART.victory) || "../assets/bgm/victory.mp3";
     try {
-      if (!victoryAudio) victoryAudio = new Audio(src);
-      victoryAudio.currentTime = 0; victoryAudio.volume = 0.7;
-      var p = victoryAudio.play();
-      if (p && p.catch) p.catch(function () { sfx("win"); });
+      var a = victoryAudioEl();
+      try { a.currentTime = 0; } catch (e) {}
+      var p = a.play();
+      if (p && p.catch) p.catch(function () { sfxReady["#victory"] = false; sfx("win"); });
     } catch (e) { sfx("win"); }
   }
 
