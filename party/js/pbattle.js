@@ -22,7 +22,11 @@
   var SFX_NAMES = ["cursor", "slash", "crit", "hit", "heal", "level", "win", "ng", "ok",
                    "boss", "encounter", "chest", "stairs",
                    "magic", "magic_fire", "magic_ice", "magic_thunder", "magic_holy"];
-  var SFX_LEVEL = 0.7;
+  // 0.7 と書いてあったが、iOS の <audio> は volume を受け付けないので実機では
+  // ずっと 1.0 で鳴っていた。Web Audio に移して初めて数字が効くようになるため、
+  // 0.7 のままにすると効果音だけ急に小さくなる。以前の聞こえ方に合わせて 1.0。
+  // 変えるのは「読み上げが埋もれない」ためのBGMだけにする（js/bgm.js）
+  var SFX_LEVEL = 1.0;
   var VICTORY = "#victory";
 
   function sfxUrl(name) {

@@ -24,14 +24,16 @@
                     arena1: 1, arena2: 1, arena3: 1, arena4: 1, arena5: 1,
                     midboss: 1, king1: 1, king2: 1, king3: 1, king4: 1,
                     boss: 1, lastboss: 1, ending: 1, gameover: 1 };
-  // 0.55 → 0.45。読み上げは音量の上限で鳴らしていてこれ以上上げられないので、
-  // 聞き取りやすさはBGM側を下げて確保する（実機で家族に試してもらった判断。
-  // 以前は「BGMは下げない」方針だった）。
+  // iOS の <audio> は volume を受け付けないので、これまで実機ではこの値が
+  // 何であれ 1.0 で鳴っていた。Web Audio の GainNode に移して初めて効く
+  // ようになった（js/audio.js）。つまり実機での「以前の音量」は 1.0 であり、
+  // ここを 0.45 にすると体感が半分以下になって落差が大きすぎた。
   //
-  // iOS の <audio> は volume を受け付けない。曲は長いので <audio> のまま
-  // 鳴らすが、音量だけは Web Audio の GainNode で取る（js/audio.js）。
+  // 目的は「読み上げがBGMに埋もれないこと」だけなので、以前の音量から
+  // 少しだけ下げる 0.9 にする。読み上げは 1.0（上限）なので、その差で通る。
+  // 曲は長いので <audio> のまま鳴らし、音量だけ GainNode で取る。
   // 繋げなかった環境では今まで通り el.volume を使う。
-  var VOLUME = 0.45;
+  var VOLUME = 0.9;
   var routed = false;   // Web Audio の経路に繋げたか
 
   function setVol(v) {
