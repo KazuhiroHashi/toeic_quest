@@ -34,6 +34,18 @@ var SKIP_ASSET_DIRS = ["movie_src", "field"];
 var SKIP_BGM = ["field", "town", "dungeon", "battle_dungeon"];
 var WEBP_QUALITY = 82;
 var BGM_BITRATE = "128k";
+// BGMを書き出すときに掛ける音量。読み上げに対して下げるぶんを、ここで作る。
+//
+// iOS の <audio> は volume を受け付けない（何を入れても 1.0 で鳴る）ので、
+// コード側の数字では下げられない。一度 Web Audio の GainNode に繋いで
+// 解決したが、繋いだ要素は src を差し替えても鳴り始めないことがあり、
+// 曲を切り替えるBGMでは実機で鳴らなくなった。
+// ファイルそのものを小さく書き出すのが、どの環境でも確実に効く唯一の手。
+//
+// 0.73 は実機で合わせた値（1.0 → 0.9 → 0.81 → 0.73 と詰めた）。
+// 効果音 0.81・読み上げ 1.10 は Web Audio のゲインで効いているので、
+// ここを変えるときは js/audio.js 側の数字と合わせて考えること。
+var BGM_GAIN = 0.73;
 
 function rmrf(p) { fs.rmSync(p, { recursive: true, force: true }); }
 function mkdir(p) { fs.mkdirSync(p, { recursive: true }); }
@@ -180,8 +192,10 @@ function placeAsset(src, dstDir, name) {
   // BGM is long and loops; sfx are tiny one-shots not worth re-encoding
   if (ext === ".mp3" && rel.indexOf("bgm" + path.sep) === 0) {
     if (SKIP_BGM.indexOf(stem) >= 0) return;
-    var a = cached(src, rel, function (s, d) {
-      ff(["-i", s, "-c:a", "libmp3lame", "-b:a", BGM_BITRATE, d]);
+    // 変換の設定を鍵に混ぜる。混ぜないと、音量やビットレートを変えても
+    // 元ファイルの日付が同じかぎり古い変換結果が使い回され、変更が反映されない
+    var a = cached(src, rel.replace(/\.mp3$/, "") + ".g" + BGM_GAIN + "-" + BGM_BITRATE + ".mp3", function (s, d) {
+      ff(["-i", s, "-af", "volume=" + BGM_GAIN, "-c:a", "libmp3lame", "-b:a", BGM_BITRATE, d]);
     });
     fs.copyFileSync(a, path.join(dstDir, name));
     stats.audIn += size; stats.audOut += fs.statSync(a).size;

@@ -24,23 +24,19 @@
                     arena1: 1, arena2: 1, arena3: 1, arena4: 1, arena5: 1,
                     midboss: 1, king1: 1, king2: 1, king3: 1, king4: 1,
                     boss: 1, lastboss: 1, ending: 1, gameover: 1 };
-  // iOS の <audio> は volume を受け付けないので、これまで実機ではこの値が
-  // 何であれ 1.0 で鳴っていた。Web Audio の GainNode に移して初めて効く
-  // ようになった（js/audio.js）。つまり実機での「以前の音量」は 1.0 であり、
-  // ここを 0.45 にすると体感が半分以下になって落差が大きすぎた。
+  // ここは 1.0 のまま。iOS は <audio> の volume を受け付けないので、
+  // 何を入れても実機では 1.0 で鳴る。数字で下げようとしても効かない。
   //
-  // 目的は「読み上げがBGMに埋もれないこと」だけ。読み上げは音源の余裕を
-  // 使い切って 1.10 で頭打ちなので、足りないぶんはこちらを下げて作る。
-  //   1.0 → 0.9 → 0.81 → 0.73（効果音も同じ割合で下げている）
-  // 曲は長いので <audio> のまま鳴らし、音量だけ GainNode で取る。
-  // 繋げなかった環境では今まで通り el.volume を使う。
-  var VOLUME = 0.73;
-  var routed = false;   // Web Audio の経路に繋げたか
+  // 一度は Web Audio の GainNode に繋いで音量を取れるようにしたが、
+  // createMediaElementSource に繋いだ要素は src を差し替えても鳴り始めない
+  // ことがあり（WebKitの既知のふるまい）、曲ごとに src を入れ替えるBGMでは
+  // 「戦闘が始まってもしばらく鳴らない」「鳴らない」が実機で出た。撤去した。
+  //
+  // 読み上げに対して下げるぶんは、配信する mp3 そのものを小さく書き出して
+  // 作る（tools/build_www.js の BGM_GAIN）。ファイル側なら iOS でも確実に効く。
+  var VOLUME = 1.0;
 
-  function setVol(v) {
-    if (routed) { window.WQAUDIO.setLevel("bgm", v); return; }
-    if (el) el.volume = v;
-  }
+  function setVol(v) { if (el) el.volume = v; }   // ブラウザではフェードに効く
   var STEP = 40;        // ms per fade tick (fade-out only — a track always
                         // starts at full volume, or its opening hit is lost)
 
@@ -84,10 +80,6 @@
         if (f) f();   // fall through to the next candidate
       }
     });
-    if (window.WQAUDIO && WQAUDIO.connect(el, "bgm")) {
-      routed = true;
-      WQAUDIO.setLevel("bgm", VOLUME);   // 以降 el.volume は 1 のまま触らない
-    }
     return el;
   }
 

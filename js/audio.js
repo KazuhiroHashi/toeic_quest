@@ -110,7 +110,15 @@
        .then(function (buf) { buffers[name] = buf; state[name] = null; }, fail);
   }
 
-  // 鳴らせたら true。false なら呼び出し側が <audio> で鳴らす
+  // 同じ音は1つまで。鳴っている最中に同じ音がまた来たら、前のを止めて鳴らし直す。
+  //
+  // <audio> で鳴らしていたころは要素が1つしか無く、重ねようとしても
+  // 鳴り直すだけだった。Web Audio はいくらでも重なるので、同じ音が続けて
+  // 呼ばれると何重にもなり、「プェプェプェプェーーーン」と尾を引いて、
+  // 足し合わさった音が割れる。さらに音が飽和すると WebKit が出力全体を
+  // 抑えにかかるので、BGMまで一緒に小さくなる（実機で出た3つの症状は
+  // どれもこれが原因）。
+  var playing = {};      // 名前 -> 鳴っている最中の音
   function play(name, busName) {
     var c = context();
     if (!c) return false;
@@ -118,9 +126,13 @@
     if (!buf) return false;
     if (!resume()) return false;       // まだ操作前
     try {
+      var prev = playing[name];
+      if (prev) { try { prev.stop(); } catch (e) {} playing[name] = null; }
       var s = c.createBufferSource();
       s.buffer = buf;
       s.connect(bus(busName || "sfx"));
+      s.onended = function () { if (playing[name] === s) playing[name] = null; };
+      playing[name] = s;
       s.start(0);
       return true;
     } catch (e) { return false; }
@@ -175,23 +187,13 @@
     } catch (e) { return null; }
   }
 
-  // ---- <audio> を Web Audio の経路に繋ぐ（BGM用）----
-  // 繋いだ要素の音は GainNode を通るようになるので、el.volume ではなく
-  // setLevel() で音量を変える。一度しか繋げないので印を付けておく
-  function connect(el, busName) {
-    var c = context();
-    if (!c || !el) return false;
-    if (el.__wqBus) return true;
-    var g = bus(busName);
-    if (!g) return false;
-    try {
-      var src = c.createMediaElementSource(el);
-      src.connect(g);
-      el.__wqBus = busName;
-      el.volume = 1;            // ここから先の音量は GainNode が持つ
-      return true;
-    } catch (e) { return false; }
-  }
+  // <audio> を Web Audio の経路に繋ぐ仕組みは置かない。
+  // BGMで一度やったが、createMediaElementSource に繋いだ要素は src を
+  // 差し替えても鳴り始めないことがある（WebKit の既知のふるまい）。
+  // BGMは曲ごとに src を入れ替える作りなので、これに正面からぶつかり、
+  // 「戦闘が始まってもしばらく曲が鳴らない」「BGMが鳴らない」が出た。
+  // BGMは素の <audio> のままにして、音量はファイル側で調整する
+  // （tools/build_www.js の BGM_GAIN）。
 
   window.WQAUDIO = {
     available: function () { return !!context(); },
@@ -199,7 +201,6 @@
     load: load,
     play: play,
     ready: ready,
-    connect: connect,
     buffer: buffer,
     source: source,
     setLevel: setLevel,

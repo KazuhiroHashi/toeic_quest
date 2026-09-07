@@ -160,6 +160,12 @@
 }
 .wq2-store-panel {
   width: 100%; max-width: 320px; text-align: center; padding: 18px 16px;
+  /* 画面の短い端末では中身がはみ出し、上端が切れて読めなくなっていた
+     （「ぜんめつしてしまった……」のあとの復活の説明で実際に出た）。
+     パネルの高さを画面内に収め、あふれる分はパネルの中でスクロールさせる */
+  max-height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .wq2-store-h { font-size: 15px; font-weight: bold; color: #ffe08a; margin-bottom: 10px; }
 .wq2-store-p { font-size: 13px; line-height: 1.7; color: #eef2ff; margin-bottom: 12px; }
@@ -190,6 +196,8 @@
   font-size: 12px; color: #eef2ff; line-height: 1.75; text-align: left;
   background: rgba(8, 11, 26, .6); border: 1px solid #3a4570; border-radius: 8px;
   padding: 10px 12px; margin-bottom: 12px;
+  /* 説明が長いので、ここを先に畳む。こうしないとボタンが画面の外に出る */
+  max-height: 30vh; overflow-y: auto;
 }
 .wq2-store-rule-h { color: #ffe08a; font-weight: bold; margin-bottom: 6px; }
 .wq2-store-rule b { color: #ffd76a; }
