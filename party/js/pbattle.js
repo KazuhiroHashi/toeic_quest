@@ -726,9 +726,9 @@
     // on a blank screen — if it has not returned in 6s the battle just starts.
     if (window.WQ2_STORE && WQ2_STORE.adBeforeBattle) {
       await Promise.race([
-        // encounter.round は闘技場だけが入れる「1周の何戦目か」。
-        // 塔やフィールドは undefined で、通算の回数で判断される
-        WQ2_STORE.adBeforeBattle(encounter && encounter.round),
+        // round は闘技場の「1周の何戦目か」、floor は塔の階数。
+        // フィールドはどちらも無く、通算の回数で判断される
+        WQ2_STORE.adBeforeBattle(encounter && encounter.round, encounter && encounter.floor),
         new Promise(function (r) { setTimeout(r, 6000); })
       ]).catch(function () {});
     }

@@ -20,7 +20,11 @@
   //   11戦目の前：出さない。真ラスボスは隠しの登場で、カウンタも開始カードも
   //             出さない作りにしてある。その直前に広告を挟むと台無しになる
   var AD_ROUNDS = [6, 8, 10];
-  // 塔とフィールドには「何戦目」が無いので、通算の回数で間引く
+  // 挑戦の塔は5階ごとが守護者戦で、突破するとパーティが全回復する。
+  // その休憩の直後＝6・11・16階の前に出す。闘技場の6戦目と同じ考え方で、
+  // 戦いの途中ではなく、ひと区切りついたところに置く
+  var TOWER_EVERY = 5;
+  // フィールドには区切りが無いので、通算の回数で間引く
   var AD_EVERY = 2;
   var BANNER_H = 50;  // 下部バナーの高さ。実機では読み込み後の実寸に差し替える
   var PRICE = "¥500";
@@ -187,7 +191,7 @@
     // once every AD_EVERY battles — the first battle starts straight away, then
     // one before every second battle after that. The counter is persisted so
     // quitting and relaunching does not reset the cadence.
-    adBeforeBattle: function (round) {
+    adBeforeBattle: function (round, floor) {
       if (premiumActive()) return Promise.resolve();
       state.battles = (state.battles || 0) + 1;
       // never stack an interstitial straight after a rewarded revive
@@ -199,8 +203,11 @@
         // 闘技場（1周11戦）。位置は AD_ROUNDS で決め打ちにする。
         // 通算回数で数えていたときは、2周目以降の序盤にも広告が入っていた
         show = AD_ROUNDS.indexOf(round) >= 0;
+      } else if (typeof floor === "number") {
+        // 挑戦の塔。守護者を倒して全回復した直後（6・11・16階…の前）
+        show = floor > 1 && (floor - 1) % TOWER_EVERY === 0;
       } else {
-        // 挑戦の塔・フィールド。区切りが無いので通算の回数で間引く
+        // フィールド。区切りが無いので通算の回数で間引く
         show = state.battles > AD_EVERY && (state.battles - 1) % AD_EVERY === 0;
       }
       if (!show) return Promise.resolve();

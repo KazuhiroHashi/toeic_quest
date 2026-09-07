@@ -522,7 +522,9 @@
       b.mag = Math.round(b.atk * 1.05);
       foes = [b];
     }
-    return { bg: TOWER_BG[(floor - 1) % TOWER_BG.length], quizLv: qz, bgm: floor % 5 === 0 ? "midboss" : "arena" + (((floor - 1) % 5) + 1), enemies: foes };
+    // floor は広告の位置の判断に使う（pstore.js の TOWER_EVERY）
+    return { floor: floor, bg: TOWER_BG[(floor - 1) % TOWER_BG.length], quizLv: qz,
+             bgm: floor % 5 === 0 ? "midboss" : "arena" + (((floor - 1) % 5) + 1), enemies: foes };
   }
   async function runTower() {
     if (window.WQ2_STORE && !WQ2_STORE.canPlay()) {
