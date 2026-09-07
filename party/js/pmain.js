@@ -20,9 +20,10 @@
   window.WQ2_SAVE_STUDY = saveStudy;   // pdrill.js から呼ぶ
 
   // total distinct words cleared (answered correctly at least once) out of the
-  // current vocabulary range's total. 2026-09-07: TOEIC側は6帯で1,907語
-  // （旧データは帯をまたいで重複しており、実質3,000と表示していたのが不正確
-  // だった。data/vocab_*.js と tools/rebalance_toeic_bands.js を参照）
+  // current vocabulary range's total. 2026-09-07: TOEIC側は6帯で3,027語。
+  // 元は帯をまたいで重複しており（重複を除くと1,907語）、そこへ新しい語を
+  // 1,120足して6帯を作り直した。data/vocab_*.js と tools/rebalance_toeic_bands.js
+  // ／tools/add_toeic_words.js を参照
   window.studyProgress = function () {
     var words = (window.G && window.G.study && window.G.study.words) || {};
     var cleared = 0;
@@ -30,7 +31,7 @@
     // 学生版は1つの段階に複数学年が混ざる＝段階の語数を足すと重複するので、
     // 出題範囲そのものが持つ単語数（重複なし）を使う
     var total = window.WQ2_MODE ? WQ2_MODE.totalWords() : 0;
-    return { cleared: cleared, total: total || 1907 };
+    return { cleared: cleared, total: total || 3027 };
   };
   // trophy tier for a cleared count: 100 bronze / 200 silver / 300 gold / 500 platinum
   window.trophyFor = function (n) {
