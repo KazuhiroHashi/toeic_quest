@@ -233,7 +233,7 @@
     return panel(
       '<div class="wq2-store-h">出題範囲を えらぶ</div>' +
       '<div class="wq2-store-p">あとから タイトル画面で 変えられます。</div>',
-      [{ key: "toeic", label: 'TOEIC<span class="wq2-mode-sub">スコア400〜900の 3000語</span>', primary: state.mode !== "student" },
+      [{ key: "toeic", label: 'TOEIC<span class="wq2-mode-sub">スコア400〜900の 1907語</span>', primary: state.mode !== "student" },
        { key: "student", label: '学生（中学・高校）<span class="wq2-mode-sub">学年べつの 教科書・入試の単語</span>', primary: state.mode === "student" }]
     );
   }

@@ -19,7 +19,10 @@
   }
   window.WQ2_SAVE_STUDY = saveStudy;   // pdrill.js から呼ぶ
 
-  // total distinct words cleared (answered correctly at least once) out of all 3000
+  // total distinct words cleared (answered correctly at least once) out of the
+  // current vocabulary range's total. 2026-09-07: TOEIC側は6帯で1,907語
+  // （旧データは帯をまたいで重複しており、実質3,000と表示していたのが不正確
+  // だった。data/vocab_*.js と tools/rebalance_toeic_bands.js を参照）
   window.studyProgress = function () {
     var words = (window.G && window.G.study && window.G.study.words) || {};
     var cleared = 0;
@@ -27,7 +30,7 @@
     // 学生版は1つの段階に複数学年が混ざる＝段階の語数を足すと重複するので、
     // 出題範囲そのものが持つ単語数（重複なし）を使う
     var total = window.WQ2_MODE ? WQ2_MODE.totalWords() : 0;
-    return { cleared: cleared, total: total || 3000 };
+    return { cleared: cleared, total: total || 1907 };
   };
   // trophy tier for a cleared count: 100 bronze / 200 silver / 300 gold / 500 platinum
   window.trophyFor = function (n) {
@@ -465,7 +468,7 @@
             "\n　覚えた単語 … " + pg.cleared + " ／ " + pg.total + " 語" +
             (tr.icon ? "\n　称号 … " + tr.icon + " " + tr.name : ""),
           "〜 ことばの闘技場 制覇 〜\n\n★　ＷＯＲＤ　ＱＵＥＳＴ　★\n\nおめでとう！ そして ありがとう。",
-          "（タイトルの「単語帳」で\n　出会った単語を いつでも 復習できます。\n　全3000語 制覇を めざそう！）"
+          "（タイトルの「単語帳」で\n　出会った単語を いつでも 復習できます。\n　全" + pg.total + "語 制覇を めざそう！）"
         ];
         // 挑戦の塔は初回クリアで開放される（refreshTowerBtn がボタンを出す）。
         // これまで何も知らせていなかったので、遊べる場所が増えたことに
