@@ -1,8 +1,13 @@
-// TOEIC 600 level vocabulary (505 words)
+// TOEIC 600 level vocabulary (500 words)
 // 2026-09-07 に作り直した（tools/build_toeic_bands.js）。
 // 出題は重み付き抽選で選ぶので、このリストの並び順は結果に影響しない。
 window.VOCAB = window.VOCAB || {};
 window.VOCAB[600] = [
+{w:"receptionist",m:"受付係",p:"n"},
+{w:"local cuisine",m:"郷土料理",p:"n"},
+{w:"cloud storage",m:"クラウドストレージ",p:"n"},
+{w:"remote access",m:"遠隔アクセス",p:"n"},
+{w:"gather around",m:"周りに集まる",p:"phr"},
 {w:"return policy",m:"返品方針",p:"n"},
 {w:"opponent team",m:"対戦相手チーム",p:"n"},
 {w:"license plate",m:"ナンバープレート",p:"n"},
@@ -423,8 +428,6 @@ window.VOCAB[600] = [
 {w:"dismantle",m:"解体する",p:"v"},
 {w:"photocopy",m:"コピーする",p:"v"},
 {w:"proofread",m:"校正する",p:"v"},
-{w:"as of now",m:"現時点で",p:"phr"},
-{w:"as of yet",m:"まだ",p:"phr"},
 {w:"on the go",m:"活動中で",p:"phr"},
 {w:"mid-level",m:"中級の",p:"adj"},
 {w:"trip over",m:"つまずく",p:"phr"},
@@ -499,13 +502,5 @@ window.VOCAB[600] = [
 {w:"wheelbarrow",m:"一輪手押し車",p:"n"},
 {w:"streetlight",m:"街灯",p:"n"},
 {w:"hold off on",m:"見合わせる",p:"phr"},
-{w:"catch up on",m:"遅れを取り戻す",p:"phr"},
-{w:"cut back on",m:"減らす",p:"phr"},
-{w:"fall behind",m:"遅れをとる",p:"phr"},
-{w:"sign up for",m:"申し込む",p:"phr"},
-{w:"get back to",m:"あとで返事する",p:"phr"},
-{w:"weigh in on",m:"意見を述べる",p:"phr"},
-{w:"back out of",m:"手を引く",p:"phr"},
-{w:"fill in for",m:"代理を務める",p:"phr"},
-{w:"bounce back",m:"回復する",p:"phr"}
+{w:"catch up on",m:"遅れを取り戻す",p:"phr"}
 ];

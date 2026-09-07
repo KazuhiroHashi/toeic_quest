@@ -1,4 +1,4 @@
-// TOEIC 400 level vocabulary (505 words)
+// TOEIC 400 level vocabulary (500 words)
 // 2026-09-07 に作り直した（tools/build_toeic_bands.js）。
 // 出題は重み付き抽選で選ぶので、このリストの並び順は結果に影響しない。
 window.VOCAB = window.VOCAB || {};
@@ -502,10 +502,5 @@ window.VOCAB[400] = [
 {w:"sold out",m:"売り切れ",p:"phr"},
 {w:"look for",m:"〜を探す",p:"phr"},
 {w:"turn off",m:"電源を切る",p:"phr"},
-{w:"drop off",m:"車から降ろす",p:"phr"},
-{w:"check in",m:"搭乗手続きする",p:"phr"},
-{w:"fill out",m:"記入する",p:"phr"},
-{w:"hand out",m:"配布する",p:"phr"},
-{w:"taxi fare",m:"タクシー運賃",p:"n"},
-{w:"agreement",m:"合意",p:"n"}
+{w:"drop off",m:"車から降ろす",p:"phr"}
 ];

@@ -160,7 +160,11 @@ var MANUAL_BAND = {
   // errata: 950点取得者でも知らないレアな語。短いので語長からの
   // 自動見積もりでは軽く見られてしまう（一度500→600と直したが、
   // それでもまだ易しく見えすぎていた）
-  "errata": 5
+  "errata": 5,
+
+  "overrule": 5, "plummet": 5, "prevalent": 5, "scaffolding": 5,
+  "solvent": 5, "stipend": 5, "amicable": 5, "congenial": 5,
+  "sturdy": 4, "traction": 4, "abide by": 4, "demote": 4, "incubate": 4
 };
 
 var list = Object.keys(entries).map(function (w) { return entries[w]; });
@@ -196,6 +200,84 @@ Object.keys(MANUAL_BAND).forEach(function (w) {
     if (i >= 0) out[targetBand].push(out[b].splice(i, 1)[0]);
   });
 });
+
+// ---- 熟語（phr）で「似た語が並びすぎている」ものを間引き、
+// 各帯をちょうど500語に揃える ----
+// 例：「turn on／switch on」のように訳がほぼ同じ組が2つある、
+// 「in ___」型の前置詞句が同じ帯に何本も並ぶ、など。似た語が
+// 並びすぎている分は、6帯を500語ずつに揃えるために間引く分（27語）
+// の中で、いちばん重複感の強いものから優先して削る
+var TARGET_PER_BAND = 500;
+function keyOf(e) { return (e.isNew ? 1000 : 0) + e.w.length; } // 新しい語・長い語ほど大きい値
+var pinnedWords = new Set(Object.keys(MANUAL_BAND));
+function isPinned(e) { return pinnedWords.has(e.w); }
+var totalNow = 0;
+BANDS.forEach(function (b) { totalNow += out[b].length; });
+var totalBudget = Math.max(0, totalNow - TARGET_PER_BAND * BANDS.length);
+
+var cutSet = new Set();
+
+// ① 訳がまったく同じ熟語の組（帯の中で）は、いちばん基本的な1つだけ残す。
+// これは削っても情報が失われないので、予算に関係なく必ず間引く。
+// 手直しで固定した語（MANUAL_BAND）は対象から外す
+BANDS.forEach(function (b) {
+  var byMeaning = {};
+  out[b].forEach(function (e) { if (e.p === "phr" && !isPinned(e)) (byMeaning[e.m] = byMeaning[e.m] || []).push(e); });
+  Object.keys(byMeaning).forEach(function (m) {
+    var g = byMeaning[m];
+    if (g.length < 2) return;
+    g.sort(function (a, c) { return keyOf(a) - keyOf(c); });
+    g.slice(1).forEach(function (e) { cutSet.add(e); });
+  });
+});
+
+// ② 同じ語で始まる熟語の集まりのうち、いちばん大きい集まりから順に、
+// 基本的な2つを残して間引く。①だけでは予算（27語）に届かないので、
+// 「集まりが大きい＝似た語が並びすぎている度合いが強い」ものを優先する
+var remainingBudget = totalBudget - cutSet.size;
+if (remainingBudget > 0) {
+  var candidates = [];
+  BANDS.forEach(function (b) {
+    var byRoot = {};
+    out[b].forEach(function (e) {
+      if (e.p !== "phr" || cutSet.has(e) || isPinned(e)) return;
+      var r = e.w.split(/\s+/)[0];
+      (byRoot[r] = byRoot[r] || []).push(e);
+    });
+    Object.keys(byRoot).forEach(function (r) {
+      var g = byRoot[r];
+      if (g.length <= 2) return;
+      g.sort(function (a, c) { return keyOf(a) - keyOf(c); });
+      g.slice(2).forEach(function (e) { candidates.push({ e: e, familySize: g.length }); });
+    });
+  });
+  candidates.sort(function (a, b2) {
+    if (b2.familySize !== a.familySize) return b2.familySize - a.familySize;
+    return keyOf(b2.e) - keyOf(a.e);
+  });
+  candidates.slice(0, remainingBudget).forEach(function (c) { cutSet.add(c.e); });
+}
+
+BANDS.forEach(function (b) { out[b] = out[b].filter(function (e) { return !cutSet.has(e); }); });
+
+// 間引いた結果は6帯合わせてちょうど3000語になるが、間引きが均等には
+// 起きないので帯ごとの語数はまだ500からずれている。MANUAL_BAND で固定
+// した語はそのまま残し、それ以外の語を全帯まとめてスコア順に並べ直し、
+// 各帯の残り枠（500 − 固定語数）に詰め直すことで、ちょうど500語ずつに揃える
+var pinnedByBand = {}, flexible = [];
+BANDS.forEach(function (b) {
+  pinnedByBand[b] = out[b].filter(isPinned);
+  out[b].forEach(function (e) { if (!isPinned(e)) flexible.push(e); });
+});
+flexible.sort(function (a, b2) { return a.score - b2.score; });
+var fi = 0;
+BANDS.forEach(function (b) {
+  var slots = TARGET_PER_BAND - pinnedByBand[b].length;
+  out[b] = pinnedByBand[b].concat(flexible.slice(fi, fi + slots));
+  fi += slots;
+});
+
+console.log("削減した重複気味の熟語: " + cutSet.size + "語（合計 " + totalNow + " → " + (totalNow - cutSet.size) + "）");
 
 BANDS.forEach(function (b) {
   var slice = out[b];

@@ -1,8 +1,13 @@
-// TOEIC 500 level vocabulary (505 words)
+// TOEIC 500 level vocabulary (500 words)
 // 2026-09-07 に作り直した（tools/build_toeic_bands.js）。
 // 出題は重み付き抽選で選ぶので、このリストの並び順は結果に影響しない。
 window.VOCAB = window.VOCAB || {};
 window.VOCAB[500] = [
+{w:"check in",m:"搭乗手続きする",p:"phr"},
+{w:"fill out",m:"記入する",p:"phr"},
+{w:"hand out",m:"配布する",p:"phr"},
+{w:"taxi fare",m:"タクシー運賃",p:"n"},
+{w:"agreement",m:"合意",p:"n"},
 {w:"cafeteria",m:"社員食堂",p:"n"},
 {w:"crosswalk",m:"横断歩道",p:"n"},
 {w:"promotion",m:"昇進",p:"n"},
@@ -17,7 +22,6 @@ window.VOCAB[500] = [
 {w:"take a break",m:"休憩を取る",p:"phr"},
 {w:"advertisement",m:"広告",p:"n"},
 {w:"crate of fruit",m:"果物の木箱",p:"n"},
-{w:"be in charge of",m:"〜を担当して",p:"phr"},
 {w:"sort",m:"分類する",p:"v"},
 {w:"fold",m:"折りたたむ",p:"v"},
 {w:"wipe",m:"拭く",p:"v"},
@@ -321,12 +325,9 @@ window.VOCAB[500] = [
 {w:"wrap up",m:"締めくくる",p:"phr"},
 {w:"back up",m:"支持する",p:"phr"},
 {w:"stop by",m:"立ち寄る",p:"phr"},
-{w:"take on",m:"引き受ける",p:"phr"},
-{w:"take up",m:"占める",p:"phr"},
 {w:"ramp up",m:"増強する",p:"phr"},
 {w:"hold up",m:"持ちこたえる",p:"phr"},
 {w:"on hold",m:"保留中で",p:"phr"},
-{w:"in bulk",m:"大量に",p:"phr"},
 {w:"referee",m:"審判",p:"n"},
 {w:"peer at",m:"じっと見る",p:"phr"},
 {w:"gaze at",m:"じっと見つめる",p:"phr"},
@@ -365,7 +366,6 @@ window.VOCAB[500] = [
 {w:"teammate",m:"チームメイト",p:"n"},
 {w:"carnival",m:"謝肉祭",p:"n"},
 {w:"overpass",m:"陸橋",p:"n"},
-{w:"stare at",m:"じっと見る",p:"phr"},
 {w:"converse",m:"会話する",p:"v"},
 {w:"laminate",m:"ラミネート加工する",p:"v"},
 {w:"annotate",m:"注釈を付ける",p:"v"},
@@ -502,10 +502,5 @@ window.VOCAB[500] = [
 {w:"frozen goods",m:"冷凍食品",p:"n"},
 {w:"asking price",m:"言い値",p:"n"},
 {w:"neighborhood",m:"近隣地域",p:"n"},
-{w:"construction",m:"建設",p:"n"},
-{w:"receptionist",m:"受付係",p:"n"},
-{w:"local cuisine",m:"郷土料理",p:"n"},
-{w:"cloud storage",m:"クラウドストレージ",p:"n"},
-{w:"remote access",m:"遠隔アクセス",p:"n"},
-{w:"gather around",m:"周りに集まる",p:"phr"}
+{w:"construction",m:"建設",p:"n"}
 ];
