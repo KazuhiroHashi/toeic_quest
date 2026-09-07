@@ -390,6 +390,8 @@
     for (var i = startAt; i < rounds.length; i++) {
       saveRun(i); // checkpoint before each battle so an interruption resumes here
       var r = rounds[i];
+      // 何戦目かを渡す。広告を出す位置の判断に使う（pstore.js の AD_ROUNDS）
+      r.enc.round = i + 1;
       // 10 shown battles; the 11th (真ラスボス) is a hidden surprise — no counter, no start card
       if (i < 10) await gsay("【ことばの闘技場】\n" + r.label + "（" + (i + 1) + "／10）\nＡボタンで 開始！");
       var res = await window.PBATTLE.start(r.enc);
@@ -476,6 +478,16 @@
         for (var e = 0; e < ending.length; e++) await gsay(ending[e]);
         // ending movie after the epilogue text (skippable; failures fall through)
         if (window.PMOVIE) { if (window.BGM) BGM.stop(); await PMOVIE.play("ed"); }
+        // エンディングを見終えて、タイトルに戻るところ。1周が完全に終わった
+        // 区切りで、この先に続きを待っている人がいない。全画面広告を置くなら
+        // ここがいちばん邪魔にならない。戦闘前と同じく、止まったときのために
+        // 6秒で見切る
+        if (window.WQ2_STORE && WQ2_STORE.adAfterEnding) {
+          await Promise.race([
+            WQ2_STORE.adAfterEnding(),
+            new Promise(function (r) { setTimeout(r, 6000); })
+          ]).catch(function () {});
+        }
       }
     }
     if (window.BGM) BGM.stop();

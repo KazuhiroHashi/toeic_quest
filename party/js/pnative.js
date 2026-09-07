@@ -12,7 +12,7 @@
     // ★ AdMobのリワード広告ユニットID
     rewardedAndroid: "ca-app-pub-3056251560404390/5134516956", // 本番（Bridge AI / WORD QUEST Android）
     rewardedIos:     "ca-app-pub-3056251560404390/7099435396", // 本番（Bridge AI / WORD QUEST iOS）
-    // インタースティシャル（第3・5・7・9・11戦の前に出す全画面広告）
+    // インタースティシャル（闘技場の6・8・10戦目の前と、エンディング後に出す全画面広告）
     //   ★Androidは未作成。Android版を出すときに AdMob で作って差し替えること。
     //   テスト用IDのまま testing:false にすると、その枠の収益はゼロになる
     //   （build_www.js がその組み合わせを検出してビルドを止める）
@@ -77,7 +77,7 @@
     // 診断用。Safariのウェブインスペクタのコンソールで WQ2_ADS と打つと、
     // どのビルドが入っていて、何回読み込んだかが分かる。
     // 「修正が入ったビルドを試しているのか」を毎回このコマンドで確かめられる
-    window.WQ2_ADS = { build: "2026-09-06x", max: MAX_LOADS, loaders: {} };
+    window.WQ2_ADS = { build: "2026-09-07a", max: MAX_LOADS, loaders: {} };
 
     function Loader(name, start) {
       var self = this, pending = false, timer = 0, fails = 0, loads = 0, dead = false;

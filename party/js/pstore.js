@@ -12,7 +12,16 @@
   var KEY = "wq2_store_v1";
   var MAX = 1;        // 無料の1日あたり挑戦回数（スタミナ）
   var AD_REFILL = 1;  // リワード広告1回で回復するスタミナ
-  var AD_EVERY = 2;   // 無料版で全画面広告を出す間隔（何戦ごとか）
+  // 闘技場（1周11戦）で全画面広告を出す戦い。その直前に1回だけ出る。
+  //   1〜5戦目：出さない。仲間が2・3・5戦目で加わり、5戦目の古竜で
+  //             ひと区切りになる導入の弧。ここを切ると面白さが伝わる前に止まる
+  //   6戦目の前：古竜を倒した直後＝章の変わり目。いちばん自然な切れ目
+  //   8・10戦目の前：四天王どうしの合間
+  //   11戦目の前：出さない。真ラスボスは隠しの登場で、カウンタも開始カードも
+  //             出さない作りにしてある。その直前に広告を挟むと台無しになる
+  var AD_ROUNDS = [6, 8, 10];
+  // 塔とフィールドには「何戦目」が無いので、通算の回数で間引く
+  var AD_EVERY = 2;
   var BANNER_H = 50;  // 下部バナーの高さ。実機では読み込み後の実寸に差し替える
   var PRICE = "¥500";
   // grace period after the cached expiry before premium is dropped, so a
@@ -178,15 +187,30 @@
     // once every AD_EVERY battles — the first battle starts straight away, then
     // one before every second battle after that. The counter is persisted so
     // quitting and relaunching does not reset the cadence.
-    adBeforeBattle: function () {
+    adBeforeBattle: function (round) {
       if (premiumActive()) return Promise.resolve();
       state.battles = (state.battles || 0) + 1;
       // never stack an interstitial straight after a rewarded revive
       if (skipNextAd) { skipNextAd = false; save(); return Promise.resolve(); }
       save();
-      // 第3・5・7・9・11戦の前＝第2・4・6・8・10戦を終えた直後に出す。
-      // 序盤2戦は広告なしで通す（最初の数分で離脱されると課金導線に乗らない）
-      if (state.battles <= AD_EVERY || (state.battles - 1) % AD_EVERY !== 0) return Promise.resolve();
+
+      var show;
+      if (typeof round === "number") {
+        // 闘技場（1周11戦）。位置は AD_ROUNDS で決め打ちにする。
+        // 通算回数で数えていたときは、2周目以降の序盤にも広告が入っていた
+        show = AD_ROUNDS.indexOf(round) >= 0;
+      } else {
+        // 挑戦の塔・フィールド。区切りが無いので通算の回数で間引く
+        show = state.battles > AD_EVERY && (state.battles - 1) % AD_EVERY === 0;
+      }
+      if (!show) return Promise.resolve();
+      return new Promise(function (r) { api.showInterstitial(function () { r(); }); });
+    },
+
+    // エンディングを見終えて、タイトルに戻る直前。1周の終わりで、この先を
+    // 待っている人がいない場所。戦闘の途中に挟むより害が小さい
+    adAfterEnding: function () {
+      if (premiumActive()) return Promise.resolve();
       return new Promise(function (r) { api.showInterstitial(function () { r(); }); });
     },
 
