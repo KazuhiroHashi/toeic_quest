@@ -3,7 +3,6 @@
 // 出題は重み付き抽選で選ぶので、このリストの並び順は結果に影響しない。
 window.VOCAB = window.VOCAB || {};
 window.VOCAB[800] = [
-{w:"concierge",m:"接客係",p:"n"},
 {w:"excursion",m:"小旅行",p:"n"},
 {w:"refurbish",m:"改修する",p:"v"},
 {w:"adhere to",m:"固守する",p:"phr"},
@@ -501,6 +500,7 @@ window.VOCAB[800] = [
 {w:"succinct",m:"簡明な",p:"adj"},
 {w:"overrule",m:"却下する",p:"v"},
 {w:"turnover",m:"離職率",p:"n"},
+{w:"gratuity",m:"心付け",p:"n"},
 {w:"across the board",m:"全面的に",p:"phr"},
 {w:"artifact",m:"工芸品",p:"n"},
 {w:"collectively",m:"集合的に",p:"adv"},

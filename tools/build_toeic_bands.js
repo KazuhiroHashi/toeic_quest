@@ -156,7 +156,11 @@ var MANUAL_BAND = {
   "across the board": 4, "amend": 4, "apprise": 4, "artifact": 4, "avert": 4,
   "brisk": 4, "collectively": 4, "correspondent": 4, "differentiate": 4,
   "exempt": 4, "flawless": 4, "instrumental": 4, "periodical": 4,
-  "whereby": 4, "withhold": 4
+  "whereby": 4, "withhold": 4,
+  // errata: 950点取得者でも知らないレアな語。短いので語長からの
+  // 自動見積もりでは軽く見られてしまう（一度500→600と直したが、
+  // それでもまだ易しく見えすぎていた）
+  "errata": 5
 };
 
 var list = Object.keys(entries).map(function (w) { return entries[w]; });

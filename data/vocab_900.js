@@ -3,7 +3,6 @@
 // 出題は重み付き抽選で選ぶので、このリストの並び順は結果に影響しない。
 window.VOCAB = window.VOCAB || {};
 window.VOCAB[900] = [
-{w:"gratuity",m:"心付け",p:"n"},
 {w:"creditor",m:"債権者",p:"n"},
 {w:"excavate",m:"掘削する",p:"v"},
 {w:"easement",m:"地役権",p:"n"},
@@ -272,6 +271,7 @@ window.VOCAB[900] = [
 {w:"lucid",m:"明快な",p:"adj"},
 {w:"niche",m:"隙間市場",p:"n"},
 {w:"proxy",m:"代理人",p:"n"},
+{w:"errata",m:"正誤表",p:"n"},
 {w:"concur",m:"同意する",p:"v"},
 {w:"divest",m:"売却する",p:"v"},
 {w:"garner",m:"集める",p:"v"},

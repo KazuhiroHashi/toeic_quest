@@ -254,7 +254,6 @@ window.VOCAB[600] = [
 {w:"huddle",m:"身を寄せ合う",p:"v"},
 {w:"waiver",m:"権利放棄書",p:"n"},
 {w:"notary",m:"公証人",p:"n"},
-{w:"errata",m:"正誤表",p:"n"},
 {w:"caveat",m:"注意事項",p:"n"},
 {w:"genial",m:"温和な",p:"adj"},
 {w:"ensure",m:"確実にする",p:"v"},
@@ -507,5 +506,6 @@ window.VOCAB[600] = [
 {w:"get back to",m:"あとで返事する",p:"phr"},
 {w:"weigh in on",m:"意見を述べる",p:"phr"},
 {w:"back out of",m:"手を引く",p:"phr"},
-{w:"fill in for",m:"代理を務める",p:"phr"}
+{w:"fill in for",m:"代理を務める",p:"phr"},
+{w:"bounce back",m:"回復する",p:"phr"}
 ];
