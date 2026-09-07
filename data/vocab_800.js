@@ -1,4 +1,4 @@
-// TOEIC 800 level vocabulary (504 words)
+// TOEIC 800 level vocabulary (506 words)
 // 2026-09-07 に作り直した（tools/build_toeic_bands.js）。
 // 出題は重み付き抽選で選ぶので、このリストの並び順は結果に影響しない。
 window.VOCAB = window.VOCAB || {};
@@ -293,6 +293,8 @@ window.VOCAB[800] = [
 {w:"enact",m:"制定する",p:"v"},
 {w:"surge",m:"急上昇する",p:"v"},
 {w:"quota",m:"割当量",p:"n"},
+{w:"amend",m:"改正する",p:"v"},
+{w:"brisk",m:"活発な",p:"adj"},
 {w:"unfold",m:"広げる",p:"v"},
 {w:"enroll",m:"入学登録する",p:"v"},
 {w:"ballot",m:"投票用紙",p:"n"},
@@ -307,6 +309,7 @@ window.VOCAB[800] = [
 {w:"embark",m:"乗り込む",p:"v"},
 {w:"frugal",m:"倹約な",p:"adj"},
 {w:"deduce",m:"演繹する",p:"v"},
+{w:"exempt",m:"免除する",p:"v"},
 {w:"premium",m:"保険料",p:"n"},
 {w:"notable",m:"注目すべき",p:"adj"},
 {w:"uncover",m:"明らかにする",p:"v"},
@@ -360,6 +363,7 @@ window.VOCAB[800] = [
 {w:"envision",m:"思い描く",p:"v"},
 {w:"converge",m:"収束する",p:"v"},
 {w:"affluent",m:"裕福な",p:"adj"},
+{w:"withhold",m:"差し控える",p:"v"},
 {w:"authentic",m:"本物の",p:"adj"},
 {w:"hazardous",m:"危険な",p:"adj"},
 {w:"diagnosis",m:"診断",p:"n"},
@@ -431,6 +435,7 @@ window.VOCAB[800] = [
 {w:"depot",m:"貯蔵所",p:"n"},
 {w:"annex",m:"別館、付属物",p:"n"},
 {w:"hedge",m:"リスク回避",p:"n"},
+{w:"avert",m:"そらす",p:"v"},
 {w:"repeal",m:"廃止する",p:"v"},
 {w:"ledger",m:"元帳",p:"n"},
 {w:"offset",m:"相殺する",p:"v"},
@@ -455,6 +460,7 @@ window.VOCAB[800] = [
 {w:"faulty",m:"誤りのある",p:"adj"},
 {w:"robust",m:"頑健な",p:"adj"},
 {w:"accrue",m:"蓄積する",p:"v"},
+{w:"apprise",m:"通知する",p:"v"},
 {w:"statute",m:"法令",p:"n"},
 {w:"nullify",m:"無効にする",p:"v"},
 {w:"solvent",m:"支払能力のある",p:"adj"},
@@ -486,6 +492,7 @@ window.VOCAB[800] = [
 {w:"opulent",m:"豪華な",p:"adj"},
 {w:"austere",m:"禁欲的な",p:"adj"},
 {w:"diverge",m:"分岐する",p:"v"},
+{w:"whereby",m:"それによって",p:"adv"},
 {w:"expedite",m:"迅速に処理する",p:"v"},
 {w:"leverage",m:"活用する",p:"v"},
 {w:"overhaul",m:"全面的に見直す",p:"v"},
@@ -494,17 +501,12 @@ window.VOCAB[800] = [
 {w:"succinct",m:"簡明な",p:"adj"},
 {w:"overrule",m:"却下する",p:"v"},
 {w:"turnover",m:"離職率",p:"n"},
-{w:"gratuity",m:"心付け",p:"n"},
-{w:"creditor",m:"債権者",p:"n"},
-{w:"excavate",m:"掘削する",p:"v"},
-{w:"easement",m:"地役権",p:"n"},
-{w:"surveyor",m:"測量士",p:"n"},
-{w:"sanction",m:"制裁",p:"n"},
-{w:"panelist",m:"登壇者",p:"n"},
-{w:"deadlock",m:"行き詰まり",p:"n"},
-{w:"addendum",m:"補遺",p:"n"},
-{w:"appendix",m:"付録",p:"n"},
-{w:"synopsis",m:"あらすじ",p:"n"},
-{w:"citation",m:"引用",p:"n"},
-{w:"outreach",m:"働きかけ",p:"n"}
+{w:"across the board",m:"全面的に",p:"phr"},
+{w:"artifact",m:"工芸品",p:"n"},
+{w:"collectively",m:"集合的に",p:"adv"},
+{w:"correspondent",m:"特派員",p:"n"},
+{w:"differentiate",m:"区別する",p:"v"},
+{w:"flawless",m:"完璧な",p:"adj"},
+{w:"instrumental",m:"重要な役割の",p:"adj"},
+{w:"periodical",m:"定期刊行物",p:"n"}
 ];

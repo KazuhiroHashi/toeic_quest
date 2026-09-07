@@ -1,4 +1,4 @@
-// TOEIC 700 level vocabulary (504 words)
+// TOEIC 700 level vocabulary (510 words)
 // 2026-09-07 に作り直した（tools/build_toeic_bands.js）。
 // 出題は重み付き抽選で選ぶので、このリストの並び順は結果に影響しない。
 window.VOCAB = window.VOCAB || {};
@@ -506,5 +506,11 @@ window.VOCAB[700] = [
 {w:"paperwork",m:"書類仕事",p:"n"},
 {w:"objection",m:"異議",p:"n"},
 {w:"regarding",m:"~に関して",p:"phr"},
-{w:"clientele",m:"顧客層",p:"n"}
+{w:"clientele",m:"顧客層",p:"n"},
+{w:"accountability",m:"説明責任",p:"n"},
+{w:"alternatively",m:"あるいは",p:"adv"},
+{w:"blueprint",m:"設計図",p:"n"},
+{w:"capitalize",m:"資本化する",p:"v"},
+{w:"comparatively",m:"比較的",p:"adv"},
+{w:"in the event of",m:"万一～の場合",p:"phr"}
 ];

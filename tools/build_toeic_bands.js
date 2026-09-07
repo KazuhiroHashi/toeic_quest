@@ -147,11 +147,24 @@ function estimateBand(e) {
   return Math.min(5, Math.max(0, lenEst * 0.5 + e.hint * 0.5));
 }
 
+// ---- 手直し（利用者からの個別指摘。自動見積もりより優先する）----
+// 950点取得者の実感で「900点台にしては易しい」と指摘された語。
+// 自動見積もりをまた直しても、ここは上書きされずに残る
+var MANUAL_BAND = {
+  "accountability": 3, "alternatively": 3, "blueprint": 3, "capitalize": 3,
+  "comparatively": 3, "in the event of": 3,
+  "across the board": 4, "amend": 4, "apprise": 4, "artifact": 4, "avert": 4,
+  "brisk": 4, "collectively": 4, "correspondent": 4, "differentiate": 4,
+  "exempt": 4, "flawless": 4, "instrumental": 4, "periodical": 4,
+  "whereby": 4, "withhold": 4
+};
+
 var list = Object.keys(entries).map(function (w) { return entries[w]; });
 list.forEach(function (e) {
   var jt = jhsTier[e.w], ht = hsTier[e.w];
   e.eduTier = jt !== undefined ? jt : (ht !== undefined ? 3 + ht : 6);
   if (e.band === undefined) e.band = Math.round(estimateBand(e));
+  if (MANUAL_BAND[e.w] !== undefined) e.band = MANUAL_BAND[e.w];
   e.band = Math.min(5, Math.max(0, e.band));
   e.score = e.band * 100000 + e.eduTier * 1000 + e.w.length * 10 + Math.min(e.pos || 0, 9);
 });
@@ -165,6 +178,19 @@ BANDS.forEach(function (b, i) {
   var take = per + (i < rem ? 1 : 0);
   out[b] = list.slice(idx, idx + take);
   idx += take;
+});
+
+// 全体を順位で切っているだけなので、MANUAL_BAND で下げた語が、
+// 全体の並びの都合で狙った帯に入りきらないことがある（他の語との
+// 相対順位で境界をまたいでしまう）。手直しした語だけは、最後に
+// 確実に指定の帯へ移す
+Object.keys(MANUAL_BAND).forEach(function (w) {
+  var targetBand = BANDS[MANUAL_BAND[w]];
+  BANDS.forEach(function (b) {
+    if (b === targetBand) return;
+    var i = out[b].findIndex(function (e) { return e.w === w; });
+    if (i >= 0) out[targetBand].push(out[b].splice(i, 1)[0]);
+  });
 });
 
 BANDS.forEach(function (b) {
