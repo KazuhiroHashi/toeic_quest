@@ -20,29 +20,45 @@ var G1_CORE = new Set(("a about after afternoon again all also always and animal
 // ---- words that belong to 中3/入試 (abstract, exam-oriented) ----
 var G3_HINT = new Set(("ability abroad absent accept according achieve action active activity actually add address adult advantage advice affect agriculture aim allow ancient announce apologize appear appreciate area argue arrange article attack attend attention attract audience author average avoid aware balance basic behavior belief benefit blind bother brain breath breathe brief broad burn cancer capital cause celebrate century certain challenge character charge charity chemical chief citizen claim climate comment common communicate communication community company compare compete complain complete condition confidence confuse connect consider contact contain continue contribute control convenient conversation cooperate correct courage create creature crime crop crowd cultural cure curious custom customer damage deal death debate decision decrease degree delay demand describe design destroy detail develop device difference direct direction disagree disappear disappoint disaster discover discovery discuss disease distance divide document double doubt duty eager earn earthquake economy educate education effect effort elect electric electricity emergency emotion encourage energy engineer environment equal equipment escape evidence exact examine excellent except exchange exercise exist expect experiment expert explain explore express expression extra fail fair familiar fashion fault fear feature female figure final fit fix flat flood focus forecast forever forgive form fortunately forward found freedom frequently fuel function gain general generation gesture global goods government grade gradually graduate greenhouse guard guide habit handle harm harmful harvest heat height hire honest honor huge humor identify ignore illness image imagine immediately impact import impossible impress improve include income increase indeed independent individual industry influence injure injury insect insist instance instrument intelligent intend interview invent invention involve issue judge justice knowledge labor lack law lead leader legal leisure lend level license likely limit literature local locate lonely maintain major male manage manner marine material mayor meaning means measure medical mental mention method military mineral modern moment movement narrow nation native natural negative neighbor nervous network normal novel nuclear obey observe obvious occur offer official operate opportunity opposite ordinary organization organize origin original otherwise overcome oxygen pain particular passage passenger patient pattern peaceful perform performance perhaps period permit personal persuade physical planet pleasant pleasure poem poison policy polite political pollution population position positive possible poverty power powerful practical praise predict prefer prepare presentation preserve pressure prevent previous primary print prison private process produce product production professional profit progress promote proper propose protection prove provide publish punish purchase pure purpose quality quantity quarter quit range rapid rare rate rather react realize recent recognize recommend record recover recycle reduce refer reflect refuse regard region regret regular reject relate relationship relative relax release religion rely remain remind remove repair replace reply represent require rescue research reserve resource respect respond response responsible retire reveal review reward risk role rough route rule sacred satisfy scale scene schedule scientific score search secret section secure seek select sense sensitive separate series serious service settle shortage sight signal silence similar situation skill social society solar solution solve source species specific spirit spread standard statement strategy strength stress strict structure struggle succeed success successful sudden suddenly suffer sufficient suggest suitable supply suppose surface surround survey survive suspect symbol system talent target task tax technique technology temperature tend term terrible therefore thought threat thus tiny tool topic total trade tradition translate transport treat treatment trend trust truth typical unique unit universe university unless unusual upset urban valuable value variety various vary vehicle victim view violence vision vote wage wealth weapon weigh weight welfare whether willing wisdom wise witness wonder worse worst worth wound youth").split(" "));
 
-var jhsAll = load("jhs1.txt").concat(load("jhs2.txt"));
+// ---- 中学から高校へ移す語（2026-09-08）----
+// もとは「抽象的っぽい語は中3」という手作業の仕分けだけで決めていたため、
+// 実際の中学教科書には出てこない語が中3に大量に混ざっていた（obvious など）。
+// 一語ずつ見直し、英検準2級〜2級相当のものをここに集めて高校lv1へ移す。
+// 中学の総語数は学習指導要領の 1600〜1800語 に収める。
+var TO_HS = new Set(("according achieve afterward agriculture ancient appreciate arrange aside atmosphere aware behavior belief bitter bow brief broad bury calm capital ceiling charity chief citizen claim clerk client clue coal cooperate cultural cure custom customer dawn debate decrease degree delay demand desire detail device document dozen draft duty eager economy elder elderly elect emotion equipment essay etc evidence exact examine expert explore fabric faith fasten fault fee female fortunately frame frequently fuel function gain gesture goods gradually grain grateful greenhouse grocery guard harvest hire honor horizon humor identify ignore illness immediately impact income indeed individual industry influence insist instance intelligent intend involve issue justice labor lack latest lean lecture legal leisure license likely liquid literature locate maintain major male manner manufacture marine mass mayor means mental mention method military mineral moreover muscle narrow native negative nod novel nuclear obey observe obvious occur official opportunity orbit ordinary organic origin otherwise overcome oxygen pale panel particular passage peak per permit persuade phrase physical pity plenty poet policy political poverty powder practical predict pregnant preserve previous priest primary principal prison private process professional professor profit progress promote proper propose prove publish punish purchase pure qualify quantity quarter range rapid rare rate raw react recall receipt recent refer reflect refuse regard region regular reject relative religion rely represent require reserve resource respond response responsible retire reveal reward rid role rough route rude ruin sacred satisfy scale schedule scientific section secure seek sensitive series servant settle shallow shelter shortage slave slight soil solar solid sore soul source spare species specific spirit statue steel strategy stream strength strict strike structure struggle sufficient suitable supply suppose surround survey suspect symbol talent tax technique temporary tend tender term threat thus tidy tight tribe trial unable unique unless unusual upset urban urgent vary vehicle victim violence vision wage wealth welfare whisper willing wisdom witness wound youth zone").split(" "));
+
+var basic = load("jhs1.txt"), extra = load("jhs2.txt");
+basic.forEach(function (e) { e.__src = 1; });   // 基本
+extra.forEach(function (e) { e.__src = 2; });   // 発展
+var jhsAll = basic.concat(extra);
 // dedupe (first wins)
 var seen = {}, jhs = [];
 jhsAll.forEach(function (e) { var k = e.w.toLowerCase(); if (!seen[k]) { seen[k] = 1; jhs.push(e); } });
 
-var g1 = [], g2 = [], g3 = [];
+// 学年の決め方
+//   中1 … 教科書の冒頭に必ず出てくる語（G1_CORE）
+//   中3 … 発展語彙（出典 jhs2）＋ G3_HINT。高校へ送った分は除く
+//   中2 … その残り（基本語彙 jhs1 のうち中1に入らなかったもの）
+// 以前は中3を G3_HINT という手作業の一覧「だけ」で決めていた。それだと中3が
+// 抽象語の精鋭ばかりになり、かえって難しくなる。出典の区分も併せて使い、
+// 中3にふつうの語も混ざるようにしてある。
+// なお発展側(jhs2)には add / area / bake のような易しい語も混ざっているので、
+// 出典だけを信じるのも正しくない。ここは人の目で見直す余地が残っている。
+var g1 = [], g2 = [], g3 = [], toHs = [];
 jhs.forEach(function (e) {
   var k = e.w.toLowerCase();
-  if (G1_CORE.has(k)) g1.push(e);
-  else if (G3_HINT.has(k)) g3.push(e);
-  else g2.push(e);
+  if (TO_HS.has(k)) { toHs.push(e); return; }        // 高校へ送る
+  if (G1_CORE.has(k)) { g1.push(e); return; }
+  if (e.__src === 2 || G3_HINT.has(k)) { g3.push(e); return; }
+  g2.push(e);
 });
+[g1, g2, g3, toHs].forEach(function (l) { l.forEach(function (e) { delete e.__src; }); });
 
-// balance to the real curriculum shape: 中1 ~600 / 中2 ~600 / 中3 ~645
-// (中1 is where textbooks front-load the most words, so top it up from g2's
-//  easiest remainder rather than leaving it thin)
-function moveEasiest(from, to, n) {
-  from.sort(function (a, b) { return a.w.length - b.w.length; }); // shorter ≈ more basic
-  for (var i = 0; i < n && from.length; i++) to.push(from.shift());
-}
-if (g1.length < 600) moveEasiest(g2, g1, 600 - g1.length);
-function rebalance(from, to, n) { for (var i = 0; i < n && from.length; i++) to.push(from.pop()); }
-if (g2.length > 600) rebalance(g2, g3, g2.length - 600);
+// 語数合わせはしない。
+// 以前は「文字数が短い＝やさしい」として中2から中1へ語を移していたが、
+// 英語の難しさは文字数では決まらない（etc / per / raw / rid / nod が中1に
+// 入っていた）。学年は G1_CORE と G3_HINT の仕分けだけで決め、
+// 何語になったかはそのまま出す。
 
 // ---- high school: 3 exam levels ----
 var hsStd = load("hs1.txt"), hsAdv = load("hs2.txt"), idiom = load("phrase.txt");
@@ -58,7 +74,7 @@ hsStd = ded(hsStd); hsAdv = ded(hsAdv); idiom = ded(idiom);
 // lv3 = 難関大（hs2 全部）
 var half = Math.ceil(hsStd.length / 2);
 var idiomHalf = Math.ceil(idiom.length / 2);
-var lv1 = hsStd.slice(0, half).concat(idiom.slice(0, idiomHalf));
+var lv1 = toHs.concat(hsStd.slice(0, half)).concat(idiom.slice(0, idiomHalf));
 var lv2 = hsStd.slice(half).concat(idiom.slice(idiomHalf));
 var lv3 = hsAdv;
 
