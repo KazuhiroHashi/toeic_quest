@@ -193,18 +193,14 @@
       intro: ["四天王ガグが 立ちはだかる！", "『話す力は 我が手にある。\n　その声も この地で 奪わせてもらう。』"] });
   }
   function bossBlank() {
-    // HPは 5600 → 5040（1割減）。四天王3人目にして戦いが長すぎるという指摘による。
-    // 前後（ガグ3910 / イレイズ6800）との差が開きすぎないよう、上げ幅ではなく
-    // ここだけを下げてある
-    return king({ base: "king_blank", name: "四天王ブランク", lv: 800, hp: 5040, atk: 94, def: 30, exp: 2800, quizLv: 700, bg: "zone6", bgm: "king3",
+    return king({ base: "king_blank", name: "四天王ブランク", lv: 800, hp: 4800, atk: 94, def: 30, exp: 2800, quizLv: 700, bg: "zone6", bgm: "king3",
       aoeCry: "しずかに しようね", aoeVerb: "ささやいた",
       magicCharge: true, chargeCry: "『いくよー。ぜんぶ まっしろ！』",
       skills: [{ name: "白紙化", power: 0.72, all: true }, { name: "記憶消去", power: 1.35, all: false }],
       intro: ["四天王ブランクが ぽわんと 現れた！", "『こんにちは。みんなの あたまの中、\n　まっしろに しちゃうね？　うふふ』"] });
   }
   function bossErase() {
-    // HPは 6800 → 6500。ブランク（5040）に続けて長い戦いが2つ並ぶのを避ける
-    return king({ base: "king_erase", name: "四天王イレイズ", lv: 850, hp: 6500, atk: 112, def: 34, exp: 3600, quizLv: 750, bg: "zone5", bgm: "king4",
+    return king({ base: "king_erase", name: "四天王イレイズ", lv: 850, hp: 6300, atk: 112, def: 34, exp: 3600, quizLv: 750, bg: "zone5", bgm: "king4",
       magicCharge: true, chargeCry: "『すべて、消える。』",
       skills: [{ name: "消し去る風", power: 0.68, all: true }, { name: "抹消の一撃", power: 1.0, all: false }],
       intro: ["最後の四天王 イレイズが 立ちはだかる！", "『書く力は すでに この手の中。\n　お前たちの名も、ここで 消す。』"] });
@@ -217,7 +213,7 @@
       bgm: "boss",
       enemies: [{
         base: "maou_mutos", name: "沈黙王ミュートス", lv: 900,
-        hp: 4600, atk: 112, def: 38, agi: 22, mag: 92, exp: 5000, boss: true,
+        hp: 5200, atk: 112, def: 38, agi: 22, mag: 92, exp: 5000, boss: true,
         magicCharge: true, chargeCry: "『静寂よ、すべてを 呑み込め—！』",
         skills: [{ name: "静寂の波動", power: 0.95, all: true }, { name: "言葉狩り", power: 1.3, all: false }], skillRate: 0.4,
         phases: [
@@ -235,7 +231,7 @@
       bgm: "lastboss", // 専用曲があれば使用、無ければbossにフォールバック
       enemies: [{
         base: "maou_true", name: "真・沈黙王ミュートス", lv: 900,
-        hp: 6800, atk: 148, def: 42, agi: 24, mag: 112, exp: 12000, boss: true,
+        hp: 7000, atk: 148, def: 42, agi: 24, mag: 112, exp: 12000, boss: true,
         magicCharge: true, chargeCry: "『これが 絶対の 静寂—！』",
         skills: [{ name: "絶対静寂", power: 1.1, all: true }, { name: "言葉狩り", power: 1.4, all: false }], skillRate: 0.44,
         phases: [
