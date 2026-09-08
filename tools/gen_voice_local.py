@@ -18,6 +18,7 @@
 #   （mp3変換に ffmpeg を使う。無ければ pip install imageio-ffmpeg でも可）
 #   （音が出ない・語が飛ぶときは brew install espeak-ng）
 import argparse, json, os, subprocess, sys, time, wave, struct, math
+import numpy as np
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL  = os.path.join(ROOT, "build", "kokoro-v1.0.onnx")
@@ -28,28 +29,77 @@ OUTDIR = os.path.join(ROOT, "assets", "voice")
 # TOEIC本番が米英まざるので、女性=米・男性=英にしてある。
 FEMALE = "af_kore"     # 語尾リフト 中央値 -4.7半音、最悪でも -0.7半音。ピーク -2.5dBFS
 MALE   = "am_fenrir"   # 語尾リフト 中央値 -5.5半音、最悪 -1.8半音。0/11。2026-08-22 確定
-PEAK   = 0.89          # 正規化のねらい（-1.0dBFS。歪ませず、BGMに埋もれない）
 BITRATE = "32k"
 SR = 24000
 
+# 音量の揃え方（2026-09-08 に方式を変更）
+#
+# 元はピーク（波形の最大値）だけを -1.0dBFS に揃えていた。しかしピークは
+# 破裂音（p・t・k）で一瞬だけ跳ね上がるので、そこが先に上限に当たってしまい、
+# 語の本体は小さいまま残る。実測すると、ピークは全語 -1〜-2dB でそろって
+# いるのに、体感音量は -12.2dB〜-21.5dB と9dBも開いていた。
+# 「同じ音量で録ったはずなのに語によって小さく聞こえる」のはこれが原因。
+#
+# そこで、耳が感じる大きさに近い RMS（実効値）で揃える方式にした。
+# RMSで揃えると山が上限を超える語が出るので、KNEE から上だけを tanh で
+# やわらかく抑える。超えた分を切り落とす（ハードクリップ）と歪んで
+# 「ジリッ」と鳴るが、tanh で丸めれば耳につかない。
+TARGET_RMS_DB = -14.0   # 体感音量のねらい。実測の平均 -16dB より少し上げる
+# 山の上限。mp3は展開すると元の波形より飛び出すので、0dBFSぎりぎりには
+# しない。RMSで揃えると山の近くに音が密集するぶん、この飛び出しが大きく
+# 出る（実測で最大 +1.0dB）。
+#
+# 以前はここに、再生側の持ち上げ（js/voice.js の BOOST）のぶんも空けて
+# おく必要があった。BOOST を 1.0 にしたのでその制約は無くなり、上限を
+# 下げて音を潰さずに済むようになっている。
+PEAK_CEIL = 0.85        # -1.4dBFS（展開後でも -0.4dB ほどに収まる）
+KNEE = 0.70             # ここから上をやわらかく抑える
+TARGET_RMS = 10 ** (TARGET_RMS_DB / 20.0)
+
+
+def _rms(x):
+    return math.sqrt(float(np.mean(x * x)) + 1e-18)
+
+
+def _soft_limit(x):
+    """KNEE から上だけを tanh で丸める。PEAK_CEIL を超えない"""
+    y = x.copy()
+    a = np.abs(y)
+    over = a > KNEE
+    if over.any():
+        room = PEAK_CEIL - KNEE
+        y[over] = np.sign(y[over]) * (KNEE + room * np.tanh((a[over] - KNEE) / room))
+    return y
+
 
 def trim_and_normalize(samples, sr, th_db=-45.0, pad=0.04):
-    """前後の無音を落として、ピークを揃える。1語ずつ作るので切り分けは不要"""
+    """前後の無音を落として、体感音量（RMS）を揃える。1語ずつ作るので切り分けは不要"""
+    x = np.asarray(samples, dtype=np.float64)
     hop = int(sr * 0.005)
-    on = []
-    for i in range(0, len(samples) - hop, hop):
-        s = samples[i:i + hop]
-        r = math.sqrt(sum(x * x for x in s) / len(s)) or 1e-9
-        if 20 * math.log10(r) > th_db:
-            on.append(i)
-    if not on:
+    n = len(x) // hop
+    if n < 1:
         return None
-    a = max(0, on[0] - int(sr * pad))
-    b = min(len(samples), on[-1] + hop + int(sr * pad))
-    seg = samples[a:b]
-    peak = max(abs(x) for x in seg) or 1e-9
-    g = PEAK / peak
-    return [x * g for x in seg]
+    rms = np.sqrt(np.mean(x[:n * hop].reshape(n, hop) ** 2, axis=1) + 1e-18)
+    on = np.nonzero(20 * np.log10(rms) > th_db)[0]
+    if len(on) == 0:
+        return None
+    a = max(0, on[0] * hop - int(sr * pad))
+    b = min(len(x), (on[-1] + 1) * hop + int(sr * pad))
+    seg = x[a:b]
+
+    r = _rms(seg)
+    if r <= 0:
+        return None
+    # 抑えた分だけRMSが下がるので、ねらいに乗るまで数回だけ寄せる
+    g = TARGET_RMS / r
+    y = _soft_limit(seg * g)
+    for _ in range(4):
+        r2 = _rms(y)
+        if r2 <= 0 or abs(20 * math.log10(r2 / TARGET_RMS)) < 0.05:
+            break
+        g *= TARGET_RMS / r2
+        y = _soft_limit(seg * g)
+    return y
 
 
 def find_ffmpeg():
@@ -73,6 +123,9 @@ def main():
     ap.add_argument("--out", default=OUTDIR)
     ap.add_argument("--wav", action="store_true", help="mp3にせずwavのまま置く")
     ap.add_argument("--force", action="store_true", help="既にあるファイルも作り直す")
+    # 全語の作り直しは1プロセスだと45分ほどかかる。onnxruntimeは1語の生成で
+    # 1コアしか使い切らないので、語を分割して並列に走らせると台数分だけ速くなる
+    ap.add_argument("--shard", help="担当ぶんだけ作る。例 1/4（4分割の1つ目）")
     a = ap.parse_args()
 
     for f in (MODEL, VOICES):
@@ -89,6 +142,9 @@ def main():
     words = a.words if a.words else sorted(assign.keys())
     if a.limit:
         words = words[:a.limit]
+    if a.shard:
+        i, n = (int(v) for v in a.shard.split("/"))
+        words = words[i - 1::n]
 
     from kokoro_onnx import Kokoro
     import soundfile as sf
