@@ -78,8 +78,16 @@
   function resume() {
     var c = context();
     if (!c) return false;
-    if (c.state !== "running" && c.resume) { try { c.resume(); } catch (e) {} }
-    return c.state === "running";
+    if (c.state === "running") return true;
+    if (c.resume) { try { c.resume(); } catch (e) {} }
+    // ここで c.state を見て false を返してはいけない。resume() は非同期で、
+    // 呼んだ直後はまだ "suspended" のまま（実測：直後 suspended、120ms後に
+    // running）。false を返すと呼び出し側が <audio> の控えに落ちるが、iOS の
+    // <audio> は要素ごとに解禁が要るので鳴らず、その1音が消える。
+    // 「ボタンのクリック音が鳴らない時がある」はこれ。広告のあとは iOS が
+    // context を止めるので、広告のたびに次の1音が落ちていた。
+    // 止まっている context に start() した音は、動き出した時にちゃんと鳴る。
+    return c.state !== "closed";
   }
   ["pointerdown", "touchstart", "keydown"].forEach(function (ev) {
     window.addEventListener(ev, resume, { passive: true });
