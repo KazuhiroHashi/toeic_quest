@@ -510,11 +510,23 @@
 .wq2-store-panel .wq2-store-h { padding-left: 34px; padding-right: 34px; }
 
 /* 出題範囲の選択（学年ボタンの補足行） */
+.wq2-store-note {
+  font-size: 11.5px; line-height: 1.65; color: #a8b6d4;
+  border-left: 2px solid rgba(140, 170, 230, .45);
+  padding-left: 9px; margin: -4px 0 12px;
+  text-align: left;
+}
 .wq2-mode-sub {
   display: block; margin-top: 3px; font-size: 10px; letter-spacing: 0;
   color: #9fb0d8; font-weight: normal;
 }
-.wq2-store-btn.primary .wq2-mode-sub { color: #ffe6b0; }
+.wq2-store-btn.primary .wq2-store-note {
+  font-size: 11.5px; line-height: 1.65; color: #a8b6d4;
+  border-left: 2px solid rgba(140, 170, 230, .45);
+  padding-left: 9px; margin: -4px 0 12px;
+  text-align: left;
+}
+.wq2-mode-sub { color: #ffe6b0; }
 
 /* =========================================================================
    戦闘画面テーマ「ガラスとオーロラ」（デザイン案09）
