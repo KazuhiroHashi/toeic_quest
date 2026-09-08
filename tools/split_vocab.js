@@ -67,15 +67,40 @@ readCsv("octanove-vocabulary-profile-c1c2-1.0.csv").forEach(function (c) {
 //         または 中1 / 中2 / 中3 / 高1 / 高2 / 高3）。1行目は見出しでもよい。
 var JP = {};
 var JP_FILE = path.join(SRC, "jp-curriculum.csv");
-var JP_STAGE = { "中1": "g1", "中2": "g2", "中3": "g3", "高1": "lv1", "高2": "lv2", "高3": "lv3",
-                 g1: "g1", g2: "g2", g3: "g3", lv1: "lv1", lv2: "lv2", lv3: "lv3" };
+// 学年の書き方はいろいろありうるので、広めに受ける
+var JP_STAGE = {};
+[["g1", ["g1", "中1", "中一", "中学1", "中学1年", "中学一年", "1", "1年", "一年"]],
+ ["g2", ["g2", "中2", "中二", "中学2", "中学2年", "中学二年", "2", "2年", "二年"]],
+ ["g3", ["g3", "中3", "中三", "中学3", "中学3年", "中学三年", "3", "3年", "三年"]],
+ ["lv1", ["lv1", "高1", "高一", "高校1", "高校1年", "高校基礎"]],
+ ["lv2", ["lv2", "高2", "高二", "高校2", "高校2年", "大学入試"]],
+ ["lv3", ["lv3", "高3", "高三", "高校3", "高校3年", "難関大"]]
+].forEach(function (p2) { p2[1].forEach(function (k) { JP_STAGE[k] = p2[0]; }); });
+
 if (fs.existsSync(JP_FILE)) {
-  readCsv("jp-curriculum.csv").forEach(function (c) {
-    var w = String(c[0] || "").trim().toLowerCase();
-    var st = JP_STAGE[String(c[1] || "").trim()];
-    if (w && st) JP[w] = st;
+  var rows = readCsv("jp-curriculum.csv");
+  // 単語の列と学年の列がどこにあるか、中身を見て決める。
+  // 見出し行や列の順番を気にせずに済むように
+  var best = { w: 0, g: 1, n: -1 };
+  for (var a = 0; a < 4; a++) {
+    for (var b = 0; b < 4; b++) {
+      if (a === b) continue;
+      var n = 0;
+      rows.forEach(function (c) {
+        var w = String(c[a] || "").trim();
+        var g = JP_STAGE[String(c[b] || "").trim()];
+        if (g && /^[A-Za-z][A-Za-z' .-]*$/.test(w)) n++;
+      });
+      if (n > best.n) best = { w: a, g: b, n: n };
+    }
+  }
+  rows.forEach(function (c) {
+    var w = String(c[best.w] || "").trim().toLowerCase();
+    var st = JP_STAGE[String(c[best.g] || "").trim()];
+    if (w && st && /^[a-z][a-z' .-]*$/.test(w)) JP[w] = st;
   });
-  console.log("日本の教科書準拠の一覧を使います: " + Object.keys(JP).length + "語");
+  console.log("日本の教科書準拠の一覧を使います: " + Object.keys(JP).length + "語" +
+    "（" + (best.w + 1) + "列目=単語 / " + (best.g + 1) + "列目=学年 と読みました）");
 } else {
   console.log("※ tools/vocabsrc/jp-curriculum.csv が無いので、CEFR-J を土台にします");
 }
