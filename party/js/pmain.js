@@ -203,7 +203,8 @@
       intro: ["四天王ブランクが ぽわんと 現れた！", "『こんにちは。みんなの あたまの中、\n　まっしろに しちゃうね？　うふふ』"] });
   }
   function bossErase() {
-    return king({ base: "king_erase", name: "四天王イレイズ", lv: 850, hp: 6800, atk: 112, def: 34, exp: 3600, quizLv: 750, bg: "zone5", bgm: "king4",
+    // HPは 6800 → 6500。ブランク（5040）に続けて長い戦いが2つ並ぶのを避ける
+    return king({ base: "king_erase", name: "四天王イレイズ", lv: 850, hp: 6500, atk: 112, def: 34, exp: 3600, quizLv: 750, bg: "zone5", bgm: "king4",
       magicCharge: true, chargeCry: "『すべて、消える。』",
       skills: [{ name: "消し去る風", power: 0.68, all: true }, { name: "抹消の一撃", power: 1.0, all: false }],
       intro: ["最後の四天王 イレイズが 立ちはだかる！", "『書く力は すでに この手の中。\n　お前たちの名も、ここで 消す。』"] });
