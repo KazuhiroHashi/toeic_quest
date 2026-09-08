@@ -58,8 +58,10 @@ the core game mechanic rather than a separate quiz screen, the learner keeps
 answering questions in order to keep playing.
 
 Content:
-- 4,883 English words, each with a pre-recorded audio pronunciation file
+- 5,761 English words, each with a pre-recorded audio pronunciation file
   bundled in the app (no speech synthesis, no network required)
+- 3,000 of these are TOEIC vocabulary, evenly divided into six score bands
+  of 500 words each
 - TOEIC score bands 400 / 500 / 600 / 700 / 800 / 900
 - Japanese school levels: junior high 1st, 2nd, 3rd year; high school basic;
   university entrance; advanced university entrance
@@ -85,7 +87,7 @@ First launch:
 2. Tap anywhere to start. The title screen appears.
 
 Main features, all reachable from the title screen:
-- ことばの闘技場 (Arena) - the main game mode. Five consecutive battles.
+- ことばの闘技場 (Arena) - the main game mode. Eleven consecutive battles.
 - 挑戦の塔 (Tower) - endless mode, hidden until the Arena is cleared once.
 - 学習の記録 (Study records) - accuracy, daily history, weak words.
 - 出題：TOEIC (Vocabulary range) - switch between TOEIC bands and school years.
@@ -158,7 +160,7 @@ All content in the app is original and created by us:
 - vocabulary lists and Japanese definitions
 - character and enemy artwork
 - background music and sound effects
-- pronunciation audio for all 4,883 words
+- pronunciation audio for all 5,761 words
 
 We hold the rights to all of the above. No third-party protected material is
 included in the app.
@@ -176,7 +178,7 @@ Purchase, submitted together with this app version:
   Price          : JPY 500 per month
 
 What the free version includes:
-  The complete game. All game modes, all vocabulary, all 4,883 audio files.
+  The complete game. All game modes, all vocabulary, all pronunciation audio.
   Nothing is locked behind payment except the items listed below.
   Free users may start one battle per day. This can be increased by watching
   a rewarded video ad (+1) and by completing the daily review (+1).
