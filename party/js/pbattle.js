@@ -151,33 +151,17 @@
       var d = sr.bottom - r.top + 6;                          // 抜けるのに要る高さ
       if (d > lift) lift = d;
     });
-    if (lift > 0) {
-      // 逃がしすぎて敵が隠れては本末転倒なので、上げ幅に上限を置く
-      lift = Math.min(lift, br.height * 0.34);
-      strip.style.bottom = Math.round((br.bottom - sr.bottom) + lift) + "px";
-    }
-    indentMsg();
+    if (lift <= 0) return;
+    // 逃がしすぎて敵が隠れては本末転倒なので、上げ幅に上限を置く
+    lift = Math.min(lift, br.height * 0.34);
+    strip.style.bottom = Math.round((br.bottom - sr.bottom) + lift) + "px";
   }
 
-  // メッセージ窓は画面いっぱいに広げてあるが、コマンド窓はその上に重なる。
-  // 短い文なら右側に出るので気づかないが、長い文（敵が4体の登場文など）は
-  // 折り返して行頭がコマンド窓の裏に回り、読めなくなっていた。
-  // 窓が出ている間だけ、その幅だけ文を右へ寄せる
-  function indentMsg() {
-    var msg = $("pbattle-msg");
-    if (!msg) return;
-    var mr = msg.getBoundingClientRect();
-    var pad = 0;
-    [$("pbattle-cmd"), $("pbattle-sub")].forEach(function (el) {
-      if (!el || el.style.display === "none") return;
-      var r = el.getBoundingClientRect();
-      if (!r.height || r.bottom <= mr.top || r.top >= mr.bottom) return;  // 縦が離れていれば関係ない
-      if (r.left > mr.left + mr.width / 2) return;                        // 右寄りの窓は行頭を邪魔しない
-      var d = r.right - mr.left + 8;
-      if (d > pad) pad = d;
-    });
-    msg.style.paddingLeft = pad ? Math.round(pad) + "px" : "";
-  }
+  // メッセージ窓の左がコマンド窓に隠れるのは、直さなくてよい。
+  // say() は全て await 付きで呼ばれていて、プレイヤーが必ずタップして
+  // 読み終えてからコマンド窓が出る。窓が出たあとに残っている文は
+  // 「もう読んだ文」なので、そこを右へ寄せると字が詰まるだけ損になる。
+  // 一度そう直して戻した（2026-09-08）。
 
   function menu(el, items, title) {
     return new Promise(function (resolve) {
