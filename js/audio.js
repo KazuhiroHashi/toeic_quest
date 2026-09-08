@@ -30,11 +30,51 @@
   var Ctx = window.AudioContext || window.webkitAudioContext;
   var ctx = null;
   var master = null;
+  var limiter = null;
   var buses = {};       // 名前 -> GainNode
   var levels = {};      // 名前 -> 音量（context ができる前に指定された分を覚える）
   var buffers = {};     // 効果音の名前 -> AudioBuffer
   var state = {};       // 効果音の名前 -> "loading" | "fail"
   var dead = !Ctx;      // Web Audio そのものが使えない
+
+  // 出口に頭打ち（リミッター）を1枚置く。
+  //
+  // Web Audio は重ねた音をそのまま足し算するので、違う音が同時に鳴ると
+  // 出力が 1.0 を超える。実測：
+  //                                     入れる前 → 入れたあと
+  //     効果音1つ                          0.79  →  0.79
+  //     正解の瞬間（読み上げ中に会心の音）    1.23  →  0.93
+  //     効果音＋読み上げ                    1.29  →  0.92
+  //     呪文＋斬＋会心＋被弾（全体攻撃）      2.15  →  0.96
+  //     勝利（ファンファーレ＋レベルアップ）   1.03  →  0.89
+  //     広告や着信のあと、溜まった音が一斉に  2.76  →  0.92
+  // 1.0 を超えたぶんは歪むだけでなく、iOS では出力全体を抑えにかかるので、
+  // 「急に音が異常に小さくなる」という形で表に出る（実機で報告あり）。
+  //
+  // 同じ名前の音を1つに絞る対処は入れてあるが、それは同じ音の連打にしか
+  // 効かない。違う音どうしの重なりはここで受ける。
+  // 0.70 までは素通しで、そこから上だけを 0.92 に向けて丸める。ふだんの1音は
+  // 0.79 なのでほぼ手つかず（-0.05dB）、重なった分だけが頭を押さえられる。
+  // 読み上げの mp3 を作るときと同じ形（tools/gen_voice_local.py の _soft_limit）。
+  //
+  // DynamicsCompressorNode ではなく波形で作っているのは、あちらが中で
+  // 持ち上げ（メイクアップゲイン）を掛けるため。実測で音が1つのときまで
+  // +0.9dB 大きくなり、しかもその量はしきい値の付け方で変わる。エンジンが
+  // 違えば量も変わるので、実機で当てにできない。こちらは計算どおりに効く。
+  //
+  // BGM は Web Audio を通っていない（素の <audio>）ので、ここには入らない。
+  // つまり効果音が重なってもBGMが押し下げられることはない。
+  var KNEE = 0.70, CEIL = 0.92, RANGE = 4;   // RANGE = 受け止められる重なりの上限
+  function limitCurve() {
+    var n = 8192, c = new Float32Array(n), room = CEIL - KNEE;
+    for (var i = 0; i < n; i++) {
+      var x = (i / (n - 1)) * 2 - 1;         // -1〜+1（実際の入力の RANGE 倍ぶん）
+      var a = Math.abs(x) * RANGE, y;
+      y = a <= KNEE ? a : KNEE + room * Math.tanh((a - KNEE) / room);
+      c[i] = x < 0 ? -y : y;
+    }
+    return c;
+  }
 
   function context() {
     if (ctx || dead) return ctx;
@@ -42,7 +82,18 @@
       ctx = new Ctx();
       master = ctx.createGain();
       master.gain.value = 1;
-      master.connect(ctx.destination);
+      var out = ctx.destination;
+      if (ctx.createWaveShaper) {
+        var pre = ctx.createGain();
+        pre.gain.value = 1 / RANGE;          // ±4 を波形の ±1 に畳む
+        limiter = ctx.createWaveShaper();
+        limiter.curve = limitCurve();
+        limiter.oversample = "4x";           // 折り返しノイズを出さない
+        pre.connect(limiter);
+        limiter.connect(out);
+        out = pre;
+      }
+      master.connect(out);
     } catch (e) { dead = true; ctx = null; }
     return ctx;
   }
@@ -79,7 +130,13 @@
     var c = context();
     if (!c) return false;
     if (c.state === "running") return true;
-    if (c.resume) { try { c.resume(); } catch (e) {} }
+    if (c.resume) {
+      try {
+        var q = c.resume();
+        // 動き出したら、抱えていた分はもう「溜まった音」ではない
+        if (q && q.then) q.then(function () { pend.length = 0; }, function () {});
+      } catch (e) {}
+    }
     // ここで c.state を見て false を返してはいけない。resume() は非同期で、
     // 呼んだ直後はまだ "suspended" のまま（実測：直後 suspended、120ms後に
     // running）。false を返すと呼び出し側が <audio> の控えに落ちるが、iOS の
@@ -126,6 +183,21 @@
   // 足し合わさった音が割れる。さらに音が飽和すると WebKit が出力全体を
   // 抑えにかかるので、BGMまで一緒に小さくなる（実機で出た3つの症状は
   // どれもこれが原因）。
+
+  // 止まっている context に start() した音は、動き出した瞬間に「全部いっしょに」
+  // 鳴り出す。広告・着信・アプリの切り替えのあとがこれで、実測で8個が同じ瞬間に
+  // 重なり、出力が 2.76（+8.8dB）まで跳ねた。
+  // 止まっている間に抱えておくのは最後の1つだけにする。1つは残すので、
+  // 「広告のあと、押したボタンの音が鳴らない」は起きないままにできる。
+  var pend = [];
+  function hold(s) {
+    var c = ctx;
+    if (!c) return;
+    if (c.state === "running") { pend.length = 0; return; }
+    for (var i = 0; i < pend.length; i++) { try { pend[i].stop(); } catch (e) {} }
+    pend = [s];
+  }
+
   var playing = {};      // 名前 -> 鳴っている最中の音
   function play(name, busName) {
     var c = context();
@@ -142,6 +214,7 @@
       s.onended = function () { if (playing[name] === s) playing[name] = null; };
       playing[name] = s;
       s.start(0);
+      hold(s);
       return true;
     } catch (e) { return false; }
   }
@@ -191,6 +264,7 @@
       s.buffer = buf;
       s.connect(bus(busName || "sfx"));
       s.start(0);
+      hold(s);
       return s;
     } catch (e) { return null; }
   }
