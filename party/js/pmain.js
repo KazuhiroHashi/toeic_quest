@@ -193,7 +193,10 @@
       intro: ["四天王ガグが 立ちはだかる！", "『話す力は 我が手にある。\n　その声も この地で 奪わせてもらう。』"] });
   }
   function bossBlank() {
-    return king({ base: "king_blank", name: "四天王ブランク", lv: 800, hp: 5600, atk: 94, def: 30, exp: 2800, quizLv: 700, bg: "zone6", bgm: "king3",
+    // HPは 5600 → 5040（1割減）。四天王3人目にして戦いが長すぎるという指摘による。
+    // 前後（ガグ3910 / イレイズ6800）との差が開きすぎないよう、上げ幅ではなく
+    // ここだけを下げてある
+    return king({ base: "king_blank", name: "四天王ブランク", lv: 800, hp: 5040, atk: 94, def: 30, exp: 2800, quizLv: 700, bg: "zone6", bgm: "king3",
       aoeCry: "しずかに しようね", aoeVerb: "ささやいた",
       magicCharge: true, chargeCry: "『いくよー。ぜんぶ まっしろ！』",
       skills: [{ name: "白紙化", power: 0.72, all: true }, { name: "記憶消去", power: 1.35, all: false }],
