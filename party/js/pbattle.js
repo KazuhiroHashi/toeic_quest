@@ -127,6 +127,36 @@
     });
   }
 
+  // コマンド窓とサブ窓は画面の下から上へ伸びる。ステータス列は画面の高さの
+  // 25%の位置に置いてあるが、これは割合なので画面が短い端末ほど下がってくる。
+  // 一方コマンド窓の高さは字の大きさで決まる固定値（実測210px）なので、
+  // 短い端末ではステータス列に食い込む。左端＝ユウのカードが真っ先に潰れ、
+  // 「自分の番なのに自分のHPだけ見えない」という状態になっていた。
+  //   実測でユウのカードが隠れる割合： SE 95% ／ 12 85% ／ Pro Max 54%
+  //   （Pro Max は名前とHPの上半分が残るので気づきにくい）
+  // 窓が開いている間だけ、重なっているぶんだけ列を持ち上げて逃がす。
+  // 閉じれば元の位置に戻すので、ふだんの見た目は変わらない。
+  function liftStrip() {
+    var strip = $("pparty-strip"), scr = $("pbattle-screen");
+    if (!strip || !scr) return;
+    strip.style.bottom = "";                       // まず素の位置に戻してから測る
+    var sr = strip.getBoundingClientRect(), br = scr.getBoundingClientRect();
+    if (!sr.height || !br.height) return;
+    var lift = 0;
+    [$("pbattle-cmd"), $("pbattle-sub")].forEach(function (el) {
+      if (!el || el.style.display === "none") return;
+      var r = el.getBoundingClientRect();
+      if (!r.height) return;
+      if (r.right <= sr.left || r.left >= sr.right) return;   // 横がずれていれば関係ない
+      var d = sr.bottom - r.top + 6;                          // 抜けるのに要る高さ
+      if (d > lift) lift = d;
+    });
+    if (lift <= 0) return;
+    // 逃がしすぎて敵が隠れては本末転倒なので、上げ幅に上限を置く
+    lift = Math.min(lift, br.height * 0.34);
+    strip.style.bottom = Math.round((br.bottom - sr.bottom) + lift) + "px";
+  }
+
   function menu(el, items, title) {
     return new Promise(function (resolve) {
       var sel = 0;
@@ -146,7 +176,7 @@
           };
         });
       }
-      function close(v) { INPUT.stack.pop(); el.style.display = "none"; resolve(v); }
+      function close(v) { INPUT.stack.pop(); el.style.display = "none"; liftStrip(); resolve(v); }
       INPUT.stack.push({
         onA: function () { if (!items[sel].disabled) { sfx("cursor"); close(sel); } },
         onB: function () { close(-1); },
@@ -161,6 +191,7 @@
       });
       el.style.display = "block";
       render();
+      liftStrip();
     });
   }
 

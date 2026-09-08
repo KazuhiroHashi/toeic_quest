@@ -416,6 +416,14 @@
   z-index: 8;
 }
 #pbattle-cmd { position: absolute; left: 6px; bottom: 6px; min-width: 128px; z-index: 9; }
+/* 背の低い端末（iPhone SE など）では、コマンド窓5行が画面の47%を占めてしまう。
+   その分ステータス列を高く逃がすことになり、敵とそのHPバーまで隠れる。
+   字と行間を少しだけ詰めて、逃がす高さを減らす。
+   縦844px以上（iPhone 12 以降）はそのまま */
+@media (max-height: 820px) {
+  #pbattle-cmd .menu-item { padding-top: 1px; padding-bottom: 1px; }
+  #pbattle-cmd .menu-title { margin-bottom: 2px; padding-bottom: 1px; }
+}
 #pbattle-sub { position: absolute; right: 6px; bottom: 6px; max-height: 62%; overflow-y: auto; z-index: 10; }
 /* keep tall spell lists (インフェルノ等 7〜8個) inside the screen: tighter rows + scroll */
 #pbattle-sub .menu-item { line-height: 1.35; padding-top: 2px; padding-bottom: 2px; }
