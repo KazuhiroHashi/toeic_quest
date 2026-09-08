@@ -75,7 +75,7 @@
 | ゲーム本体（11戦＋挑戦の塔＋復習＋実績） | ✅ |
 | バンドルID `com.bridgeai.wordquest` | ✅ |
 | AdMob 広告ユニットID（Android / iOS 両方） | ✅ コードに反映済み |
-| 収益化（スタミナ1／日・動画1本で+1（上限なし）／2戦ごとに全画面広告／下部バナー常時／月額¥500サブスク） | ✅ |
+| 収益化（スタミナ1／日・動画1本で+1（上限なし）／区切りのいい場所で全画面広告／月額¥500サブスク） | ✅ 下部バナーは2026-09-08に廃止（遊びの最中ずっと画面を占めるため） |
 | アイコン・ロゴ・キービジュアル | ✅ |
 | **OP ムービー 27.1秒** | ✅ 1080×1920 / H.264+AAC |
 | **ED ムービー 24.5秒** | ✅ 同上 |
@@ -101,7 +101,7 @@
 
 | | 項目 | いまの状態 |
 |---|---|---|
-| 1 | **`party/js/pnative.js` の `interstitialAndroid` / `bannerAndroid`** | ❗ **Google のテスト用IDのまま。** AdMob で Android 用のインタースティシャルとバナーを作って差し替える。忘れるとその枠の収益がゼロになる（`rewardedAndroid` だけは本番IDが入っている） |
+| 1 | **`party/js/pnative.js` の `interstitialAndroid`** | ❗ **Google のテスト用IDのまま。** AdMob で Android 用のインタースティシャルを作って差し替える。忘れるとその枠の収益がゼロになる（`rewardedAndroid` だけは本番IDが入っている） |
 | 2 | **課金の開示文（`party/js/pstore.js` の `storeWords()`）** | ✅ 自動。`Capacitor.getPlatform()` を見て Android では「Google アカウントに請求」「解約は Google Play の設定から」に切り替わる。**手で書き換えないこと。** iOS版の画面に「Google Play」と書いてあると審査で指摘されるため、この分岐を消してはいけない |
 | 3 | Google Play にサブスク `wordquest_premium_monthly` を登録 | ⬜ iOS と同じIDで作り、その下に**基本プラン（月額）**を作る |
 | 4 | `npm run ads:live` を実行してから AAB をビルド | ⬜ `node tools/set_ads.js --show` で本番モードとID一覧を確認できる |

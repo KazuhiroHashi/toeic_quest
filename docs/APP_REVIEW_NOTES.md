@@ -105,8 +105,9 @@ question appears -> tap one of the four answers.
 --------------------------------------------------
 The app uses only two external components:
 
-- Google AdMob (advertising) - banner, interstitial and rewarded video ads,
-  shown to free users only. Ads are disabled entirely for subscribers.
+- Google AdMob (advertising) - interstitial and rewarded video ads, shown to
+  free users only. There is no banner ad; nothing is displayed during play.
+  Ads are disabled entirely for subscribers.
 - Apple In-App Purchase / StoreKit - for the auto-renewable subscription.
 
 There is nothing else. Specifically, the app does NOT use:

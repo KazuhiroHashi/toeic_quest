@@ -18,9 +18,6 @@
     //   （build_www.js がその組み合わせを検出してビルドを止める）
     interstitialAndroid: "ca-app-pub-3940256099942544/1033173712", // Google テスト用
     interstitialIos:     "ca-app-pub-3056251560404390/9479211793", // 本番（2026-08-22）
-    // 画面下に出しっぱなしにするバナー。インタースティシャルとは別の広告枠
-    bannerAndroid: "ca-app-pub-3940256099942544/6300978111", // Google テスト用
-    bannerIos:     "ca-app-pub-3056251560404390/4608817044", // 本番（2026-08-22）
     // ★ アプリ内課金：プレミアム（月額¥500・自動更新サブスク）
     //   両ストアで同じIDで登録すること。Google Play では基本プラン（月額）を
     //   この商品の下に作る
@@ -45,7 +42,6 @@
   var platform = cap.getPlatform ? cap.getPlatform() : "android";
   var rewardedId = platform === "ios" ? CONFIG.rewardedIos : CONFIG.rewardedAndroid;
   var interstitialId = platform === "ios" ? CONFIG.interstitialIos : CONFIG.interstitialAndroid;
-  var bannerId = platform === "ios" ? CONFIG.bannerIos : CONFIG.bannerAndroid;
 
   // ---------- AdMob rewarded (@capacitor-community/admob) ----------
   var AdMob = cap.Plugins && cap.Plugins.AdMob;
@@ -77,7 +73,7 @@
     // 診断用。Safariのウェブインスペクタのコンソールで WQ2_ADS と打つと、
     // どのビルドが入っていて、何回読み込んだかが分かる。
     // 「修正が入ったビルドを試しているのか」を毎回このコマンドで確かめられる
-    window.WQ2_ADS = { build: "2026-09-07i", max: MAX_LOADS, loaders: {} };
+    window.WQ2_ADS = { build: "2026-09-08a", max: MAX_LOADS, loaders: {} };
 
     function Loader(name, start) {
       var self = this, pending = false, timer = 0, fails = 0, loads = 0, dead = false;
@@ -149,32 +145,10 @@
     AdMob.addListener("interstitialAdFailedToShow", interDone);
     AdMob.addListener("interstitialAdFailedToLoad", function () { inter.retry(); });
 
-    // ---------- banner (free tier: pinned to the bottom) ----------
-    // 操作ボタンに重ならないよう、読み込まれた実寸だけ #app の下に余白を作る。
-    // 高さは端末と広告で変わるので、決め打ちせず SizeChanged を待つ。
-    AdMob.addListener("bannerAdSizeChanged", function (size) {
-      var h = (size && size.height) || 0;
-      document.documentElement.style.setProperty("--wq-banner", h > 0 ? h + "px" : "0px");
-    });
-
-    window.WQ2_STORE.showBanner = function () {
-      if (window.WQ2_STORE.isPremium && window.WQ2_STORE.isPremium()) return;
-      AdMob.showBanner({
-        adId: bannerId,
-        adSize: "ADAPTIVE_BANNER",
-        position: "BOTTOM_CENTER",
-        margin: 0,
-        isTesting: CONFIG.testing,
-        npa: CONFIG.nonPersonalized
-      }).catch(function () {
-        document.documentElement.style.setProperty("--wq-banner", "0px");
-      });
-    };
-    window.WQ2_STORE.hideBanner = function () {
-      document.documentElement.style.setProperty("--wq-banner", "0px");
-      if (AdMob.removeBanner) AdMob.removeBanner().catch(function () {});
-      else if (AdMob.hideBanner) AdMob.hideBanner().catch(function () {});
-    };
+    // 画面下のバナーは置かない（2026-09-08 に廃止）。遊んでいる最中ずっと
+    // 画面を占め続ける広告は、面白さを削るほうが大きいと判断した。
+    // 広告は全画面（区切りのいい場所だけ）とリワード（本人が選んだときだけ）の2つ。
+    // AdMob 側のバナー枠は消さずに残してある。戻したくなったらここを書き直す。
 
     window.WQ2_STORE.showInterstitial = function (cb) {
       // nothing loaded (offline, no fill, first battle after launch): do not

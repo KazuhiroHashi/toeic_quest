@@ -902,8 +902,6 @@
   refreshTowerBtn();
   refreshModeBtn();
   refreshVoiceBtn();
-  // 無料版だけ。プレミアムなら showBanner が自分で何もしない
-  if (window.WQ2_STORE && WQ2_STORE.showBanner) WQ2_STORE.showBanner();
 
   // Opening: browsers block audio until a user gesture, and the first tap is
   // usually a menu button that jumps straight into battle — so the title theme

@@ -26,7 +26,6 @@
   var TOWER_EVERY = 5;
   // フィールドには区切りが無いので、通算の回数で間引く
   var AD_EVERY = 2;
-  var BANNER_H = 50;  // 下部バナーの高さ。実機では読み込み後の実寸に差し替える
   var PRICE = "¥500";
   // grace period after the cached expiry before premium is dropped, so a
   // renewal that has not been observed yet (offline, slow receipt refresh)
@@ -147,7 +146,6 @@
       state.premium = !!active;
       state.premiumUntil = active ? (untilMs || 0) : 0;
       save();
-      if (premiumActive()) api.hideBanner(); else api.showBanner();
     },
 
     // daily review reward: +1 stamina, once per day (premium doesn't need it)
@@ -168,24 +166,10 @@
     // fires straight away and the battle starts as normal.
     showInterstitial: function (cb) { adScreen("広告").then(function () { cb(); }); },
 
-    // 画面下に出しっぱなしにするバナー。操作ボタンに重ならないよう、
-    // 高さぶんだけ #app の下に余白を作って、そこへ表示する。
-    // NATIVE OVERRIDES THIS（実機はネイティブのビューが重なる）。
-    // Web版は同じ高さの枠を描いて、レイアウトへの影響を確かめられるようにする。
-    showBanner: function () {
-      if (premiumActive()) return;
-      document.documentElement.style.setProperty("--wq-banner", BANNER_H + "px");
-      if (document.getElementById("wq2-banner")) return;
-      var el = document.createElement("div");
-      el.id = "wq2-banner";
-      el.textContent = "広告（デモ）";
-      document.body.appendChild(el);
-    },
-    hideBanner: function () {
-      document.documentElement.style.setProperty("--wq-banner", "0px");
-      var el = document.getElementById("wq2-banner");
-      if (el) el.remove();
-    },
+    // 画面下に出しっぱなしのバナーは置かない（2026-09-08 に廃止）。
+    // 遊びの最中ずっと画面を占め続ける広告は、面白さを削るほうが大きい。
+    // 全画面広告（区切りのいい場所だけ）と、続きを選んだ人だけが見る
+    // リワード広告の2つでやる。
 
     // Called by the battle engine before every encounter. Shows a full-screen ad
     // once every AD_EVERY battles — the first battle starts straight away, then

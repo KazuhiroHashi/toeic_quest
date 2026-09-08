@@ -4,7 +4,6 @@
 //
 //   node tools/set_ads.js --show
 //   node tools/set_ads.js --interstitial-ios ca-app-pub-xxx/yyy
-//   node tools/set_ads.js --banner-ios ca-app-pub-xxx/yyy
 //   node tools/set_ads.js --live      # testing: false（本番広告）
 //   node tools/set_ads.js --test      # testing: true（テスト広告）
 "use strict";
@@ -18,8 +17,7 @@ var LINE = /^(\s*testing:\s*)(?:true|false)(\s*,)/m;
 
 var KEYS = {
   "--rewarded-android": "rewardedAndroid", "--rewarded-ios": "rewardedIos",
-  "--interstitial-android": "interstitialAndroid", "--interstitial-ios": "interstitialIos",
-  "--banner-android": "bannerAndroid", "--banner-ios": "bannerIos"
+  "--interstitial-android": "interstitialAndroid", "--interstitial-ios": "interstitialIos"
 };
 
 var src = fs.readFileSync(F, "utf8");
