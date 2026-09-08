@@ -51,6 +51,7 @@
   var unlocked = false;
   var onFail = null;  // playAny's "try the next one" continuation
   var ramp = null;
+  var rampAt = 0;     // フェードが最後に動いた時刻（止まったままかを見分ける）
 
   function srcOf(name) {
     return (window.BGM_ART && window.BGM_ART[name]) ||
@@ -91,12 +92,36 @@
     if (!el) return;
     clearInterval(ramp);
     var a = el, v = VOLUME;
+    rampAt = Date.now();
     ramp = setInterval(function () {
+      rampAt = Date.now();
       v -= VOLUME * 0.15;
       if (v <= 0) { clearInterval(ramp); ramp = null; a.pause(); setVol(VOLUME); }
       else setVol(v);
     }, STEP);
   }
+
+  // フェードは 0.85→0.70→0.55→0.40→0.25→0.10 と 40ms ごとに下げていく。
+  // この途中でアプリが裏に回る（広告・着信・ホームに戻る）とタイマーが止まり、
+  // 下がりかけの音量のまま残る。元に戻すのは次の曲を鳴らすときだけなので、
+  // そこまでBGMだけが小さいまま——最悪 1割の音量——で鳴りつづける。
+  // 実測：フェード中に時計を止めると 0.7 のまま残り、画面をタップしても戻らない。
+  //
+  // 表に戻ったときと、次に画面を触ったときに、止まったままのフェードを畳む。
+  // 進行中のフェード（1秒以内に動いている）には手を出さない。
+  function healVolume() {
+    if (!el || !ramp) return;
+    if (Date.now() - rampAt < 1000) return;    // ふつうに進んでいる
+    clearInterval(ramp); ramp = null;
+    setVol(VOLUME);
+    // 止めるつもりだったのなら止める。BGMを切っている（enabled=false）ときは
+    // cur を残したまま止めるので、そちらも見る
+    if (!cur || !enabled) { try { el.pause(); } catch (e) {} }
+  }
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) healVolume();
+  });
+  window.addEventListener("pageshow", healVolume);
 
   function startTrack(name) {
     if (!enabled || missing[name]) return;
@@ -170,6 +195,7 @@
     window.addEventListener(ev, function () {
       var first = !unlocked;
       unlocked = true;
+      healVolume();                       // 途中で止まったフェードを畳む
       if (cur && enabled && (first || !el || el.paused)) startTrack(cur);
     }, { passive: true });
   });
