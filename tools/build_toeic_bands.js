@@ -103,7 +103,8 @@ var FILE_HINT = {
   "new_words_22_fill_gap.js": 3.0,
   "new_words_23_final.js": 3.5,
   "new_words_24_last_push.js": 1.5,
-  "new_words_25_buffer.js": 3.0
+  "new_words_25_buffer.js": 3.0,
+  "new_words_26_replacements.js": 1.5
 };
 
 var candFiles = fs.readdirSync(NEW_DIR).filter(function (f) { return /\.js$/.test(f); }).sort();
@@ -119,8 +120,56 @@ candFiles.forEach(function (f) {
   });
 });
 
+// ---- 英語をそのままカタカナにしただけの訳を直す（2026-09-08）----
+// documentary の訳が「ドキュメンタリー」になっていた。これでは音が同じなので、
+// 語を知らなくても選択肢から音で当てられてしまい、問題として成立しない。
+// 訳がカタカナだけの語を全部見直したところ76語あり、次の3つに分かれた。
+//   1) そのままでよい … 訳が英語と別の語（brochure→パンフレット、
+//      questionnaire→アンケート、windshield→フロントガラス など）。
+//      和製英語との違いを覚えられるので、むしろ学習になる
+//   2) 訳を直せば残せる … 自然な日本語がある語。それがこの表
+//   3) 外すしかない … カタカナ以外に日本語が無い語。下の DROP
+var MEANING_FIX = {
+  "coach": "指導する", "network": "人脈", "drill": "反復練習", "bench": "長椅子",
+  "booth": "仕切り席", "buffet": "立食形式の食事", "resort": "行楽地",
+  "server": "給仕係", "backup": "予備", "parade": "行進", "suitcase": "旅行かばん",
+  "teammate": "同じ組の仲間", "counter": "受付台", "curriculum": "教育課程",
+  "slogan": "標語", "campus": "大学の構内", "scanner": "読み取り機",
+  "headset": "通話用の受話器", "allergy": "過敏症", "catering": "仕出し",
+  "hardware": "機器本体", "password": "合言葉", "firewall": "防火壁",
+  "platform": "演壇", "ensemble": "合奏", "pamphlet": "小冊子",
+  "flextime": "自由勤務時間制", "projector": "映写機", "briefcase": "書類かばん",
+  "rehearsal": "下稽古", "tournament": "勝ち抜き戦", "version": "版",
+  "terminal": "終着駅", "orchestra": "管弦楽団", "soundtrack": "映画音楽",
+  "letterhead": "社名入りの便箋", "documentary": "記録映画", "announcement": "告知",
+  "elevator": "昇降機", "lobby": "玄関広間", "hose": "水を通す管",
+  "malware": "不正プログラム", "intercom": "室内通話装置", "container": "容器",
+  "check-in": "宿泊手続き", "check-out": "精算して退室すること",
+  "help desk": "相談窓口", "rental car": "貸自動車", "shuttle bus": "送迎バス",
+  "hybrid work": "在宅と出社の併用", "supply chain": "供給網",
+  "room service": "客室への配膳", "cloud storage": "オンラインの保管庫",
+  "receipt printer": "領収書の印刷機", "gantt chart": "工程表",
+  "late checkout": "延長して退室すること", "co-working space": "共用の仕事場",
+  "percentage point": "百分率の差", "printer cartridge": "印刷機のインク容器",
+  "orientation session": "新人向けの説明会"
+};
+// カタカナ以外に日本語が無く、訳を直しようがない語。同じ帯の語で置き換える
+var DROP = new Set(["logo", "login", "balcony", "wrench", "barcode", "software", "database"]);
+
+// カタカナに置き換えただけの訳を直す／直しようがない語を外す
+var fixedN = 0, droppedN = 0;
+Object.keys(entries).forEach(function (w) {
+  if (DROP.has(w)) { delete entries[w]; droppedN++; return; }
+  if (MEANING_FIX[w] && entries[w].m !== MEANING_FIX[w]) { entries[w].m = MEANING_FIX[w]; fixedN++; }
+});
+// 表に書いたのに1つも当たらない行は、語が消えたか綴りを間違えている。黙って
+// 効かないままだと気づけないので知らせる
+Object.keys(MEANING_FIX).forEach(function (w) {
+  if (!entries[w]) console.error("! 訳の手直し表に、存在しない語があります: " + w);
+});
 console.log("古い語（元の帯が分かる）: " + oldCount);
 console.log("新しい語の候補: " + candFiles.length + "ファイル → 採用 " + added + "  重複のため除外 " + skippedDup);
+console.log("カタカナ訳の手直し: 訳を直した " + fixedN + "語 ／ 外した " + droppedN + "語");
 console.log("合計: " + Object.keys(entries).length);
 console.log("");
 

@@ -696,11 +696,28 @@
 .dr-kpi span { font-size: 9.5px; color: #93a1c4; letter-spacing: .04em; }
 
 .dr-state { display: flex; gap: 6px; font-variant-numeric: tabular-nums; }
-.dr-state > div {
+/* タイルは押せる（単語一覧へ進む）ので button で出す。div のときと
+   見た目が変わらないよう、ボタンの既定の見た目を消しておく */
+.dr-state > div, .dr-state > button {
   flex: 1; text-align: center; font-size: 9.5px; color: #c6d2ea;
   padding: 7px 2px; border-radius: 9px; border: 1px solid transparent;
+  font-family: inherit; -webkit-appearance: none; appearance: none;
 }
+.dr-state > button { cursor: pointer; transition: filter .12s, transform .08s; }
+.dr-state > button::after {
+  content: "›"; display: inline-block; margin-left: 3px;
+  font-size: 12px; opacity: .55; vertical-align: -1px;
+}
+.dr-state > button:active { transform: translateY(1px); filter: brightness(1.25); }
+.dr-state > button:focus-visible { outline: 2px solid #ffd54a; outline-offset: 2px; }
+/* 語が1つも無い区分。押しても空の一覧が出るだけなので押せなくする */
+.dr-state > .dr-off { opacity: .45; }
 .dr-state b { display: block; font-size: 17px; font-weight: 500; line-height: 1.3; }
+/* 「押すと単語が見られます」の小さな案内。見出しの右に添える */
+.dr-hint { float: right; font-size: 9.5px; font-weight: normal; color: #8fa0c4; letter-spacing: 0; }
+/* 一覧側の見出しに出す、その区分のタイル1枚だけの並び */
+.dr-state-one > div { flex: 0 0 auto; padding: 6px 16px; }
+.dr-note-top { margin-top: 6px; }
 .dr-state .s-solid { background: rgba(90,220,255,.14); border-color: rgba(90,220,255,.4); }
 .dr-state .s-solid b { color: #7fe4ff; }
 .dr-state .s-vague { background: rgba(255,200,90,.13); border-color: rgba(255,200,90,.38); }
@@ -728,8 +745,11 @@
 /* ---------- 推移グラフ ---------- */
 .dr-chart { width: 100%; height: auto; display: block; margin: 4px 0 2px; overflow: visible; }
 .dr-grid { stroke: rgba(190, 214, 255, .16); stroke-width: 1; }
-/* 棒は文脈。折れ線より必ず後ろに退かせる */
-.dr-barmark { fill: rgba(190, 214, 255, .22); }
+/* 解答数の棒は「積み上げた努力」に見せる。以前は折れ線の背景に退かせた
+   薄い青灰色だったが、それでは何日やったかが読み取れず、伸びても嬉しくない。
+   仲間のHPバーと同じ緑にして、多い日ほど気持ちよく立ち上がって見えるようにする。
+   正答率の折れ線（水色）とは色が離れているので、2本の意味を取り違えない */
+.dr-barmark { fill: rgba(74, 214, 122, .5); }
 .dr-line { fill: none; stroke: #5adcff; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .dr-dot { fill: #5adcff; stroke: #0b1226; stroke-width: 1.2; }
 .dr-ax { font-size: 8px; fill: #8494b8; }
@@ -739,7 +759,7 @@
   display: flex; gap: 12px; justify-content: center; font-size: 9.5px; color: #93a1c4; margin-top: 2px;
 }
 .dr-legend i { display: inline-block; margin-right: 4px; vertical-align: 1px; }
-.dr-legend .lg-bar { width: 8px; height: 8px; border-radius: 2px; background: rgba(190,214,255,.34); }
+.dr-legend .lg-bar { width: 8px; height: 8px; border-radius: 2px; background: rgba(74,214,122,.62); }
 .dr-legend .lg-line { width: 12px; height: 2px; background: #5adcff; vertical-align: 4px; }
 .dr-c small { display: block; font-size: 8.5px; color: #8494b8; }
 /* 誤答率リストは件数が多いので、1行に収めて詰める */

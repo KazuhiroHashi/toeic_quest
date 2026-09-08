@@ -59,7 +59,7 @@
     var out = {
       n: 0, correct: 0, wrong: 0, timeSum: 0, timeN: 0,
       state: { fresh: 0, weak: 0, vague: 0, solid: 0 },
-      group: [], weak: [], vague: [], due: 0, total: 0,
+      group: [], weak: [], vague: [], solid: [], due: 0, total: 0,
       daily: daily(), missCount: []
     };
     var groups = (window.WQ2_MODE && WQ2_MODE.groups) ? WQ2_MODE.groups() : [];
@@ -81,6 +81,7 @@
       out.state[s]++;
       if (s === "weak") out.weak.push({ w: k, r: r });
       if (s === "vague") out.vague.push({ w: k, r: r });
+      if (s === "solid") out.solid.push({ w: k, r: r });
       if (r.due != null && r.due <= today) out.due++;
 
       var gi = inGroup[k];
@@ -103,6 +104,10 @@
     out.vague.sort(function (a, b) {
       return (b.r.t / b.r.c || 0) - (a.r.t / a.r.c || 0);
     });
+    // 即答は速い順。「これだけ速く言えるようになった」が上に来る
+    out.solid.sort(function (a, b) {
+      return (a.r.t / a.r.c || 9) - (b.r.t / b.r.c || 9);
+    });
     return out;
   }
 
@@ -123,6 +128,16 @@
       var box = document.createElement("div");
       box.className = "wq2-store-panel dq-window dr-panel";
       box.innerHTML = html;
+      // 中身の中にも「押すと閉じて、その値を返す」口を作る。定着度のタイルから
+      // 単語一覧へ移るのに使う。ボタン列は下端にしか置けないので、これが無いと
+      // 表の途中から次の画面へ進ませられない
+      box.querySelectorAll("[data-pick]").forEach(function (el) {
+        el.onclick = function (e) {
+          e.preventDefault();
+          wrap.remove();
+          resolve(el.getAttribute("data-pick"));
+        };
+      });
       // 左上の×。中身が長いと下の「閉じる」までスクロールしないと届かない
       var x = document.createElement("button");
       x.className = "wq2-x";
@@ -289,11 +304,19 @@
     h += '<div class="dr-note">直近14日で <b>' + activeDays.length + '日</b>学習、合計 <b>' + sumA + '問</b>。</div>';
 
     // ---- 定着度 ----
-    h += '<div class="dr-h">定着度</div>';
+    // 数だけ見せても「で、どれ？」で終わる。押すとその単語が並ぶようにした。
+    // 語が1つも無い区分は押せない（押して空の画面が出るのは裏切りになる）
+    h += '<div class="dr-h">定着度<span class="dr-hint">押すと単語が見られます</span></div>';
+    function tile(kind, cls, n, label) {
+      var on = n > 0;
+      return '<' + (on ? 'button data-pick="state:' + kind + '"' : 'div') +
+        ' class="' + cls + (on ? '' : ' dr-off') + '">' +
+        '<b>' + n + '</b>' + label + '</' + (on ? 'button' : 'div') + '>';
+    }
     h += '<div class="dr-state">' +
-      '<div class="s-solid"><b>' + a.state.solid + '</b>即答</div>' +
-      '<div class="s-vague"><b>' + a.state.vague + '</b>曖昧</div>' +
-      '<div class="s-weak"><b>' + a.state.weak + '</b>苦手</div>' +
+      tile("solid", "s-solid", a.state.solid, "即答") +
+      tile("vague", "s-vague", a.state.vague, "曖昧") +
+      tile("weak", "s-weak", a.state.weak, "苦手") +
       '</div>';
 
     // ---- 誤答回数（重要）----
@@ -335,12 +358,71 @@
       btns.unshift({ key: "buy", primary: true, label: "★ プレミアムで すべて見る" });
     }
     return panel(h, btns).then(function (k) {
+      // 定着度のタイルから来た。単語一覧を見せて、閉じたらここへ戻す
+      if (k && k.indexOf("state:") === 0) {
+        return showStateList(k.slice(6)).then(showAnalysis);
+      }
       if (k !== "buy" || !window.WQ2_STORE) return;
       return new Promise(function (r) { WQ2_STORE.buyPremium(r); }).then(function (ok) {
         // 買えたら開き直す。何を買ったのかがその場で見えないと、
         // 「払ったのに変わらない」という体験になる
         if (ok) return showAnalysis();
       });
+    });
+  }
+
+  // ---------- 定着度の単語一覧 ----------
+  // 即答／曖昧／苦手のどれかを押したときに出る。数の内訳を実際の語で見せる。
+  // 並びは analyse() が区分ごとに意味のある順にしてある
+  //   即答 … 速い順（いちばん身についた語が上）
+  //   曖昧 … 遅い順（あと一歩の語が上）
+  //   苦手 … 間違えた回数の多い順
+  var STATE_INFO = {
+    solid: { name: "即答", cls: "s-solid",
+             note: "2秒以内に答えられた語です。ここに入れば、試験でも迷いません。" },
+    vague: { name: "曖昧", cls: "s-vague",
+             note: "正解はするものの、思い出すのに時間がかかっている語です。あと一歩。" },
+    weak:  { name: "苦手", cls: "s-weak",
+             note: "間違えた回数が正解に追いついている語です。ここを潰すのがいちばん効きます。" }
+  };
+  function showStateList(kind) {
+    var info = STATE_INFO[kind];
+    if (!info) return Promise.resolve();
+    var a = analyse(), list = a[kind] || [];
+    var pro = isPremium();
+    var h = '<div class="wq2-store-h">' + info.name + 'の単語</div>' +
+            '<div class="dr-state dr-state-one"><div class="' + info.cls + '">' +
+            '<b>' + list.length + '</b>語</div></div>' +
+            '<div class="dr-note dr-note-top">' + info.note + '</div>';
+
+    // 一覧そのものはプレミアムの売り物なので、無料版では伏せる。
+    // 誤答回数のリストと同じ扱いにしてある（片方だけ開けると筋が通らない）
+    var rows = list.slice(0, pro ? 60 : 5);
+    var body = '<div class="dr-list">';
+    rows.forEach(function (x) {
+      var avg = x.r.t && x.r.c ? (x.r.t / x.r.c) : null;
+      var right = kind === "weak"
+        ? (x.r.wr || 0) + "回<small>/" + ((x.r.c || 0) + (x.r.wr || 0)) + "</small>"
+        : (avg ? avg.toFixed(1) + "<small>秒</small>" : "—");
+      body += '<div><span class="dr-w">' + (pro ? x.w : masked(Math.min(Math.max(x.w.length, 4), 9))) + '</span>' +
+              '<span class="dr-m">' + (pro ? (x.r.m || "") : masked(4)) + '</span>' +
+              '<span class="dr-c">' + right + '</span></div>';
+    });
+    body += '</div>';
+    h += pro ? body : locked(body);
+    if (pro && list.length > rows.length) {
+      h += '<div class="dr-note">上位' + rows.length + '語を表示しています（全' + list.length + '語）。</div>';
+    }
+
+    var btns = [{ key: "back", primary: true, label: "← 学習の記録へ戻る" }];
+    if (!pro) {
+      h += '<div class="dr-sell">単語の一覧は プレミアム（月額' +
+           (window.WQ2_STORE && WQ2_STORE.price ? WQ2_STORE.price() : "") + '）で 見られます。</div>';
+      btns.unshift({ key: "buy", label: "★ プレミアムで すべて見る" });
+    }
+    return panel(h, btns).then(function (k) {
+      if (k !== "buy" || !window.WQ2_STORE) return;
+      return new Promise(function (r) { WQ2_STORE.buyPremium(r); });
     });
   }
 
