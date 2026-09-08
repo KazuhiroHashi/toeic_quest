@@ -439,6 +439,10 @@
         if (window.BGM) BGM.playAny(["ending", "title"]); // victory epilogue music
         // ending scene: clear the fallen boss and switch to a bright, hopeful backdrop
         $("penemy-row").innerHTML = "";
+        // ステータス列も畳む。戦いは終わっていて見る必要がないうえ、
+        // エピローグの「冒険の記録」は6行あり、伸びたメッセージ窓が
+        // この列に重なってしまう
+        $("pparty-strip").innerHTML = "";
         var kv = (window.UI_ART && window.UI_ART.titlebg) || "../assets/ui/title_bg.png";
         var bgEl = $("pbattle-bg");
         bgEl.style.backgroundImage = "url('" + kv + "')";

@@ -425,9 +425,18 @@
 .pmember.guarding .pname::after { content: "🛡"; margin-left: 3px; }
 
 /* windows — message and command share the bottom band; message always visible */
+/* 高さは中身に合わせて上へ伸ばす。以前は height:22% の固定で、4行を超える文
+   （エンディングの「冒険の記録」など6行）が枠の下からそのまま飛び出していた。
+   実測のはみ出し： SE 60px ／ iPhone 12 27px ／ Pro Max 10px。
+   ふだんの戦闘文は1〜3行で 22% に収まるので、min-height により見た目は従来どおり。
+   伸びすぎて敵が隠れないよう 46% で頭打ちにし、そこから先は枠の中で送る */
 #pbattle-msg {
   position: absolute;
-  left: 6px; right: 6px; bottom: 6px; height: 22%; min-height: 96px;
+  left: 6px; right: 6px; bottom: 6px;
+  height: auto;
+  min-height: 96px;              /* max() を解さない古いWebView用の下限 */
+  min-height: max(96px, 22%);    /* 解せなければ上の行が残るだけ */
+  max-height: 46%; overflow-y: auto;
   z-index: 8;
 }
 #pbattle-cmd { position: absolute; left: 6px; bottom: 6px; min-width: 128px; z-index: 9; }
