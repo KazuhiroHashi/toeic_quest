@@ -175,14 +175,32 @@
        .then(function (buf) { buffers[name] = buf; state[name] = null; }, fail);
   }
 
-  // 同じ音は1つまで。鳴っている最中に同じ音がまた来たら、前のを止めて鳴らし直す。
+  // 同じ音が続けて呼ばれたときの決まり。
   //
-  // <audio> で鳴らしていたころは要素が1つしか無く、重ねようとしても
-  // 鳴り直すだけだった。Web Audio はいくらでも重なるので、同じ音が続けて
-  // 呼ばれると何重にもなり、「プェプェプェプェーーーン」と尾を引いて、
-  // 足し合わさった音が割れる。さらに音が飽和すると WebKit が出力全体を
-  // 抑えにかかるので、BGMまで一緒に小さくなる（実機で出た3つの症状は
-  // どれもこれが原因）。
+  // 【なぜ2回作り直しているか】
+  // Web Audio はいくらでも音が重なる。同じ音が続けて呼ばれると何重にもなり、
+  // 「プェプェプェプェーーーン」と尾を引いて音が割れる（2026-09-07に報告）。
+  // そこで「同じ名前の音は1つまで。来たら前のを止めて鳴らし直す」にした。
+  //
+  // これが別の不具合を生んだ。stop() はその瞬間に切り落とすので、余韻の
+  // 途中で止まると「カキーン」が「カッ」になる（2026-09-08に報告）。
+  // 実測すると、これは例外ではなく日常的に起きていた：
+  //     crit  の聞こえる長さ 0.35秒 ／ slash 0.35秒 ／ hit 0.50秒 ／ cursor 0.70秒
+  //     実際の呼び直し間隔   cursor 0.315秒（8回中4回）／ hit 0.328秒（7回中2回）
+  // 鳴り終わる前に切られていた。
+  //
+  // 【いまの決まり】重ねないことと、切らないことを両立させる。
+  //   ・70ms 以内に同じ音がまた来たら、それは「ひとつの出来事の重複」。
+  //     たとえばボスの全体攻撃は味方4人ぶんの hit を同じ瞬間に呼ぶ。
+  //     2つ目以降は鳴らさず、いま鳴っている音をそのまま鳴らしきる。
+  //     → 重ならないし、切れもしない。
+  //   ・それより後なら、別の出来事なので重ねて鳴らす。
+  //     同時に3つまで。あふれたら、いちばん古いものを 80ms かけて
+  //     消してから譲る。stop() でぶつ切りにはしない。
+  //   ・重なったぶんの音量は、出口のリミッターが受け止める。
+  var MIN_GAP = 0.07;    // 秒。これより短い間隔＝同じ出来事の重複
+  var MAX_SAME = 3;      // 同じ音を同時に鳴らす上限
+  var FADE = 0.08;       // 打ち切るときの消し方（秒）
 
   // 止まっている context に start() した音は、動き出した瞬間に「全部いっしょに」
   // 鳴り出す。広告・着信・アプリの切り替えのあとがこれで、実測で8個が同じ瞬間に
@@ -198,7 +216,7 @@
     pend = [s];
   }
 
-  var playing = {};      // 名前 -> 鳴っている最中の音
+  var live = {};         // 名前 -> 鳴っている最中のものの一覧（古い順）
   function play(name, busName) {
     var c = context();
     if (!c) return false;
@@ -206,13 +224,37 @@
     if (!buf) return false;
     if (!resume()) return false;       // まだ操作前
     try {
-      var prev = playing[name];
-      if (prev) { try { prev.stop(); } catch (e) {} playing[name] = null; }
+      var now = c.currentTime;
+      var arr = live[name] || (live[name] = []);
+
+      // ひとつの出来事から続けて呼ばれたぶんは、鳴らさずに見送る。
+      // いま鳴っている音がそのまま最後まで鳴る
+      if (arr.length && now - arr[arr.length - 1].t < MIN_GAP) return true;
+
+      // あふれたぶんは、消してから譲る（ぶつ切りにしない）
+      while (arr.length >= MAX_SAME) {
+        var old = arr.shift();
+        try {
+          var g0 = old.g.gain;
+          g0.cancelScheduledValues(now);
+          g0.setValueAtTime(g0.value, now);
+          g0.linearRampToValueAtTime(0.0001, now + FADE);
+          old.s.stop(now + FADE);
+        } catch (e) { try { old.s.stop(); } catch (e2) {} }
+      }
+
+      var g = c.createGain();
+      g.connect(bus(busName || "sfx"));
       var s = c.createBufferSource();
       s.buffer = buf;
-      s.connect(bus(busName || "sfx"));
-      s.onended = function () { if (playing[name] === s) playing[name] = null; };
-      playing[name] = s;
+      s.connect(g);
+      var rec = { s: s, g: g, t: now };
+      s.onended = function () {
+        var k = arr.indexOf(rec);
+        if (k >= 0) arr.splice(k, 1);
+        try { g.disconnect(); } catch (e) {}
+      };
+      arr.push(rec);
       s.start(0);
       hold(s);
       return true;
