@@ -329,7 +329,14 @@
 }
 .penemy .ptag {
   font-size: 11px; color: #fff; text-shadow: 1px 1px 0 #000;
-  margin-bottom: 2px; white-space: nowrap;
+  margin-bottom: 2px;
+  /* 折り返さない指定だった。敵が3〜4体並ぶと1体あたりの枠が90px前後に
+     なるのに対し、名前は「イレイザーマッシュ」で121pxある。枠から
+     あふれて となりの名前とくっつき、両端の敵は画面の外へ出て
+     字が欠けていた（実測：最大31pxあふれ、画面外へ25px）。
+     枠の中で折り返して収める */
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 .penemy .phpbar {
   height: 6px; margin: 4px 10% 0; border-radius: 3px;
