@@ -314,6 +314,14 @@
   display: flex; align-items: flex-end; justify-content: center; gap: 2%;
   z-index: 2;
 }
+/* iPhone SE のように背の低い端末では、コマンド窓を避けてステータス列を
+   持ち上げたぶんが敵の下端にかぶる。敵のHPバーは絵の真下にあるので、
+   そこが真っ先に隠れる（実測：SEだけ100%隠れ、他の機種は0%）。
+   この画面は上に何も置いていないので、敵を縮めるのではなく上へ寄せて
+   逃がす。高さは 44%→43% とほぼ据え置きなので、敵の大きさは変わらない */
+@media (max-height: 700px) {
+  #penemy-row { top: 1%; height: 43%; }
+}
 .penemy { position: relative; text-align: center; transition: opacity .5s, transform .5s; }
 .penemy img {
   width: 100%; height: auto; display: block;
