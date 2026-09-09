@@ -75,13 +75,53 @@
     // 診断用。Safariのウェブインスペクタのコンソールで WQ2_ADS と打つと、
     // どのビルドが入っていて、何回読み込んだかが分かる。
     // 「修正が入ったビルドを試しているのか」を毎回このコマンドで確かめられる
+    // 記録は端末に残す。アプリを閉じたら消える作りでは「あとで見る」ができない。
+    // これは遊ぶ人のための表示ではなく、作った側が異常に気づくための仕掛けなので、
+    // 遊び終わったあとに落ち着いて読めることのほうが大事。
+    var LOGKEY = "wq2_ads_v1";
+    var saved = {};
+    try { saved = JSON.parse(localStorage.getItem(LOGKEY) || "{}") || {}; } catch (e) {}
+
     window.WQ2_ADS = {
-      build: "2026-09-09d", max: MAX_LOADS, loaders: {},
+      build: "2026-09-09e", max: MAX_LOADS, loaders: {},
       platform: platform, testing: CONFIG.testing,
       rewardedId: rewardedId, interstitialId: interstitialId,
-      init: "まだ",              // 初期化の結果
-      log: []                    // 直近の出来事（新しいものが先頭）
+      init: "まだ",                          // 初期化の結果
+      log: [],                               // この起動での出来事（新しいものが先頭）
+      prev: saved.log || [],                 // 前回までの記録
+      lastShown: saved.lastShown || 0,       // 最後に広告が「実際に出た」時刻
+      shownTotal: saved.shownTotal || 0      // 出た通算回数
     };
+
+    function persist() {
+      try {
+        localStorage.setItem(LOGKEY, JSON.stringify({
+          log: window.WQ2_ADS.log.concat(window.WQ2_ADS.prev).slice(0, 60),
+          lastShown: window.WQ2_ADS.lastShown,
+          shownTotal: window.WQ2_ADS.shownTotal
+        }));
+      } catch (e) {}
+    }
+
+    // 異常かどうかを1つにまとめ、見た目に出す側へ渡す。
+    // 長押しして探しにいく作りでは、そもそも「見にいこう」と思わない。
+    // タイトルのビルド番号の色が変わるようにしてある（party.css）。
+    function health() {
+      var d = window.WQ2_ADS;
+      if (/失敗/.test(d.init)) return "bad";
+      var bad = false;
+      ["rewarded", "interstitial"].forEach(function (k) {
+        var L = d.loaders[k]; if (!L) return;
+        var st = L.stats();
+        // 1回の失敗は通信のゆらぎでも起きる。2回続く、または3回試して
+        // 一度も用意できていないなら、そこには理由がある。
+        if (st.dead || st.fails >= 2 || (st.loads >= 3 && !st.ready)) bad = true;
+      });
+      return bad ? "bad" : "ok";
+    }
+    function paint() {
+      try { document.documentElement.setAttribute("data-ads", health()); } catch (e) {}
+    }
     // 実機で理由を読むための記録。Macに繋がなくても、タイトル画面の
     // ビルド番号を長押しすれば下の report() が読める。
     // AdMob の失敗コード: 0=内部エラー 1=リクエスト不正 2=通信 3=在庫なし
@@ -89,9 +129,17 @@
       var t = new Date();
       var hh = ("0" + t.getHours()).slice(-2) + ":" + ("0" + t.getMinutes()).slice(-2) +
                ":" + ("0" + t.getSeconds()).slice(-2);
-      window.WQ2_ADS.log.unshift(hh + " " + line);
+      var stamp = (t.getMonth() + 1) + "/" + t.getDate() + " " + hh;
+      window.WQ2_ADS.log.unshift(stamp + " " + line);
       if (window.WQ2_ADS.log.length > 30) window.WQ2_ADS.log.pop();
       if (window.console) console.log("[WQ2ads] " + line);
+      persist(); paint();
+    }
+    // 広告が「画面に出た」ときだけ呼ぶ。読み込めた、ではない。
+    function shown(kind) {
+      window.WQ2_ADS.lastShown = Date.now();
+      window.WQ2_ADS.shownTotal++;
+      note(kind + "広告が出た（通算 " + window.WQ2_ADS.shownTotal + " 回目）");
     }
     function why(e) {
       if (!e) return "理由不明";
@@ -103,6 +151,15 @@
     window.WQ2_ADS.report = function () {
       var d = window.WQ2_ADS, out = [];
       out.push("ビルド " + d.build + " / " + d.platform + (d.testing ? " / テスト広告" : " / 本番広告"));
+      // いちばん知りたいのはこれ。「広告が出たことがあるのか」
+      if (d.shownTotal) {
+        var ls = new Date(d.lastShown);
+        out.push("★ 広告が出た回数 " + d.shownTotal + "回 / 最後は " +
+          (ls.getMonth() + 1) + "/" + ls.getDate() + " " +
+          ("0" + ls.getHours()).slice(-2) + ":" + ("0" + ls.getMinutes()).slice(-2));
+      } else {
+        out.push("★ この端末で 広告はまだ一度も出ていません");
+      }
       out.push("初期化: " + d.init);
       ["rewarded", "interstitial"].forEach(function (k) {
         var L = d.loaders[k];
@@ -115,7 +172,8 @@
       });
       out.push("");
       // 画面に収まる分だけ。全部は console か WQ2_ADS.log で読める
-      out.push(d.log.length ? d.log.slice(0, 12).join("\n") : "（記録なし）");
+      var lines = d.log.concat(d.prev);
+      out.push(lines.length ? lines.slice(0, 12).join("\n") : "（記録なし）");
       return out.join("\n");
     };
 
@@ -192,6 +250,7 @@
       rewarded.consumed();
     });
     AdMob.addListener("onRewardedVideoAdFailedToLoad", function (e) { rewarded.retry(e); });
+    AdMob.addListener("onRewardedVideoAdShowed", function () { shown("リワード"); });
 
     window.WQ2_STORE.showRewarded = function (cb) {
       if (!rewarded.ready) { cb(false); rewarded.load(); return; } // no fill / offline: fail gracefully
@@ -208,6 +267,7 @@
     AdMob.addListener("interstitialAdDismissed", interDone);
     AdMob.addListener("interstitialAdFailedToShow", interDone);
     AdMob.addListener("interstitialAdFailedToLoad", function (e) { inter.retry(e); });
+    AdMob.addListener("interstitialAdShowed", function () { shown("全画面"); });
 
     // 画面下のバナーは置かない（2026-09-08 に廃止）。遊んでいる最中ずっと
     // 画面を占め続ける広告は、面白さを削るほうが大きいと判断した。
