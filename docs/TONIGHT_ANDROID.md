@@ -63,23 +63,26 @@ git pull
 npm install
 
 # 3. 最新のゲーム本体を www/ に配置
-npm run sync:www
+npm run build:www
 
-# 4. アプリアイコンを全サイズ自動生成
+# 4. アプリアイコンとスプラッシュを全サイズ自動生成
 npm run assets
 
 # 5. Androidプロジェクトを作成
 npx cap add android
 
-# 6. 同期
-npx cap sync
+# 6. 同期＋AdMobのアプリIDを注入（この1行でまとめてやる）
+npm run cap:sync
 
 # 7. Android Studio を開く
 npx cap open android
 ```
 
-> ⚠️ もし `npm run sync:www` で「source build not found」と出たら、
-> `dist/wq2_party.html` が無い状態です。私に言ってください（最新ビルドを push します）。
+> ⚠️ **6行目を `npx cap sync` だけで済ませないこと。**
+> `npm run cap:sync` は `npx cap sync` のあとに `npm run admob` を走らせて、
+> AdMob のアプリIDを AndroidManifest.xml に書き込みます。これが無いと
+> AdMob の初期化が失敗し、**広告が一切出ません**（しかも黙って失敗します）。
+> 入ったかどうかは、タイトル画面のビルド番号を1.5秒長押しすると読めます。
 
 ## 2-C. Android Studio での作業
 1. 開いたら右下に「Gradle sync」が走る → **終わるまで待つ**（初回5〜10分）

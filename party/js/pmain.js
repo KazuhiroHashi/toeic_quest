@@ -926,4 +926,32 @@
     }
     t.addEventListener("pointerdown", go);
   })();
+
+  // タイトル右下のビルド番号を1.5秒長押しすると、広告の状態が読める。
+  //
+  // 広告が出ないときに、その理由を確かめる手段がなかった。Safariの
+  // ウェブインスペクタは Mac と有線接続が要るうえ、遊んでいる本人が
+  // 開けるものではない。実機だけで読めるところに出しておく。
+  // 遊ぶ人が偶然たどり着く操作ではないので、審査にも影響しない。
+  (function armAdDiag() {
+    var el = $("ptitle-build");
+    if (!el) return;
+    var timer = 0;
+    function cancel() { if (timer) { clearTimeout(timer); timer = 0; } }
+    el.addEventListener("pointerdown", function () {
+      cancel();
+      timer = setTimeout(function () {
+        timer = 0;
+        var txt = (window.WQ2_ADS && window.WQ2_ADS.report)
+          ? WQ2_ADS.report()
+          : "このビルドではネイティブの広告が動いていません。\n" +
+            "（ブラウザで開いている／Capacitor のプラグインが入っていない）";
+        if (window.WQ2_STORE && WQ2_STORE.note) WQ2_STORE.note(txt);
+        else alert(txt);
+      }, 1500);
+    });
+    ["pointerup", "pointercancel", "pointerleave"].forEach(function (e) {
+      el.addEventListener(e, cancel);
+    });
+  })();
 })();

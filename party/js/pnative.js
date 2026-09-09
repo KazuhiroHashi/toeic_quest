@@ -75,32 +75,78 @@
     // 診断用。Safariのウェブインスペクタのコンソールで WQ2_ADS と打つと、
     // どのビルドが入っていて、何回読み込んだかが分かる。
     // 「修正が入ったビルドを試しているのか」を毎回このコマンドで確かめられる
-    window.WQ2_ADS = { build: "2026-09-09b", max: MAX_LOADS, loaders: {} };
+    window.WQ2_ADS = {
+      build: "2026-09-09d", max: MAX_LOADS, loaders: {},
+      platform: platform, testing: CONFIG.testing,
+      rewardedId: rewardedId, interstitialId: interstitialId,
+      init: "まだ",              // 初期化の結果
+      log: []                    // 直近の出来事（新しいものが先頭）
+    };
+    // 実機で理由を読むための記録。Macに繋がなくても、タイトル画面の
+    // ビルド番号を長押しすれば下の report() が読める。
+    // AdMob の失敗コード: 0=内部エラー 1=リクエスト不正 2=通信 3=在庫なし
+    function note(line) {
+      var t = new Date();
+      var hh = ("0" + t.getHours()).slice(-2) + ":" + ("0" + t.getMinutes()).slice(-2) +
+               ":" + ("0" + t.getSeconds()).slice(-2);
+      window.WQ2_ADS.log.unshift(hh + " " + line);
+      if (window.WQ2_ADS.log.length > 30) window.WQ2_ADS.log.pop();
+      if (window.console) console.log("[WQ2ads] " + line);
+    }
+    function why(e) {
+      if (!e) return "理由不明";
+      var c = (e.code != null) ? e.code : (e.error && e.error.code);
+      var m = e.message || (e.error && e.error.message) || String(e);
+      var name = { 0: "内部エラー", 1: "リクエスト不正", 2: "通信できない", 3: "広告の在庫なし" }[c];
+      return (c != null ? "コード" + c + (name ? "(" + name + ")" : "") + " " : "") + m;
+    }
+    window.WQ2_ADS.report = function () {
+      var d = window.WQ2_ADS, out = [];
+      out.push("ビルド " + d.build + " / " + d.platform + (d.testing ? " / テスト広告" : " / 本番広告"));
+      out.push("初期化: " + d.init);
+      ["rewarded", "interstitial"].forEach(function (k) {
+        var L = d.loaders[k];
+        if (!L) { out.push(k + ": 未作成"); return; }
+        var s = L.stats();
+        out.push(k + ": " + (s.ready ? "用意できている" : "まだ") +
+          " / 読込" + s.loads + "回 失敗" + s.fails + "回" +
+          (s.dead ? " / 打ち切り済み" : "") + (s.scheduled ? " / 再試行待ち" : ""));
+        if (s.lastError) out.push("   直近の失敗: " + s.lastError);
+      });
+      out.push("");
+      // 画面に収まる分だけ。全部は console か WQ2_ADS.log で読める
+      out.push(d.log.length ? d.log.slice(0, 12).join("\n") : "（記録なし）");
+      return out.join("\n");
+    };
 
     function Loader(name, start) {
       var self = this, pending = false, timer = 0, fails = 0, loads = 0, dead = false;
       self.ready = false;
       window.WQ2_ADS.loaders[name] = self;
+      var lastError = "";
       self.stats = function () {
-        return { loads: loads, fails: fails, ready: self.ready, dead: dead, pending: pending, scheduled: !!timer };
+        return { loads: loads, fails: fails, ready: self.ready, dead: dead,
+                 pending: pending, scheduled: !!timer, lastError: lastError };
       };
       self.load = function () {
         if (dead || pending || timer || self.ready) return;   // すでに動いている／予約済み／打ち切り
         if (loads >= MAX_LOADS) {                              // 安全弁
           dead = true;
-          if (window.console) console.warn("[WQ2] " + name + " の読み込みを打ち切りました（" + loads + "回）");
+          note(name + " の読み込みを打ち切り（" + loads + "回試して駄目だった）");
           return;
         }
         loads++; pending = true;
         start().then(
-          function () { pending = false; self.ready = true; fails = 0; },
-          function () { pending = false; self.retry(); }
+          function () { pending = false; self.ready = true; fails = 0; note(name + " 用意できた"); },
+          function (e) { pending = false; self.retry(e); }
         );
       };
-      self.retry = function () {
+      self.retry = function (e) {
         self.ready = false;
+        if (e) lastError = why(e);
         if (dead || pending || timer) return;                 // 二重通知はここで捨てる
         fails++;
+        note(name + " 読み込み失敗 " + fails + "回目: " + (lastError || "理由不明"));
         var wait = Math.min(30000 * Math.pow(2, Math.min(fails - 1, 4)), 480000);
         timer = setTimeout(function () { timer = 0; self.load(); }, wait);
       };
@@ -118,8 +164,19 @@
 
     // 初期化前に読み込むと確実に失敗するので、終わってから両方を仕込む
     AdMob.initialize({ initializeForTesting: CONFIG.testing })
-      .then(function () { rewarded.load(); inter.load(); })
-      .catch(function () {});
+      .then(function () {
+        window.WQ2_ADS.init = "成功";
+        note("AdMob 初期化 成功");
+        rewarded.load(); inter.load();
+      })
+      .catch(function (e) {
+        // ここで失敗すると広告は一切出ない。理由が分からないまま
+        // 「広告が出ない」とだけ言われる状態が続いていたので、必ず残す。
+        // よくある原因は、アプリIDが Info.plist / AndroidManifest.xml に
+        // 入っていないこと（npm run admob の実行漏れ）。
+        window.WQ2_ADS.init = "失敗 — " + why(e);
+        note("AdMob 初期化 失敗: " + why(e));
+      });
 
     // reward granted only when the video is actually completed
     var rewardCb = null;
@@ -134,7 +191,7 @@
       if (rewardCb) { var cb = rewardCb; rewardCb = null; cb(false); }
       rewarded.consumed();
     });
-    AdMob.addListener("onRewardedVideoAdFailedToLoad", function () { rewarded.retry(); });
+    AdMob.addListener("onRewardedVideoAdFailedToLoad", function (e) { rewarded.retry(e); });
 
     window.WQ2_STORE.showRewarded = function (cb) {
       if (!rewarded.ready) { cb(false); rewarded.load(); return; } // no fill / offline: fail gracefully
@@ -150,7 +207,7 @@
     }
     AdMob.addListener("interstitialAdDismissed", interDone);
     AdMob.addListener("interstitialAdFailedToShow", interDone);
-    AdMob.addListener("interstitialAdFailedToLoad", function () { inter.retry(); });
+    AdMob.addListener("interstitialAdFailedToLoad", function (e) { inter.retry(e); });
 
     // 画面下のバナーは置かない（2026-09-08 に廃止）。遊んでいる最中ずっと
     // 画面を占め続ける広告は、面白さを削るほうが大きいと判断した。
