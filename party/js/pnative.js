@@ -124,7 +124,12 @@
     // reward granted only when the video is actually completed
     var rewardCb = null;
     AdMob.addListener("onRewardedVideoAdReward", function () { if (rewardCb) { var cb = rewardCb; rewardCb = null; cb(true); } });
-    AdMob.addListener("onRewardedVideoAdClosed", function () {
+    // イベント名は "onRewardedVideoAdDismissed"。"...Closed" は
+    // @capacitor-community/admob のどのバージョンにも存在せず（Closed は
+    // バナーの "bannerAdClosed" だけ）、購読しても一度も呼ばれない。
+    // 呼ばれないと rewarded.consumed() が走らないので、次の広告が読み込まれず
+    // リワードは起動後1回しか効かない。取り消したときは cb も呼ばれず止まる。
+    AdMob.addListener("onRewardedVideoAdDismissed", function () {
       // closed without reward -> no grant; either way, preload the next one
       if (rewardCb) { var cb = rewardCb; rewardCb = null; cb(false); }
       rewarded.consumed();
