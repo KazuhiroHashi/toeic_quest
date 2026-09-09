@@ -472,7 +472,7 @@
             (sst.maxChain ? "\n　最大チェイン … ×" + sst.maxChain + (newChain ? "　🎉新記録！" : "") : "") +
             "\n　覚えた単語 … " + pg.cleared + " ／ " + pg.total + " 語" +
             (tr.icon ? "\n　称号 … " + tr.icon + " " + tr.name : ""),
-          "〜 ことばの闘技場 制覇 〜\n\n★　ＷＯＲＤ　ＱＵＥＳＴ　★\n\nおめでとう！ そして ありがとう。",
+          "〜 ことばの闘技場 制覇 〜\n\n★　Ｗ Ｏ Ｒ Ｄ Ｒ Ｉ Ａ　★\n\nおめでとう！ そして ありがとう。",
           "（タイトルの「単語帳」で\n　出会った単語を いつでも 復習できます。\n　全" + pg.total + "語 制覇を めざそう！）"
         ];
         // 挑戦の塔は初回クリアで開放される（refreshTowerBtn がボタンを出す）。
@@ -888,7 +888,7 @@
     var lg = new Image();
     lg.onload = function () {
       var box = $("ptitle-logo");
-      box.innerHTML = '<img src="' + lgSrc + '" alt="WORD QUEST">';
+      box.innerHTML = '<img src="' + lgSrc + '" alt="WORDRIA">';
       box.classList.add("img");
       one();
     };

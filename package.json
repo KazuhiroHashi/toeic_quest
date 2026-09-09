@@ -2,7 +2,7 @@
   "name": "wordquest-app",
   "version": "0.1.0",
   "private": true,
-  "description": "WORD QUEST - native app wrapper (Capacitor) for iOS/Android",
+  "description": "WORDRIA - native app wrapper (Capacitor) for iOS/Android",
   "scripts": {
     "build:www": "node tools/build_www.js",
     "admob": "node tools/apply_admob.js",

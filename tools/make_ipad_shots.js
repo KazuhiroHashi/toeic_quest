@@ -30,7 +30,7 @@ var W = 2064, H = 2752;   // 13インチiPad（Apple指定の縦）
 var SHOTS = [
   { file: "01_quiz.png",     title: "戦いながら、英単語を覚える",  sub: "4択に答えると剣が飛ぶ。まちがえたら反撃を受ける。" },
   { file: "02_boss.png",     title: "ボスは、単語で倒す",         sub: "コマンドバトルの緊張感が、語彙をそのまま記憶に変える。" },
-  { file: "03_title.png",    title: "単語帳を開くより、冒険しよう。", sub: "WORD QUEST 英単語RPG" },
+  { file: "03_title.png",    title: "単語帳を開くより、冒険しよう。", sub: "WORDRIA 英単語RPG" },
   { file: "04_grades.png",   title: "中学英語から TOEIC®まで",    sub: "中1・中2・中3・高校基礎・大学入試・難関大／スコア別の6段階。" },
   { file: "05_wordbook.png", title: "出会った単語は、単語帳に残る", sub: "意味・発音・正解率を、いつでも見返せる。" },
   { file: "06_records.png",  title: "称号と記録が、次の一戦を呼ぶ", sub: "最速タイム、最大チェイン、制覇回数。" }
