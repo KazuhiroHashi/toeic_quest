@@ -265,6 +265,12 @@
          { key: "buy", label: "★ プレミアム（月額" + PRICE + "）" },
          { key: "no", label: "やめる" }]
       ).then(function (k) {
+        // showRewarded は cb(true/false) で「広告が最後まで流れたか」を返すが、
+        // ここでは見ずに必ず回復させる。意図的な選択（2026-09-09 に確認）。
+        // 広告が出ないのはこちら側の都合（在庫なし・圏外・SDKの不調）であって、
+        // 遊ぶ人の落ち度ではない。押したのに何も起きない、を作らない。
+        // ※そのぶん「広告が出ていない」ことに気づけないので、失敗の記録は
+        //   pnative.js 側に残してある（タイトルのビルド番号を長押しで読める）
         if (k === "ad") return new Promise(function (r) { api.showRewarded(function () { state.stamina += AD_REFILL; save(); r(); }); });
         if (k === "buy") return new Promise(function (r) { api.buyPremium(function () { r(); }); });
         return;
@@ -295,6 +301,7 @@
         '<div class="wq2-store-p">広告を見れば その場で 復活できます。</div>' + rule,
         [{ key: "ad", label: "📺 広告を見て 復活", primary: true }, { key: "no", label: "タイトルへ" }]
       ).then(function (k) {
+        // 上の openGate と同じ。広告が流れなくても復活はさせる。
         if (k === "ad") return new Promise(function (r) {
           api.showRewarded(function () { skipNextAd = true; r(true); });
         });
