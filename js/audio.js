@@ -217,7 +217,10 @@
   }
 
   var live = {};         // 名前 -> 鳴っている最中のものの一覧（古い順）
-  function play(name, busName) {
+  // gain は音ごとの補正。素材の録り音がばらばらなので、ここで揃える。
+  // mp3を作り直すと音が劣化するし、元に戻せなくなる。音の一本ごとに
+  // GainNode を通しているので、そこに掛けるだけで済む
+  function play(name, busName, gain) {
     var c = context();
     if (!c) return false;
     var buf = buffers[name];
@@ -244,6 +247,7 @@
       }
 
       var g = c.createGain();
+      g.gain.value = (gain == null) ? 1 : gain;
       g.connect(bus(busName || "sfx"));
       var s = c.createBufferSource();
       s.buffer = buf;

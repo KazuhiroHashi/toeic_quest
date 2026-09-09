@@ -73,7 +73,7 @@
     // 診断用。Safariのウェブインスペクタのコンソールで WQ2_ADS と打つと、
     // どのビルドが入っていて、何回読み込んだかが分かる。
     // 「修正が入ったビルドを試しているのか」を毎回このコマンドで確かめられる
-    window.WQ2_ADS = { build: "2026-09-08n", max: MAX_LOADS, loaders: {} };
+    window.WQ2_ADS = { build: "2026-09-09a", max: MAX_LOADS, loaders: {} };
 
     function Loader(name, start) {
       var self = this, pending = false, timer = 0, fails = 0, loads = 0, dead = false;

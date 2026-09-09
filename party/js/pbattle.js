@@ -25,7 +25,18 @@
   // 実機での以前の聞こえ方は 1.0（iOS の <audio> は volume を受け付けないので、
   // コードに 0.7 と書いてあっても効いていなかった）。読み上げが埋もれないよう、
   // BGM と同じ割合で下げている。 1.0 → 0.9 → 0.81
-  var SFX_LEVEL = 0.81;
+  // 読み上げが効果音に埋もれるという指摘。実測すると、聞こえている部分の音量が
+  //     斬・被弾・会心 -7〜-8dB ／ 読み上げ -13.9dB
+  // で、読み上げのほうが6dB低かった。効果音側を少し下げ、読み上げを上げて逆転させる。
+  //  1.0 → 0.9 → 0.81 → 0.70
+  var SFX_LEVEL = 0.70;
+
+  // 素材ごとの録り音のばらつきを、ここで揃える。
+  // ok（正解のピローン）は会心音より 22.7dB 低く、BGMに完全に埋もれていた。
+  // cursor も 19dB 低い。mp3を作り直すと劣化するので、鳴らすときに掛ける。
+  //   ok     ×7.0 … 聞こえている部分が -30.6dB → -13.7dB（読み上げと同じくらい）
+  //   cursor ×2.2 … -26.8dB → -19.9dB（会心より12dB下。押した合図としては十分）
+  var SFX_GAIN = { ok: 7.0, cursor: 2.2 };
   var VICTORY = "#victory";
 
   function sfxUrl(name) {
@@ -61,7 +72,7 @@
   }
 
   function sfx(name) {
-    if (window.WQAUDIO && WQAUDIO.play(name, "sfx")) return;
+    if (window.WQAUDIO && WQAUDIO.play(name, "sfx", SFX_GAIN[name])) return;
     sfxFallback(name);
   }
 
@@ -80,7 +91,7 @@
 
   // 勝利のファンファーレ。鳴らせなければ win の効果音で代える
   function victoryJingle() {
-    if (window.WQAUDIO && WQAUDIO.play(VICTORY, "sfx")) return;
+    if (window.WQAUDIO && WQAUDIO.play(VICTORY, "sfx", SFX_GAIN[VICTORY])) return;
     try {
       var a = sfxAudio(VICTORY);
       try { a.currentTime = 0; } catch (e) {}

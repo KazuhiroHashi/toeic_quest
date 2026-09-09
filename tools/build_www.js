@@ -45,7 +45,7 @@ var BGM_BITRATE = "128k";
 // 0.73 は実機で合わせた値（1.0 → 0.9 → 0.81 → 0.73 と詰めた）。
 // 効果音 0.81・読み上げ 1.10 は Web Audio のゲインで効いているので、
 // ここを変えるときは js/audio.js 側の数字と合わせて考えること。
-var BGM_GAIN = 0.73;
+var BGM_GAIN = 0.62;   // 読み上げを聞かせるため 0.73 から下げた（2026-09-09）
 
 function rmrf(p) { fs.rmSync(p, { recursive: true, force: true }); }
 function mkdir(p) { fs.mkdirSync(p, { recursive: true }); }
