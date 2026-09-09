@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// WORD QUEST - まとめて生成した音声を1語ずつに切り分ける
+// WORDRIA - まとめて生成した音声を1語ずつに切り分ける
 //
 //   node tools/split_voice.js <音声ファイル> <語1> <語2> ...
 //   node tools/split_voice.js batch.wav --batch f000     # build/voice_batches.json から語を引く

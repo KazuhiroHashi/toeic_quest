@@ -1,4 +1,4 @@
-// WORD QUEST II - map validation (run: node party/tools/check_wq2.js)
+// WORDRIA - map validation (run: node party/tools/check_wq2.js)
 // For every map in window.WQ2_MAPS:
 //   * uniform row width, grid === rows alias, entry on a walkable tile
 //   * BFS from entry (npc/boss/gate tiles are bump-reachable but not passable):

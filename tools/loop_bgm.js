@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// WORD QUEST - make a BGM track loop seamlessly.
+// WORDRIA - make a BGM track loop seamlessly.
 //
 // Suno always fades the last few seconds out, so a looped track dips to silence
 // and then jumps back to the top. This trims the fade and crossfades the tail

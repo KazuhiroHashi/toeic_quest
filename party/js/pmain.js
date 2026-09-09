@@ -1,4 +1,4 @@
-// WORD QUEST II - prototype shell (demo menu)
+// WORDRIA - prototype shell (demo menu)
 (function () {
   "use strict";
   window.ASSET_BASE = "../"; // bgm.js loads from ../assets/bgm/

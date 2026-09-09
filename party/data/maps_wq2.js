@@ -1,4 +1,4 @@
-// WORD QUEST II - map data (chapter 1-2 scope)
+// WORDRIA - map data (chapter 1-2 scope)
 // Same tile legend as ../data/maps.js so the existing field renderer can be reused:
 //  . grass  t forest  m mountain  w water  s sand(/snow placeholder)  b bridge
 //  = wall   , floor   - dungeon floor  ^ stairs up/exit  v stairs down/exit

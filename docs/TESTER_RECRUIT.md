@@ -6,7 +6,7 @@
 ---
 
 ## 0. まず用意するもの（1回だけ）
-- **X（旧Twitter）のアカウント**（既存でも新規でもOK。新規なら名前は `Bridge AI` / `WORD QUEST開発中` など）
+- **X（旧Twitter）のアカウント**（既存でも新規でもOK。新規なら名前は `Bridge AI` / `WORDRIA開発中` など）
 - **Google グループ**（Androidテスター用のメール受け皿。作り方は下の「B-1」）
 - **TestFlightの公開リンク**（Apple承認後）／**Google クローズドテストのオプトインURL**
 

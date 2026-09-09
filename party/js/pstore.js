@@ -1,4 +1,4 @@
-// WORD QUEST II - monetization layer
+// WORDRIA - monetization layer
 // Free + daily stamina + rewarded-ad continue + a ¥500/month subscription (ads off).
 // WEB build uses MOCK ad/purchase (clearly labelled デモ). The native (Capacitor)
 // build overrides WQ2_STORE.showRewarded / WQ2_STORE.buyPremium with real

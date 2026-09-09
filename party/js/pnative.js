@@ -1,4 +1,4 @@
-// WORD QUEST - native bridge (Capacitor only; no-op on the web)
+// WORDRIA - native bridge (Capacitor only; no-op on the web)
 // Overrides the WQ2_STORE mocks with real AdMob rewarded ads and the ¥500/month
 // subscription (StoreKit / Play Billing via cordova-plugin-purchase).
 //
@@ -10,8 +10,8 @@
 
   var CONFIG = {
     // ★ AdMobのリワード広告ユニットID
-    rewardedAndroid: "ca-app-pub-3056251560404390/5134516956", // 本番（Bridge AI / WORD QUEST Android）
-    rewardedIos:     "ca-app-pub-3056251560404390/7099435396", // 本番（Bridge AI / WORD QUEST iOS）
+    rewardedAndroid: "ca-app-pub-3056251560404390/5134516956", // 本番（Bridge AI / WORDRIA Android）
+    rewardedIos:     "ca-app-pub-3056251560404390/7099435396", // 本番（Bridge AI / WORDRIA iOS）
     // インタースティシャル（闘技場の6・8・10戦目の前と、エンディング後に出す全画面広告）
     //   ★Androidは未作成。Android版を出すときに AdMob で作って差し替えること。
     //   テスト用IDのまま testing:false にすると、その枠の収益はゼロになる
@@ -21,6 +21,8 @@
     // ★ アプリ内課金：プレミアム（月額¥500・自動更新サブスク）
     //   両ストアで同じIDで登録すること。Google Play では基本プラン（月額）を
     //   この商品の下に作る
+    //   ★IDは変えないこと。両ストアに登録済みの商品IDで、変えると既存の
+    //     購読が紐づかなくなる。アプリ名がWORDRIAになっても据え置き。
     productId: "wordquest_premium_monthly",
     // 本番の広告を出す。ここは false のままコミットしてある。
     //   以前は true をコミットし、ビルド前に npm run ads:live で false に書き換える

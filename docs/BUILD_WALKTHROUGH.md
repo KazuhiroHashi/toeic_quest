@@ -18,13 +18,13 @@
 1. https://play.google.com/console → 「登録」
 2. アカウント種別＝**個人**、$25 支払い
 3. **本人確認**（氏名・住所・電話・身分証）を提出 → 数日かかることあり
-4. 「アプリを作成」→ アプリ名 **WORD QUEST**
+4. 「アプリを作成」→ アプリ名 **WORDRIA**（作成済み。登録名は改名前の `WORD QUEST`）
 
 ### Apple Developer（$99/年）
 1. https://developer.apple.com/programs/ → 「Enroll」
 2. **個人（Individual）**で登録（法人はD-U-N-Sが要り+1〜2週）
 3. $99 支払い → **本人確認**完了を待つ（1〜3日）
-4. App Store Connect → 「＋ 新規App」→ WORD QUEST
+4. App Store Connect → 「＋ 新規App」→ WORDRIA（作成済み。登録名は改名前の `WORD QUEST`）
 
 ### 税務・銀行（両方・入金に必要／後で困らないよう早めに）
 - Google：Console → お支払いプロファイル
@@ -32,7 +32,7 @@
 
 ### AdMob（広告・並行）
 1. https://admob.google.com → 登録
-2. 「アプリを追加」→ WORD QUEST（まだ未公開でOK）
+2. 「アプリを追加」→ WORDRIA（登録名は改名前の `WORD QUEST`。まだ未公開でOK）
 3. **リワード広告ユニット**を作成 → 出てくる **広告ユニットID** を私に渡す（実装はこちらで配線）
 
 ---

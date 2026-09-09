@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// WORD QUEST - OP/ED movie assembler.
+// WORDRIA - OP/ED movie assembler.
 //
 // Takes the raw Seedance clips dropped in movie/src/, applies the per-cut
 // repairs described in movie/cuts.json, crossfades them together, lays the
@@ -39,6 +39,32 @@ function probe(file, entries) {
 }
 function duration(file) { return parseFloat(probe(file, "format=duration")); }
 function rel(p) { return path.relative(ROOT, p); }
+
+// 重ねる絵に透過が無ければ、ここで止める。
+//
+// 一度、透過を表す市松模様が絵として焼き込まれた logo.png を渡されたまま
+// OP/ED を組み上げてしまったことがある。書き出しは成功するので、完成した
+// 動画を目で見るまで誰も気づかない。組む前に落とすほうが安い。
+function requireAlpha(file) {
+  const fmt = probe(file, "stream=pix_fmt");
+  if (!/a|pal8/.test(fmt)) {
+    console.error(`  ! ${rel(file)} に透過(アルファ)がありません。pix_fmt=${fmt}`);
+    console.error(`    背景を透明にした PNG を書き出し直してください。`);
+    process.exit(1);
+  }
+  // pix_fmt が rgba でも、四隅が不透明なら市松模様が焼き込まれている。
+  // 左上 8x8 のアルファを生データで取り出して、最大値を見る。
+  const px = execFileSync("ffmpeg", [
+    "-hide_banner", "-loglevel", "error", "-i", file,
+    "-vf", "crop=8:8:0:0,extractplanes=a", "-f", "rawvideo", "-pix_fmt", "gray", "-"
+  ], { maxBuffer: 1 << 16 });
+  const maxA = Math.max.apply(null, Array.from(px));
+  if (maxA > 32) {
+    console.error(`  ! ${rel(file)} の左上が透明ではありません (alpha=${maxA})。`);
+    console.error(`    透過を表す市松模様が、絵として焼き込まれている可能性があります。`);
+    process.exit(1);
+  }
+}
 
 // Every clip is forced onto the same canvas before anything else touches it,
 // so a 720p cut and a 4K cut can sit in the same timeline.
@@ -108,6 +134,7 @@ function stampTail(seq, spec, reel) {
   const st = Math.max(0, seq.dur - hold);
   const fade = Math.min(0.8, hold / 3);
   const logo = path.join(ROOT, spec.logo || "assets/ui/logo.png");
+  requireAlpha(logo);
   const out = path.join(TMP, `${reel}_tail.mp4`);
 
   // The tail often lands on a blown-out frame, and a gold logo on gold reads as

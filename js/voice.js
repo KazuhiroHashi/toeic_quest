@@ -1,4 +1,4 @@
-// WORD QUEST - 英単語の読み上げ（assets/voice/<単語>.mp3）
+// WORDRIA - 英単語の読み上げ（assets/voice/<単語>.mp3）
 // 問題が出た瞬間に鳴らす。効果音と同じで、BGMには一切触らずに重ねるだけ。
 //
 // bgm.js と同じ理由で要素はひとつだけ持ち回す。iOS Safari は「最初のタップで

@@ -1,4 +1,4 @@
-// WORD QUEST II - field/explore engine (chapter-1 scope)
+// WORDRIA - field/explore engine (chapter-1 scope)
 // PFIELD.start() : walk the WQ2 world — towns, shops, inns, chests, gates,
 // stairs, random encounters (via PBATTLE), boss fights, save/load.
 (function () {

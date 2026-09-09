@@ -1,4 +1,4 @@
-// WORD QUEST - 音の土台（Web Audio）
+// WORDRIA - 音の土台（Web Audio）
 //
 // なぜ <audio> をやめたか。iOS の <audio> には、直しようのない制約が2つある。
 //

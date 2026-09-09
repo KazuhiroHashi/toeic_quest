@@ -21,7 +21,8 @@ Googleの「12人×14日」が最大のボトルネックなので、**今晩こ
 `docs/ADMOB_STEPS.md` の通り。要点だけ：
 1. https://admob.google.com → 同じGoogleアカウントで開始
 2. 国＝日本／**通貨＝JPY**（⚠️後から変更不可）
-3. 「アプリを追加」→ **Android** → ストア登録済み？→**いいえ** → 名前 `WORD QUEST`
+3. 「アプリを追加」→ **Android** → ストア登録済み？→**いいえ** → 名前 `WORDRIA`
+   （※登録済みのものは改名前の `WORD QUEST` のまま。IDが同じなら影響しない）
 4. 「広告ユニットを追加」→ **リワード** → 名前 `continue_reward` → 作成
 5. **2つのIDをコピーしてチャットに貼る**（私が即コードに入れます）
    ```
@@ -101,7 +102,7 @@ npx cap open android
 
 # PART 3：Googleに提出（Console承認が下りたら）
 
-1. Play Console → **アプリを作成**（アプリ名 `WORD QUEST` ／日本語／ゲーム／無料）
+1. Play Console → **アプリを作成**（アプリ名 `WORDRIA` ／日本語／ゲーム／無料）
 2. 左メニュー **テスト → クローズドテスト** → 「新しいトラックを作成」
 3. **AABをアップロード**
 4. **テスター**タブ → メーリングリスト → `wordquest-testers@googlegroups.com` を追加

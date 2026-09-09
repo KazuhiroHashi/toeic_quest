@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// WORD QUEST - リスニング音声の割り当てと生成バッチを作る
+// WORDRIA - リスニング音声の割り当てと生成バッチを作る
 //
 //   node tools/build_voice_list.js            # build/voice_plan.json を書き出す
 //   node tools/build_voice_list.js --show 3   # バッチを3つ表示（貼り付け用）

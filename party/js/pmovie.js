@@ -1,4 +1,4 @@
-// WORD QUEST II - OP/ED movie playback.
+// WORDRIA - OP/ED movie playback.
 // PMOVIE.play("op"|"ed") -> Promise. Fullscreen <video> over the game with a
 // skip button. Resolves when the video ends, is skipped, or cannot play
 // (missing file / unsupported codec / autoplay refusal) — the game must never

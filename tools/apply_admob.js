@@ -6,8 +6,10 @@ var fs = require("fs");
 var path = require("path");
 var root = path.join(__dirname, "..");
 
-var ANDROID_APP_ID = "ca-app-pub-3056251560404390~1913457246"; // Bridge AI / WORD QUEST (Android)
-var IOS_APP_ID = "ca-app-pub-3056251560404390~6974212233";     // Bridge AI / WORD QUEST (iOS)
+// AdMob管理画面上のアプリ名は "WORD QUEST" のまま（改名前に登録したもの）。
+// IDが同じなら収益に影響しないので、急いで直す必要はない。
+var ANDROID_APP_ID = "ca-app-pub-3056251560404390~1913457246"; // Bridge AI / WORDRIA (Android)
+var IOS_APP_ID = "ca-app-pub-3056251560404390~6974212233";     // Bridge AI / WORDRIA (iOS)
 
 // ---------- Android: AndroidManifest.xml ----------
 (function () {

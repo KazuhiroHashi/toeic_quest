@@ -1,4 +1,4 @@
-// WORD QUEST II - party battle engine
+// WORDRIA - party battle engine
 // PBATTLE.start(encounter) -> Promise<{result:"win"|"lose"|"flee", exp}>
 // encounter: { enemies:[{base,name,lv,hp,atk,def,agi,exp,boss,phases,skills,mag}], bg, intro }
 (function () {

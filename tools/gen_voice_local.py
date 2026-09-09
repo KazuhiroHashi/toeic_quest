@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# WORD QUEST - リスニング音声をローカルで作る（Kokoro-82M / Apache-2.0）
+# WORDRIA - リスニング音声をローカルで作る（Kokoro-82M / Apache-2.0）
 #
 #   python3 tools/gen_voice_local.py                  # build/voice_plan.json の全語
 #   python3 tools/gen_voice_local.py --limit 30       # 先に30語だけ試す

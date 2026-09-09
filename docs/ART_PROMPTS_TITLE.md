@@ -26,6 +26,17 @@ A bright, cheerful key visual for a cute fantasy JRPG about learning English wor
 
 ## ② タイトルロゴ　【保存名: logo.png】
 
+> **2026-09-09：ロゴは WORDRIA のものに差し替え済み。**
+> 現行の `assets/ui/logo.png` は外注した金の立体ロゴで、下のプロンプトから
+> 作ったものではない。旧ロゴは `assets/ui/logo-wordquest-original.png` に保管。
+> 以下は当時のプロンプトの記録。作り直すときは `WORD QUEST` を `WORDRIA`
+> （1語・7文字）に読み替えること。
+>
+> **書き出しは必ず背景透過PNG（アルファ付き）にすること。**
+> 透過を表す市松模様が絵として焼き込まれたPNGを渡されたことがあり、
+> タイトル画面とOP/EDに灰色の板が乗ったまま組み上がった。
+> `node tools/build_movie.js` はこれを検知して止まるようにしてある。
+
 **文字は「WORD QUEST」のみ（数字・II・2・1は入れない）／背景透過PNG。**
 日本のゲームロゴ風＝**丸ゴシック系のポップ書体・フラット寄り・細く均一なフチ・ツヤ控えめ**が肝（西洋カジュアルの厚ぼったい3Dキャンディ調は避ける）。
 
@@ -36,8 +47,8 @@ A cute, clean title logo for a cozy Japanese mobile RPG about learning English w
 ポイント／微調整用メモ：
 - まだ洋物っぽい → `flatter, less 3D gloss, thinner even outline, rounded maru-gothic typeface` を追い足し
 - 色を変えたい → `honey-gold and sky-blue` を好みの2色に
-- カタカナ「ワードクエスト」は画像だと崩れやすいので、**ロゴ画像は英字のみ**にして、カナはゲーム内文字で表示するのが確実
-- タイトルは **「WORD QUEST」**（続編番号は付けない）
+- カタカナ「ワードリア」は画像だと崩れやすいので、**ロゴ画像は英字のみ**にして、カナはゲーム内文字で表示するのが確実
+- タイトルは **「WORDRIA」**（続編番号は付けない）
 
 ---
 

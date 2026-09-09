@@ -49,13 +49,13 @@ iOS の審査は通常24〜48時間で、この義務がない。
 
 ### 1. App Store Connect でアプリを登録
 
-- 名前：**WORD QUEST 〜 沈黙の四天王 〜**（`docs/STORE_LISTING.md`）
+- 名前：**WORDRIA 〜 沈黙の四天王 〜**（`docs/STORE_LISTING.md`）
 - Bundle ID：`com.bridgeai.wordquest`
 - **「App情報」に利用規約URLを設定**（上記のterms.html）。サブスクを出すなら必須
 
 ### 2. サブスクリプションを登録
 
-- サブスクリプショングループを作る（例：`WORD QUEST プレミアム`）
+- サブスクリプショングループを作る（例：`WORDRIA プレミアム`）
 - 製品ID **`wordquest_premium_monthly`** ／ 自動更新 ／ **月額 ¥500**
 - 表示名と説明を日本語で入れる
 - **審査用のスクリーンショット**が要る。タイトルの「★ プレミアム（月額¥500・広告オフ）」を

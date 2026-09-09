@@ -9,7 +9,7 @@
 
 ## 0. AdMob で広告ユニットを2つ作る（10分）
 
-AdMob → アプリ（WORD QUEST iOS）→ 広告ユニット → 新しい広告ユニット
+AdMob → アプリ（`WORD QUEST iOS`。改名前の登録名のまま）→ 広告ユニット → 新しい広告ユニット
 
 | 作るもの | 名前の例 |
 |---|---|
@@ -78,7 +78,7 @@ Xcode で：
 | | |
 |---|---|
 | 製品ID | `wordquest_premium_monthly` |
-| 表示名 | `WORD QUEST プレミアム` |
+| 表示名 | `WORDRIA プレミアム`（登録時は `WORD QUEST プレミアム`。改名版を出すときに変える） |
 | 期間・価格 | 1か月・自動更新・**¥500** |
 | 審査用スクショ | `store/screenshots/07_subscription.png` |
 

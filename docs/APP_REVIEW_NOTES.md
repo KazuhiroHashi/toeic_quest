@@ -39,7 +39,7 @@ mechanism is required or present.
 --------------------------------------------------
 2. PURPOSE AND TARGET AUDIENCE
 --------------------------------------------------
-WORD QUEST is an English vocabulary learning game for Japanese speakers.
+WORDRIA is an English vocabulary learning game for Japanese speakers.
 The entire user interface is in Japanese; the material being learned is
 English vocabulary.
 
@@ -171,7 +171,7 @@ included in the app.
 The app is free to download and play. It contains exactly one In-App
 Purchase, submitted together with this app version:
 
-  Reference name : WORD QUEST Premium Monthly
+  Reference name : WORDRIA Premium Monthly
   Product ID     : wordquest_premium_monthly
   Type           : Auto-renewable subscription
   Duration       : 1 month
@@ -211,6 +211,24 @@ How to reach the purchase flow:
 
 Terms of Use:     https://bridge-ai-tokyo.com/wordquest/terms.html
 Privacy Policy:   https://bridge-ai-tokyo.com/wordquest/privacy.html
+
+--------------------------------------------------
+8. NOTE ON THE APP NAME (from version 2.2.0)
+--------------------------------------------------
+From version 2.2.0 the app is renamed from "WORD QUEST" to "WORDRIA".
+
+The rename is voluntary and was decided by us. A third party filed a
+Japanese trademark application for a similar mark, so we chose a distinct,
+coined name of our own before any conflict could arise. No claim has been
+made against us.
+
+The bundle identifier (com.bridgeai.wordquest) and the In-App Purchase
+product identifier (wordquest_premium_monthly) still contain the former
+name. These identifiers are not visible to users and were deliberately left
+unchanged, so that existing installations and active subscriptions continue
+to work. Only the display names have changed.
+
+The privacy policy and terms of use are the same documents at the same URLs.
 
 --------------------------------------------------
 
@@ -275,7 +293,7 @@ App Store Connect の App Review ページの返信欄に、動画を添付す�
 1か国（おそらく日本）だけだと、**審査担当の国では購入導線が動かない**可能性が
 ある。「買えなかった」で差し戻される典型例なので、先に直しておく。
 
-  収益化 → サブスクリプション → Premium → WORD QUEST Premium Monthly
+  収益化 → サブスクリプション → Premium → WORDRIA Premium Monthly
   → 配信可否 → 編集 → **アプリと同じ地域をすべて選ぶ**
 
 価格は地域ごとにAppleが自動で換算するので、日本の¥500は変わらない。
@@ -287,7 +305,23 @@ App Store Connect の App Review ページの返信欄に、動画を添付す�
 iPad用は「説明文＋実機画面」の構成だが、中の画面は実機そのものなので条件を
 満たしている。何もしなくてよい。
 
-### ③ メモ欄にも同じ本文を入れる
+### ③ 改名（2.2.0）で追加で必要になること
+
+本文の8番に、改名の説明を英語で入れてある。**バンドルIDと商品IDに旧名が
+残っている**ことを先に説明しておくためのもの。審査担当がIDと表示名の食い違いを
+見つけたときに、問い合わせで往復せずに済む。
+
+改名版を出すときは、これも忘れないこと。
+
+- [ ] タイトル画面のスクリーンショットを撮り直す（旧ロゴが写っている）
+      → 2.3.3（実際の画面と一致していること）
+- [ ] Appプレビュー動画を差し替える（末尾に旧ロゴが出る）
+- [ ] サブスクリプションの**表示名**を `WORDRIA プレミアム` に変える
+      （製品IDは変えない。表示名の変更はそのサブスクだけ再審査になる）
+- [ ] App名・説明文・プロモーションテキスト・キーワードを差し替える
+      → `docs/STORE_LISTING.md` の「App Store Connect 貼り付け用」
+
+### ④ メモ欄にも同じ本文を入れる
 
 返信するだけでなく、**バージョンのページ →「App Review情報」→「メモ」**にも
 同じ本文を貼っておく。Appleが「次回以降の参照のために入れておけ」と明示して

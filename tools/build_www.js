@@ -30,6 +30,9 @@ var clean = process.argv.includes("--clean");
 // movie_src: Seedance start frames, build-time only.
 // field: art for the unfinished story mode, which release builds do not expose.
 var SKIP_ASSET_DIRS = ["movie_src", "field"];
+// 旧「WORD QUEST」ロゴ。改名の記録として assets/ui/ に残してあるだけで、
+// アプリからは参照しない。同梱すると使わない旧商標の絵が binary に入る。
+var SKIP_ASSET_FILES = ["logo-wordquest-original.png"];
 // BGM used only by that story mode
 var SKIP_BGM = ["field", "town", "dungeon", "battle_dungeon"];
 var WEBP_QUALITY = 82;
@@ -209,6 +212,7 @@ function copyAssets(src, dst) {
   mkdir(dst);
   for (var name of fs.readdirSync(src)) {
     if (SKIP_ASSET_DIRS.indexOf(name) >= 0) continue;
+    if (SKIP_ASSET_FILES.indexOf(name) >= 0) continue;
     var s = path.join(src, name);
     if (fs.statSync(s).isDirectory()) copyAssets(s, path.join(dst, name));
     else placeAsset(s, dst, name);

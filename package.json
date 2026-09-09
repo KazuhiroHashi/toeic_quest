@@ -1,5 +1,5 @@
 {
-  "name": "wordquest-app",
+  "name": "wordria-app",
   "version": "0.1.0",
   "private": true,
   "description": "WORDRIA - native app wrapper (Capacitor) for iOS/Android",
