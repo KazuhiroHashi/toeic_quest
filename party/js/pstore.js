@@ -233,8 +233,8 @@
         '購入を確定すると ' + W.account + ' に請求されます。<br>' +
         '解約しないかぎり 自動更新されます。<br>' +
         '解約は ' + W.store + ' の<br>サブスクリプション設定から いつでも できます。<br>' +
-        '<a href="https://bridge-ai-tokyo.com/wordquest/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>　' +
-        '<a href="https://bridge-ai-tokyo.com/wordquest/terms.html" target="_blank" rel="noopener">利用規約</a></div>' +
+        '<a href="https://bridge-ai-tokyo.com/wordria/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>　' +
+        '<a href="https://bridge-ai-tokyo.com/wordria/terms.html" target="_blank" rel="noopener">利用規約</a></div>' +
         (demo ? '<div class="wq2-ad-note">※デモ版：実際の課金は 公開版で有効になります</div>' : ''),
         [{ key: "buy", label: demo ? "登録する（デモ）" : "登録する", primary: true },
          { key: "restore", label: "購入を復元" },

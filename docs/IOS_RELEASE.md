@@ -38,8 +38,8 @@ iOS の審査は通常24〜48時間で、この義務がない。
 | `NSUserTrackingUsageDescription` | 自動で削除。ATTを使わず非パーソナライズ広告のみのため |
 | スクリーンショット | `store/screenshots/` に5枚（1290×2796） |
 | アイコン・スプラッシュ | `appicon/`。`npm run assets` が全サイズ生成 |
-| プライバシーポリシー | https://bridge-ai-tokyo.com/wordquest/privacy.html |
-| 利用規約（EULA） | https://bridge-ai-tokyo.com/wordquest/terms.html |
+| プライバシーポリシー | https://bridge-ai-tokyo.com/wordria/privacy.html |
+| 利用規約（EULA） | https://bridge-ai-tokyo.com/wordria/terms.html |
 | サポートURL | https://bridge-ai-tokyo.com/support.html |
 | 掲載文 | `docs/STORE_LISTING.md` |
 

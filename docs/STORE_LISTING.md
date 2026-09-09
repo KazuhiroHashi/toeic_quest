@@ -79,8 +79,8 @@ TOEIC®テスト頻出レベルの語彙で遊ぶこともできます。
 プレミアム（自動更新サブスクリプション）に登録すると、広告が表示されなくなり、
 学習の記録をすべて見られます。
 
-利用規約 https://bridge-ai-tokyo.com/wordquest/terms.html
-プライバシーポリシー https://bridge-ai-tokyo.com/wordquest/privacy.html
+利用規約 https://bridge-ai-tokyo.com/wordria/terms.html
+プライバシーポリシー https://bridge-ai-tokyo.com/wordria/privacy.html
 
 ※本アプリはETSおよびTOEIC®プログラムとは一切関係ありません。「TOEIC」はEducational Testing Service（ETS）の登録商標です。
 ```
@@ -134,8 +134,8 @@ This app is not affiliated with, endorsed by, or sponsored by ETS.
 - 一般向け（学習）。暴力・性的表現なし。IARC/Apple質問票は概ね **全年齢〜12+** に収まる。子ども（13歳未満）主対象ではない旨を選択。
 
 ### 必須リンク
-- **プライバシーポリシーURL**：https://bridge-ai-tokyo.com/wordquest/privacy.html （公開済み）
-- **利用規約URL**：https://bridge-ai-tokyo.com/wordquest/terms.html （公開済み）
+- **プライバシーポリシーURL**：https://bridge-ai-tokyo.com/wordria/privacy.html **← 提出前にサーバへ置くこと**
+- **利用規約URL**：https://bridge-ai-tokyo.com/wordria/terms.html **← 提出前にサーバへ置くこと**
 - **サポートURL**：https://bridge-ai-tokyo.com/support.html
 
 ---
@@ -151,8 +151,8 @@ This app is not affiliated with, endorsed by, or sponsored by ETS.
 | **キーワード**（100字） | `ワードリア,トーイック,英単語,英語,単語,語彙,ボキャブラリー,単語帳,受験,大学受験,高校入試,中学英語,高校英語,暗記,リスニング,発音,勉強,学習,クイズ,RPG,ゲーム` |
 | **プロモーションテキスト**（170字） | 下記「プロモーションテキスト（本文）」を参照。表に入れると改行が消えるため別掲 |
 | **サポートURL** | `https://bridge-ai-tokyo.com/support.html` |
-| **プライバシーポリシーURL** | `https://bridge-ai-tokyo.com/wordquest/privacy.html` |
-| **利用規約（EULA）URL** | `https://bridge-ai-tokyo.com/wordquest/terms.html` |
+| **プライバシーポリシーURL** | `https://bridge-ai-tokyo.com/wordria/privacy.html` |
+| **利用規約（EULA）URL** | `https://bridge-ai-tokyo.com/wordria/terms.html` |
 | **カテゴリ** | 教育（第2カテゴリ：ゲーム／ワード） |
 
 キーワードは89字（上限100）。改名で名前が検索に効かなくなるので、
@@ -242,22 +242,20 @@ App名に `英単語RPG` を入れたので、サブタイトルからは外し�
 
 ---
 
-## サイト側の宿題（bridge-ai-tokyo.com）
+## サイト側でやること（bridge-ai-tokyo.com）
 
-急がないが、いずれ直すもの。**審査が通ってから**やること。
-URLは審査中に動かさない（切れると差し戻しになる）。
+**提出より先にやること。** コード側のURLは `/wordria/` に書き換え済みなので、
+サーバにファイルが無いとリンク切れになり、審査で差し戻される。
 
-1. `https://bridge-ai-tokyo.com/wordria/privacy.html` と `terms.html` を作る
-   （中身は `store/privacy.html` を置くだけ。すでにWORDRIA表記に直してある）
-2. 旧 `/wordquest/` は**消さずにリダイレクト**にする。
-   App Store Connect と Google Play に登録済みのURLなので、切れると審査に響く
-3. 両ストアの登録URLを `/wordria/` に更新する
-4. AdMob管理画面のアプリ表示名を WORDRIA に変える（IDは触らない）
+1. `https://bridge-ai-tokyo.com/wordria/privacy.html` を置く（中身は `store/privacy.html`）
+2. `https://bridge-ai-tokyo.com/wordria/terms.html` を置く（中身は既存 `/wordquest/terms.html` と同じでよい）
+3. 旧 `/wordquest/` は**消さない**。そのまま残すか、`/wordria/` へのリダイレクトにする
+4. App Store Connect の「App情報」で、プライバシーポリシーURLと利用規約URLを `/wordria/` に変える
 
-`/wordquest/` というURLが残っていること自体は商標の使用にあたりうるので、
-落ち着いたら1〜3まで済ませておくのが望ましい。
+置いたあと、必ずブラウザで両方のURLを開いて表示されることを確かめる。
 
----
+急がなくてよいもの：
+- AdMob管理画面のアプリ表示名を WORDRIA に変える（IDは触らない）
 
 ## Xcode 側でやること（`npx cap sync` では変わらない）
 

@@ -140,8 +140,8 @@ npm run open:ios       # Archive → Upload
 | 通し動作 | タイトル→闘技場→戦闘→クイズ→判定まで **JSエラーなし・読み込み失敗なし** |
 | 出荷ビルドの中身 | 読み上げ4,883語／BGM17曲／効果音18／OP・ED |
 | 未完成モード | 出荷ビルドから除外済み（「制作中」の文字は0件） |
-| プライバシーポリシー | https://bridge-ai-tokyo.com/wordquest/privacy.html **HTTP 200** |
-| 利用規約 | https://bridge-ai-tokyo.com/wordquest/terms.html **HTTP 200** |
+| プライバシーポリシー | https://bridge-ai-tokyo.com/wordria/privacy.html **HTTP 200** |
+| 利用規約 | https://bridge-ai-tokyo.com/wordria/terms.html **HTTP 200** |
 | サポート | https://bridge-ai-tokyo.com/support.html **HTTP 200** |
 | iOS の Info.plist | AdMob App ID・輸出コンプライアンス・ATT不使用の設定を自動注入 |
 

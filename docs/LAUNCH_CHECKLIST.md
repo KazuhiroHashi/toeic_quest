@@ -60,7 +60,7 @@
 | 🤖 | `party/js/pnative.js` の `testing: true` → `false` | ⬜ **ビルド直前に必ず**（忘れるとテスト広告のまま公開される） |
 | 🧑 | App Store Connect / Play Console でアプリ登録 | ⬜ |
 | 🧑 | **サブスク `wordquest_premium_monthly`（月額¥500・自動更新）を両ストアに登録** | ⬜ Google Play は基本プラン（月額）も作る |
-| 🧑 | App Store Connect の「App情報」に**利用規約(EULA)のURL**を設定 | ⬜ https://bridge-ai-tokyo.com/wordquest/terms.html |
+| 🧑 | App Store Connect の「App情報」に**利用規約(EULA)のURL**を設定 | ⬜ https://bridge-ai-tokyo.com/wordria/terms.html |
 | 🧑 | **Google Play クローズドテスト 12人 × 14日連続** | ⬜ **最長の待ち時間。ここが全体の締切を決める** |
 
 **12人×14日が critical path です。** 他が全部終わっていても、ここを始めてから最短2週間。
@@ -79,8 +79,8 @@
 | アイコン・ロゴ・キービジュアル | ✅ |
 | **OP ムービー 27.1秒** | ✅ 1080×1920 / H.264+AAC |
 | **ED ムービー 24.5秒** | ✅ 同上 |
-| プライバシーポリシー | ✅ https://bridge-ai-tokyo.com/wordquest/privacy.html |
-| 利用規約（サブスク条件・解約方法を明記） | ✅ https://bridge-ai-tokyo.com/wordquest/terms.html |
+| プライバシーポリシー | ✅ https://bridge-ai-tokyo.com/wordria/privacy.html |
+| 利用規約（サブスク条件・解約方法を明記） | ✅ https://bridge-ai-tokyo.com/wordria/terms.html |
 | ストア掲載文 | ✅ `docs/STORE_LISTING.md` |
 | 効果音 | ✅ 全参照ファイルが存在 |
 

@@ -209,8 +209,8 @@ How to reach the purchase flow:
   The same panel also appears when a free user has used the daily play
   allowance, offering the choice of watching a rewarded ad or subscribing.
 
-Terms of Use:     https://bridge-ai-tokyo.com/wordquest/terms.html
-Privacy Policy:   https://bridge-ai-tokyo.com/wordquest/privacy.html
+Terms of Use:     https://bridge-ai-tokyo.com/wordria/terms.html
+Privacy Policy:   https://bridge-ai-tokyo.com/wordria/privacy.html
 
 --------------------------------------------------
 8. NOTE ON THE APP NAME (from version 2.2.0)
