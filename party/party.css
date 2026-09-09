@@ -42,13 +42,10 @@
   color: rgba(120, 130, 160, .5); user-select: text;
 }
 #ptitle-screen.pre-start #ptitle-build { display: none; }
-/* 広告が動いていないときの目印。開発者だけが意味を知っていればよいので、
-   文言は出さない。遊ぶ人には直せないことを画面で知らせても仕方がなく、
-   かといって長押しで探しにいく作りでは、こちらも見にいこうと思わない。
-   起動するたび目に入るここの色を変える。詳しくは長押しで読む。
-   （pnative.js が <html data-ads="bad"> を立てる） */
-html[data-ads="bad"] #ptitle-build { color: rgba(255, 176, 64, .95); }
-html[data-ads="bad"] #ptitle-build::after { content: " ▲"; }
+/* 広告の不調を画面に出す目印は置かない（2026-09-09 方針）。
+   遊ぶ人には直せないうえ、「何かが壊れている」と伝えるだけになる。
+   異常はAdMobの管理画面と、ビルド番号の長押しで読む診断で見る。
+   pnative.js が <html data-ads="..."> を立てるが、見た目には出さない。 */
 #ptitle-menu .title-btn {
   display: flex; align-items: center; gap: 10px; width: 100%; margin: 7px 0; padding: 12px 16px;
   font-size: 16px; letter-spacing: 1px; font-weight: bold; text-align: left; font-family: inherit; cursor: pointer;
