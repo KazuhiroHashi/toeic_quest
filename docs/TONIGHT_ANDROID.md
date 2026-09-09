@@ -44,8 +44,13 @@ Googleの「12人×14日」が最大のボトルネックなので、**今晩こ
 
 # PART 2：Mac作業（Android Studio）
 
+> **2026-09-09：Capacitor 8 に上げました。**
+> Google Play が新規アプリに APIレベル36 を要求するようになり、
+> Capacitor 6（34）では AAB を受け付けてもらえないためです。
+> `android/` は作り直しが要ります。手順は `docs/CAPACITOR8_MIGRATION.md`。
+
 ## 2-A. 事前インストール（初回のみ・ダウンロード待ちが長いので先に開始）
-- **Node.js**: https://nodejs.org （LTS版）
+- **Node.js**: https://nodejs.org （**v22以上**。Capacitor 8 の必須要件）
 - **Android Studio**: https://developer.android.com/studio
   - 初回起動時のセットアップウィザードは**全部そのままNext**でOK
 
@@ -60,6 +65,8 @@ git checkout claude/toeic-quest-game-8zva6k
 git pull
 
 # 2. 依存インストール（数分）
+#    Capacitor 8 に上げたので、古い node_modules は一度消す
+rm -rf node_modules android
 npm install
 
 # 3. 最新のゲーム本体を www/ に配置

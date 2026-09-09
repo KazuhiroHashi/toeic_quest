@@ -32,9 +32,15 @@ Python を使うときだけ `conda activate base` すればよく、普段の�
 ターミナルを開いて、まず今の状態を確認します。
 
 ```bash
-node -v          # v18 以上なら OK。「command not found」なら下でインストール
+node -v          # ★ v22 以上が必要（Capacitor 8）。低ければ brew upgrade node
 xcodebuild -version   # Xcode は導入済みのはず
 ```
+
+> **2026-09-09：Capacitor 8 に上げました。**
+> Node 22以上が必須、iOS は CocoaPods ではなく Swift Package Manager、
+> Android は targetSdk 36 になります。`android/` `ios/` は作り直しが要ります。
+> 手順と背景は `docs/CAPACITOR8_MIGRATION.md` に書いてあります。
+> **すでに `android/` `ios/` がある場合は、そちらを先に読んでください。**
 
 ### Node.js と ffmpeg
 ```bash
@@ -65,8 +71,10 @@ https://developer.android.com/studio からダウンロードしてインスト�
 ```bash
 sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
 sudo xcodebuild -license accept
-brew install cocoapods
 ```
+
+> **CocoaPods は不要になりました**（Capacitor 8 から Swift Package Manager）。
+> すでに入れてあっても害はありません。
 
 ---
 
@@ -110,11 +118,15 @@ npm run build:www
 ## STEP 3：ネイティブプロジェクトを作る（一度だけ）
 
 ```bash
+npm run build:www
 npx cap add android
 npx cap add ios
-npm run assets        # アイコンとスプラッシュを全サイズ生成
+npm run assets        # アイコンとスプラッシュを全サイズ生成（cap add のあとで）
 npm run cap:sync      # www を同期 ＋ AdMob の App ID を注入
 ```
+
+> `npm run cap:sync` を `npx cap sync` で代用しないこと。AdMob のアプリIDが
+> AndroidManifest.xml / Info.plist に入らず、**広告が出なくなります**。
 
 `android/` と `ios/` は gitignore されているので、**このMac上にだけ**作られます。
 
@@ -155,7 +167,9 @@ Xcode が開いたら：
 
 1. 左のツリーで **App** を選択 → **Signing & Capabilities**
 2. **Team** に自分の Apple Developer アカウントを選ぶ
-3. Bundle Identifier が `com.bridgeai.wordquest` になっているか確認
+3. Bundle Identifier が `com.bridgeai.wordquest` になっているか確認（**変えないこと**）
+   - あわせて Info.plist の `Bundle display name` と `Bundle name` を `WORDRIA` にする
+   - General の Version（App Store Connect の表示に合わせる）と Build（前より大きい番号）
 4. 上部のデバイス選択で **Any iOS Device (arm64)** を選ぶ
 5. メニュー **Product → Archive**（5〜10分）
 6. Organizer が開いたら **Distribute App → App Store Connect → Upload**

@@ -56,35 +56,22 @@ var IOS_APP_ID = "ca-app-pub-3056251560404390~6974212233";     // Bridge AI / WO
   console.log("ios: GADApplicationIdentifier set ->", IOS_APP_ID);
 })();
 
-// ---------- iOS: Podfile — 同意SDK(UMP)のバージョンを2系に固定する ----------
-// GoogleUserMessagingPlatform 3.0 が公開クラスの名前を一斉に変えた。
-//   UMPConsentInformation -> ConsentInformation / sharedInstance -> shared
-//   UMPRequestParameters  -> RequestParameters  / UMPDebugSettings -> DebugSettings
-//   tagForUnderAgeOfConsent -> isTaggedForUnderAgeOfConsent
-// @capacitor-community/admob v6 は 2系の名前のまま書かれている。そして
-// Google-Mobile-Ads-SDK 側の依存指定が「>= 2.1」で上限なしのため、CocoaPods が
-// 素直に 3.x を拾い、ConsentExecutor.swift が22個のエラーで落ちる。
-// プラグインが追いつくまで 3.0 未満に抑える。
-// （実際に 2026-08-26 の Archive がこれで止まった。プラグインを上げるときに外すこと）
+// ---------- iOS: Podfile — 昔のUMPの固定を外す ----------
+// Capacitor 6 のころ、GoogleUserMessagingPlatform を「< 3.0」に抑えていた。
+// UMP 3.0 が公開クラスの名前を一斉に変え（UMPConsentInformation ->
+// ConsentInformation など）、@capacitor-community/admob v6 が 2系の名前の
+// ままだったため、CocoaPods が 3.x を拾うと ConsentExecutor.swift が
+// 22個のエラーで落ちたからである（2026-08-26 の Archive が実際に止まった）。
+//
+// admob v8 は 'GoogleUserMessagingPlatform', '~> 3.1' を要求する。
+// つまり昔の固定を残したままだと、今度はそれが原因で pod install が
+// 解決できなくなる。移行にあたって、その行を消す側に回す。
 (function () {
   var f = path.join(root, "ios/App/Podfile");
   if (!fs.existsSync(f)) { console.log("skip ios Podfile (not generated yet)"); return; }
   var s = fs.readFileSync(f, "utf8");
-  var LINE = "  pod 'GoogleUserMessagingPlatform', '< 3.0' # pinned by tools/apply_admob.js";
-  var HAVE = /^[ \t]*pod ['"]GoogleUserMessagingPlatform['"].*$/m;
-
-  if (HAVE.test(s)) {
-    s = s.replace(HAVE, LINE);
-  } else {
-    // `def capacitor_pods` の定義ではなく、target 'App' の中の呼び出しの直後に入れる
-    var CALL = /(target ['"]App['"] do\r?\n[ \t]*capacitor_pods\r?\n)/;
-    if (!CALL.test(s)) {
-      console.log("ios Podfile: target 'App' が見つからず追記できません。手で追加してください:");
-      console.log("  " + LINE);
-      return;
-    }
-    s = s.replace(CALL, "$1" + LINE + "\n");
-  }
-  fs.writeFileSync(f, s);
-  console.log("ios: GoogleUserMessagingPlatform を < 3.0 に固定 (pod install が必要)");
+  var PIN = /^[ \t]*pod ['"]GoogleUserMessagingPlatform['"][^\n]*#\s*pinned by tools\/apply_admob\.js[^\n]*\r?\n/m;
+  if (!PIN.test(s)) return;                       // もう無い。何もしない
+  fs.writeFileSync(f, s.replace(PIN, ""));
+  console.log("ios: 古い GoogleUserMessagingPlatform の固定を削除しました (pod install が必要)");
 })();
