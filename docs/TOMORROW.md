@@ -40,15 +40,21 @@ Play Console → 左メニュー「**テストとリリース**」→「**メイ
 
 ### B-1. 先に Mac で画像を取り出す
 
+> ⚠️ **Terminal に貼るのは、この1行だけです。**
+> このあとに出てくる枝分かれの図は「どこに何があるか」の説明で、
+> **打ち込むものではありません**（貼ると `command not found` が並びます）。
+
+**▼ ここをコピーして Terminal に貼る**
+
 ```bash
-cd ~/toeic_quest
-git pull origin claude/toeic-quest-game-8zva6k
-open store/play
+cd ~/toeic_quest && git pull origin claude/toeic-quest-game-8zva6k && open store/play
 ```
 
 Finder が開きます。この中の画像を、ブラウザにドラッグして入れてください。
 
-```
+**▼ ここから下は説明の図。打ち込まないこと**
+
+```text
 store/play/
 ├── icon_512.png                 → 「アプリのアイコン」
 ├── feature_1024x500.png         → 「フィーチャー グラフィック」
