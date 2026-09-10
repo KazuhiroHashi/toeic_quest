@@ -95,8 +95,12 @@
 #ptitle-screen.pre-start #ptitle-menu,
 #ptitle-screen.pre-start #ptitle-stamina,
 #ptitle-screen.pre-start #pbtn-unlock,
+#ptitle-screen.pre-start #pbtn-rate,
 #ptitle-screen.pre-start #ptitle-foot,
 #ptitle-screen.pre-start #title-copy { display: none; }
+/* ↑ タイトルに要素を足したら、この一覧にも足すこと。
+   入れ忘れると「タップして スタート」だけの画面に、そのボタンだけが
+   ぽつんと出る。実際に評価ボタンでそうなった（2026-09-11） */
 /* logo as an image (assets/ui/logo.png) instead of text */
 #ptitle-logo.img { text-shadow: none; }
 #ptitle-logo.img img { display: block; width: 100%; max-width: 340px; height: auto; margin: 0 auto; }
