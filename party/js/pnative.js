@@ -13,10 +13,7 @@
     rewardedAndroid: "ca-app-pub-3056251560404390/5134516956", // 本番（Bridge AI / WORDRIA Android）
     rewardedIos:     "ca-app-pub-3056251560404390/7099435396", // 本番（Bridge AI / WORDRIA iOS）
     // インタースティシャル（闘技場の6・8・10戦目の前と、エンディング後に出す全画面広告）
-    //   ★Androidは未作成。Android版を出すときに AdMob で作って差し替えること。
-    //   テスト用IDのまま testing:false にすると、その枠の収益はゼロになる
-    //   （build_www.js がその組み合わせを検出してビルドを止める）
-    interstitialAndroid: "ca-app-pub-3940256099942544/1033173712", // Google テスト用
+    interstitialAndroid: "ca-app-pub-3056251560404390/6300972973", // 本番（battle_break・2026-09-10）
     interstitialIos:     "ca-app-pub-3056251560404390/9479211793", // 本番（2026-08-22）
     // ★ アプリ内課金：プレミアム（月額¥500・自動更新サブスク）
     //   両ストアで同じIDで登録すること。Google Play では基本プラン（月額）を
@@ -83,7 +80,7 @@
     try { saved = JSON.parse(localStorage.getItem(LOGKEY) || "{}") || {}; } catch (e) {}
 
     window.WQ2_ADS = {
-      build: "2026-09-09e", max: MAX_LOADS, loaders: {},
+      build: "2026-09-10a", max: MAX_LOADS, loaders: {},
       platform: platform, testing: CONFIG.testing,
       rewardedId: rewardedId, interstitialId: interstitialId,
       init: "まだ",                          // 初期化の結果
