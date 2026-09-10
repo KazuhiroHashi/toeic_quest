@@ -147,3 +147,63 @@ AdMob プラグイン v8 のメソッド名・イベント名も、v6 から変�
 
 これまで置いていなかった。移行では「こちらで通ったものと同じ組み合わせが
 Mac でも入る」ことが要るので、固定して一緒に配る。
+
+---
+
+## パッケージ名が iOS と Android で違う（2026-09-10）
+
+```
+Android : com.bridgeai.wordria    ← Google Play に登録した値
+iOS     : com.bridgeai.wordquest  ← App Store に登録済み。変えられない
+```
+
+### なぜ分けたのか
+
+iOS は改名前に App Store Connect でアプリを作ってしまっているので、
+バンドルIDを変えると別アプリ扱いになり、記録も購読も全部切れる。
+
+一方 Android は**まだ一度も出していなかった**ので、自由に選べた。
+Android ではパッケージ名が**公開URLにそのまま出る**。
+
+```
+play.google.com/store/apps/details?id=com.bridgeai.wordria
+```
+
+改名の目的は「WORD QUEST を公に使うのをやめる」ことなので、
+ここで wordquest を選ぶ理由が無かった。iOS のバンドルIDは
+どこにも表示されないので、そのままでよい。
+
+Apple と Google は互いのIDを見ていない。揃っていなくても問題ない。
+
+### どう実現しているか
+
+`capacitor.config.json` の `appId` は1つしか持てないので、
+そこには **Android 用の値**（`com.bridgeai.wordria`）を入れてある。
+Android はこれで全部（build.gradle・strings.xml・Javaのパッケージ）が
+そろって生成される。
+
+iOS 側だけ `tools/apply_appid.js` が書き戻す。iOS が触るのは
+`project.pbxproj` の `PRODUCT_BUNDLE_IDENTIFIER` だけなので、
+書き換え箇所が少なくて安全。
+
+`npm run cap:sync` の最後に自動で走る。
+
+```
+npm run cap:sync
+  = build:www → npx cap sync → npm run admob → npm run appid
+```
+
+`npx cap sync` だけで済ませないこと。**iOS のバンドルIDが
+wordria のままになり、App Store Connect が受け付けない。**
+
+### 食い違ったらどうなるか
+
+どちらも**アップロードの時点で必ず弾かれる**ので、黙って間違ったまま
+公開されることはない。
+
+| | |
+|---|---|
+| Android が wordquest のまま | Play Console が「パッケージ名が一致しません」で拒否 |
+| iOS が wordria のまま | App Store Connect に該当アプリが無く拒否 |
+
+`apply_appid.js` は Android 側の値が期待と違えばエラーで止まる。
