@@ -91,6 +91,10 @@
           <div id="title-copy">4人パーティで 早押し英単語バトル。<br>2秒以内の正解で クリティカル！</div>
           <!-- 文言と金額は pmain.js の refreshStamina() が pstore.js の PRICE から入れる -->
           <button id="pbtn-unlock" class="title-btn ghost">★ プレミアム</button>
+          <!-- 評価は「お願い」であって、取引ではない。押しても何ももらえないし、
+               押さなくても何も起きない。星の数でゲームの中身を変えることは
+               ストアの規約で禁止されている（party/js/prate.js に詳しく書いた） -->
+          <button id="pbtn-rate" class="title-btn ghost">☆ このアプリを評価する</button>
           <div id="ptitle-foot"><span id="pbtn-field">※ ストーリーモードは 制作中です</span></div>
         <!-- どのビルドが端末に入っているかを、道具なしで確かめられるようにする。
              cap sync の掛け忘れやXcodeのキャッシュで古いコードが動いていたことが
@@ -144,6 +148,7 @@
 <script src="js/pvocab.js"></script>
 <script src="js/pstore.js"></script>
 <script src="js/pnative.js"></script>
+<script src="js/prate.js"></script>
 <script src="js/pmovie.js"></script>
 <script src="js/pbattle.js"></script>
 <script src="js/pdrill.js"></script>

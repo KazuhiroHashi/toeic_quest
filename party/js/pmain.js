@@ -496,6 +496,11 @@
             new Promise(function (r) { setTimeout(r, 6000); })
           ]).catch(function () {});
         }
+        // 1周を遊びきった直後は、いちばん気持ちが乗っている。ストアの評価を
+        // お願いするなら ここしかない。2周目以降・90日おき・生涯3回まで、
+        // そして見返りは一切つけない（条件と理由は party/js/prate.js）。
+        // maybeAsk は必ず解決するので、ここで止まることはない
+        if (window.WQ2_RATE) await WQ2_RATE.maybeAsk(rc.clears);
       }
     }
     if (window.BGM) BGM.stop();
@@ -788,6 +793,11 @@
   });
   $("pbtn-tower").addEventListener("click", function () { $("pbtn-tower").blur(); runTower(); });
   $("pbtn-achv").addEventListener("click", function () { $("pbtn-achv").blur(); showAchievements(); });
+  // 自分から評価しに来た人の入口。何も見返りは無い（prate.js の冒頭に理由）
+  if ($("pbtn-rate")) $("pbtn-rate").addEventListener("click", function () {
+    $("pbtn-rate").blur();
+    if (window.WQ2_RATE) WQ2_RATE.openStore();
+  });
   if ($("pbtn-analysis")) $("pbtn-analysis").addEventListener("click", function () {
     $("pbtn-analysis").blur();
     if (window.PDRILL) PDRILL.analysis();
