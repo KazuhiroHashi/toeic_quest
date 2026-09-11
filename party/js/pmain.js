@@ -208,6 +208,11 @@
   }
   function bossErase() {
     return king({ base: "king_erase", name: "四天王イレイズ", lv: 850, hp: 6300, atk: 112, def: 34, exp: 3600, quizLv: 750, bg: "zone5", bgm: "king4",
+      // 四天王で唯一、全体攻撃の台詞が既定（＝ハウルと同じ）のままだった。
+      // ガグとブランクは固有の言い回しを持っているので、ここだけ揃っていない。
+      // イレイズが奪ったのは「書く力」で、静めるのではなく消す側。
+      // 口調は短く冷たい（chargeCry『すべて、消える。』／intro『ここで 消す。』）
+      aoeCry: "消えろ", aoeVerb: "言い放った",
       magicCharge: true, chargeCry: "『すべて、消える。』",
       skills: [{ name: "消し去る風", power: 0.68, all: true }, { name: "抹消の一撃", power: 1.0, all: false }],
       intro: ["最後の四天王 イレイズが 立ちはだかる！", "『書く力は すでに この手の中。\n　お前たちの名も、ここで 消す。』"] });
