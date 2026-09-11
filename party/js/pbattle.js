@@ -689,6 +689,19 @@
         cl.push(mm.name + "に " + dm);
       }
       await say(cl.join("\n") + " のダメージ！");
+      // chargeFollowUp を持つ敵だけ、大魔法のあとに通常攻撃が1回続く（＝ためたターンも2回行動）。
+      // 真・沈黙王ミュートス用。ためターンが「大技1発で終わり」にならないようにする
+      if (f.chargeFollowUp) {
+        var alive = [];
+        for (var k = 0; k < party.length; k++) if (party[k].hp > 0) alive.push(k);
+        if (alive.length) {
+          var ti0 = alive[rnd(alive.length)], t0 = party[ti0];
+          var d0 = Math.max(1, Math.round((f.atk - defOf(t0) / 2 + rnd(6)) * (t0.guard ? 0.5 : 1)));
+          hitMember(ti0, d0);
+          await say(f.name + "は 返す手で おそいかかった！\n" + t0.name + "に " + d0 + " のダメージ！" + (t0.guard ? "（防御で半減）" : ""));
+          if (t0.hp <= 0) await say(t0.name + "は たおれてしまった！");
+        }
+      }
       return;
     }
     // boss charge windup

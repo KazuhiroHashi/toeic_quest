@@ -233,6 +233,8 @@
         base: "maou_true", name: "真・沈黙王ミュートス", lv: 900,
         hp: 7000, atk: 148, def: 42, agi: 24, mag: 112, exp: 12000, boss: true,
         magicCharge: true, chargeCry: "『これが 絶対の 静寂—！』",
+        // 真の姿だけは、ためた大魔法のあとに 通常攻撃が1回続く（ためターンも2回行動）
+        chargeFollowUp: true,
         skills: [{ name: "絶対静寂", power: 1.1, all: true }, { name: "言葉狩り", power: 1.4, all: false }], skillRate: 0.44,
         phases: [
           { at: 1.0, acts: 2, aoe: 0.25, charge: 0 },
