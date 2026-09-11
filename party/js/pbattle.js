@@ -731,7 +731,14 @@
       var useSkill = f.skills && f.skills.length && Math.random() < (f.skillRate || 0.4);
       var bossAoe = phase && phase.aoe && Math.random() < phase.aoe;
       if (bossAoe && (!f.skills || Math.random() < 0.5)) {
-        await say(f.name + "は「" + (f.aoeCry || "静まれ") + "！」と" + (f.aoeVerb || "叫んだ") + "！\n言葉の嵐が吹き荒れる！");
+        // 全体攻撃の見せ方。既定は「静まれ！」と叫ぶ——言葉を奪う側の決め台詞で、
+        // 四天王ハウルが初めて使う。aoeCry / aoeVerb はその言い回しだけを替える。
+        //
+        // aoeLine は2行まるごと差し替える。言葉を奪う者ではない敵——洞窟の古竜の
+        // ように ただ道をふさいでいるだけの相手——は、叫ぶ側の台詞を使わない。
+        // ここを既定のままにすると、ハウルより前に同じ台詞が出てしまう。
+        await say(f.aoeLine ||
+          (f.name + "は「" + (f.aoeCry || "静まれ") + "！」と" + (f.aoeVerb || "叫んだ") + "！\n言葉の嵐が吹き荒れる！"));
         var al = [];
         for (var j = 0; j < living.length; j++) {
           var mi = living[j], mm2 = party[mi];
