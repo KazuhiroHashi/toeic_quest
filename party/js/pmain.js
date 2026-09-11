@@ -447,7 +447,10 @@
         var ups = window.PBATTLE.levelEveryone(i >= 3 ? 3 : 2); // faster leveling from the mid-boss on (Yu reaches Lv20=パーティヒール by the ガグ戦)
         var gift = GIFTS[i] || "herb";
         var who = window.PBATTLE.giveItemToParty(gift);
-        var giftName = gift === "herb" ? "ハーブティー" : gift === "elixir" ? "エナジーコーヒー" : "エスプレッソ";
+        // 名前は pbattle.js の ITEMS が唯一の出どころ。ここに書き写すと、
+        // 名前を変えたときに片方だけ古いまま残る
+        var gi = window.PBATTLE.ITEMS[gift] || {};
+        var giftName = gi.name || gift;
         var head = (i === 9) ? "ミュートスを倒した…と思ったその時！" : "勝利！ パーティは 全回復した。";
         var msg = head + "\n" + (who ? who + "が『" + giftName + "』を拾った！" : "（道具袋は満杯だった）");
         if (ups.length) msg += "\nみんなの レベルが上がった！（Ｌｖ" + window.PBATTLE.getParty()[0].lv + "）";

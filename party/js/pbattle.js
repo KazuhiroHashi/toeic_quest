@@ -320,6 +320,25 @@
     return { gained: amount, ups: ups };
   }
 
+  // 道具は3つだけ。名前と回復量を1か所にまとめる。
+  //
+  // 以前は「どうぐ」の一覧、使ったときの処理、pmain.js の入手メッセージの
+  // 3か所に名前と数字が散らばっていて、片方だけ直すと食い違う形だった。
+  //
+  // 名前でHPかMPかが分かるようにしてある。以前は
+  //   ハーブティー … ＨＰ回復
+  //   エナジーコーヒー … ＭＰ回復
+  //   エスプレッソ … ＭＰ大回復
+  // で、飲み物の名前からは何が戻るのか読み取れなかった（「エスプレッソって
+  // 何だっけ」と実際に分からなくなった）。「マジカル」が付くほうがＭＰ、
+  // ラテよりエスプレッソが濃い＝よく効く、と名前だけで見当がつくようにした。
+  var ITEMS = {
+    herb:     { name: "ハーブティー",         stat: "hp", amount: 40 },
+    elixir:   { name: "マジカルラテ",         stat: "mp", amount: 30 },
+    espresso: { name: "マジカルエスプレッソ", stat: "mp", amount: 80 }
+  };
+  function statLabel(it) { return it.stat === "hp" ? "ＨＰ" : "ＭＰ"; }
+
   var items = { herb: 6, elixir: 2 };
 
   // ================= state =================
@@ -492,11 +511,16 @@
         acts.push({ who: i, kind: "guard" });
       } else {
         var counts = {};
-        p.bag.forEach(function (k) { if (k === "herb" || k === "elixir" || k === "espresso") counts[k] = (counts[k] || 0) + 1; });
+        p.bag.forEach(function (k) { if (ITEMS[k]) counts[k] = (counts[k] || 0) + 1; });
         var inv = [];
-        if (counts.herb) inv.push({ key: "herb", label: "ハーブティー ×" + counts.herb });
-        if (counts.elixir) inv.push({ key: "elixir", label: "エナジーコーヒー ×" + counts.elixir });
-        if (counts.espresso) inv.push({ key: "espresso", label: "エスプレッソ ×" + counts.espresso });
+        // 一覧にも回復量を出す。選ぶ前に「どちらが多く戻るか」が分からないと、
+        // 貴重なほうを雑に使ってしまう。まほうの一覧が「名前　ＭＰ12」と
+        // 出しているのと同じ形にそろえた
+        ["herb", "elixir", "espresso"].forEach(function (k) {
+          if (!counts[k]) return;
+          var it = ITEMS[k];
+          inv.push({ key: k, label: it.name + "　" + statLabel(it) + it.amount + "　×" + counts[k] });
+        });
         if (!inv.length) { await say(p.name + "は 使える道具を持っていない！"); continue; }
         var ii = await menu($("pbattle-sub"), inv, p.name + "の どうぐ");
         if (ii === -1) continue;
@@ -545,9 +569,11 @@
       var bi = p.bag.indexOf(a.item);
       if (bi < 0) { await say("道具が見つからない…"); return; }
       p.bag.splice(bi, 1); // consume from the acting member's bag
-      if (a.item === "herb") { t.hp = Math.min(t.maxhp, t.hp + 40); await say(p.name + "は ハーブティーを使った！\n" + t.name + "のＨＰが 40 回復！"); }
-      else if (a.item === "espresso") { t.mp = Math.min(t.maxmp, t.mp + 80); await say(p.name + "は エスプレッソを使った！\n" + t.name + "のＭＰが 80 回復！"); }
-      else { t.mp = Math.min(t.maxmp, t.mp + 30); await say(p.name + "は エナジーコーヒーを使った！\n" + t.name + "のＭＰが 30 回復！"); }
+      var it = ITEMS[a.item] || ITEMS.herb;
+      if (it.stat === "hp") t.hp = Math.min(t.maxhp, t.hp + it.amount);
+      else t.mp = Math.min(t.maxmp, t.mp + it.amount);
+      await say(p.name + "は " + it.name + "を使った！\n" +
+                t.name + "の" + statLabel(it) + "が " + it.amount + " 回復！");
       sfx("heal"); renderParty(-1);
       return;
     }
@@ -913,15 +939,41 @@
       if (totalExp > 0) {
         await say("パーティは " + totalExp + " の 経験値を得た！");
         // 生き残った全員が満額の経験値をもらう（頭割りにしない）
+        //
+        // 知らせ方を1人1通にまとめてある。以前は「1レベル上がるごとに1通」
+        // だったので、最終戦のように一度に2レベル上がると
+        //   ユウは レベル33に上がった！
+        //   ユウは レベル34に上がった！
+        //   ガイは レベル33に上がった！   ← 34のあとに33
+        // と続き、「上がったのに、次は下のレベルに上がった」と読めてしまう。
+        // 実際に真ミュートスを倒したあとで、そう見えるという指摘があった。
+        // 全員が同じレベルになったときは、さらに1通にまとめる（闘技場の
+        // 道中で出している「みんなの レベルが上がった！」と同じ書き方）。
+        var lvUps = [], living = 0;
         for (var pi = 0; pi < party.length; pi++) {
           var m = party[pi];
           if (m.hp <= 0) continue;
+          living++;
           var res = gainExp(m, totalExp);
-          for (var u = 0; u < res.ups.length; u++) {
-            sfx("level");
-            await say(m.name + "は レベル " + res.ups[u].lv + " に上がった！");
-            if (res.ups[u].learned.length) {
-              await say(m.name + "は 魔法『" + res.ups[u].learned.join("』『") + "』を おぼえた！");
+          if (!res.ups.length) continue;
+          var learned = [];
+          res.ups.forEach(function (u) { learned = learned.concat(u.learned); });
+          lvUps.push({ name: m.name, lv: m.lv, learned: learned });
+        }
+        if (lvUps.length) {
+          sfx("level");
+          var allSame = lvUps.length > 1 && lvUps.length === living &&
+            lvUps.every(function (u) { return u.lv === lvUps[0].lv; });
+          if (allSame) {
+            await say("パーティ全員の レベルが " + lvUps[0].lv + " に上がった！");
+          } else {
+            await say(lvUps.map(function (u) {
+              return u.name + "は レベル " + u.lv + " に上がった！";
+            }).join("\n"));
+          }
+          for (var k = 0; k < lvUps.length; k++) {
+            if (lvUps[k].learned.length) {
+              await say(lvUps[k].name + "は 魔法『" + lvUps[k].learned.join("』『") + "』を おぼえた！");
             }
           }
         }
@@ -991,6 +1043,7 @@
     // learned spells with descriptions, for the inspect command
     spellInfo: function (m) { return (m.spellIds || []).map(function (sid) { return { name: SPELLS[sid].name, mp: SPELLS[sid].mp, desc: SPELLS[sid].desc }; }); },
     SPELLS: SPELLS,
+    ITEMS: ITEMS,   // 名前と回復量はここが唯一の出どころ（pmain.js の入手メッセージが読む）
     pressA: function () { var t = INPUT.top(); if (t && t.onA) t.onA(); },
     pressB: function () { var t = INPUT.top(); if (t && t.onB) t.onB(); },
     pressDir: function (d) { var t = INPUT.top(); if (t && t.onDir) t.onDir(d === "left" ? "up" : d === "right" ? "down" : d); }

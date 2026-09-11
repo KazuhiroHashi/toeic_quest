@@ -15,7 +15,7 @@
   var moving = false, busy = false;
 
   var ITEM_NAMES = {
-    herb: "ハーブティー", wing: "帰還の羽根ペン", elixir: "エナジーコーヒー",
+    herb: "ハーブティー", wing: "帰還の羽根ペン", elixir: "マジカルラテ",
     cave_key: "洞窟のカギ", tower_key: "塔のカギ"
   };
   var GEAR = {
