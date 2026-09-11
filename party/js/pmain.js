@@ -848,9 +848,19 @@
     });
   })();
 
-  // ornate UI frame auto-detection (shared with game 1)
+  // 窓枠の装飾画像があれば使う（css/style.css の .ui-frame）。
+  //
+  // 以前は assets/ui/frame.png を決め打ちで取りに行っていた。その絵は
+  // 結局作らなかったので、起動のたびに実機のコンソールへ
+  // ERR_FILE_NOT_FOUND が1件出ていた。動きには影響しないが、無いものを
+  // 毎回取りに行っているのは事実なので消す。<img> の404はブラウザが
+  // 直接記録するため、onerror では握りつぶせない。取りに行かないしかない。
+  //
+  // 絵を用意したら tools/build_inline_assets.js が UI_ART.frame に載せる
+  // （存在するファイルだけを拾う作りになっている）。ここは触らなくてよい。
   (function () {
-    var src = (window.UI_ART && window.UI_ART.frame) || "../assets/ui/frame.png";
+    var src = window.UI_ART && window.UI_ART.frame;
+    if (!src) return;
     var img = new Image();
     img.onload = function () {
       document.documentElement.style.setProperty("--frame-src", "url('" + src + "')");

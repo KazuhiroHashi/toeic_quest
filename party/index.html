@@ -76,7 +76,6 @@
           <div id="ptitle-logo">WORDRIA</div>
           <div id="ptitle-sub">〜 沈黙の四天王 〜</div>
           <div id="ptitle-start">▶ タップして スタート</div>
-          <div id="ptitle-stamina"></div>
           <div id="ptitle-streak" style="display:none"></div>
           <div id="ptitle-records"></div>
           <div id="ptitle-menu">
@@ -89,6 +88,11 @@
             <button id="pbtn-achv" class="title-btn"><span class="ic">🏅</span><span class="tx">称号・記録</span></button>
           </div>
           <div id="title-copy">4人パーティで 早押し英単語バトル。<br>2秒以内の正解で クリティカル！</div>
+          <!-- 残りプレイ回数。以前はロゴの直下に置いていたが、遊ぶ前の人が
+               最初に見るものが「制限」になっていた。プレミアムに入ると
+               refreshStamina() がこの札を「★ プレミアム加入中」に差し替え、
+               下の申し込みボタンを消す。対になっているので、隣に置く -->
+          <div id="ptitle-stamina"></div>
           <!-- 文言と金額は pmain.js の refreshStamina() が pstore.js の PRICE から入れる -->
           <button id="pbtn-unlock" class="title-btn ghost">★ プレミアム</button>
           <!-- 評価は「お願い」であって、取引ではない。押しても何ももらえないし、

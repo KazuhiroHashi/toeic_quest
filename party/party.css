@@ -104,11 +104,11 @@
 /* logo as an image (assets/ui/logo.png) instead of text */
 #ptitle-logo.img { text-shadow: none; }
 #ptitle-logo.img img { display: block; width: 100%; max-width: 340px; height: auto; margin: 0 auto; }
-/* stamina chip */
+/* stamina chip — メニューの下、プレミアムの真上に置く（index.html の並び順） */
 #ptitle-stamina {
   font-size: 12px; letter-spacing: 1px; color: #fff3cf;
   background: rgba(0,0,0,.28); border: 1px solid rgba(255,220,140,.45); border-radius: 16px;
-  padding: 4px 14px; margin-bottom: 6px; text-shadow: 0 1px 2px rgba(0,0,0,.5);
+  padding: 4px 14px; margin: 14px 0 0; text-shadow: 0 1px 2px rgba(0,0,0,.5);
 }
 /* best records line (score attack) */
 #ptitle-records {
@@ -131,6 +131,8 @@
   border: 1px dashed rgba(255, 215, 120, .6); border-radius: 10px; cursor: pointer;
 }
 #pbtn-unlock.ghost:active, #pbtn-rate.ghost:active { background: rgba(255, 215, 120, .28); }
+/* 残りプレイの札のすぐ下に来るので、二重に空けない */
+#ptitle-stamina + #pbtn-unlock.ghost { margin-top: 6px; }
 /* 評価は売り物ではないので、プレミアムより一段おとなしくする。
    同じ金色で並べると、どちらも「押させたいもの」に見えてしまう */
 #pbtn-rate.ghost {
@@ -154,7 +156,7 @@
 #ptitle-screen.has-kv #ptitle-sub,
 #ptitle-screen.has-kv #title-copy { display: none; } /* the artwork carries the vibe */
 #ptitle-screen.has-kv #ptitle-logo.img img { max-width: 270px; }
-#ptitle-screen.has-kv #ptitle-stamina { margin: 2px 0 5px; }
+#ptitle-screen.has-kv #ptitle-stamina { margin: 10px 0 0; }
 #ptitle-screen.has-kv #ptitle-records { margin-bottom: 8px; }
 #ptitle-screen.has-kv #ptitle-menu .title-btn { margin: 5px 0; padding: 11px 14px; background: linear-gradient(180deg, rgba(30,38,74,.95), rgba(10,13,32,.96)); border-color: #6a74a8; }
 #ptitle-screen.has-kv #ptitle-menu .title-btn.primary { padding: 13px 14px; margin-bottom: 6px; background: linear-gradient(180deg, #5647c2, #2a1f66); }
