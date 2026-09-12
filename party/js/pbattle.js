@@ -947,34 +947,24 @@
         //   ガイは レベル33に上がった！   ← 34のあとに33
         // と続き、「上がったのに、次は下のレベルに上がった」と読めてしまう。
         // 実際に真ミュートスを倒したあとで、そう見えるという指摘があった。
-        // 全員が同じレベルになったときは、さらに1通にまとめる（闘技場の
-        // 道中で出している「みんなの レベルが上がった！」と同じ書き方）。
-        var lvUps = [], living = 0;
+        // まとめるのは1人ぶんまで。「パーティ全員の レベルが〜」と1通に
+        // する案は採らない（本人の判断・2026-09-12）。誰がどうなったかは
+        // 1人ずつ読めたほうがよい。
+        var lvUps = [];
         for (var pi = 0; pi < party.length; pi++) {
           var m = party[pi];
           if (m.hp <= 0) continue;
-          living++;
           var res = gainExp(m, totalExp);
           if (!res.ups.length) continue;
           var learned = [];
           res.ups.forEach(function (u) { learned = learned.concat(u.learned); });
           lvUps.push({ name: m.name, lv: m.lv, learned: learned });
         }
-        if (lvUps.length) {
+        for (var k = 0; k < lvUps.length; k++) {
           sfx("level");
-          var allSame = lvUps.length > 1 && lvUps.length === living &&
-            lvUps.every(function (u) { return u.lv === lvUps[0].lv; });
-          if (allSame) {
-            await say("パーティ全員の レベルが " + lvUps[0].lv + " に上がった！");
-          } else {
-            await say(lvUps.map(function (u) {
-              return u.name + "は レベル " + u.lv + " に上がった！";
-            }).join("\n"));
-          }
-          for (var k = 0; k < lvUps.length; k++) {
-            if (lvUps[k].learned.length) {
-              await say(lvUps[k].name + "は 魔法『" + lvUps[k].learned.join("』『") + "』を おぼえた！");
-            }
+          await say(lvUps[k].name + "は レベル " + lvUps[k].lv + " に上がった！");
+          if (lvUps[k].learned.length) {
+            await say(lvUps[k].name + "は 魔法『" + lvUps[k].learned.join("』『") + "』を おぼえた！");
           }
         }
       }
