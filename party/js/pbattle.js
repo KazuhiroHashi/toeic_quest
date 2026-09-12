@@ -909,6 +909,21 @@
       }
 
       var acts = cmd.acts;
+
+      // ぼうぎょは「選んだ時点」から効く。
+      //
+      // 以前は行動順が回ってきたときに初めて p.guard を立てていた。行動順は
+      // すばやさで決まるので、敵のほうが速いと「殴られたあとで 身を守る」に
+      // なり、そのターンのぼうぎょは何の役にも立っていなかった。実際に
+      // そうなるという指摘があった（2026-09-12）。
+      //
+      // acts はコマンドを決め終えたあとの確定した並びなので、ここで立てれば
+      // Ｂボタンで前の人に戻って選び直した場合も取りこぼさない（戻ると
+      // acts.pop() されるため、ぼうぎょを取り消した人はここに残らない）。
+      // ターンの頭で全員 guard=false に戻しているので、持ち越しもしない。
+      acts.forEach(function (a) { if (a.kind === "guard") party[a.who].guard = true; });
+      renderParty(-1);   // 盾のしるしもその場で出す
+
       var queue = acts.map(function (a) { return { m: true, a: a, agi: party[a.who].agi + rnd(8) }; });
       foes.forEach(function (f, i) { if (f.hp > 0) queue.push({ m: false, fi: i, agi: f.agi + rnd(8) }); });
       queue.sort(function (x, y) { return y.agi - x.agi; });
