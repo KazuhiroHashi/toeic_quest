@@ -513,13 +513,12 @@
         var counts = {};
         p.bag.forEach(function (k) { if (ITEMS[k]) counts[k] = (counts[k] || 0) + 1; });
         var inv = [];
-        // 一覧にも回復量を出す。選ぶ前に「どちらが多く戻るか」が分からないと、
-        // 貴重なほうを雑に使ってしまう。まほうの一覧が「名前　ＭＰ12」と
-        // 出しているのと同じ形にそろえた
+        // 一覧には回復量を出さない。使って初めて気づけばよい
+        //（本人の判断・2026-09-12）。名前だけで ＨＰかＭＰか、
+        // どちらが濃いかは分かるようにしてある（ITEMS の説明を参照）
         ["herb", "elixir", "espresso"].forEach(function (k) {
           if (!counts[k]) return;
-          var it = ITEMS[k];
-          inv.push({ key: k, label: it.name + "　" + statLabel(it) + it.amount + "　×" + counts[k] });
+          inv.push({ key: k, label: ITEMS[k].name + " ×" + counts[k] });
         });
         if (!inv.length) { await say(p.name + "は 使える道具を持っていない！"); continue; }
         var ii = await menu($("pbattle-sub"), inv, p.name + "の どうぐ");
