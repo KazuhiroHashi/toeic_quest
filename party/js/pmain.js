@@ -455,6 +455,19 @@
         var msg = head + "\n" + (who ? who + "が『" + giftName + "』を拾った！" : "（道具袋は満杯だった）");
         if (ups.length) msg += "\nみんなの レベルが上がった！（Ｌｖ" + window.PBATTLE.getParty()[0].lv + "）";
         await gsay(msg);
+        // levelEveryone は覚えた魔法も返しているのに、これまで受け取る側で
+        // 捨てていた。闘技場のレベルは大半がここで上がる（1戦ごとに2〜3）
+        // ので、「魔法をおぼえた」がほとんど出ないままになっていた。
+        // 戦闘中と同じく、人ごとに1通ずつ出す
+        var order = [], spellsOf = {};
+        ups.forEach(function (u) {
+          if (!u.learned || !u.learned.length) return;
+          if (!spellsOf[u.name]) { spellsOf[u.name] = []; order.push(u.name); }
+          spellsOf[u.name] = spellsOf[u.name].concat(u.learned);
+        });
+        for (var li = 0; li < order.length; li++) {
+          await gsay(order[li] + "は 魔法『" + spellsOf[order[li]].join("』『") + "』を おぼえた！");
+        }
         var join = JOIN_AFTER[i];
         if (join) {
           var m = window.PBATTLE.addMember(join.id, window.PBATTLE.getParty()[0].lv);
