@@ -154,6 +154,41 @@ Play Console →「**テストとリリース**」→「**テスト**」→「**
 
 ## 残っている宿題（急ぎではない）
 
+### エンディングのムービーが3人（パーティは4人）
+
+ED は3カットのつなぎで、**仲間が映るのは ED-3「旅の続き」だけ**。
+そこに歩いているのが**3人**になっている。ミアは4戦目のあとに加わるので、
+エンディング時点のパーティは4人。食い違っている。
+
+**原因は指示漏れ。** `docs/MOVIE_PROMPTS.md` の ED-3 のプロンプトが
+
+```
+Tiny hero silhouettes walk together down a path toward the horizon.
+```
+
+と書いてあるだけで、**人数を指定していない**。Seedance が3人にした。
+
+**直し方**（Higgsfield ＋ Seedance 2.5・9:16・10秒・音声なし）
+
+起点画像 `assets/bg/zone4.png` は変えず、その1行をこうする。
+
+```
+Exactly four tiny hero silhouettes walk together down a path toward
+the horizon — a boy with a sword and cape, an armored warrior,
+a girl in a pointed witch hat, and a girl in white robes.
+```
+
+そのあと `movie/src/ed3.mp4` を差し替えて `node tools/build_movie.js`。
+
+**ついでに直ること：** いまは `movie/cuts.json` で
+「6秒手前から崩れた文字が空に出るため、その前で切る」として
+**10秒撮ったうち5.4秒しか使っていない**。共通スタイル指定の
+「文字を出さない」（ED-3 は文字なしのカット）は整理済みなので、
+撮り直せば10秒フルで使えるかもしれない。
+
+> ムービーの差し替えは AAB のビルドと独立していて、**公開後の
+> アップデートでも直せる**。ストアを先に片づけてよい。
+
 ### スクリーンショット 04・06 の撮り直し
 
 `04_grades.png`（学年選択）と `06_records.png`（称号・記録）に、
