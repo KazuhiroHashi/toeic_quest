@@ -5,11 +5,19 @@
 // and then jumps back to the top. This trims the fade and crossfades the tail
 // into the head, so the end of the file flows straight into its own beginning.
 //
+//   node tools/loop_bgm.js assets/bgm/*.mp3 --check      # どの曲が未処理か見る
 //   node tools/loop_bgm.js assets/bgm/king1.mp3          # overwrite in place
 //   node tools/loop_bgm.js assets/bgm/king1.mp3 -o out.mp3
 //   node tools/loop_bgm.js assets/bgm/*.mp3              # batch
 //   node tools/loop_bgm.js king1.mp3 --xf 2.0            # longer crossfade
 //   node tools/loop_bgm.js king1.mp3 --min 150           # repeat until >=150s
+//
+// ── 直す手順（ループする曲は2回かける）──────────────────
+//   node tools/loop_bgm.js assets/bgm/title.mp3            # ① フェードを除去
+//   node tools/loop_bgm.js assets/bgm/title.mp3 --reseam   # ② 頭の二度打ちを除去
+// ①だけで止めると、末尾0.6秒に曲の頭が薄く混ざったまま。<audio loop> は
+// 0秒に戻るので「頭が0.6秒鳴って、また頭から鳴る」と聞こえる。king1 で
+// 実際に起きた。②まで必ずやること。
 //
 // Needs ffmpeg on PATH.
 
@@ -136,13 +144,40 @@ function reseam(src, opts) {
   return dst;
 }
 
+// 何も書き換えずに、継ぎ目の有無だけを一覧にする。
+//
+// 見ているのは「曲中の平均音量」と「末尾2秒の平均音量」の差。Suno の
+// フェードアウトが残っていると、末尾は無音近くまで落ちるので差が大きく開く。
+// 処理済みの曲は 0〜4dB に収まる。
+//
+// ※ 差が出ても必ず不具合とは限らない。曲そのものが静かに終わる場合がある
+//   （ending がそれ。最後の1秒はその手前より大きい）。★が出たら、
+//   終盤の音量を1秒ずつ見て、下がり続けているかを確かめること。
+// ※ 1回しか鳴らない音（victory のファンファーレ）は、フェードアウトが正しい。
+//   ループしない音は、この表の判定を当てはめないこと。
+function check(files) {
+  console.log("\n曲名          長さ    曲中     末尾2秒   落差   判定");
+  files.forEach(function (f) {
+    const d = duration(f);
+    const body = level(f, d * 0.35, Math.min(20, d * 0.3));
+    const tail = level(f, Math.max(0, d - 2), 2);
+    const drop = body - tail;
+    const v = drop >= 6 ? "★ フェードアウトが残っている" : drop >= 3 ? "△ すこし落ちる" : "OK";
+    console.log(path.basename(f, ".mp3").padEnd(13) +
+      (d.toFixed(0) + "秒").padStart(6) + "  " + body.toFixed(1).padStart(6) + "dB " +
+      tail.toFixed(1).padStart(7) + "dB " + drop.toFixed(1).padStart(6) + "dB  " + v);
+  });
+  console.log("");
+}
+
 function parseArgs() {
   const a = process.argv.slice(2);
   const o = { files: [], xf: XF_DEFAULT, tol: 4, min: 0, out: null, gain: 0,
-              reseam: false, fade: FADE_DEFAULT };
+              reseam: false, check: false, fade: FADE_DEFAULT };
   for (let i = 0; i < a.length; i++) {
     if (a[i] === "--xf") o.xf = parseFloat(a[++i]);
     else if (a[i] === "--reseam") o.reseam = true;
+    else if (a[i] === "--check") o.check = true;
     else if (a[i] === "--fade") o.fade = parseFloat(a[++i]);
     else if (a[i] === "--tol") o.tol = parseFloat(a[++i]);
     else if (a[i] === "--min") o.min = parseFloat(a[++i]);
@@ -158,7 +193,17 @@ if (!args.files.length) {
   console.log("使い方: node tools/loop_bgm.js <mp3...> [--xf 1.2] [--min 150] [--gain -1.3] [-o out.mp3]");
   console.log("       node tools/loop_bgm.js <mp3...> --reseam [--fade 0.30]");
   console.log("         --reseam は、すでにループ化した曲の継ぎ目を静かに作り直します");
+  console.log("       node tools/loop_bgm.js <mp3...> --check");
+  console.log("         --check は何も書き換えず、どの曲が未処理かだけを出します");
   process.exit(1);
+}
+if (args.check) {
+  check(args.files.filter(function (f) {
+    if (fs.existsSync(f)) return true;
+    console.error("  ! 見つかりません: " + f);
+    return false;
+  }));
+  process.exit(0);
 }
 if (args.out && args.files.length > 1) {
   console.error("-o は1ファイルのときだけ使えます");

@@ -74,6 +74,17 @@ Mac 側で `git pull` すれば、6枚とも新しくなっています。
 > **App Store 側も同じ画像が古いまま**ですが、iOS はまだ出せないので
 > 急ぎません（`store/upload/6.9inch` `6.5inch` `13inch` は更新済み）。
 
+**ついでにもう1か所。** 同じ「メインのストアの掲載情報」の下のほうに
+「**ウェブサイト**」欄があります。いまはトップ `https://bridge-ai-tokyo.com/`
+が入っているはずです。紹介ページができたので
+
+```
+https://bridge-ai-tokyo.com/wordria/
+```
+
+に差し替えてください（`/wordria/` `/wordria/privacy.html`
+`/wordria/terms.html` とも開けることを確認済み）。
+
 ---
 
 ## B. 申告の残り（20分・ブラウザだけ）
@@ -234,11 +245,48 @@ Play・App Store の3サイズすべて作り直し済み。
 次に画面を変えたときの撮り直し方は `store/screenshots/README.md`。
 `node tools/make_shots.js` で3枚撮れます。
 
+### ~~BGM のループの継ぎ目~~ → 出荷分は済（2026-09-13）
+
+**何のことか。** Suno は曲の最後を必ずフェードアウトさせる。ところが
+アプリは `<audio loop>` で鳴らすので、**音が消えたあと、いきなり頭から
+鳴り直す**。「スーッと消えて、ドン」と聞こえる、あれのこと。
+`tools/loop_bgm.js` がフェードを切り落として、末尾を曲の頭につなぎ直す。
+
+**以前ここに書いてあった10曲の名前は間違っていました。**
+`arena1〜4, boss, king2〜4, lastboss, midboss` と書いてありましたが、
+測ったらこれらは**すでに処理済み**でした。実際に残っていたのは別の曲です。
+数だけ合っていて、中身が入れ替わっていた。
+
+いまの状態は、いつでもこれで確かめられます（何も書き換えません）：
+
+```bash
+node tools/loop_bgm.js assets/bgm/*.mp3 --check
+```
+
+**出荷ビルドに入る曲は、全部かたづきました。**
+
+| 曲 | 直した | なぜ |
+|---|---|---|
+| `title` | ✅ 58dB → 3dB | タイトル画面。**全員が必ず聞く**。4分で一周する |
+| `ending` | ✅ 73dB → 6dB | エンディング。6dBは曲そのものの静かな終わり方（実測で確認） |
+| `gameover` | ✅ 47dB → 0.5dB | 全滅の曲 |
+
+**★が残っている曲は、直さなくてよい。** 理由：
+
+- `field` `town` `dungeon` `battle_dungeon` … 制作中のストーリーモード専用。
+  `tools/build_www.js` の `SKIP_BGM` で**出荷ビルドに入っていない**
+- `battle` `battle2` … 入ってはいるが、**鳴る場面が無い**。戦闘の曲は
+  11曲すべてが `bgm:` で名指しされていて（arena1〜4/king1〜4/boss/midboss/
+  lastboss）、この2曲は「名指しが無かったとき」の保険。出番が来ない
+- `victory` … 6秒のファンファーレ。**ループしない**ので、
+  フェードアウトが正しい。効果音として鳴らしている（`pbattle.js`）
+
+> `battle` と `battle2` を同梱から外せば **5.6MB 減らせます**が、
+> 保険を外すことになるので、公開を急ぐいまは触っていません。
+
 ### そのほか
 
 - `wordquest_pr_886x1920.mp4`（家族用のPR動画）に旧ロゴ
-- BGM のループの継ぎ目が10曲ぶん残っている
-  （`arena1〜4, boss, king2〜4, lastboss, midboss`）
 
 ---
 
@@ -247,11 +295,13 @@ Play・App Store の3サイズすべて作り直し済み。
 - **AdMob のアプリを Google Play のストア掲載情報に紐づける**
   → マッチ率 0.00% の原因は「ストア情報が未登録のアプリには広告配信を
     制限する」という AdMob の仕様。**バグではありません。公開が先です**
-- `app-ads.txt` を `bridge-ai-tokyo.com` に置く
-- `bridge-ai-tokyo.com/wordria/` の紹介ページを作る
-  （いまは privacy.html と terms.html だけで、`/wordria/` 自体は404）
+- `app-ads.txt` を `bridge-ai-tokyo.com` に置く（いまは404）
+- ~~`/wordria/` の紹介ページを作る~~ → **できています**（2026-09-13・娘さん作）
+  - `/wordria/` `/wordria/privacy.html` `/wordria/terms.html` とも HTTP 200 を確認
+  - ストアのバッジは「近日公開」。**公開されたら実際のURLに差し替える**
 - `/wordquest/` をリダイレクトに変える
   **※ストアが `/wordria/` を向き、アプリが公開されるまでは消さないこと**
+  （`/wordquest/` も `/wordquest/privacy.html` もまだ生きている・確認済み）
 
 ---
 
