@@ -1050,7 +1050,7 @@
     // 説明すると、書くほど言い訳に見える（2026-09-13 本人の判断）
     var isStudent = !!(window.WQ2_MODE && WQ2_MODE.get && WQ2_MODE.get().mode === "student");
     var note = !isStudent ? "" :
-      '<div class="zk-note">学年の分け方は目安です。実際に習う学年と異なる語があります。</div>';
+      '<div class="zk-note">学年の分け方は目安です。実際に学習する学年と異なる語があり、改善を進めます。</div>';
 
     $("zukan-summary").style.display = "none";
     $("zukan-list").innerHTML = '<div class="zk-summary-inner">' + head + bandLine + legend + '</div>' + rows.join("") + note;
