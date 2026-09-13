@@ -80,7 +80,7 @@
     try { saved = JSON.parse(localStorage.getItem(LOGKEY) || "{}") || {}; } catch (e) {}
 
     window.WQ2_ADS = {
-      build: "2026-09-10a", max: MAX_LOADS, loaders: {},
+      build: "2026-09-13a", max: MAX_LOADS, loaders: {},
       platform: platform, testing: CONFIG.testing,
       rewardedId: rewardedId, interstitialId: interstitialId,
       init: "まだ",                          // 初期化の結果
@@ -209,6 +209,22 @@
       self.consumed = function () {                   // 表示し終わった。次を読む
         self.ready = false; fails = 0; self.load();
       };
+      // 本人が「広告を見る」を選んだとき用。待ちも打ち切りも解いて、いま読みにいく。
+      //
+      // load() は「打ち切り済み(dead)」「再試行待ち(timer)」のときは黙って
+      // 何もしない。再試行の間隔は失敗するたびに倍になり最大8分あくので、
+      // 圏外を一度またいだだけで、そのあと何分も広告が出せない状態になる。
+      // 打ち切りに至れば、アプリを開き直すまで二度と出ない。
+      // 自動の読み込みならそれでよい（無駄な通信を繰り返さないための安全弁）。
+      // だが本人が広告を見ると決めて押した場面は別で、ここで諦めるのは
+      // 「見ると言ったのに出ない」になる。人が押した回数しか起きないので、
+      // 暴走の心配もない。
+      self.revive = function () {
+        if (self.ready || pending) return;
+        if (timer) { clearTimeout(timer); timer = 0; }
+        dead = false; fails = 0; loads = 0;
+        self.load();
+      };
     }
 
     var rewarded = new Loader("rewarded", function () {
@@ -259,10 +275,40 @@
     AdMob.addListener("onRewardedVideoAdFailedToLoad", function (e) { rewarded.retry(e); });
     AdMob.addListener("onRewardedVideoAdShowed", function () { onScreen = true; shown("リワード"); });
 
-    window.WQ2_STORE.showRewarded = function (cb) {
-      if (!rewarded.ready) { cb(false); rewarded.load(); return; } // no fill / offline: fail gracefully
+    // スタミナ切れの「広告を見て＋1」と、たおれたときの「広告を見て復活」の
+    // どちらもここを通る。pstore.js の openGate / offerContinue の2か所だけ。
+    //
+    // 以前はここで、用意できていなければ即座に諦めていた：
+    //     if (!rewarded.ready) { cb(false); rewarded.load(); return; }
+    // これだと、読み込みが間に合っていないだけの場面まで落としてしまう。
+    // いちばん多いのは「リワードを見た直後にもう一度見る」場面で、
+    // 1本目を見終えた時点で次の読み込みが始まるため、続けて押すと必ず
+    // ready が false になる。コンティニューを2回続けたときがこれにあたる。
+    // 読み込みには数秒かかるので、押した人には少し待ってもらう。
+    //
+    // 待っても駄目なら cb(false)。呼び出し側は、広告が出ても出なくても
+    // スタミナ回復・復活をさせる（pstore.js に理由を書いてある）ので、
+    // 待ちが無駄になっても、遊ぶ人が損をすることはない。
+    var REWARD_WAIT_MS = 4000;
+    function showRewardNow(cb) {
       rewardCb = cb;
-      AdMob.showRewardVideoAd().catch(function () { if (rewardCb) { var c = rewardCb; rewardCb = null; c(false); } });
+      AdMob.showRewardVideoAd().catch(function () {
+        if (rewardCb) { var c = rewardCb; rewardCb = null; c(false); }
+      });
+    }
+    window.WQ2_STORE.showRewarded = function (cb) {
+      rewarded.revive();                       // 打ち切り・再試行待ちを解いて読みにいく
+      if (rewarded.ready) { showRewardNow(cb); return; }
+      var waited = 0;
+      var iv = setInterval(function () {
+        waited += 250;
+        if (rewarded.ready) { clearInterval(iv); showRewardNow(cb); return; }
+        if (waited >= REWARD_WAIT_MS) {
+          clearInterval(iv);
+          note("リワード 読み込みが間に合わず 表示できなかった");
+          cb(false);
+        }
+      }, 250);
     };
 
     // ---------- interstitial (free tier: one before every battle) ----------
