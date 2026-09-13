@@ -250,6 +250,21 @@ html = html.replace(/(src=")(assets\/[^"]+)\.png(")/g, '$1$2.webp$3');
 var footBefore = html;
 html = html.replace(/[ \t]*<div id="ptitle-foot">[\s\S]*?<\/div>\r?\n/, "");
 if (html === footBefore) { console.error("  ! ptitle-foot が見つかりません（index.html の構造が変わった？）"); process.exit(1); }
+
+// 端末に入っているビルドの目印を、ここで書き込む。
+//
+// index.html には "build 2026-09-10a" のように手で書いた文字が入っていた。
+// この表示の目的は「いま端末で動いているのが、どのビルドか」を道具なしで
+// 確かめることなのに、手で書く以上いつか必ず古いまま残る。実際 2026-09-13 の
+// 時点で3日前の日付を表示していて、番号としての役目を果たしていなかった。
+// version.json から書き込めば、ずれようがない。
+var vb = JSON.parse(fs.readFileSync(path.join(root, "version.json"), "utf8"));
+var stamp = new Date().toISOString().slice(0, 16).replace("T", " ");
+var buildBefore = html;
+html = html.replace(/(<div id="ptitle-build">)[\s\S]*?(<\/div>)/,
+                    "$1build " + vb.code + " (" + vb.name + ") " + stamp + "$2");
+if (html === buildBefore) { console.error("  ! ptitle-build が見つかりません（index.html の構造が変わった？）"); process.exit(1); }
+
 fs.writeFileSync(path.join(www, "index.html"), html);
 fs.copyFileSync(path.join(root, "party", "party.css"), path.join(www, "party.css"));
 mkdir(path.join(www, "css"));

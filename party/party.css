@@ -38,7 +38,13 @@
 /* 端末に入っているビルドの目印。小さく、邪魔にならない位置に。
    これが古い日付のままなら cap sync が効いていない */
 #ptitle-build {
-  margin-top: 6px; font-size: 9px; letter-spacing: .5px;
+  /* この行はタイトルの初期表示では画面の外にある（実測 y=731、見えている
+     範囲は 676 まで）。メニューを下まで送れば出てくるが、余白が無いと
+     送りきっても下端ぎりぎり（残り4px）で、指では狙いにくい。
+     下に余白を置くと、送りきったとき39px空いて押しやすくなる。
+     操作パネルに隠れているわけではない（2026-09-13 実測） */
+  margin-top: 6px; margin-bottom: 22px;
+  font-size: 9px; letter-spacing: .5px;
   color: rgba(120, 130, 160, .5); user-select: text;
 }
 #ptitle-screen.pre-start #ptitle-build { display: none; }
