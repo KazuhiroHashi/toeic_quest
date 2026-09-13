@@ -240,6 +240,11 @@ mkdir(cacheDir);
 // ---- index.html + css ---------------------------------------------------
 var htmlSrc = path.join(root, "party", "index.html");
 var html = fs.readFileSync(htmlSrc, "utf8").replace(/(href|src)="\.\.\//g, '$1="');
+// index.html が直接 <img> で読む絵（タイトルの項目アイコン）。placeAsset が
+// assets/ 配下の PNG を WebP に焼き直して拡張子ごと変えるので、ここを書き換え
+// ないと出荷ビルドだけ 404 になる。開発中は party/ から直接 .png を読むため
+// 気づけない。copyScript が js に対してやっているのと同じ処理
+html = html.replace(/(src=")(assets\/[^"]+)\.png(")/g, '$1$2.webp$3');
 // drop the "ストーリーモードは制作中" entry — the mode is unfinished and its art
 // is excluded above, so it must not be reachable in a shipped build
 var footBefore = html;

@@ -86,8 +86,7 @@ WANT.forEach(function (name) {
 });
 
 // ---- 書き出し -------------------------------------------------------------
-var inner = Math.round(SIZE * (1 - MARGIN * 2));   // 絵そのものの幅
-var pad = Math.round((SIZE - inner) / 2);
+var inner = Math.round(SIZE * (1 - MARGIN * 2));   // 絵そのものの大きさの目安
 var done = 0, missing = [], saved = 0, before = 0;
 
 console.log("\n" + SIZE + "×" + SIZE + " に書き出します（余白 " + Math.round(MARGIN * 100) + "%）\n");
@@ -110,22 +109,36 @@ WANT.forEach(function (name) {
     process.exitCode = 1; return;
   }
 
-  // 絵を切り出し → 正方形に整え → 余白を付けて SIZE に収める
-  var side = Math.max(box.w, box.h);
+  // 絵を切り出し → 大きさをそろえて縮小 → 中央に置いて SIZE に収める
+  //
+  // 「長辺を inner にそろえる」だと、縦長の絵だけ小さく見える。実際に
+  // 塔（縦横比 0.47）と勲章（0.53）が、城や本の半分の幅になって沈んだ。
+  // そこで、縦横の相乗平均 √(w×h) を inner にそろえる。こうすると
+  // 「画面が絵で埋まる量」がだいたい同じになり、並べたとき揃って見える。
+  //   ・正方形の絵（城・記録・本・歯車）は、これまでと同じ大きさのまま
+  //   ・縦長・横長の絵だけが、余っていたぶん大きくなる
+  // ただし枠からはみ出させない。長辺が SIZE を超えるときは、そこで頭打ち
+  // にする（縦長の絵は左右にたっぷり余白が残るので、上下が枠いっぱいでも
+  // 詰まって見えない）
+  var k = inner / Math.sqrt(box.w * box.h);
+  k = Math.min(k, SIZE / Math.max(box.w, box.h));
+  var ow = Math.max(1, Math.round(box.w * k));
+  var oh = Math.max(1, Math.round(box.h * k));
+
   var out = path.join(DIR, name + ".png");
   ff(["-i", src, "-vf",
     "format=rgba," +
     "crop=" + box.w + ":" + box.h + ":" + box.x + ":" + box.y + "," +
-    "pad=" + side + ":" + side + ":(ow-iw)/2:(oh-ih)/2:color=#00000000," +
-    "scale=" + inner + ":" + inner + ":flags=lanczos," +
-    "pad=" + SIZE + ":" + SIZE + ":" + pad + ":" + pad + ":color=#00000000",
+    "scale=" + ow + ":" + oh + ":flags=lanczos," +
+    "pad=" + SIZE + ":" + SIZE + ":(ow-iw)/2:(oh-ih)/2:color=#00000000",
     "-frames:v", "1", out]);
 
   var b = fs.statSync(src).size, a = fs.statSync(out).size;
   before += b; saved += a; done++;
   console.log("  " + name.padEnd(14) + w + "×" + h + " " + kb(src).padStart(8) +
     "  →  " + SIZE + "×" + SIZE + " " + kb(out).padStart(7) +
-    "   (" + Math.round(100 - a / b * 100) + "% 減)");
+    "   (" + Math.round(100 - a / b * 100) + "% 減)" +
+    "   絵は " + ow + "×" + oh);
 });
 
 if (missing.length) {

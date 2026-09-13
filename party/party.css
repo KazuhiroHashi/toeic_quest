@@ -60,14 +60,16 @@
   background: rgba(255,255,255,.10); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14);
 }
 #ptitle-menu .title-btn .tx { flex: 1; }
-/* 挑戦の塔のしるし。ほかの項目は絵文字だが、塔だけは使える絵文字が無い
-   （🗼 は東京タワーそのもので、汎用の「塔」は Unicode に存在しない）。
-   周りが色つきの絵文字なので、これも単色にせず石・影・旗で塗り分ける */
-#ptitle-menu .title-btn .ic-svg { width: 18px; height: 18px; display: block; }
-#ptitle-menu .title-btn .ic-svg .s1 { fill: #d9cdb0; }  /* 石 */
-#ptitle-menu .title-btn .ic-svg .s2 { fill: #b3a382; }  /* 影の側 */
-#ptitle-menu .title-btn .ic-svg .s3 { fill: #2b3252; }  /* 窓 */
-#ptitle-menu .title-btn .ic-svg .s4 { fill: #d9534f; }  /* 旗 */
+/* 項目のしるし。28pxの枠に22pxで置く。絵の側に8%の余白が焼いてあるので、
+   実際に見える絵は20px前後になる。object-fit: contain は保険——塔と勲章は
+   縦長なので、正方形に収めるときに潰さないため（make_icons.js が正方形に
+   整えているので、ふだんは効かない）。
+   -webkit-touch-callout は、長押しで「画像を保存」が出るのを止める。
+   ボタンの上に置いた絵なので、押し続けたときに出てほしくない */
+#ptitle-menu .title-btn .ic img {
+  width: 22px; height: 22px; display: block; object-fit: contain;
+  pointer-events: none; -webkit-touch-callout: none; -webkit-user-drag: none;
+}
 #ptitle-menu .title-btn:active { transform: translateY(1px); filter: brightness(1.12); }
 #ptitle-menu .title-btn.primary {
   font-size: 18px; padding: 15px 16px; margin-bottom: 10px; letter-spacing: 2px;

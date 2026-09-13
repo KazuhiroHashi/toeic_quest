@@ -78,7 +78,8 @@ clean outlines, vivid saturated colors, bright enough to read against a dark
 panel, 2D illustration (not 3D render), no grain, no gradient backdrop,
 no drop shadow cast onto the background.
 Composition: one object only, centered, facing the viewer, filling about 84%
-of the frame, generous even margins on all four sides.
+of the frame, generous even margins on all four sides. The object must fit a
+roughly SQUARE area — do not make it tall and narrow or wide and flat.
 Legibility: this is displayed at 20x20 pixels. Keep the silhouette simple and
 instantly recognisable. No thin lines, no small details, no fine texture.
 Avoid: text, letters, numbers, logos, watermarks, scenery, multiple objects,
@@ -150,14 +151,35 @@ from a short red and blue striped ribbon.
 
 ## 受け取ったあと
 
-1. `assets/ui/icons/` に上の名前で置く
-2. 透過とサイズを検査する（こちらでやる）
-3. `party/index.html` の `<span class="ic">絵文字</span>` を
-   `<span class="ic"><img src="../assets/ui/icons/ic_xxx.png" alt=""></span>` に替え、
-   `party.css` に `#ptitle-menu .title-btn .ic img { width:20px; height:20px; }` を足す
-4. 実機サイズ（375／393px）で描画して、つぶれていないか見る
+1. 原寸を `art/icons/ic_xxx.png` に置く（`assets/` の中には置かない。
+   `build_www.js` が `assets/` を丸ごと同梱するので、1200pxの絵まで端末へ運ばれる）
+2. `node tools/make_icons.js` — 透過を検査し、`assets/ui/icons/` に128pxで書き出す
+3. `party/index.html` の `<span class="ic">…</span>` を
+   `<span class="ic"><img src="../assets/ui/icons/ic_xxx.png" alt=""></span>` に替える
+4. `npm run build:www` して、`www/index.html` が `.webp` を指し、
+   `www/assets/ui/icons/` に同じ名前の `.webp` があることを確かめる
+5. 実機サイズ（360／375／393px）で描画して、つぶれていないか見る
 
 **7つそろってから差し替える。** 混ざった状態では出さない。
+
+### ⚠️ ここで実際にはまったこと（2026-09-13）
+
+**① 出荷ビルドだけ 404 になりかけた**
+`build_www.js` は `assets/` の PNG を WebP に焼き直して**拡張子ごと変える**。
+その書き換えは JS にしか掛かっていなかったので、index.html に直接書いた
+`.png` は出荷ビルドで消える。開発中は `party/` から素の PNG を読むため
+**手元では絶対に気づけない**。html にも同じ書き換えを足して塞いだ。
+
+**② 縦長の絵だけ小さく見えた**
+届いた7枚の縦横比は、5枚が約1.0、**塔が0.47・勲章が0.53**。
+「長辺をそろえる」やり方だと、この2枚だけ枠の半分の幅になって沈んだ。
+`make_icons.js` を **√(幅×高さ) をそろえる**（＝画面が絵で埋まる量をそろえる）
+に直して解決。正方形の絵は変わらず、縦長の2枚だけ19%大きくなる。
+
+→ **次に頼むときは、プロンプトに縦横比を書く。** 上の共通スタイルに
+`Fit the object into a roughly square area` と入れておくと、この手間が要らない。
+勲章は「short ribbon」と指定したのに長いリボンで届いた。生成AIは
+長さの形容詞をよく落とすので、**「正方形に収まること」で縛るほうが効く**。
 
 ---
 
