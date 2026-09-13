@@ -699,7 +699,17 @@
   transition: background .12s, border-color .12s;
 }
 .quiz-choice .num { color: #7fa8d8; }
-.quiz-choice:active { background: rgba(90, 220, 255, .24); border-color: rgba(90,220,255,.75); }
+#quiz-choices:not(.locked) .quiz-choice:active { background: rgba(90, 220, 255, .24); border-color: rgba(90,220,255,.75); }
+/* 答えたあとは、選択肢に触れても反応させない。
+   答えると #quiz-result に「正解！」などの文字が入って枠の高さが変わる。
+   枠は中央揃えなので選択肢がすこし動き、まだ画面に触れている指の下に
+   別の選択肢が来て :active が当たる。その色（.24）は .correct（.28）と
+   ほぼ同じ水色なので、**正解が2つあるように見えていた**。
+   Pixel 8 で実際に見えた（2026-09-13）。quiz.js が locked を付ける。
+   二重に塞いである。触れなくする（pointer-events）だけだと、すでに押されて
+   いる最中の :active が残る可能性があるので、色の指定そのものを
+   :not(.locked) で外してある（上の行） */
+#quiz-choices.locked .quiz-choice { pointer-events: none; }
 .quiz-choice.correct {
   background: rgba(90, 220, 255, .28); border-color: rgba(90, 220, 255, .9); color: #fff;
   box-shadow: 0 0 24px rgba(90, 220, 255, .5);

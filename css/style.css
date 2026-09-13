@@ -299,7 +299,9 @@ canvas#field-canvas {
   text-shadow: 0 1px 3px rgba(0,0,0,.9);
 }
 .quiz-choice .num { color: var(--accent); margin-right: 8px; }
-.quiz-choice:active { background: #234; }
+#quiz-choices:not(.locked) .quiz-choice:active { background: #234; }
+/* 答えたあとは触れても反応させない。理由は party.css の同じ規則に書いた */
+#quiz-choices.locked .quiz-choice { pointer-events: none; }
 .quiz-choice.correct { background: #063; border-color: var(--good); }
 .quiz-choice.wrong { background: #611; border-color: var(--danger); }
 #quiz-result {

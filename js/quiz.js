@@ -179,6 +179,7 @@
       hintEl.textContent = "【" + (POS_LABEL[entry.p] || "?") + "】 意味は？";
       resultEl.textContent = ""; resultEl.className = "";
       choicesEl.innerHTML = "";
+      choicesEl.classList.remove("locked");   // 前の問題で付けたものを外す
       var btns = choices.map(function (m, i) {
         var b = document.createElement("button");
         b.className = "quiz-choice";
@@ -212,6 +213,11 @@
         window.removeEventListener("keydown", keyHandler);
         var elapsed = (performance.now() - t0) / 1000;
         record(entry, correct, elapsed, lv);
+        // 触れても反応しないようにしてから、正解を見せる。
+        // ここで結果の文字が入って枠の高さが変わり、選択肢がすこし動く。
+        // まだ画面に触れている指の下に別の選択肢が来ると :active が当たり、
+        // その色が .correct とほぼ同じなので、正解が2つあるように見えていた
+        choicesEl.classList.add("locked");
         // reveal
         btns.forEach(function (b, i) {
           if (choices[i] === entry.m) b.classList.add("correct");
