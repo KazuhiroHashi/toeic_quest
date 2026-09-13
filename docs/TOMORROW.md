@@ -166,6 +166,28 @@ Android Studio が開いたら：
 「この AGP はサポートされていません」と出たら、Android Studio 自体を
 更新してください（Ladybug 以降が必要）。
 
+### ⚠️ ビルドしたら、AD_ID 権限が入っているか確かめる
+
+⑩ 広告 ID を「**はい**」で申告した（2026-09-13）。この申告をすると、
+**`com.google.android.gms.permission.AD_ID` 権限が入っていないビルドは
+アップロードがブロックされる**（Android 13 以降をターゲットにする場合）。
+
+この権限は `@capacitor-community/admob` 自身の AndroidManifest には
+書かれていない。**Google Mobile Ads SDK（play-services-ads 20.4.0 以降）の
+AAR が持っていて、マニフェストの結合で自動的に入る**仕組み。
+このプロジェクトは `25.4.+` を使うので条件は満たしている。
+
+ただし自動なので、入っていることを一度は目で見ておく。
+`npx cap open android` でビルドが通ったあと、Terminal で：
+
+```bash
+grep -rl "permission.AD_ID" android/app/build/intermediates/ | head
+```
+
+何か出れば入っている。**何も出ないときはアップロードする前に相談すること。**
+Android Studio で `AndroidManifest.xml` を開き、下の
+「**Merged Manifest**」タブを見ても同じことが確かめられる。
+
 ---
 
 ## E. 内部テストで動作確認（30分・強くおすすめ）
