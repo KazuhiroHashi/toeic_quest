@@ -45,7 +45,17 @@
      操作パネルに隠れているわけではない（2026-09-13 実測） */
   margin-top: 6px; margin-bottom: 22px;
   font-size: 9px; letter-spacing: .5px;
-  color: rgba(120, 130, 160, .5); user-select: text;
+  color: rgba(120, 130, 160, .5);
+  /* 文字として選べないようにする。
+     以前は user-select: text にしてあった（番号をコピーして送れるように）。
+     だが iOS では「長押し＝文字を選ぶ」なので、長押しすると
+     「翻訳／コピー／共有／すべて選択」の吹き出しが出て、そちらに
+     指の操作を取られる。診断の長押しは一度も届いていなかった
+     （2026-09-13 実機で確認）。コピーできることより、広告の状態を
+     読めることのほうが大事なので、選択のほうを捨てる。
+     -webkit-touch-callout も切らないと、iOS は吹き出しだけ出してくる */
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
 }
 #ptitle-screen.pre-start #ptitle-build { display: none; }
 /* 広告の不調を画面に出す目印は置かない（2026-09-09 方針）。
