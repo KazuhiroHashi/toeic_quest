@@ -226,7 +226,15 @@
           var fast = elapsed <= 2 && !opts.noCrit;
           resultEl.textContent = fast ? "クリティカルヒット！ " + entry.w + " = " + entry.m : "正解！";
           resultEl.className = "ok";
-          if (window.SFX) SFX.play(fast ? "crit" : "ok");
+          // 正解の合図はいつも ok（ピローン）。会心でも crit は鳴らさない。
+          // crit を鳴らすのは攻撃する側（pbattle.js / battle.js）の役目で、
+          // ここで鳴らすと必ず二重になっていた。2秒以内に正解すると
+          //   quiz.js の crit → 攻撃の crit
+          // と同じ音が続けて鳴り、ピローンは一度も鳴らなかった。
+          // 会心音を鳴らす呼び出し元は通常攻撃の2か所だけで、どちらも
+          // 自分で crit を鳴らす。魔法と単語ドリルは noCrit なので元から ok。
+          // 2026-09-13 実機で指摘を受けて確認
+          if (window.SFX) SFX.play("ok");
         } else {
           resultEl.textContent = (timeout ? "時間切れ… " : "ミス… ") + entry.w + " = " + entry.m;
           resultEl.className = "ng";

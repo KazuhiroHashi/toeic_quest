@@ -226,7 +226,7 @@
       // 実際に習う学年とずれている語がある。言い切らずに断っておく。
       // 理由は書かない。書くほど言い訳に見える（2026-09-13 本人の判断）
       '<div class="wq2-store-note">学年の分け方は目安です。<br>' +
-      '実際に学習する学年と異なる語があり、改善を進めます。</div>',
+      '実際に学習する学年と異なる語があります。</div>',
       GRADES.map(function (g) {
         return { key: g.id, label: g.name + '<span class="wq2-mode-sub">' + g.pools.map(function (k) { return POOL[k].name; }).join(" → ") + '</span>', primary: g.id === state.grade };
       }).concat([{ key: "back", label: "もどる" }])
