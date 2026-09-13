@@ -274,16 +274,81 @@ npx cap open android
 > **`npm run cap:sync` を `npx cap sync` で代用しないこと。**
 > AdMob のアプリIDが AndroidManifest.xml に入らず、**広告が一切出なくなります。**
 
+### 2026-09-13 に実際にぶつかった順番（次回はここを読めば早い）
+
+**① Android SDK が入っていなかった**
+
+`Select SDKs` が出て、場所を聞かれる。この Mac には SDK が無かった
+（`find ~ -maxdepth 4 -name "*.jks"` も `ls ~/Library/Android/sdk` も空）。
+
+- `Tools` メニューに **SDK Manager は無い**（Quail 3 で移動した）
+- `Android Studio → Settings…`（⌘,）→ 検索欄に `Android SDK`
+  → `Languages & Frameworks > Android SDK`
+- `Android SDK Location` の右の **Edit** → ウィザードが場所とダウンロードを両方やる
+- 置き場所は `/Users/<user>/Library/Android/sdk`
+
+**② ウィザードは API 37 を入れる。このプロジェクトが要るのは API 36**
+
+`variables.gradle` は compileSdk / targetSdk = **36**、minSdk = **24**。
+ウィザードの API 37 のチェックは**外せない**ので、入れたあとに
+`SDK Platforms` タブで **`Android 16.0 ("Baklava")` の API Level `36.0`・
+Revision `2`** を追加する。
+
+> 同じ「Android 16.0」の行が4つある。`36.1` `36.0-ext18` `36.0-ext19` は違う。
+> **ちょうど `36.0`** の行。
+
+**③ Gradle と JDK のバージョンが合わない**
+
+```
+Incompatible Gradle JVM version
+The project's Gradle version 8.14.3 is incompatible with the Gradle JVM version 25
+```
+
+Android Studio 同梱の JDK 25 が新しすぎる。エラーの下に出る
+**「Apply compatible Gradle JDK configuration and sync」**を押せば自動で直る。
+手で JDK を選ぶ必要はない。
+
+**④ Build Variants は「選択」が要る**
+
+`Generate Signed App Bundle or APK` の最後の画面で、`release` の左に
+緑のチェックが付いていても **「Please select the build variants to build and sign」**
+で止まる。あの緑は「いま有効な種類」の印で、選択とは別。
+**`release` の行そのものをクリックして青く反転させる。**
+下の `Selected App ID` に `com.bridgeai.wordria (release)` が出れば選べている。
+
+### 署名鍵（2026-09-13 に新規作成）
+
+**この Mac には鍵が1つも無かった。** 署名済みのAABを一度も作っていなかったため。
+
+```
+場所：   /Users/hashinokazuhiro/wordria-upload-key.jks   ← リポジトリの外
+Alias：  upload
+有効期限：25年
+証明書： Kazuhiro Hashino / BRIDGE AI / Tokyo / Tokyo / JP
+```
+
+**リポジトリの中に置かないこと。** git に入ると、誰でもアプリを偽装できる。
+
+> 🔴 **この鍵とパスワードを失うと、このアプリは二度と更新できない。**
+> 再発行はできず、Google にも復元できない。アプリ名を変えて出し直すしかなくなる。
+> **Mac の外にバックアップを1つ置くこと**（iCloud Drive・外付け・USB。GitHub は不可）。
+
+---
+
 Android Studio が開いたら：
 
-1. Gradle sync が走る（初回10分ほど）
-2. **Build → Generate Signed Bundle / APK → Android App Bundle**
-3. **署名鍵（.jks）はこれまでのものを使う。**
-   **作り直すと、以後このアプリを更新できなくなります**
-4. `.aab` ファイルができる
+1. Gradle sync が走る（初回10分ほど。上の①〜③を先に片づける）
+2. **Build → Generate Signed App Bundle / APK → Android App Bundle**
+3. 署名鍵は `~/wordria-upload-key.jks` を **Choose existing…** で選ぶ。
+   **二度と作り直さないこと**
+4. Build Variants で **`release` の行をクリックして選択** → Create
+5. 10〜20分で `.aab` ができる
 
 「この AGP はサポートされていません」と出たら、Android Studio 自体を
 更新してください（Ladybug 以降が必要）。
+
+> ⚠️ ビルド中に右下へ出る **「Start AGP Upgrade Assistant」は押さないこと。**
+> リリース直前にビルド設定を変えることになる。Kotlin の更新案内も同じ。
 
 ### ⚠️ ビルドしたら、AD_ID 権限が入っているか確かめる
 
