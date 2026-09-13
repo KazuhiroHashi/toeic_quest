@@ -942,6 +942,8 @@
     var m = $("pfield-wrap");
     m.style.display = "block";
     $("ptitle-screen").style.display = "none";
+    // タイトルから入った直後の1戦には広告を入れない（pstore.js）
+    if (window.WQ2_STORE && WQ2_STORE.noAdOnNextBattle) WQ2_STORE.noAdOnNextBattle();
     if (!canvas) {
       canvas = $("field-canvas");
       ctx = canvas.getContext("2d");

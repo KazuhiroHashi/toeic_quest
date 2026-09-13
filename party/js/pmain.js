@@ -412,6 +412,8 @@
     if (window.QUIZ && QUIZ.resetRunSeen) QUIZ.resetRunSeen(); // fresh word rotation per run
     bumpStreak();
     $("ptitle-screen").style.display = "none";
+    // タイトルから入った直後の1戦には広告を入れない（pstore.js）
+    if (window.WQ2_STORE && WQ2_STORE.noAdOnNextBattle) WQ2_STORE.noAdOnNextBattle();
     var rounds = arenaRounds();
     for (var i = startAt; i < rounds.length; i++) {
       saveRun(i); // checkpoint before each battle so an interruption resumes here
@@ -586,6 +588,8 @@
     if (window.QUIZ && QUIZ.resetRunSeen) QUIZ.resetRunSeen();
     bumpStreak();
     $("ptitle-screen").style.display = "none";
+    // タイトルから入った直後の1戦には広告を入れない（pstore.js）
+    if (window.WQ2_STORE && WQ2_STORE.noAdOnNextBattle) WQ2_STORE.noAdOnNextBattle();
     // fixed party: no growth during the climb, so it's purely about your answers
     window.PBATTLE.setParty(["yu", "gai", "rina", "mia"].map(function (id) {
       var m = window.PBATTLE.makeMember(id, 30);

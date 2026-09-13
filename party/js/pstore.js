@@ -69,7 +69,13 @@
     return true;
   }
 
-  var skipNextAd = false;   // set after a rewarded revive, so two ads never stack
+  // 「次の1戦は広告を出さない」印。2か所から立てる。
+  //   ・リワード広告で復活した直後（広告の直後にまた広告、を避ける）
+  //   ・タイトル画面から冒険を始めた／再開したとき（noAdOnNextBattle）
+  // adBeforeBattle の先頭で必ず降ろすので、広告が出る位置かどうかに関わらず
+  // 「その1戦ぶん」だけ効く。つまり第6戦から再開しても広告は出ず、
+  // そのあとの第8戦・第10戦はいつもどおり出る。
+  var skipNextAd = false;
 
   function screenEl() { return document.getElementById("screen") || document.body; }
 
@@ -184,6 +190,11 @@
     // once every AD_EVERY battles — the first battle starts straight away, then
     // one before every second battle after that. The counter is persisted so
     // quitting and relaunching does not reset the cadence.
+    // タイトル画面から冒険に入るとき（新規・続きから・塔・フィールド）に呼ぶ。
+    // 「続きから」で第6戦を選ぶと、画面が切り替わった直後にいきなり広告が
+    // 出ていた。遊び始める前の広告は区切りではないので、最初の1戦は外す。
+    noAdOnNextBattle: function () { skipNextAd = true; },
+
     adBeforeBattle: function (round, floor) {
       if (premiumActive()) return Promise.resolve();
       state.battles = (state.battles || 0) + 1;
