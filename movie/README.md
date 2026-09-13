@@ -63,6 +63,24 @@ node tools/build_movie.js op     # OPだけ
 - `tail.hold` — 最後にロゴを出す秒数、`scrim` — ロゴを読ませるための背景の沈み具合
 - `tail.text` — ロゴの下に文字を出したい場合のみ指定（現在は未使用）
 
+## ロゴなし版（`movie/out/OP_nologo.mp4`）
+
+最後の2.4秒に WORDRIA のロゴを焼き込んでいない OP。長さ・画質・BGM は
+通常版とまったく同じで、その2.4秒に本編の絵がそのまま流れる。
+
+ロゴを重ねる前の状態は組み立ての途中で必ず一度できている
+（`movie/tmp/op_seq.mp4`）。ただし `movie/tmp/` は gitignore なので、
+**そこから作り直すのではなく、書き出したものを置いてある**。
+
+作り直すときは、`cuts.json` の `op` から `tail` を丸ごと外して
+
+```bash
+node tools/build_movie.js op        # movie/out/OP.mp4 がロゴなしで出る
+```
+
+を走らせ、出てきたものを `OP_nologo.mp4` に名前を変えて、`cuts.json` を
+元に戻す。**`tail` を外したまま置いておかないこと**（通常版からロゴが消える）。
+
 ## 注意
 
 - `movie/tmp/` は中間ファイル置き場。gitignore 済み
