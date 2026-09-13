@@ -223,12 +223,10 @@
     return panel(
       '<div class="wq2-store-h">学年を えらぶ</div>' +
       '<div class="wq2-store-p">受ける学年に あわせた単語が 出ます。</div>' +
-      // 学年のわけ方には公的な正解が無い。学習指導要領は「中学で1600〜1800語程度」
-      // としか定めておらず、どの語を何年生で扱うかは教科書会社が決めている。
-      // それを伏せたまま「中2の単語」と言い切るのは正しくないので、ここで断る
-      '<div class="wq2-store-note">学年のわけ方は 目安です。<br>' +
-      '学習指導要領は「どの単語を 何年生で」までは 定めていないため、<br>' +
-      '教科書によって 前後します。ご容赦ください。</div>',
+      // 実際に習う学年とずれている語がある。言い切らずに断っておく。
+      // 理由は書かない。書くほど言い訳に見える（2026-09-13 本人の判断）
+      '<div class="wq2-store-note">学年の分け方は 目安です。<br>' +
+      '実際に習う学年と 異なる語があります。</div>',
       GRADES.map(function (g) {
         return { key: g.id, label: g.name + '<span class="wq2-mode-sub">' + g.pools.map(function (k) { return POOL[k].name; }).join(" → ") + '</span>', primary: g.id === state.grade };
       }).concat([{ key: "back", label: "もどる" }])
