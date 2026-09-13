@@ -5,14 +5,55 @@
 
 ---
 
+## なぜ絵文字をやめるのか（機種依存）
+
+絵文字は**端末のOSが持っているフォントで描かれる**。アプリが絵を持って
+いるわけではない。だから同じ文字でも、iPhone と Android で別の絵になる。
+実際にこのアプリで起きること：
+
+**① 見た目が変わる**
+🏰 は Apple と Google で形も色も違う。iPhone で整えた並びが、Android では
+そろって見えない。**こちらから直せない。**
+
+**② 単色で出るものがある**
+`⚙`（U+2699）と `⚔`（U+2694）は、もともと絵文字ではなく記号。
+異体字セレクタ（VS16）を付けていないので、端末によっては**色のない字**として
+描かれる。いま実機で歯車が白い線なのはこれ。
+
+**③ 古い端末では豆腐（▯）になる**
+このアプリの最低は **Android 7.0**。そこに無い絵文字は四角で出る。
+
+| 絵文字 | 追加 | Android 7.0 |
+|---|---|---|
+| 🧙 🧝 🧔 | Unicode 10.0（2017） | **出ない** |
+| 🧴 | Unicode 11.0（2018） | **出ない** |
+
+この4つは `party/js/pfield.js`（制作中のストーリーモード）の中なので、
+**いまの出荷物では画面に出ない**。ただしストーリーモードを出すときは
+必ずぶつかる。
+
+→ **画像にすれば、3つとも消える。** どの端末でも同じ絵になる。
+
 ## 納品の条件（全部共通）
 
 | 項目 | 値 |
 |---|---|
-| サイズ | **256×256**（正方形） |
+| サイズ | **128×128**（正方形） |
 | 形式 | **PNG・背景は完全な透過** |
 | 余白 | 上下左右に **8%** の余白（枠に詰めすぎない） |
 | 文字 | **入れない**（数字・記号・ロゴも不可） |
+
+### 128で足りる理由
+
+画面に出るのは **20×20 CSS ピクセル**。いちばん精細な端末（4倍）でも
+**80ピクセル**にしかならない。128 あれば足りる。
+
+そのうえ `tools/build_www.js` が**書き出しのときに WebP へ変換する**ので、
+実際に端末へ入るのはもっと小さい。128×128 の平たい絵なら **1つ 3〜6KB**、
+7つで **30KB 前後**。256 にしても画面は1ドットも良くならず、容量だけ増える。
+
+> もっと小さくするなら 96×96 でも成立する。128 にしているのは、
+> あとで称号の一覧など**大きく使いたくなったときの余地**として。
 
 > ⚠️ **「透過」と言われて、市松模様を絵として描き込んでくる生成AIがある。**
 > 実際に logo.png でそれが起きて、気づかずに動画へ焼き込みかけた
@@ -31,14 +72,17 @@
 ## 共通スタイル指定（全部の末尾に付ける）
 
 ```
-Style: anime JRPG game icon, single centered object on a fully transparent
-background, soft cel shading, thick clean outlines, vivid saturated colors,
-bright and readable at very small size, 2D illustration (not 3D render),
-no grain, no gradient background, no drop shadow on the background.
+Output: 128x128 PNG, fully transparent background, no background layer.
+Style: anime JRPG game icon, single centered object, soft cel shading, thick
+clean outlines, vivid saturated colors, bright enough to read against a dark
+panel, 2D illustration (not 3D render), no grain, no gradient backdrop,
+no drop shadow cast onto the background.
 Composition: one object only, centered, facing the viewer, filling about 84%
-of the frame, generous even margins.
-Avoid: text, letters, numbers, logos, watermarks, backgrounds, scenery,
-multiple objects, thin hairlines, tiny details, photorealism, 3D render.
+of the frame, generous even margins on all four sides.
+Legibility: this is displayed at 20x20 pixels. Keep the silhouette simple and
+instantly recognisable. No thin lines, no small details, no fine texture.
+Avoid: text, letters, numbers, logos, watermarks, scenery, multiple objects,
+checkerboard pattern, photorealism, 3D render.
 ```
 
 ---
