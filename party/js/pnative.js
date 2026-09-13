@@ -234,6 +234,14 @@
         note("AdMob 初期化 失敗: " + why(e));
       });
 
+    // 広告が画面に出ている間だけ true。pstore.js の擬似広告と同じ役目で、
+    // ここでは本物の表示・終了イベントから立てる。pbattle.js が、広告の裏で
+    // 戦闘と BGM が始まってしまうのを防ぐために見る。
+    // 実機で、全画面広告が流れている最中に次の敵の登場音と戦闘BGMが
+    // 鳴っていた（2026-09-13 Pixel 8）
+    var onScreen = false;
+    window.WQ2_STORE.adVisible = function () { return onScreen; };
+
     // reward granted only when the video is actually completed
     var rewardCb = null;
     AdMob.addListener("onRewardedVideoAdReward", function () { if (rewardCb) { var cb = rewardCb; rewardCb = null; cb(true); } });
@@ -243,12 +251,13 @@
     // 呼ばれないと rewarded.consumed() が走らないので、次の広告が読み込まれず
     // リワードは起動後1回しか効かない。取り消したときは cb も呼ばれず止まる。
     AdMob.addListener("onRewardedVideoAdDismissed", function () {
+      onScreen = false;
       // closed without reward -> no grant; either way, preload the next one
       if (rewardCb) { var cb = rewardCb; rewardCb = null; cb(false); }
       rewarded.consumed();
     });
     AdMob.addListener("onRewardedVideoAdFailedToLoad", function (e) { rewarded.retry(e); });
-    AdMob.addListener("onRewardedVideoAdShowed", function () { shown("リワード"); });
+    AdMob.addListener("onRewardedVideoAdShowed", function () { onScreen = true; shown("リワード"); });
 
     window.WQ2_STORE.showRewarded = function (cb) {
       if (!rewarded.ready) { cb(false); rewarded.load(); return; } // no fill / offline: fail gracefully
@@ -259,13 +268,14 @@
     // ---------- interstitial (free tier: one before every battle) ----------
     var interCb = null;
     function interDone() {
+      onScreen = false;
       if (interCb) { var c = interCb; interCb = null; c(); }
       inter.consumed();   // load the next one for the following battle
     }
     AdMob.addListener("interstitialAdDismissed", interDone);
     AdMob.addListener("interstitialAdFailedToShow", interDone);
     AdMob.addListener("interstitialAdFailedToLoad", function (e) { inter.retry(e); });
-    AdMob.addListener("interstitialAdShowed", function () { shown("全画面"); });
+    AdMob.addListener("interstitialAdShowed", function () { onScreen = true; shown("全画面"); });
 
     // 画面下のバナーは置かない（2026-09-08 に廃止）。遊んでいる最中ずっと
     // 画面を占め続ける広告は、面白さを削るほうが大きいと判断した。

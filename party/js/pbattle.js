@@ -809,6 +809,31 @@
   }
 
   // ================= main loop =================
+
+  // 広告の待ちを打ち切る保険。
+  //
+  // もとは「6秒たったら先へ進む」だけだった。広告SDKが固まったときに、
+  // 遊ぶ人を空白の画面へ閉じ込めないための保険だったが、**全画面広告は
+  // ふつう10〜15秒ある**。6秒で見切って戦闘が始まり、広告の裏で敵の登場音と
+  // 戦闘BGMが鳴っていた（2026-09-13 Pixel 8 で確認）。
+  //
+  // 広告が画面に出ているかを見て、待ち方を変える。
+  //   ・出ていない状態が6秒続いた → 読み込めていない。見切って始める
+  //   ・出ている → 閉じられるまで待つ（上限90秒。閉じたことが伝わらない
+  //     SDKの不具合で、永久に待つことがないように）
+  var AD_WAIT_MS = 6000, AD_MAX_MS = 90000;
+  function adGuard(adPromise) {
+    return new Promise(function (resolve) {
+      var waited = 0;
+      var iv = setInterval(function () {
+        waited += 500;
+        var visible = !!(window.WQ2_STORE && WQ2_STORE.adVisible && WQ2_STORE.adVisible());
+        if ((!visible && waited >= AD_WAIT_MS) || waited >= AD_MAX_MS) { clearInterval(iv); resolve(); }
+      }, 500);
+      adPromise.then(function () { clearInterval(iv); }, function () { clearInterval(iv); });
+    });
+  }
+
   // damage carried into a continue: { enc, frac[] } — remaining HP of each foe
   // as a fraction of its max, captured at the moment the party fell
   var carry = null;
@@ -818,12 +843,10 @@
     // Guarded by a timeout because a stalled ad SDK must never trap the player
     // on a blank screen — if it has not returned in 6s the battle just starts.
     if (window.WQ2_STORE && WQ2_STORE.adBeforeBattle) {
-      await Promise.race([
-        // round は闘技場の「1周の何戦目か」、floor は塔の階数。
-        // フィールドはどちらも無く、通算の回数で判断される
-        WQ2_STORE.adBeforeBattle(encounter && encounter.round, encounter && encounter.floor),
-        new Promise(function (r) { setTimeout(r, 6000); })
-      ]).catch(function () {});
+      // round は闘技場の「1周の何戦目か」、floor は塔の階数。
+      // フィールドはどちらも無く、通算の回数で判断される
+      var adP = WQ2_STORE.adBeforeBattle(encounter && encounter.round, encounter && encounter.floor);
+      await Promise.race([adP, adGuard(adP)]).catch(function () {});
     }
 
     party = window.PBATTLE.getParty();
@@ -868,11 +891,21 @@
       // beat of silence — otherwise the cue's tail sits on top of the track's
       // intro and the first bar is lost. The timer is the fallback for when the
       // cue never loads (its "ended" would never fire).
-      var armed = false;
+      var armed = false, adWaits = 0;
       var startMusic = function () {
         if (armed) return;
+        if (screenEl.style.display === "none") { armed = true; return; }
+        // 広告が画面に出ている間は鳴らさない。閉じてから鳴らす。
+        // 戦闘の開始そのものも adGuard で待たせているが、リワード広告で
+        // 復活したあとなど別の道もあるので、鳴らす側でも見ておく。
+        // 60秒で諦めるのは、閉じたことが伝わらないときに永久に無音の
+        // 戦闘が続くのを避けるため
+        if (window.WQ2_STORE && WQ2_STORE.adVisible && WQ2_STORE.adVisible() && adWaits < 120) {
+          adWaits++;
+          setTimeout(startMusic, 500);
+          return;
+        }
         armed = true;
-        if (screenEl.style.display === "none") return;
         if (encounter.bgm) BGM.playAny(isBoss ? [encounter.bgm, "boss", "midboss"] : [encounter.bgm, "battle", "battle2"]); // missing files fall back
         else if (isBoss) BGM.playAny(["midboss", "boss"]);
         else BGM.playAny(Math.random() < 0.5 ? ["battle", "battle2"] : ["battle2", "battle"]);

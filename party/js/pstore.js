@@ -115,8 +115,14 @@
     });
   }
 
+  // 広告が画面に出ている間だけ true。BGM と戦闘の開始を、広告が閉じるまで
+  // 待たせるために使う。ネイティブ側（pnative.js）が本物の広告の
+  // 表示・終了イベントで上書きする
+  var adOnScreen = false;
+
   // ---- mock rewarded-ad playback screen (native build overrides showRewarded) ----
   function adScreen(tag) {
+    adOnScreen = true;
     return new Promise(function (resolve) {
       var wrap = document.createElement("div");
       wrap.className = "wq2-store-ovl";
@@ -128,11 +134,14 @@
         '<div class="wq2-ad-note">※実際の広告は 公開版で表示されます</div>' +
         '</div>';
       screenEl().appendChild(wrap);
-      setTimeout(function () { wrap.remove(); resolve(); }, 1700);
+      setTimeout(function () { adOnScreen = false; wrap.remove(); resolve(); }, 1700);
     });
   }
 
   var api = {
+    // いま広告が画面に出ているか。pbattle.js が、広告の裏で戦闘と BGM が
+    // 始まってしまうのを防ぐために見る（2026-09-13 実機で起きた）
+    adVisible: function () { return adOnScreen; },
     stamina: function () { return state.stamina; },
     max: function () { return MAX; },
     isPremium: premiumActive,
