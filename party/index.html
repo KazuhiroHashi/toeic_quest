@@ -136,7 +136,11 @@
       <div id="ab-btns">
         <div>
           <div id="btn-b" class="act-btn">Ｂ</div>
-          <div class="btn-label">メニュー/戻る</div>
+          <!-- 以前は「メニュー/戻る」だったが、メニューを開くのは pfield.js＝
+               制作中のストーリーモードの中だけ。出荷ビルドで B がするのは
+               閉じる／戻るだけ（称号・記録、プレミアムの案内、確認パネル）。
+               押しても開かないものが書いてあると、遊ぶ人を迷わせる -->
+          <div class="btn-label">戻る</div>
         </div>
         <div>
           <div id="btn-a" class="act-btn">Ａ</div>
