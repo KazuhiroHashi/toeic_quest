@@ -303,6 +303,9 @@
   font-size: 12.5px; color: #cfd8ee; padding: 5px 2px; border-bottom: 1px solid rgba(255,255,255,.07); }
 .achv-row b { color: #ffe08a; font-size: 13.5px;
   font-family: "Hiragino Sans","Yu Gothic UI",system-ui,sans-serif; }
+/* 「冒険 完結」「挑戦の塔 最高」の行だけ、絵文字ではなく絵を使っている。
+   行は baseline でそろえているので、文字の下端に合わせて少し沈める */
+.achv-row img.achv-img { width: 15px; height: 15px; vertical-align: -2px; }
 
 /* daily streak chip */
 #ptitle-streak {

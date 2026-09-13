@@ -33,7 +33,9 @@ var SHOTS = [
   { file: "03_title.png",    title: "単語帳を開くより、冒険しよう。", sub: "WORDRIA 英単語RPG" },
   { file: "04_grades.png",   title: "中学英語から TOEIC®まで",    sub: "中1・中2・中3・高校基礎・大学入試・難関大／スコア別の6段階。" },
   { file: "05_wordbook.png", title: "出会った単語は、単語帳に残る", sub: "意味・発音・正解率を、いつでも見返せる。" },
-  { file: "06_records.png",  title: "称号と記録が、次の一戦を呼ぶ", sub: "最速タイム、最大チェイン、制覇回数。" }
+  // 「制覇」はアプリ内で「完結」に直したので、こちらも合わせる。
+  // 絵の中に「冒険 完結」と出ているのに、見出しだけ別の言葉だと引っかかる
+  { file: "06_records.png",  title: "称号と記録が、次の一戦を呼ぶ", sub: "最速タイム、最大チェイン、完結回数。" }
 ];
 
 function dataUri(p) {

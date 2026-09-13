@@ -661,16 +661,24 @@
       return '<div class="achv-medal ' + t.cls + '"><div class="achv-ic">' + (t.icon || "🔒") + '</div>' +
         '<div class="achv-lv">' + g.name + '</div><div class="achv-n">' + n + '/' + g.words.length + '</div></div>';
     }).join("");
+    // 冒険と塔だけは絵にする。🗼 は東京タワーそのもので、汎用の「塔」は
+    // Unicode に存在しない。城も端末ごとに形が変わるので、タイトルの項目と
+    // 同じ絵を使って揃える（assets/ui/icons/）。
+    // ※ パスは途中で切らず、ひとつながりの文字列で書くこと。build_www.js が
+    //    "../assets/ → "assets/、.png" → .webp" と書き換えるので、
+    //    つなぎ合わせて組み立てると書き換えが効かず、出荷ビルドで消える
+    var icAdv = '<img class="achv-img" src="../assets/ui/icons/ic_adventure.png" alt="">';
+    var icTow = '<img class="achv-img" src="../assets/ui/icons/ic_tower.png" alt="">';
     var rows = [
       ["📚 覚えた単語", pg.cleared + " / " + pg.total + " 語"],
       ["🏆 総合称号", (tr.icon || "🔰") + " " + tr.name],
       ["⭐ 金★（3連続正解）", gold + " 語"],
       ["⚡ 銀★（2秒以内）", fast + " 語"],
       ["🔥 連続学習", streak >= 1 ? streak + " 日" : "—"],
-      ["🏰 冒険 完結", (rc.clears || 0) + " 回"],
+      [icAdv + " 冒険 完結", (rc.clears || 0) + " 回"],
       ["⏱ 最速クリア", rc.bestMs ? fmtMs(rc.bestMs) : "—"],
       ["🔗 最大チェイン", rc.bestChain ? "×" + rc.bestChain : "—"],
-      ["🗼 挑戦の塔 最高", rc.bestFloor ? rc.bestFloor + " 階" : "—"]
+      [icTow + " 挑戦の塔 最高", rc.bestFloor ? rc.bestFloor + " 階" : "—"]
     ].map(function (r) { return '<div class="achv-row"><span>' + r[0] + '</span><b>' + r[1] + '</b></div>'; }).join("");
     var wrap = document.createElement("div");
     wrap.className = "wq2-store-ovl";
