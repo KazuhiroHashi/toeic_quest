@@ -1045,8 +1045,29 @@
     var legend = '<div class="zk-legend">★＝正解ずみ／銀★＝2秒以内で正解／金★＝3連続正解　｜　🥉100 🥈200 🥇300 🏆500 問クリアで トロフィー</div>';
     // Keep only the rank tabs fixed: put the summary INSIDE the scroll area so
     // the word list gets the full remaining height.
+    // ---- 学年のわけ方についての断り（学生モードのときだけ）----
+    // どの語を何年生で習うかには公的な正解が無い。学習指導要領は語数しか
+    // 定めておらず、実際の割り当ては教科書会社ごとに違う。こちらの分け方が
+    // 手元の教科書とずれることは必ず起きるので、一覧のいちばん下で先に断る。
+    // 「目安です」とだけ書くより、ずれることを認めて詫びるほうが伝わる。
+    // 出題範囲をえらぶ画面（pvocab.js の chooseGrade）にも同じ趣旨の断りがあるが、
+    // あれは選ぶ一瞬しか見えない。ずれに気づくのは語の一覧を見たときなので、
+    // ここにも置く（2026-09-13 本人の判断）
+    var isStudent = !!(window.WQ2_MODE && WQ2_MODE.get && WQ2_MODE.get().mode === "student");
+    var note = !isStudent ? "" :
+      '<div class="zk-note">' +
+        '<h4>学年のわけ方について</h4>' +
+        '<p>どの単語を 何年生で習うかは、教科書によって違います。学習指導要領も' +
+        '「中学校で1600〜1800語程度」と示すだけで、どの語を 何年生で扱うかまでは' +
+        '定めていません。</p>' +
+        '<p>ここでの学年分けは、複数の教科書と入試をもとにした<b>目安</b>です。' +
+        'お使いの教科書と前後することがあります。ご容赦ください。</p>' +
+        '<p>上のタブから、ほかの学年の単語もいつでもご覧いただけます。' +
+        '覚える順番が多少前後しても、その語を知っていることの値打ちは変わりません。</p>' +
+      '</div>';
+
     $("zukan-summary").style.display = "none";
-    $("zukan-list").innerHTML = '<div class="zk-summary-inner">' + head + bandLine + legend + '</div>' + rows.join("");
+    $("zukan-list").innerHTML = '<div class="zk-summary-inner">' + head + bandLine + legend + '</div>' + rows.join("") + note;
     $("zukan-list").scrollTop = 0;
   }
   // Self-contained zukan (own listeners) so it works from field OR the title screen.

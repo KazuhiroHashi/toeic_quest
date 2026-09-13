@@ -265,6 +265,19 @@
 .zk-band b { color: #fff; font-size: 15px;
   font-family: "Hiragino Sans","Yu Gothic UI",system-ui,sans-serif; }
 .zk-legend { font-size: 10.5px; color: #8894ad; margin-top: 5px; line-height: 1.6; }
+/* 一覧のいちばん下に置く、学年のわけ方についての断り。
+   読み飛ばされてよい類の文章なので、語の行より控えめにする。ただし
+   読もうとした人がちゃんと読めるだけの字の大きさと行間は残す */
+.zk-note {
+  margin: 18px 4px 8px; padding: 12px 14px;
+  font-size: 11px; line-height: 1.8; color: #9aa6c0; text-align: left;
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid rgba(255, 255, 255, .08); border-radius: 10px;
+}
+.zk-note h4 { margin: 0 0 8px; font-size: 11.5px; font-weight: bold; color: #cfd8ee; }
+.zk-note p { margin: 0 0 9px; }
+.zk-note p:last-child { margin-bottom: 0; }
+.zk-note b { color: #cfd8ee; }
 .zk-rank { font-size: 12px; letter-spacing: 2px; color: #b9c3ea; font-weight: bold; margin-bottom: 2px;
   font-family: "Hiragino Sans","Yu Gothic UI",system-ui,sans-serif; }
 .zk-summary-inner { padding: 4px 0 10px; }

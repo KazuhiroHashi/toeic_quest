@@ -228,7 +228,7 @@
       // それを伏せたまま「中2の単語」と言い切るのは正しくないので、ここで断る
       '<div class="wq2-store-note">学年のわけ方は 目安です。<br>' +
       '学習指導要領は「どの単語を 何年生で」までは 定めていないため、<br>' +
-      '教科書によって 前後します。</div>',
+      '教科書によって 前後します。ご容赦ください。</div>',
       GRADES.map(function (g) {
         return { key: g.id, label: g.name + '<span class="wq2-mode-sub">' + g.pools.map(function (k) { return POOL[k].name; }).join(" → ") + '</span>', primary: g.id === state.grade };
       }).concat([{ key: "back", label: "もどる" }])
