@@ -79,8 +79,20 @@
           <div id="ptitle-streak" style="display:none"></div>
           <div id="ptitle-records"></div>
           <div id="ptitle-menu">
-            <button id="pbtn-arena" class="title-btn primary"><span class="ic">🏆</span><span class="tx">ことばの闘技場</span></button>
-            <button id="pbtn-tower" class="title-btn" style="display:none"><span class="ic">🗼</span><span class="tx">挑戦の塔</span></button>
+            <!-- 本編。以前は「ことばの闘技場」だったが、腕試しの余興に見えて
+                 これが game の本体だと伝わらなかった。城のしるしを添えて
+                 「ことばの王国」にしてある（制作中のストーリーモードとは別物） -->
+            <button id="pbtn-arena" class="title-btn primary"><span class="ic">🏰</span><span class="tx">ことばの王国</span></button>
+            <!-- 塔は絵文字で描けない。🗼 は東京タワーそのもので、汎用の「塔」は
+                 Unicode に存在しない。ここだけ絵を持たせている（.ic svg） -->
+            <button id="pbtn-tower" class="title-btn" style="display:none"><span class="ic"><svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true">
+              <path class="s1" d="M7 5h2v2h2V5h2v2h2V5h2v4H7z"/>
+              <path class="s1" d="M8.1 9h7.8l.7 12.6H7.4z"/>
+              <path class="s2" d="M12 9h3.9l.7 12.6H12z"/>
+              <path class="s3" d="M10.7 12.2h2.6v4.4h-2.6z"/>
+              <path class="s4" d="M12 1.4h4.6l-1.3 1.5 1.3 1.5H12z"/>
+              <path class="s1" d="M11.6 1.4h.8V5h-.8z"/>
+            </svg></span><span class="tx">挑戦の塔</span></button>
             <button id="pbtn-analysis" class="title-btn"><span class="ic">📊</span><span class="tx">学習の記録</span></button>
             <button id="pbtn-mode" class="title-btn"><span class="ic">📚</span><span class="tx">出題：TOEIC</span></button>
             <button id="pbtn-diff" class="title-btn"><span class="ic">⚙</span><span class="tx">難易度：ふつう</span></button>

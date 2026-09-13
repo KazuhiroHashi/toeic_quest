@@ -270,7 +270,7 @@
       return panel(
         '<div class="wq2-store-h">学習の記録</div>' +
         '<div class="dr-empty">記録は まだ ' + a.n + ' 語分です。<br><br>' +
-        '闘技場か 試験対策を 少し進めると、<br>毎日の推移と 苦手な単語を<br>ここに表示します。<br><br>' +
+        '王国か 試験対策を 少し進めると、<br>毎日の推移と 苦手な単語を<br>ここに表示します。<br><br>' +
         '<b>あと ' + (10 - a.n) + ' 語</b>で 表示できます。</div>',
         []
       );
@@ -481,7 +481,7 @@
     var list = pickList(kind, 20);
     if (!list.length) {
       await panel('<div class="wq2-store-h">試験対策</div>' +
-        '<div class="dr-empty">出題できる単語が ありません。<br>闘技場を 少し進めてから どうぞ。</div>',
+        '<div class="dr-empty">出題できる単語が ありません。<br>王国を 少し進めてから どうぞ。</div>',
         []);
       return;
     }
