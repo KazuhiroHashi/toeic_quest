@@ -419,13 +419,13 @@
       // 何戦目かを渡す。広告を出す位置の判断に使う（pstore.js の AD_ROUNDS）
       r.enc.round = i + 1;
       // 10 shown battles; the 11th (真ラスボス) is a hidden surprise — no counter, no start card
-      if (i < 10) await gsay("【ことばの王国】\n" + r.label + "（" + (i + 1) + "／10）\nＡボタンで 開始！");
+      if (i < 10) await gsay("【ことばの冒険】\n" + r.label + "（" + (i + 1) + "／10）\nＡボタンで 開始！");
       var res = await window.PBATTLE.start(r.enc);
       saveStudy();
       if (res.result === "flee") {
         // 中断してタイトルへ。直前に saveRun(i) を打ってあるので、
         // 「続きから」でこの戦いから再開できる。負けたことにはしない
-        await gsay("王国から 引き上げた。\n\n（タイトルの「続きから」で\n　この戦いから 再開できます）");
+        await gsay("冒険から 引き上げた。\n\n（タイトルの「続きから」で\n　この戦いから 再開できます）");
         break;
       }
       if (res.result !== "win") {
@@ -437,7 +437,7 @@
         // keep the best chain even on defeat
         var st0 = window.ARENA_STATS || {}, rc0 = loadRec();
         if ((st0.maxChain || 0) > (rc0.bestChain || 0)) { rc0.bestChain = st0.maxChain; saveRec(rc0); refreshRecords(); }
-        await gsay("王国の旅に 敗れた…。\nＬｖ" + window.PBATTLE.getParty()[0].lv + "／" + (i + 1) + "戦目でリタイア。\n\n" +
+        await gsay("冒険は ここで 途絶えた…。\nＬｖ" + window.PBATTLE.getParty()[0].lv + "／" + (i + 1) + "戦目でリタイア。\n\n" +
           "これまでに " + pg.cleared + " ／ " + pg.total + " 問クリア！" + (tr.icon ? "　" + tr.icon + tr.name : "") + "\n" +
           "（タイトルの「単語帳」で 復習できます）");
         break;
@@ -510,7 +510,7 @@
             (sst.maxChain ? "\n　最大チェイン … ×" + sst.maxChain + (newChain ? "　🎉新記録！" : "") : "") +
             "\n　覚えた単語 … " + pg.cleared + " ／ " + pg.total + " 語" +
             (tr.icon ? "\n　称号 … " + tr.icon + " " + tr.name : ""),
-          "〜 ことばの王国 制覇 〜\n\n★　Ｗ Ｏ Ｒ Ｄ Ｒ Ｉ Ａ　★\n\nおめでとう！ そして ありがとう。",
+          "〜 ことばの冒険 完結 〜\n\n★　Ｗ Ｏ Ｒ Ｄ Ｒ Ｉ Ａ　★\n\nおめでとう！ そして ありがとう。",
           "（タイトルの「単語帳」で\n　出会った単語を いつでも 復習できます。\n　全" + pg.total + "語 制覇を めざそう！）"
         ];
         // 挑戦の塔は初回クリアで開放される（refreshTowerBtn がボタンを出す）。
@@ -667,7 +667,7 @@
       ["⭐ 金★（3連続正解）", gold + " 語"],
       ["⚡ 銀★（2秒以内）", fast + " 語"],
       ["🔥 連続学習", streak >= 1 ? streak + " 日" : "—"],
-      ["🏰 王国 制覇", (rc.clears || 0) + " 回"],
+      ["🏰 冒険 完結", (rc.clears || 0) + " 回"],
       ["⏱ 最速クリア", rc.bestMs ? fmtMs(rc.bestMs) : "—"],
       ["🔗 最大チェイン", rc.bestChain ? "×" + rc.bestChain : "—"],
       ["🗼 挑戦の塔 最高", rc.bestFloor ? rc.bestFloor + " 階" : "—"]
@@ -709,7 +709,7 @@
     bgEl.style.backgroundSize = "cover"; bgEl.style.backgroundPosition = "center top";
     $("penemy-row").innerHTML = ""; $("pparty-strip").innerHTML = ""; $("pchain-badge").className = "";
     if (!due.length) {
-      await gsay("【今日の復習】\n復習する単語は ありません！\n\n王国で ミスした単語が\n自動で ここに たまります。");
+      await gsay("【今日の復習】\n復習する単語は ありません！\n\n冒険で ミスした単語が\n自動で ここに たまります。");
     } else {
       bumpStreak();
       await gsay("【今日の復習】\nミスした単語 " + due.length + " 語に 再挑戦！\n正解するほど 次の出題は 先になります。");
@@ -753,7 +753,7 @@
       (rc.bestMs ? "最速 " + fmtMs(rc.bestMs) : "") +
       (rc.bestMs && rc.bestChain ? "　" : "") +
       (rc.bestChain ? "最大チェイン ×" + rc.bestChain : "") +
-      (rc.clears ? "　制覇 " + rc.clears + "回" : "");
+      (rc.clears ? "　冒険 完結 " + rc.clears + "回" : "");
   }
 
   function refreshStamina() {
@@ -813,7 +813,7 @@
   function refreshArenaBtn() {
     var r = loadRun(), tx = $("pbtn-arena").querySelector(".tx");
     if (!tx) return;
-    tx.textContent = r ? "続きから（" + Math.min(r.i + 1, 11) + "戦目）" : "ことばの王国";
+    tx.textContent = r ? "続きから（" + Math.min(r.i + 1, 11) + "戦目）" : "ことばの冒険";
   }
   $("pbtn-arena").addEventListener("click", async function () {
     $("pbtn-arena").blur();
