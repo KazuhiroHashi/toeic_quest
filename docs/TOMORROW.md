@@ -256,7 +256,7 @@ D. Mac で AAB を作る → 内部テストに上げる → 定期購入を登�
 Capacitor 8 に上げたので、`android/` フォルダは作り直しになります。
 詳細は `docs/CAPACITOR8_MIGRATION.md`。
 
-**▼ Terminal に貼る（1行ずつ）**
+**▼ 初回（android/ が無い状態から）**
 
 ```bash
 cd ~/toeic_quest
@@ -270,6 +270,38 @@ npm run assets
 npm run cap:sync
 npx cap open android
 ```
+
+**▼ 2回目以降（直したものを出し直すとき）**
+
+```bash
+cd ~/toeic_quest
+git pull origin claude/toeic-quest-game-8zva6k
+npm run bump            # ← versionCode を1つ上げる。忘れると Play が弾く
+npm run cap:sync
+npx cap open android
+```
+
+`android/` を消す必要はありません。5分ほどで終わります。
+
+### versionCode のこと
+
+Play は**同じ versionCode のファイルを二度は受け付けません**。出し直すたびに
+1つずつ上げる必要があります。
+
+ところが `npx cap add android` で作り直すと、この番号は**必ず 1 に戻ります**。
+手で直していると、作り直すたびに戻り、気づかずアップロードして弾かれる。
+
+そこで番号は `version.json` に置き、`npm run cap:sync` が毎回そこから
+書き戻すようにした（`tools/apply_version.js`）。**android/ を何度作り直しても
+番号は保たれます。**
+
+```
+npm run bump        version.json の code を 1つ上げる（出し直す前に一度だけ）
+npm run cap:sync    android/ に書き込む（自動で呼ばれる）
+```
+
+> 「このバージョンコードは既に使用されています」と Play に言われたら、
+> `npm run bump` を忘れています。上げて作り直せば通ります。
 
 > **`npm run cap:sync` を `npx cap sync` で代用しないこと。**
 > AdMob のアプリIDが AndroidManifest.xml に入らず、**広告が一切出なくなります。**
