@@ -388,7 +388,28 @@
   }
   function clearRun() { try { localStorage.removeItem(RUN_KEY); } catch (e) {} }
 
+  // 冒険・塔を、同時に2つ走らせない。
+  //
+  // 「戦闘のはじまりの音と曲が2回鳴る」と報告を受けた（2026-09-13）。原因は
+  // 別に見つけて直してあるが（js/bgm.js の頭出し）、もし入口が二重に呼ばれて
+  // いたとしても同じ症状になる。await をまたぐ間に2回目の呼び出しが入れば、
+  // 戦闘の開始が2つ並んで走り、登場音も曲も2回鳴る。
+  // 押し間違いや連打で起きうるので、ここで塞いでおく。
+  var runBusy = false;
+  function busy() { return runBusy; }
+  // 旗を立てるのは、自分が本当に始めたときだけ。
+  // holdRun(runArena()) と書くので、runArena の中の busy() 判定は holdRun より
+  // 先に動く。2回目の呼び出しは runArena が即 return して、そのあと holdRun に
+  // 来る。ここで無条件に旗を触ると、まだ走っている1回目の旗まで消してしまう。
+  function holdRun(p) {
+    if (runBusy) return p;                     // 1回目が走っている。触らない
+    runBusy = true;
+    return Promise.resolve(p).then(function (v) { runBusy = false; return v; },
+                                   function (e) { runBusy = false; throw e; });
+  }
+
   async function runArena(resume) {
+    if (busy()) return;            // すでに冒険か塔が動いている
     // resuming an interrupted run costs no stamina (it was already paid for)
     if (!resume) {
       // stamina gate (free daily plays); premium skips it entirely
@@ -580,6 +601,7 @@
              bgm: floor % 5 === 0 ? "midboss" : "arena" + (((floor - 1) % 5) + 1), enemies: foes };
   }
   async function runTower() {
+    if (busy()) return;            // すでに冒険か塔が動いている
     if (window.WQ2_STORE && !WQ2_STORE.canPlay()) {
       var ok = await WQ2_STORE.openGate(); refreshStamina();
       if (!ok) return;
@@ -835,13 +857,13 @@
         [{ label: "▶ 続きから（" + Math.min(r.i + 1, 11) + "戦目・Ｌｖ" + r.party[0].lv + "）" },
          { label: "🆕 最初から やり直す" },
          { label: "もどる" }]);
-      if (pick === 0) { runArena(r); return; }
+      if (pick === 0) { holdRun(runArena(r)); return; }
       if (pick !== 1) return;          // もどる / B / Esc: keep the saved run, stay on the title
       clearRun(); refreshArenaBtn();
     }
-    runArena();
+    holdRun(runArena());
   });
-  $("pbtn-tower").addEventListener("click", function () { $("pbtn-tower").blur(); runTower(); });
+  $("pbtn-tower").addEventListener("click", function () { $("pbtn-tower").blur(); holdRun(runTower()); });
   $("pbtn-achv").addEventListener("click", function () { $("pbtn-achv").blur(); showAchievements(); });
   // 自分から評価しに来た人の入口。何も見返りは無い（prate.js の冒頭に理由）
   if ($("pbtn-rate")) $("pbtn-rate").addEventListener("click", function () {
@@ -997,31 +1019,44 @@
     t.addEventListener("pointerdown", go);
   })();
 
-  // タイトル右下のビルド番号を1.5秒長押しすると、広告の状態が読める。
+  // タイトルのいちばん下のビルド番号を「5回続けて叩く」と、広告の状態が読める。
   //
   // 広告が出ないときに、その理由を確かめる手段がなかった。Safariの
   // ウェブインスペクタは Mac と有線接続が要るうえ、遊んでいる本人が
   // 開けるものではない。実機だけで読めるところに出しておく。
   // 遊ぶ人が偶然たどり着く操作ではないので、審査にも影響しない。
+  //
+  // ── なぜ長押しをやめたか（2026-09-13） ─────────────────────
+  // 最初は1.5秒の長押しにしていたが、実機で一度も開けなかった。
+  //   ・iPhone … 長押しが「翻訳／コピー／共有」の吹き出しに取られていた。
+  //     文字として選べる指定が入っていたため。これは原因が分かっている
+  //     （party.css 側で対処済み）
+  //   ・Pixel 8 … 押しても何も起きない。原因は特定できていない。
+  //     pointerleave で取り消していたこと（対象は9pxの文字で、指が動けば
+  //     すぐ外れる）や、スクロールする枠の中にあることを疑ったが、
+  //     手元の環境では3px動かしても取り消されず、再現できなかった。
+  //
+  // 原因が分からないまま長押しを手直しするより、仕組みごと替えるほうが速い。
+  // 叩いた回数なら、途中で指が動いても画面が動いても関係ない。click は
+  // 押して離すまで完結して初めて飛ぶので、取り消される余地がない。
+  // 3つの画面幅で、わざと指をずらして叩いて開くことを確認した。
+  var DIAG_TAPS = 5, DIAG_WINDOW_MS = 4000;
   (function armAdDiag() {
     var el = $("ptitle-build");
     if (!el) return;
-    var timer = 0;
-    function cancel() { if (timer) { clearTimeout(timer); timer = 0; } }
-    el.addEventListener("pointerdown", function () {
-      cancel();
-      timer = setTimeout(function () {
-        timer = 0;
-        var txt = (window.WQ2_ADS && window.WQ2_ADS.report)
-          ? WQ2_ADS.report()
-          : "このビルドではネイティブの広告が動いていません。\n" +
-            "（ブラウザで開いている／Capacitor のプラグインが入っていない）";
-        if (window.WQ2_STORE && WQ2_STORE.note) WQ2_STORE.note(txt);
-        else alert(txt);
-      }, 1500);
-    });
-    ["pointerup", "pointercancel", "pointerleave"].forEach(function (e) {
-      el.addEventListener(e, cancel);
+    var taps = 0, first = 0;
+    el.addEventListener("click", function () {
+      var now = Date.now();
+      if (now - first > DIAG_WINDOW_MS) { taps = 0; first = now; }   // 時間切れ。数え直す
+      taps++;
+      if (taps < DIAG_TAPS) return;
+      taps = 0; first = 0;
+      var txt = (window.WQ2_ADS && window.WQ2_ADS.report)
+        ? WQ2_ADS.report()
+        : "このビルドではネイティブの広告が動いていません。\n" +
+          "（ブラウザで開いている／Capacitor のプラグインが入っていない）";
+      if (window.WQ2_STORE && WQ2_STORE.note) WQ2_STORE.note(txt);
+      else alert(txt);
     });
   })();
 })();

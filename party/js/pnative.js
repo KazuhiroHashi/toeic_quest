@@ -289,6 +289,9 @@
     // 待っても駄目なら cb(false)。呼び出し側は、広告が出ても出なくても
     // スタミナ回復・復活をさせる（pstore.js に理由を書いてある）ので、
     // 待ちが無駄になっても、遊ぶ人が損をすることはない。
+    // 待つのは「間に合っていないだけ」のときだけ。AdMob が「在庫が無い」と
+    // 答えたら、そこで待つ意味は無いので即やめる。待ちきってから進むと、
+    // 押してから冒険が始まるまで毎回4秒空く。実機で指摘を受けた（2026-09-13）。
     var REWARD_WAIT_MS = 4000;
     function showRewardNow(cb) {
       rewardCb = cb;
@@ -299,16 +302,21 @@
     window.WQ2_STORE.showRewarded = function (cb) {
       rewarded.revive();                       // 打ち切り・再試行待ちを解いて読みにいく
       if (rewarded.ready) { showRewardNow(cb); return; }
+      var fails0 = rewarded.stats().fails;
       var waited = 0;
       var iv = setInterval(function () {
-        waited += 250;
+        waited += 150;
         if (rewarded.ready) { clearInterval(iv); showRewardNow(cb); return; }
-        if (waited >= REWARD_WAIT_MS) {
+        var st = rewarded.stats();
+        var answered = st.fails > fails0 && !st.pending;   // 読みにいって断られた
+        if (answered || waited >= REWARD_WAIT_MS) {
           clearInterval(iv);
-          note("リワード 読み込みが間に合わず 表示できなかった");
+          note("リワードを出せなかった（" +
+               (answered ? "読み込みに失敗: " + (st.lastError || "理由不明")
+                         : Math.round(waited / 1000) + "秒待っても用意できず") + "）");
           cb(false);
         }
-      }, 250);
+      }, 150);
     };
 
     // ---------- interstitial (free tier: one before every battle) ----------

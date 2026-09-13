@@ -49,6 +49,7 @@
   var missing = {};   // name -> true once its source failed to load
   var pos = {};       // name -> seconds, for the resumable tracks
   var unlocked = false;
+  var starting = false;  // play() を呼んだが、まだ鳴り出していない（読み込み中）
   var onFail = null;  // playAny's "try the next one" continuation
   var ramp = null;
   var rampAt = 0;     // フェードが最後に動いた時刻（止まったままかを見分ける）
@@ -144,8 +145,13 @@
         });
       }
     }
+    // play() を呼んでから実際に鳴り出すまでの間、要素は「停止中」のまま。
+    // その間に入ったタップで鳴らし直さないよう、印を立てておく（下の nudge）
+    starting = true;
     var p = a.play();
-    if (p && p.catch) p.catch(function () { /* needs a gesture; retried on the next tap */ });
+    if (p && p.then) p.then(function () { starting = false; },
+                            function () { starting = false; });  // 解禁前などは次のタップで
+    else starting = false;
   }
 
   function play(name) {
@@ -190,13 +196,36 @@
     else if (cur) startTrack(cur);
   }
 
+  // 止まってしまった曲を、続きから鳴らし直す。頭出しはしない。
+  //
+  // ここで startTrack を呼んではいけない。startTrack は「新しく鳴らし始める」
+  // 関数で、戦闘曲のように頭から鳴ると決めてある曲（NO_RESUME）は
+  // currentTime = 0 に戻す。ところが play() を呼んでから実際に音が出るまでの
+  // 間、要素は「停止中」のままなので、曲が始まる前に画面をタップすると
+  // そのたびに頭から鳴り直していた。
+  // 実機で「文章を送るために1度タップすると、また登場の音楽が鳴り始める」と
+  // 報告された（2026-09-13 Pixel 8）。戦闘に入った直後がちょうどこの窓に入る。
+  function nudge() {
+    if (!cur || !enabled) return;
+    if (!el) { startTrack(cur); return; }              // まだ一度も鳴らしていない
+    if (starting) return;                              // 読み込み中。待てば鳴る
+    if (loaded !== cur) { startTrack(cur); return; }   // 別の曲が入っている
+    if (!el.paused) return;                            // もう鳴っている
+    starting = true;
+    var q = el.play();                                 // 続きから。巻き戻さない
+    if (q && q.then) q.then(function () { starting = false; }, function () { starting = false; });
+    else starting = false;
+  }
+
   // browsers require a user gesture before audio can start
   ["pointerdown", "keydown", "touchstart"].forEach(function (ev) {
     window.addEventListener(ev, function () {
       var first = !unlocked;
       unlocked = true;
       healVolume();                       // 途中で止まったフェードを畳む
-      if (cur && enabled && (first || !el || el.paused)) startTrack(cur);
+      // 1回目だけは、まだ要素すら鳴らせていないので startTrack でよい
+      if (first) { if (cur && enabled) startTrack(cur); return; }
+      nudge();
     }, { passive: true });
   });
 
