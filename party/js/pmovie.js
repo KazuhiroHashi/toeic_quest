@@ -67,6 +67,9 @@
       skip.addEventListener("pointerdown", function (e) { e.stopPropagation(); finish(true); });
       v.addEventListener("playing", function () {
         started = true;
+        // ここで初めて <video> を見せる。それまでは party.css で隠してある。
+        // 最初のコマが出るまでブラウザが描く「白地に▶」を見せないため
+        v.classList.add("on");
         clearTimeout(guard);
         showTimer = setTimeout(function () { skip.classList.add("show"); }, 1200);
       });

@@ -509,7 +509,17 @@
   background: #000;
   display: flex; align-items: center; justify-content: center;
 }
-.pmovie-wrap video { width: 100%; height: 100%; object-fit: contain; }
+/* 再生が始まるまで <video> を隠しておく。
+   最初のコマが decode されるまでの間、ブラウザは自前の絵を描く。Android の
+   Chrome / WebView ではそれが「白地に▶」の再生ボタンで、Pixel 8 で 0.1 秒ほど
+   見えていた（2026-09-13 実機で確認）。poster を置いても、その前に一瞬出る。
+   枠の地はすでに黒なので、隠しておけば「黒 → 映像」になる。
+   .on は pmovie.js が playing イベントで付ける */
+.pmovie-wrap video {
+  width: 100%; height: 100%; object-fit: contain;
+  background: #000; visibility: hidden;
+}
+.pmovie-wrap video.on { visibility: visible; }
 .pmovie-skip {
   position: absolute; right: 14px; bottom: 18px; z-index: 1;
   font: inherit; font-size: 13px; font-weight: bold; color: #fff;
