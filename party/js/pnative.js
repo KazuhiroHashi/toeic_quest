@@ -289,32 +289,69 @@
     // 待っても駄目なら cb(false)。呼び出し側は、広告が出ても出なくても
     // スタミナ回復・復活をさせる（pstore.js に理由を書いてある）ので、
     // 待ちが無駄になっても、遊ぶ人が損をすることはない。
-    // 待つのは「間に合っていないだけ」のときだけ。AdMob が「在庫が無い」と
-    // 答えたら、そこで待つ意味は無いので即やめる。待ちきってから進むと、
-    // 押してから冒険が始まるまで毎回4秒空く。実機で指摘を受けた（2026-09-13）。
-    var REWARD_WAIT_MS = 4000;
+    // どれだけ待つかは、読み込みが動いているかどうかで変える。
+    //
+    // 実機でこうなっていた（2026-09-13）：
+    //   ・全滅からの復活では、リワード広告が出る
+    //   ・スタミナ切れの「広告を見て＋1」では出ない
+    // 同じ関数を通っているので、違いは時間だけだった。スタミナ切れは
+    // アプリを開いて数秒後に来る。復活は戦闘を1つ終えた数分後に来る。
+    // リワードは動画なので読み込みに時間がかかり、開いた直後はまだ
+    // 用意できていない。つまり在庫はあって、待ちが足りていなかった。
+    //
+    //   読み込みが動いている間（pending）  … 最大12秒待つ
+    //   動いていない／断られた             … 4秒で、または即やめる
+    // 「在庫なし」と答えられたときに待ち続けると、押してから冒険が
+    // 始まるまで毎回その秒数ぶん止まる。それも実機で指摘を受けている。
+    //
+    // 1秒を超えて待つときは「準備しています」を出す。押したのに何も
+    // 起きない時間を作らないため。広告の不調は書かない（2026-09-09 方針）。
+    var REWARD_WAIT_MS = 4000, REWARD_MAX_MS = 12000, PANEL_AFTER_MS = 1000;
+
+    function waitPanel() {
+      var wrap = document.createElement("div");
+      wrap.className = "wq2-store-ovl";
+      wrap.innerHTML = '<div class="wq2-store-panel dq-window">' +
+                       '<div class="wq2-store-p">準備しています…</div></div>';
+      (document.getElementById("screen") || document.body).appendChild(wrap);
+      return function () { try { wrap.remove(); } catch (e) {} };
+    }
+
     function showRewardNow(cb) {
       rewardCb = cb;
       AdMob.showRewardVideoAd().catch(function () {
         if (rewardCb) { var c = rewardCb; rewardCb = null; c(false); }
       });
     }
+
     window.WQ2_STORE.showRewarded = function (cb) {
       rewarded.revive();                       // 打ち切り・再試行待ちを解いて読みにいく
       if (rewarded.ready) { showRewardNow(cb); return; }
       var fails0 = rewarded.stats().fails;
-      var waited = 0;
+      var waited = 0, closePanel = null;
+      function finish(fn) {
+        clearInterval(iv);
+        if (closePanel) closePanel();
+        fn();
+      }
       var iv = setInterval(function () {
         waited += 150;
-        if (rewarded.ready) { clearInterval(iv); showRewardNow(cb); return; }
+        if (!closePanel && waited >= PANEL_AFTER_MS) closePanel = waitPanel();
+        if (rewarded.ready) { finish(function () { showRewardNow(cb); }); return; }
         var st = rewarded.stats();
-        var answered = st.fails > fails0 && !st.pending;   // 読みにいって断られた
-        if (answered || waited >= REWARD_WAIT_MS) {
-          clearInterval(iv);
-          note("リワードを出せなかった（" +
-               (answered ? "読み込みに失敗: " + (st.lastError || "理由不明")
-                         : Math.round(waited / 1000) + "秒待っても用意できず") + "）");
-          cb(false);
+        if (st.fails > fails0 && !st.pending) {          // 読みにいって断られた
+          finish(function () {
+            note("リワードを出せなかった（読み込みに失敗: " + (st.lastError || "理由不明") + "）");
+            cb(false);
+          });
+          return;
+        }
+        if (st.pending && waited < REWARD_MAX_MS) return;  // 読み込み中。もう少し待つ
+        if (waited >= (st.pending ? REWARD_MAX_MS : REWARD_WAIT_MS)) {
+          finish(function () {
+            note("リワードを出せなかった（" + Math.round(waited / 1000) + "秒待っても用意できず）");
+            cb(false);
+          });
         }
       }, 150);
     };
