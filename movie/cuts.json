@@ -60,15 +60,6 @@
         "src": "movie/src/ed1.mp4"
       },
       {
-        "name": "ED-3 旅の続き",
-        "src": "movie/src/ed3.mp4",
-        "trim": [
-          0,
-          5.4
-        ],
-        "note": "6秒手前から崩れた文字が空に出るため、その前で切る"
-      },
-      {
         "name": "ED-2 ことばが還る",
         "src": "movie/src/ed2.mp4"
       }
