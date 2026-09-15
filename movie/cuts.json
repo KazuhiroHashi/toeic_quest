@@ -57,11 +57,13 @@
     "cuts": [
       {
         "name": "ED-1 魔王の消滅",
-        "src": "movie/src/ed1.mp4"
+        "src": "movie/src/ed1.mp4",
+        "speed": 1.25
       },
       {
         "name": "ED-2 ことばが還る",
-        "src": "movie/src/ed2.mp4"
+        "src": "movie/src/ed2.mp4",
+        "speed": 1.25
       }
     ]
   }
