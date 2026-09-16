@@ -4,7 +4,7 @@
 //   npm run build:www
 //   npm install playwright-core --no-save
 //   node tools/make_shots.js
-//   → store/screenshots/01_title.png 05_records.png 06_grades.png （1290×2796）
+//   → store/screenshots/01_title 02_quiz 03_boss 04_wordbook 05_records 06_grades（1290×2796）
 //
 // そのあと、いつもの並びに組み直す：
 //   node tools/make_store_assets.js   # → 6.9inch / 6.5inch
@@ -16,10 +16,19 @@
 // （「※ ストーリーモードは 制作中です」の行は build_www.js が落とす）。
 // 店頭に出す絵は、実際に配るものと同じでなければならない。
 //
-// ── 撮れないもの ────────────────────────────────────
-// 02_quiz と 03_boss は撮らない。特定の単語（moreover / competent）と
-// 四天王ハウルが出ている場面で、そこまで自動で持っていくのは当てにならない。
-// あの2枚は手で遊んで撮ったもので、中身も古くなっていないのでそのまま使う。
+// ── 02_quiz と 03_boss も撮る（2026-09-16 追加）────────────
+// 以前は「特定の単語と四天王ハウルが出ている場面まで自動で運ぶのは
+// 当てにならない」として、この2枚だけ手で遊んで撮っていた。
+// そのぶん撮り直しが面倒になり、実際に古いまま残った：Bボタンの下が
+// 「メニュー/戻る」、Aボタンが「話す/決定」と、いまのアプリに無い表記に
+// なっていた（2026-09-16 に本人が気づいた）。撮れないままにしておくと
+// 必ずこうなるので、運べるようにした。
+//
+// 運び方は2つとも決め打ちにしてある。
+//   ・出る単語 … QUIZ.ask を包んで opts.entry を差し込む。毎回同じ語が出る
+//   ・ハウル   … 「続きから」の保存データ(wq2_run_v1)を 6戦目・4人で作り、
+//                 タイトルから再開する。11戦を勝ち抜く必要はない
+// どちらもアプリ側には手を入れていない。撮影のときだけ外から差し込む。
 //
 // ── 日本語フォント ─────────────────────────────────
 // これが無い環境で撮ると、sans-serif が中国語フォントに解決されて
@@ -71,6 +80,106 @@ async function clickText(page, sel, text) {
   }, { sel: sel, text: text });
   if (!ok) throw new Error("押せませんでした: " + sel + " 「" + text + "」");
   await page.waitForTimeout(500);
+}
+
+// 出る単語を決め打ちにする。QUIZ.ask を包んで entry を差し込むだけで、
+// アプリ側には触らない。同じ絵が何度でも撮れる
+async function forceWord(page, word) {
+  var ok = await page.evaluate(function (w) {
+    if (!window.QUIZ || !window.VOCAB) return false;
+    var found = null;
+    Object.keys(window.VOCAB).forEach(function (lv) {
+      if (found) return;
+      var e = window.VOCAB[lv].filter(function (x) { return x.w === w; })[0];
+      if (e) found = { lv: +lv, entry: e };
+    });
+    if (!found) return false;
+    var orig = window.QUIZ.ask;
+    window.QUIZ.ask = function (lv, opts) {
+      var o = {};
+      Object.keys(opts || {}).forEach(function (k) { o[k] = opts[k]; });
+      o.entry = found.entry;
+      return orig.call(this, found.lv, o);
+    };
+    return true;
+  }, word);
+  if (!ok) throw new Error("この単語が見つかりません: " + word);
+}
+
+// 「続きから」の保存データを作る。11戦を勝ち抜かずに任意の戦いから撮れる
+async function seedRun(page, nextIndex) {
+  await page.evaluate(function (i) {
+    var party = ["yu", "gai", "rina", "mia"].map(function (id) {
+      var m = window.PBATTLE.makeMember(id, 28);
+      m.bag = ["herb", "herb", "elixir"];
+      return m;
+    });
+    localStorage.setItem("wq2_run_v1", JSON.stringify({
+      i: i, party: party, stats: { t0: Date.now(), maxChain: 0 }, easy: false, at: Date.now()
+    }));
+  }, nextIndex);
+}
+
+// 中断した挑戦が残っていたら「最初から やり直す」で消す
+async function dismissResume(page) {
+  var had = await page.evaluate(function () {
+    var o = document.querySelector(".wq2-store-ovl");
+    if (!o) return false;
+    var b = [].slice.call(o.querySelectorAll("button"))
+      .filter(function (x) { return x.textContent.indexOf("最初から") >= 0; })[0];
+    if (b) { b.click(); return true; }
+    return false;
+  });
+  if (had) await page.waitForTimeout(700);
+}
+
+// 戦闘に入り、コマンドから「こうげき」を選んでクイズを出す。
+// 途中の文章は A を押して送る。何回で終わるかは戦いによって違うので、
+// 目的の要素が出るまで押す
+async function toQuiz(page) {
+  // 「Ａボタンで 開始！」のカードと、登場〜口上を送る
+  var ready = false;
+  for (var i = 0; i < 30; i++) {
+    ready = await page.evaluate(function () {
+      var el = document.getElementById("pbattle-cmd");
+      return !!el && el.style.display === "block";
+    });
+    if (ready) break;
+    await page.click("#btn-a");
+    await page.waitForTimeout(450);
+  }
+  if (!ready) throw new Error("戦闘のコマンドが出ませんでした");
+
+  // ★ メニューの項目は onpointerdown でしか動かない。el.click() では反応しない。
+  //   Playwright の本物のクリックなら pointerdown が飛ぶので、そちらを使う
+  await page.locator("#pbattle-cmd .menu-item", { hasText: "こうげき" }).first().click();
+  await page.waitForTimeout(400);
+
+  // 敵が複数なら「どの敵？」が出る。1体（ボス）なら出ない
+  var sub = await page.evaluate(function () {
+    var el = document.getElementById("pbattle-sub");
+    return !!el && el.style.display === "block";
+  });
+  if (sub) {
+    await page.locator("#pbattle-sub .menu-item").first().click();
+    await page.waitForTimeout(400);
+  }
+
+  // 攻撃を選んでもすぐクイズにはならない。素早い敵が先に動くことがあり、
+  // その行動メッセージを送らないと自分の番が来ない。出るまで A を押し続ける
+  var shown = false;
+  for (var k = 0; k < 40; k++) {
+    shown = await page.evaluate(function () {
+      var q = document.getElementById("quiz-overlay");
+      return !!q && getComputedStyle(q).display !== "none";
+    });
+    if (shown) break;
+    await page.click("#btn-a");
+    await page.waitForTimeout(350);
+  }
+  if (!shown) throw new Error("クイズが出ませんでした");
+  // 制限時間のバーが少し減ったところで撮る（満タンだと止まって見える）
+  await page.waitForTimeout(1200);
 }
 
 (async function () {
@@ -132,6 +241,38 @@ async function clickText(page, sel, text) {
   await b.page.waitForTimeout(400);
   await shot(b.page, "06_grades");
   await b.ctx.close();
+
+  // ---- 04_wordbook 単語帳 ----
+  // ここも撮影対象から漏れていて、Bボタンが「メニュー/戻る」のまま残っていた
+  var w = await open();
+  await w.page.click("#pbtn-zukan");
+  await w.page.waitForTimeout(900);
+  await shot(w.page, "04_wordbook");
+  await w.ctx.close();
+
+  // ---- 02_quiz 第1戦のクイズ ----
+  var c = await open();
+  await forceWord(c.page, "moreover");
+  await clickText(c.page, ".title-btn", "ことばの冒険");
+  await c.page.waitForTimeout(700);
+  await dismissResume(c.page);              // 前の「続きから」が残っていたら消す
+  await toQuiz(c.page);
+  await shot(c.page, "02_quiz");
+  await c.ctx.close();
+
+  // ---- 03_boss 四天王ハウル戦のクイズ ----
+  var d = await open();
+  await forceWord(d.page, "competent");
+  await seedRun(d.page, 5);                  // 6戦目＝四天王ハウルから再開させる
+  // ボタンの文字（「ことばの冒険」／「続きから」）は読み込み時に決まるので、
+  // あとから保存データを入れても変わらない。押したときに読み直されるので、
+  // 文字ではなく id で押す
+  await d.page.click("#pbtn-arena");
+  await d.page.waitForTimeout(700);
+  await clickText(d.page, ".wq2-store-btn", "続きから");
+  await toQuiz(d.page);
+  await shot(d.page, "03_boss");
+  await d.ctx.close();
 
   await browser.close();
   srv.close();

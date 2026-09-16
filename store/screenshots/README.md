@@ -30,14 +30,60 @@ node tools/make_ipad_shots.js       # → store/upload/13inch
 node tools/make_play_assets.js      # → store/play/
 ```
 
-`make_shots.js` が撮るのは**タイトル画面から行ける3枚だけ**。
-`02_quiz` と `03_boss` は、特定の単語と四天王ハウルが出ている場面なので、
-そこまで自動で運ぶのは当てにならない。あの2枚は手で遊んで撮ったもの。
+`make_shots.js` が**6枚すべて**撮る（2026-09-16 から）。
+以前は `02_quiz` と `03_boss` を「自動で運ぶのは当てにならない」として
+手で遊んで撮っていたが、そのせいで撮り直しが面倒になり、実際に古いまま
+残った（Bボタンが「メニュー/戻る」、Aボタンが「話す/決定」と、いまの
+アプリに無い表記になっていた）。運べるようにしてある。
+
+  出る単語  … QUIZ.ask を包んで opts.entry を差し込む。毎回同じ語が出る
+              （02_quiz は moreover、03_boss は competent）
+  ハウル    … 「続きから」の保存データを 6戦目・4人で作って再開する
+  04_wordbook … 単語帳。これも漏れていたので足した
+
+アプリ側には手を入れていない。撮影のときだけ外から差し込む。
 
 **www/ ビルドから撮ること。** `party/` には出荷ビルドに入らないもの
 （「※ ストーリーモードは 制作中です」の行）が混ざっている。
 
-日本語フォントが無い環境で撮ると**中国語字形になる**ので注意
+### ⚠ 日本語フォント（毎回確認すること）
+
+日本語フォントが無い環境で撮ると、sans-serif が中国語フォントに解決されて
+**中国語の字形**になる。2026-09-16 の撮り直しでも、最初はこうなっていた。
+
+```bash
+fc-match "sans-serif:lang=ja"
+#  Noto Sans CJK JP  なら正しい
+#  WenQuanYi Zen Hei など中国語フォントが出たら、そのまま撮ってはいけない
+```
+
+直し方：
+
+```bash
+apt-get install -y fonts-noto-cjk
+cat > /etc/fonts/conf.d/99-ja-noto.conf <<'XML'
+<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+<fontconfig>
+  <alias binding="strong"><family>sans-serif</family>
+    <prefer><family>Noto Sans CJK JP</family></prefer></alias>
+</fontconfig>
+XML
+fc-cache -f
+```
+
+インストールしただけでは足りない。中国語フォントのほうが優先されたままなので、
+上の設定で順番を入れ替える必要がある。
+
+### ⚠ プレビュー動画が巻き添えで再エンコードされる
+
+`make_store_assets.js` は `store/upload/preview/op_preview_886x1920.mp4` も
+作り直す。中身は同じなのにファイルが 13.2MB → 16.5MB に太るだけなので、
+**スクリーンショットだけ更新したいときは、実行後に戻すこと。**
+
+```bash
+git checkout -- store/upload/preview/
+```
 （`sans-serif` が WenQuanYi 等に解決されるため）。`fonts-noto-cjk` が必要。
 確かめ方は `fc-match "sans-serif:lang=ja"` → `Noto Sans CJK JP` なら正しい。
 
