@@ -1055,6 +1055,8 @@
         ? WQ2_ADS.report()
         : "このビルドではネイティブの広告が動いていません。\n" +
           "（ブラウザで開いている／Capacitor のプラグインが入っていない）";
+      // 音の記録も一緒に出す。「効果音が途切れる」を実機で追うため（js/audio.js）
+      if (window.WQAUDIO && WQAUDIO.report) txt += "\n\n" + WQAUDIO.report();
       if (window.WQ2_STORE && WQ2_STORE.note) WQ2_STORE.note(txt);
       else alert(txt);
     });

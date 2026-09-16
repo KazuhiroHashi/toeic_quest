@@ -76,6 +76,69 @@
     return c;
   }
 
+  // ---- 実機で何が起きているかを記録する（見るだけ。鳴り方は変えない）----
+  //
+  // 「iPhone で効果音が途切れる／鳴らなくなる」を、推測ではなく事実で追うため。
+  // Mac に繋がなくても、タイトルのビルド番号を5回叩けば読める（pmain.js）。
+  //
+  // iOS の AudioContext には他のOSに無い "interrupted" がある（電話・Siri・
+  // アラーム・他アプリの音などで音声セッションを奪われた状態）。このコードは
+  // いままでそれを区別していなかった。区別できていないことを確かめたいので、
+  // 状態の変わり目をそのまま残す。
+  var LOGKEY = "wq2_audio_v1";
+  var D = {
+    born: Date.now(),
+    states: [],        // 状態が変わった記録（新しいものが先頭）
+    stateNow: "-",
+    cut: 0,            // hold() が「running でない」ので前の音を止めた回数
+    played: 0,         // 実際に start() した回数
+    noBuf: 0,          // まだ読み込めていなくて鳴らせなかった
+    gap: 0,            // 70ms以内の重複として見送った
+    over: 0,           // 同じ音が3つを超えて、古いものを切った
+    stall: 0,          // 音声処理が詰まった疑い（時計のずれ）
+    worstStall: 0,
+    liveMax: 0
+  };
+  try {
+    var old = JSON.parse(localStorage.getItem(LOGKEY) || "{}");
+    if (old && old.states) D.prev = old.states;
+  } catch (e) {}
+  function dsave() {
+    try {
+      localStorage.setItem(LOGKEY, JSON.stringify({ states: D.states.slice(0, 40) }));
+    } catch (e) {}
+  }
+  function dstate(from, to) {
+    var t = new Date();
+    D.stateNow = to;
+    D.states.unshift(
+      ("0" + t.getHours()).slice(-2) + ":" + ("0" + t.getMinutes()).slice(-2) +
+      ":" + ("0" + t.getSeconds()).slice(-2) + " " + from + " → " + to);
+    if (D.states.length > 40) D.states.pop();
+    dsave();
+  }
+
+  // 音声処理が追いついているかを見る。AudioContext の時計は音声スレッドが
+  // 進めるので、実時間より遅れていたら、そのぶん音が途切れている。
+  // 1秒ごとに比べるだけなので、負荷にはならない
+  var clockRunning = false;
+  function watchClock() {
+    var c = ctx; if (!c) return;
+    var a0 = 0, w0 = 0;
+    setInterval(function () {
+      if (!ctx) return;
+      // 止まっている間は比べない。止まり→動きの直後も、またぐぶんが混ざるので
+      // 数えず、そこを新しい起点にし直す。これをしないと、広告やアプリの
+      // 切り替えのたびに「詰まった」と誤って数えてしまう
+      if (ctx.state !== "running") { clockRunning = false; return; }
+      var a = ctx.currentTime, w = Date.now();
+      if (!clockRunning) { clockRunning = true; a0 = a; w0 = w; return; }
+      var lag = (w - w0) / 1000 - (a - a0);         // 実時間より音声時計が遅れた秒数
+      a0 = a; w0 = w;
+      if (lag > 0.08) { D.stall++; if (lag > D.worstStall) D.worstStall = lag; }
+    }, 1000);
+  }
+
   function context() {
     if (ctx || dead) return ctx;
     try {
@@ -116,6 +179,13 @@
         out = pre;
       }
       master.connect(out);
+      // 状態の変わり目を残す。iOS の "interrupted" もここに出る
+      D.stateNow = ctx.state;
+      dstate("(作成)", ctx.state);
+      try {
+        ctx.onstatechange = function () { dstate(D.stateNow, ctx.state); };
+      } catch (e) {}
+      watchClock();
     } catch (e) { dead = true; ctx = null; }
     return ctx;
   }
@@ -234,6 +304,9 @@
     var c = ctx;
     if (!c) return;
     if (c.state === "running") { pend.length = 0; return; }
+    // ここを通るのは context が running でないとき。前に鳴らした音を止める。
+    // 「効果音が途切れる」の出どころがここなら、この数が増える
+    D.cut += pend.length;
     for (var i = 0; i < pend.length; i++) { try { pend[i].stop(); } catch (e) {} }
     pend = [s];
   }
@@ -246,7 +319,7 @@
     var c = context();
     if (!c) return false;
     var buf = buffers[name];
-    if (!buf) return false;
+    if (!buf) { D.noBuf++; return false; }
     if (!resume()) return false;       // まだ操作前
     try {
       var now = c.currentTime;
@@ -254,10 +327,11 @@
 
       // ひとつの出来事から続けて呼ばれたぶんは、鳴らさずに見送る。
       // いま鳴っている音がそのまま最後まで鳴る
-      if (arr.length && now - arr[arr.length - 1].t < MIN_GAP) return true;
+      if (arr.length && now - arr[arr.length - 1].t < MIN_GAP) { D.gap++; return true; }
 
       // あふれたぶんは、消してから譲る（ぶつ切りにしない）
       while (arr.length >= MAX_SAME) {
+        D.over++;
         var old = arr.shift();
         try {
           var g0 = old.g.gain;
@@ -281,6 +355,8 @@
         try { g.disconnect(); } catch (e) {}
       };
       arr.push(rec);
+      if (arr.length > D.liveMax) D.liveMax = arr.length;
+      D.played++;
       s.start(0);
       hold(s);
       return true;
@@ -345,8 +421,29 @@
   // BGMは素の <audio> のままにして、音量はファイル側で調整する
   // （tools/build_www.js の BGM_GAIN）。
 
+  // 実機で読むための要約。タイトルのビルド番号を5回叩くと出る（pmain.js）
+  function report() {
+    var c = ctx;
+    var mins = Math.round((Date.now() - D.born) / 60000);
+    var out = [];
+    out.push("■ 音の状態（起動から" + mins + "分）");
+    out.push("  いまの状態: " + (c ? c.state : "context なし") +
+             (c ? " / 音声時計 " + c.currentTime.toFixed(1) + "秒" : ""));
+    out.push("  鳴らした回数 " + D.played + " / 途中で切った " + D.cut + " 回");
+    out.push("  見送り: 70ms重複 " + D.gap + " / 未読込 " + D.noBuf + " / 3つ超え " + D.over);
+    out.push("  同時に鳴った最大 " + D.liveMax + " 本");
+    out.push("  処理が詰まった " + D.stall + " 回" +
+             (D.worstStall ? "（最大 " + D.worstStall.toFixed(2) + "秒の遅れ）" : ""));
+    out.push("  状態の変わり目:");
+    var ls = D.states.concat(D.prev || []);
+    if (!ls.length) out.push("    （記録なし）");
+    else ls.slice(0, 10).forEach(function (l) { out.push("    " + l); });
+    return out.join("\n");
+  }
+
   window.WQAUDIO = {
     available: function () { return !!context(); },
+    report: report,
     resume: resume,
     load: load,
     play: play,
