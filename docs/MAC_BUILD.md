@@ -157,6 +157,31 @@ Android Studio が開いたら：
 
 ---
 
+## ⚠ ios/ や android/ を作り直したときは、アイコンを生成し直すこと
+
+`npx cap add ios` / `npx cap add android` はプロジェクトを**初期状態で作る**。
+アプリアイコンと起動画面は入っていない。**`npm run cap:sync` では生成されない**
+（cap:sync がやるのは www の同期・AdMob ID・バンドルID・バージョンの4つだけ）。
+
+2026-09-16、これを忘れたまま iOS をアップロードし、TestFlight に
+**Xcode の既定アイコン**で 1.0.1 (9) が並んだ。アイコンの無いアプリは
+審査で落ちる。
+
+作り直したときの正しい順番：
+
+```bash
+npx cap add ios          # 先に作る
+npm run assets           # ← これを忘れない（appicon/ から生成）
+npm run cap:sync         # そのあと。AdMob ID・バンドルID・バージョンが入る
+npx cap open ios
+```
+
+Xcode の **TARGETS → App → General → App Icons** に剣のアイコンが出ていれば
+成功。既定の灰色アイコンのままなら `npm run assets` が効いていない。
+**Display Name** も初期化されるので、`WORDRIA` になっているか見ること。
+
+---
+
 ## STEP 5：iOS（TestFlight へ）
 
 ```bash
