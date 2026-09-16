@@ -7,15 +7,26 @@ App Store Connect の「プレビューとスクリーンショット」に上�
 | `wordquest_pr_886x1920.mp4` | **本番用。** 家族制作のPR動画。ファイル名は作った当時のまま |
 | `op_preview_886x1920.mp4` | 予備。ゲーム内OPムービーを切り出したもの |
 
-## ⚠ WORDRIA への改名で差し替えが要る
+## いまの状態（2026-09-16 確認）
 
-どちらの動画も**末尾に旧「WORD QUEST」ロゴが出る**。改名版（2.2.0）を出すときは
-両方とも作り直すこと。旧ロゴのまま新しいApp名で出すと、ガイドライン 2.3.3
-（実際の画面と一致していること）に触れる。
+| ファイル | ロゴ | 使えるか |
+|---|---|---|
+| `op_preview_886x1920.mp4` | **WORDRIA** | ✅ そのまま上げられる |
+| `wordquest_pr_886x1920.mp4` | **WORD QUEST**（旧） | ❌ 使えない |
 
-- `op_preview_886x1920.mp4` … `node tools/build_movie.js` でOPを組み直したあと、
-  `node tools/make_preview.js movie/out/OP.mp4 --fit` で作り直せる（新ロゴ反映済み）
-- `wordquest_pr_886x1920.mp4` … 家族制作。ロゴが写っている箇所を差し替えて再書き出しが必要
+`op_preview` は改名後に作り直してあり、末尾のロゴは WORDRIA になっている
+（26秒地点で確認）。**以前ここに「どちらの動画も旧ロゴが出る」と書いてあったが、
+op_preview については古い記述だった。**
+
+`wordquest_pr` は旧版のまま。ロゴだけでなく、テロップ「WORDQUESTは」、
+メニューの「ことばの闘技場」、Aボタンの「話す/決定」まで全部が旧い。
+**新しいApp名のまま出すと ガイドライン 2.3.3（実際の画面と一致していること）
+に触れる。**
+
+作り直すなら：
+- `op_preview` … `node tools/build_movie.js` でOPを組み直したあと、
+  `node tools/make_preview.js movie/out/OP.mp4 --fit`
+- `wordquest_pr` … 家族制作。作り直しはご本人たちに依頼が要る
 
 ## 条件（外れると App Store Connect が受け付けない）
 
