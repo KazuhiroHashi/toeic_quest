@@ -4,6 +4,12 @@
 //   node tools/make_ipad_shots.js
 //   → store/upload/13inch/01..06_*.png （2064×2752）
 //
+// App Store Connect の枠が「12.9インチ」だった場合は 2048×2732 が要る。
+// 13inch から縮めるだけでよい（版面は同じ比率）：
+//   for f in store/upload/13inch/*.png; do
+//     ffmpeg -i "$f" -vf scale=2048:2732:flags=lanczos "store/upload/12.9inch/$(basename $f)"
+//   done
+//
 // なぜ実機のiPadで撮り直さないか：
 //   盤面は #game-wrap の max-width:560px で頭打ちになるので、iPadの幅(1032pt)で
 //   そのまま撮ると左右が真っ黒に余る。かといって幅が収まる高さ(747pt)で撮ると
