@@ -53,26 +53,98 @@ BRIDGE AI (Tokyo) の中身：
 
 急ぎではないが、放置すると売上が受け取れない。
 
-## Apple への問い合わせ文（そのまま送れる）
+## Apple への問い合わせメール（そのまま送れる）
+
+送り先は developer.apple.com/contact/ の
+「Membership, Account & Organization」系の窓口。
+App Store Connect 右上の「?」からも同じところに入る。
+
+送る前に **Team ID を1か所だけ埋める**（App Store Connect 右上のアカウント名 →
+メンバーシップ、または developer.apple.com の Membership details にある10桁）。
+分からなければ行ごと消してよい。Entity ID があれば特定できる。
+
+### 件名
 
 ```
-BRIDGE AI (Tokyo)（Entity ID: 94850034）の納税フォームについてご相談です。
+【納税フォーム】個人事業主のため W-8BEN-E が記入できません（Entity ID: 94850034）
+```
 
-当方は日本の個人事業主で、法人登記はしておりません。
-「BRIDGE AI」は屋号であり、法人格を持つ事業体ではありません。
-米国税務上の受取人は個人（Kazuhiro Hashino）にあたると理解しています。
+### 本文
 
-現在この Entity に対して、以下2つの様式の提出を求められています。
+```
+Apple Developer Support ご担当者様
+
+いつもお世話になっております。
+Apple Developer Program に登録しております Kazuhiro Hashino と申します。
+
+App Store Connect の「ビジネス」に登録されている法的主体
+BRIDGE AI (Tokyo)（Entity ID: 94850034）の納税フォームについて、
+提出すべき様式をご教示いただきたくご連絡いたしました。
+
+
+■ 当方の状況
+
+当方は日本の個人事業主です。
+法務局への法人登記は行っておらず、「BRIDGE AI」は税務署に届け出た
+屋号（trade name）です。法人格を持つ事業体ではありません。
+したがって米国税務上の受益者（Beneficial Owner）は、個人である
+Kazuhiro Hashino にあたるものと理解しております。
+
+なお、先般アカウント種別を個人から組織へ移行いたしましたが、
+その際も法人登記のない個人事業主として登録を進めていただいております。
+
+
+■ 発生している問題
+
+現在、上記 Entity に対して以下2点の提出を求められております。
+
 　・U.S. Certificate of Foreign Status of Beneficial Owner
 　・U.S. Substitute Form W-8BEN-E
 
-いずれも事業体（Entities）向けの様式で、
-「Type of Beneficial Owner」「Chapter 3 Status」に Individual の選択肢がなく、
-事実に沿った記入ができません。
+いずれも事業体（Entities）向けの様式であり、
 
-個人事業主の場合、どの様式をどの Entity に対して提出すべきかをご教示ください。
-（個人用の W-8BEN を提出すべきでしょうか）
+　・冒頭の記入欄が "Name of organization that is the beneficial owner"
+　　であること
+　・"Type of Beneficial Owner" および "Chapter 3 Status" の選択肢に、
+　　Individual（個人）に相当する区分が存在しないこと
+
+から、当方の実態に沿った記入ができず、提出できない状態です。
+
+これらの様式は偽証罪の罰則の下で署名するものと承知しておりますので、
+事実と異なる区分を選択することは避けたく存じます。
+
+
+■ ご質問
+
+1. 個人事業主の場合、W-8BEN-E ではなく個人用の W-8BEN を
+　 提出すべきでしょうか。
+
+2. その場合、提出先となる法的主体は、
+　 BRIDGE AI (Tokyo)（Entity ID: 94850034）と
+　 Kazuhiro Hashino（Entity ID: 94651308）のいずれになりますか。
+
+3. W-8BEN-E で提出する必要がある場合、法人登記のない個人事業主は
+　 どの区分を選択すべきでしょうか。
+
+4. 現在「保留中（新規法人）」となっている有料アプリ契約および
+　 無料アプリ契約は、本フォームの提出によって進行するという理解で
+　 相違ないでしょうか。
+
+
+お手数をおかけしますが、ご確認のほどよろしくお願いいたします。
+
+
+────────────────────────
+Kazuhiro Hashino（個人事業主・屋号 BRIDGE AI）
+Apple Developer Program
+Apple ID: kazuhiro.hashino@gmail.com
+Entity ID: 94850034 / 94651308
+Team ID:
+────────────────────────
 ```
+
+> 質問4を入れてあるのは、**契約が止まっている本当の原因が納税フォームなのかを
+> 確かめるため。** もし別の理由なら、フォームを出しても解決しない。
 
 ## ついでに：EU の DSA（トレーダー申告）
 
