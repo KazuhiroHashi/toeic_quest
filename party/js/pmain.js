@@ -590,10 +590,15 @@
           ]).catch(function () {});
         }
         // 1周を遊びきった直後は、いちばん気持ちが乗っている。ストアの評価を
-        // お願いするなら ここしかない。2周目以降・90日おき・生涯3回まで、
-        // そして見返りは一切つけない（条件と理由は party/js/prate.js）。
-        // maybeAsk は必ず解決するので、ここで止まることはない
-        if (window.WQ2_RATE) await WQ2_RATE.maybeAsk(rc.clears);
+        // お願いするなら ここしかない。90日おき・生涯3回まで、そして見返りは
+        // 一切つけない（条件と理由は party/js/prate.js）。
+        // maybeAsk は必ず解決するので、ここで止まることはない。
+        //
+        // ★ 初回クリアのときは、ここでは聞かない。このあとタイトルに戻って
+        //   サウンドトラックの画面を出すので、それを閉じたところで聞く
+        //   （2026-09-19 本人の指定）。順番は
+        //   エンディング → ED動画 → 全画面広告 → サウンドトラック → 評価のお願い
+        if (window.WQ2_RATE && !ostTease) await WQ2_RATE.maybeAsk(rc.clears);
       }
     }
     if (window.BGM) BGM.stop();
@@ -601,7 +606,12 @@
     $("ptitle-screen").style.display = "flex";
     refreshStamina(); refreshArenaBtn(); refreshReviewBtn(); refreshTowerBtn(); refreshOstBtn(); refreshModeBtn(); refreshVoiceBtn();
     if (window.BGM) BGM.playAny(["title"]);
-    if (ostTease) { ostTease = false; showOst(); }
+    if (ostTease) {
+      ostTease = false;
+      var nClears = loadRec().clears || 0;
+      // 閉じたところで評価のお願い。すぐ重ねると気ぜわしいので、少しだけ置く
+      showOst(function () { if (window.WQ2_RATE) WQ2_RATE.maybeAsk(nClears); });
+    }
   }
 
   // ================= 挑戦の塔（endless mode・闘技場のバランスには一切触れない） =================
@@ -788,7 +798,9 @@
       : "サウンドトラック（" + Math.min(n, OST_CLEARS) + "／" + OST_CLEARS + "）";
   }
 
-  function showOst() {
+  // onClose … 閉じたあとに一度だけ呼ぶ。初回クリアの案内のあとで
+  //            評価のお願いに繋ぐために使う
+  function showOst(onClose) {
     var cur = -1, tick = 0;
     function no(i) { return (i + 1 < 10 ? "0" : "") + (i + 1); }
     function ms(sec) {
@@ -964,6 +976,7 @@
       $("btn-b").removeEventListener("pointerdown", onB, true);
       wrap.remove();
       syncPad();
+      if (onClose) { var after = onClose; onClose = null; setTimeout(after, 350); }
       // 聴き終わったらタイトルの曲に戻す。戻さないと、戦闘曲が
       // タイトル画面で鳴りっぱなしになる
       if (window.BGM) BGM.playAny(["title"]);
