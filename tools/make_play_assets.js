@@ -21,15 +21,18 @@ var OUT = path.join(ROOT, "store", "play");
 var BG = "#0b1131";                       // タイトル画面の地の色に合わせる
 var SHOT_W = 1080, SHOT_H = 1920;
 
-// Play は1つの端末種別につき最大8枚。並びは App Store と同じ考え方で、
-// 「英単語クイズで攻撃する」が一目で分かる 02_quiz を先頭に置く。
+// Play は1つの端末種別につき最大8枚。並びは App Store と揃える。
+// 1枚目はコマンド選択（2026-09-19 変更）。以前はクイズを先頭に置いていたが、
+// それだと「単語クイズのアプリ」に見えるという指摘があった。
+// コマンドと4人パーティを先に見せ、2枚目のクイズで「単語で戦う」と分かる並びにする。
 var SHOTS = [
-  ["01_quiz.png", "01_quiz.png"],
-  ["02_boss.png", "02_boss.png"],
-  ["03_title.png", "03_title.png"],
-  ["04_grades.png", "04_grades.png"],
-  ["05_wordbook.png", "05_wordbook.png"],
-  ["06_records.png", "06_records.png"]
+  ["01_boss_command.png", "01_boss_command.png"],
+  ["02_quiz.png", "02_quiz.png"],
+  ["03_boss.png", "03_boss.png"],
+  ["04_title.png", "04_title.png"],
+  ["05_grades.png", "05_grades.png"],
+  ["06_wordbook.png", "06_wordbook.png"],
+  ["07_records.png", "07_records.png"]
 ];
 
 function ff(args) {

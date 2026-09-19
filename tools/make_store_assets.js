@@ -25,7 +25,10 @@ var SRC = path.join(root, "store", "screenshots");
 var OUT = path.join(root, "store", "upload");
 
 // 掲載順。1枚目が最重要で、ストアでは3枚目までしか見られないことが多い
-var ORDER = ["02_quiz", "03_boss", "01_title", "06_grades", "04_wordbook", "05_records"];
+// 1枚目を 09_boss_command にした（2026-09-19）。
+// クイズの絵ばかりだと「単語クイズのアプリ」に見える、という指摘を受けたため。
+// 4人パーティとコマンドが並ぶ絵を先に置き、2枚目のクイズで「単語で戦う」と分かる並びにする。
+var ORDER = ["09_boss_command", "02_quiz", "03_boss", "01_title", "06_grades", "04_wordbook", "05_records"];
 
 var SIZES = [
   { name: "6.9inch", w: 1290, h: 2796 },
