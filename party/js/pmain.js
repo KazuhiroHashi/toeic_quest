@@ -828,7 +828,7 @@
     wrap.className = "ost-ovl" + (open ? "" : " locked");
     wrap.innerHTML =
       '<div class="ost-head">' +
-        '<button class="ost-back" aria-label="もどる">‹</button>' +
+        '<button class="ost-back" aria-label="閉じる">✕</button>' +
         '<div class="ost-h1">SOUNDTRACK</div>' +
         '<div class="ost-h2">MUSIC LIVES IN MEMORIES</div>' +
       '</div>' +
