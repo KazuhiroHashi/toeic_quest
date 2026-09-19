@@ -94,6 +94,8 @@ async function forceWord(page, word) {
       if (e) found = { lv: +lv, entry: e };
     });
     if (!found) return false;
+    // 正解の意味を控えておく。撮影中にクイズへ答えるときに使う（answerCorrectly）
+    window.__shotAnswer = found.entry.m;
     var orig = window.QUIZ.ask;
     window.QUIZ.ask = function (lv, opts) {
       var o = {};
@@ -138,7 +140,7 @@ async function dismissResume(page) {
 // 何回押せば終わるかは戦いによって違うので、出るまで押す
 async function toCommand(page) {
   var ready = false;
-  for (var i = 0; i < 30; i++) {
+  for (var i = 0; i < 60; i++) {
     ready = await page.evaluate(function () {
       var el = document.getElementById("pbattle-cmd");
       return !!el && el.style.display === "block";
@@ -147,7 +149,23 @@ async function toCommand(page) {
     await page.click("#btn-a");
     await page.waitForTimeout(450);
   }
-  if (!ready) throw new Error("戦闘のコマンドが出ませんでした");
+  if (!ready) {
+    // 何が出ているのか分からないまま落ちると原因が追えないので、書き出す
+    var now = await page.evaluate(function () {
+      function vis(id) {
+        var e = document.getElementById(id);
+        return e ? (getComputedStyle(e).display !== "none") : null;
+      }
+      var msg = document.getElementById("pbattle-msg");
+      return {
+        cmd: vis("pbattle-cmd"), sub: vis("pbattle-sub"),
+        quiz: vis("quiz-overlay"), movie: vis("pmovie"),
+        ovl: !!document.querySelector(".wq2-store-ovl"),
+        msg: msg ? (msg.textContent || "").slice(0, 60) : null
+      };
+    });
+    throw new Error("戦闘のコマンドが出ませんでした: " + JSON.stringify(now));
+  }
 }
 
 // コマンドから「こうげき」を選んでクイズを出す
@@ -184,6 +202,42 @@ async function toQuiz(page) {
   if (!shown) throw new Error("クイズが出ませんでした");
   // 制限時間のバーが少し減ったところで撮る（満タンだと止まって見える）
   await page.waitForTimeout(1200);
+}
+
+// 出ているクイズに正解する。
+// 選択肢は 1〜4 のキーでも答えられる（js/quiz.js の keyHandler）ので、
+// 正解のボタンが何番目かを数えて、その数字を押す。
+// 正解の文字列は forceWord が window.__shotAnswer に置いている。
+async function answerCorrectly(page) {
+  var idx = await page.evaluate(function () {
+    var want = window.__shotAnswer;
+    if (!want) return -2;
+    var bs = [].slice.call(document.querySelectorAll("#quiz-choices .quiz-choice"));
+    for (var i = 0; i < bs.length; i++) {
+      // ボタンの中身は <span class="num">1</span>意味 なので、番号を落として比べる
+      var t = bs[i].textContent.replace(/^\s*\d+\s*/, "");
+      if (t === want) return i;
+    }
+    return -1;
+  });
+  if (idx === -2) throw new Error("先に forceWord を呼んでください");
+  if (idx < 0) throw new Error("正解の選択肢が見つかりません");
+  await page.keyboard.press(String(idx + 1));
+}
+
+// n回ぶん戦ってから、次のコマンドが出たところで止める。
+//
+// ── なぜ要るのか ──────────────────────────────────────────
+// 敵が出てすぐのコマンド画面は、HPが満タンで、メッセージも
+// 「〜が あらわれた！」か、ボスの口上の途中になる。戦っている最中には見えない。
+// 数ターン進めると、HPが削れ、メッセージも「〜の こうげき！」になる。
+async function fightRounds(page, n) {
+  for (var r = 0; r < n; r++) {
+    await toQuiz(page);
+    await answerCorrectly(page);
+    await page.waitForTimeout(1400);     // 攻撃の演出が流れるまで
+  }
+  await toCommand(page);
 }
 
 (async function () {
@@ -277,14 +331,16 @@ async function toQuiz(page) {
   await shot(e.page, "08_command");
   await e.ctx.close();
 
-  // ---- 09_boss_command 四天王ハウル戦のコマンド選択 ----
-  // どちらが店頭で映えるか、撮ってから選ぶ
+  // ---- 09_boss_command 四天王ハウル戦のコマンド選択（戦いの最中）----
+  // 出てすぐだと HP が満タンで、メッセージもボスの口上の途中になる。
+  // 3ターン戦わせてから止めると、HP が削れ、メッセージも戦闘中のものになる
   var f = await open();
+  await forceWord(f.page, "competent");    // 正解を押すために語を固定する
   await seedRun(f.page, 5);
   await f.page.click("#pbtn-arena");
   await f.page.waitForTimeout(700);
   await clickText(f.page, ".wq2-store-btn", "続きから");
-  await toCommand(f.page);
+  await fightRounds(f.page, 3);
   await f.page.waitForTimeout(500);
   await shot(f.page, "09_boss_command");
   await f.ctx.close();
