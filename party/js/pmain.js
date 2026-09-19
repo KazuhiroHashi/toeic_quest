@@ -62,6 +62,21 @@
     try { return JSON.parse(localStorage.getItem("wq2_records_v1")) || {}; } catch (e) { return {}; }
   }
   function saveRec(r) { try { localStorage.setItem("wq2_records_v1", JSON.stringify(r)); } catch (e) {} }
+  // ── どこまで戦ったか ────────────────────────────────────────
+  // 11戦は一本道なので、最も深く入った戦いの番号ひとつで足りる。
+  // 12 は「エンディングまで見た」。
+  //
+  // ★ この記録を入れる前に遊んでいた人には bestRound が無い。無いまま数えると
+  //   全部を Secret にしてしまうので、1回でも完結していれば 12 とみなす。
+  function bestRound() {
+    var rc = loadRec();
+    return Math.max(rc.bestRound || 0, (rc.clears || 0) >= 1 ? 12 : 0);
+  }
+  function markRound(n) {
+    var rc = loadRec();
+    if ((rc.bestRound || 0) >= n) return;
+    rc.bestRound = n; saveRec(rc);
+  }
   function fmtMs(ms) {
     var s = Math.round(ms / 1000);
     return Math.floor(s / 60) + "分" + ("0" + (s % 60)).slice(-2) + "秒";
@@ -441,6 +456,9 @@
       var r = rounds[i];
       // 何戦目かを渡す。広告を出す位置の判断に使う（pstore.js の AD_ROUNDS）
       r.enc.round = i + 1;
+      // どこまで戦ったかを残す。サウンドトラック集で、まだ会っていない敵の曲を
+      // 伏せるために使う（markRound / bestRound）。勝敗ではなく「戦った」で記録する
+      markRound(i + 1);
       // 10 shown battles; the 11th (真ラスボス) is a hidden surprise — no counter, no start card
       if (i < 10) await gsay("【ことばの冒険】\n" + r.label + "（" + (i + 1) + "／10）\nＡボタンで 開始！");
       var res = await window.PBATTLE.start(r.enc);
@@ -519,6 +537,7 @@
         if (newTime) rc.bestMs = clearMs;
         if (newChain) rc.bestChain = sst.maxChain;
         rc.clears = (rc.clears || 0) + 1;
+        rc.bestRound = 12;   // エンディングまで到達。12 は「全部見た」の印
         saveRec(rc); refreshRecords();
         clearRun(); // cleared — nothing to resume
         var ending = [
@@ -714,6 +733,12 @@
   //   書き換える。つなぎ合わせて組み立てると書き換えが効かず、出荷ビルドで絵が消える。
   //   単引用符でも効かない（正規表現が二重引用符を見ている）。
   //
+  // r: この曲を出すために、少なくともそこまで進んでいる必要がある戦いの番号。
+  //    まだそこまで行っていなければ、曲名も絵も伏せて Secret と出す。
+  //    **06 Howl まで（第6戦）は伏せない。** そこまでは誰でも辿り着くし、
+  //    伏せると一覧がほとんど Secret になって、何の一覧か分からなくなる。
+  //    07 ガグ以降だけを伏せる（2026-09-19 本人の指定）。
+  //
   // d: 曲の長さ（秒）。www/assets/bgm/*.mp3 を ffprobe で測った値（2026-09-19）。
   //    一覧に 2:47 のように出すためだけのもの。再生位置は BGM.now() から取るので、
   //    ここがずれても鳴り方には影響しない。**曲を録り直したら直すこと。**
@@ -731,12 +756,12 @@
     { t: "twin dragon", k: "midboss",  d: 308, a: "../assets/enemies/dragon.png"     },  // 第5戦 洞窟の古竜（双頭の赤竜）
     // s: があると、その行の上に区切りが入る。四天王はここから4連戦
     { t: "Howl",        k: "king1",    d:  80, a: "../assets/enemies/gen_r.png",      s: "THE FOUR GENERALS" },  // 第6戦 四天王ハウル
-    { t: "Gag",         k: "king2",    d: 419, a: "../assets/enemies/king_gag.png"   },  // 第7戦 四天王ガグ
-    { t: "Brank",       k: "king3",    d: 221, a: "../assets/enemies/king_blank.png" },  // 第8戦 四天王ブランク
-    { t: "Iraze",       k: "king4",    d: 104, a: "../assets/enemies/king_erase.png" },  // 第9戦 四天王イレイズ
-    { t: "Mutos",       k: "boss",     d:  94, a: "../assets/enemies/maou_mutos.png" },  // 第10戦 沈黙王ミュートス
-    { t: "Last Mutos",  k: "lastboss", d: 197, a: "../assets/enemies/maou_true.png"  },  // 第11戦 真・沈黙王ミュートス
-    { t: "Ending",      k: "ending",   d: 176, a: "../assets/party/yu.png"           }   // エンディング（主人公ユウ）
+    { t: "Gag",         k: "king2",    d: 419, r:  7, a: "../assets/enemies/king_gag.png"   },  // 第7戦 四天王ガグ
+    { t: "Brank",       k: "king3",    d: 221, r:  8, a: "../assets/enemies/king_blank.png" },  // 第8戦 四天王ブランク
+    { t: "Iraze",       k: "king4",    d: 104, r:  9, a: "../assets/enemies/king_erase.png" },  // 第9戦 四天王イレイズ
+    { t: "Mutos",       k: "boss",     d:  94, r: 10, a: "../assets/enemies/maou_mutos.png" },  // 第10戦 沈黙王ミュートス
+    { t: "Last Mutos",  k: "lastboss", d: 197, r: 11, a: "../assets/enemies/maou_true.png"  },  // 第11戦 真・沈黙王ミュートス
+    { t: "Ending",      k: "ending",   d: 176, r: 12, a: "../assets/party/yu.png"           }   // エンディング（主人公ユウ）
   ];
   // 解放の条件は2つ。どちらかを満たせば開く。
   //   ・冒険を OST_CLEARS 回 完結させる
@@ -770,14 +795,18 @@
     }
     // 鍵つきで開くと、絵と曲名は見えるが押せない。
     // 「何が待っているか」を見せてから条件を伝えるほうが、文字だけより伝わる
-    var open = ostOpen();
+    var open = ostOpen(), far = bestRound();
+    // まだ会っていない敵の曲は、名前も絵も出さない。曲目表を眺めただけで
+    // この先に誰が出てくるか分かってしまうのを避ける
+    function secret(o) { return !!o.r && far < o.r; }
     var rows = OST.map(function (o, i) {
+      var sec = secret(o);
       return (o.s ? '<div class="ost-sec"><span></span></div>' : "") +
-        '<button class="ost-row" data-i="' + i + '">' +
+        '<button class="ost-row' + (sec ? " secret" : "") + '" data-i="' + i + '">' +
           '<span class="ost-n">' + no(i) + '</span>' +
-          '<span class="ost-art"><img src="' + o.a + '" alt=""></span>' +
+          '<span class="ost-art">' + (sec ? "?" : '<img src="' + o.a + '" alt="">') + '</span>' +
           '<span class="ost-t"></span>' +
-          '<span class="ost-d">' + (open ? ms(o.d) : "\ud83d\udd12") + '</span>' +
+          '<span class="ost-d">' + (sec ? "--:--" : (open ? ms(o.d) : "\ud83d\udd12")) + '</span>' +
         '</button>';
     }).join("");
 
@@ -813,7 +842,9 @@
 
     // 曲名と区切りは本人の文字列。innerHTML に混ぜず textContent で入れる
     var rowEls = [].slice.call(wrap.querySelectorAll(".ost-row"));
-    rowEls.forEach(function (el, i) { el.querySelector(".ost-t").textContent = OST[i].t; });
+    rowEls.forEach(function (el, i) {
+      el.querySelector(".ost-t").textContent = secret(OST[i]) ? "Secret" : OST[i].t;
+    });
     var secEls = [].slice.call(wrap.querySelectorAll(".ost-sec span"));
     OST.filter(function (o) { return o.s; }).forEach(function (o, i) {
       if (secEls[i]) secEls[i].textContent = o.s;
@@ -844,7 +875,7 @@
           Math.min(n, OST_CLEARS) + " ／ " + OST_CLEARS + "）"));
         note.appendChild(document.createElement("br"));
         var b2 = document.createElement("b");
-        b2.textContent = "プレミアムなら、いますぐ 聴けます。";
+        b2.textContent = "プレミアムなら、いますぐ 利用できます。";
         note.appendChild(b2);
         note.style.display = "";
         return;
@@ -867,7 +898,7 @@
     }
 
     function pick(i) {
-      if (!open || !window.BGM) return;
+      if (!open || secret(OST[i]) || !window.BGM) return;
       if (!BGM.isEnabled()) { idle(); return; }
       cur = i;
       rowEls.forEach(function (el, j) { el.classList.toggle("on", j === i); });
@@ -888,8 +919,12 @@
     }
     function stopAll() { if (window.BGM) BGM.stop(); idle(); }
     function step(d) {
-      if (cur < 0) { pick(0); return; }
-      pick((cur + d + OST.length) % OST.length);
+      // Secret は飛ばす。押せない曲に送られても止まるだけ
+      var j = (cur < 0 ? (d > 0 ? -1 : 0) : cur);
+      for (var n = 0; n < OST.length; n++) {
+        j = (j + d + OST.length) % OST.length;
+        if (!secret(OST[j])) { pick(j); return; }
+      }
     }
 
     rowEls.forEach(function (el, i) {

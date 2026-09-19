@@ -599,6 +599,19 @@
 .ost-ovl.locked .ost-d { color: #d9b86a; font-size: 12px; }
 .ost-note b { color: #ffe9b8; font-weight: 400; }
 
+/* ---- まだ会っていない敵の曲 ----------------------------------------
+   曲目表を眺めただけで、この先に誰が出てくるか分かってしまうのを避ける。
+   番号だけ残して、名前も絵も出さない。 */
+.ost-row.secret { opacity: .48; cursor: default; }
+.ost-row.secret:active { filter: none; }
+.ost-row.secret .ost-t { font-style: italic; letter-spacing: 2.4px; color: #8b97ba; }
+.ost-row.secret .ost-d { color: #6d789c; }
+/* ジャケットの代わりに「?」。絵と同じ枠に置いて、行の高さを揃える */
+.ost-row.secret .ost-art {
+  font-family: var(--ost-serif); font-size: 15px; color: #6d789c;
+  background: radial-gradient(circle at 50% 42%, rgba(60,70,110,.28), rgba(8,12,32,.92) 72%);
+}
+
 /* タイトルの項目。解放前は鍵と「1／5」を出す */
 #ptitle-menu .title-btn.locked { opacity: .80; }
 #ptitle-menu .title-btn.locked .tx { color: #b9c2dd; }
