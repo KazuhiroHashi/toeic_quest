@@ -6,7 +6,7 @@
   "scripts": {
     "build:www": "node tools/build_www.js",
     "admob": "node tools/apply_admob.js",
-    "cap:sync": "npm run build:www && npx cap sync && npm run admob && npm run appid && npm run appver",
+    "cap:sync": "npm run build:www && npx cap sync && npm run admob && npm run appid && npm run ioslocale && npm run appver",
     "assets": "npx @capacitor/assets generate --assetPath appicon --iconBackgroundColor '#0b1230' --iconBackgroundColorDark '#0b1230'",
     "open:android": "npm run cap:sync && npx cap open android",
     "open:ios": "npm run cap:sync && npx cap open ios",
@@ -14,6 +14,7 @@
     "ads:live": "node tools/set_ads.js --live",
     "ads:test": "node tools/set_ads.js --test",
     "appid": "node tools/apply_appid.js",
+    "ioslocale": "node tools/apply_ios_locale.js",
     "appver": "node tools/apply_version.js",
     "bump": "node tools/apply_version.js --bump"
   },
