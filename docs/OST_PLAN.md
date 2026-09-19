@@ -21,7 +21,7 @@
 | 3 | battle3 | `arena3` | 第3戦 |
 | 4 | battle4 | `arena4` | 第4戦 |
 | 5 | twin dragon | `midboss` | 第5戦 中ボス 洞窟の古竜 |
-| 6 | Haul | `king1` | 第6戦 四天王ハウル |
+| 6 | Howl | `king1` | 第6戦 四天王ハウル |
 | 7 | Gag | `king2` | 第7戦 四天王ガグ |
 | 8 | Brank | `king3` | 第8戦 四天王ブランク |
 | 9 | Iraze | `king4` | 第9戦 四天王イレイズ |
@@ -65,7 +65,7 @@
 | 03 | battle3 | `wolf` |
 | 04 | battle4 | `mush` |
 | 05 | twin dragon | `dragon` |
-| 06 | Haul | `gen_r` |
+| 06 | Howl | `gen_r` |
 | 07 | Gag | `king_gag` |
 | 08 | Brank | `king_blank` |
 | 09 | Iraze | `king_erase` |
@@ -83,6 +83,42 @@
 > 12枚とも出荷ビルドで読めることを確認済み。
 
 波形は `prefers-reduced-motion: reduce` のときは揺らさず立てたままにする。
+
+### 章の区切り
+
+`OST` の項目に `s:` があると、その行の上に区切りが入る。いまは1か所だけ。
+
+```
+05  twin dragon
+── THE FOUR GENERALS ──
+06  Howl
+```
+
+細い金の線を左右に流し、中央に小さく組の名前を置いている。
+
+> **四天王＝The Four Generals** にした理由。
+> 直訳は `The Four Heavenly Kings`（仏教の四天王の英訳）。
+> `The Elite Four` はポケモンの公式訳で一発で通じるが、
+> **他社の看板を借りた印象になる**ので避けた。
+> `The Four Generals` は字面が短く、Howl / Gag / Brank / Iraze と並べても重くない。
+
+## ★ 四天王の名前の綴り（勝手に直さないこと）
+
+奪う力と、英語の語をかけてある。
+
+| 曲名 | 日本語 | 元の語 | 奪う力 |
+|---|---|---|---|
+| **Howl** | ハウル | howl（吠える） | 聞く |
+| **Gag** | ガグ | gag（口をふさぐ） | 話す |
+| **Brank** | ブランク | blank（空白） | 読む |
+| **Iraze** | イレイズ | erase（消す） | 書く |
+
+`Brank` `Iraze` は固有名詞として意図的に崩してある。**直さないこと。**
+
+> 2026-09-19、**私が `Haul` と書いて本人に直された。**
+> `haul` は「引きずる・運ぶ」という実在の別語で、ハウルの台詞
+> （『お前たちの**叫び**は 誰にも届かん！』）と噛み合わない。
+> 英単語アプリなので、**英語に詳しい人ほど気づく。**
 
 **`js/bgm.js` は1行も触っていない。**
 
@@ -132,7 +168,7 @@ function ostOpen() { return (loadRec().clears || 0) >= OST_CLEARS; }
 clears=4 … ボタン 出ない  OK
 clears=5 … ボタン 出る    OK
 曲数 12 … battle1 / battle2 / battle3 / battle4 / twin dragon /
-          Haul / Gag / Brank / Iraze / Mutos / Last Mutos / Ending
+          Howl / Gag / Brank / Iraze / Mutos / Last Mutos / Ending
 5曲目を押した … 選択=twin dragon / 表示=♪ twin dragon　くりかえし 再生中
 JSエラー なし
 ```

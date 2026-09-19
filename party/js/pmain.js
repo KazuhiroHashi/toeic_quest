@@ -689,6 +689,15 @@
   // 中の名前（arena1 / king2 / lastboss）は場面の識別子であって曲名ではない。
   // t: が本人の付けた曲名、k: が鳴らすファイル。対応の根拠は docs/OST_PLAN.md。
   //
+  // 四天王の名は、奪う力と、英語の語をかけてある。綴りを勝手に直さないこと。
+  //   Howl   ハウル   howl（吠える）  聞く力を奪う
+  //   Gag    ガグ     gag（口をふさぐ）話す力を奪う
+  //   Brank  ブランク blank（空白）   読む力を奪う
+  //   Iraze  イレイズ erase（消す）   書く力を奪う
+  // Brank / Iraze は固有名詞として崩してあるが、Howl は実在の別語 "haul"
+  // （引きずる）と紛れるため、綴りをそちらにしない。2026-09-19 に一度
+  // Haul と書いて本人に直された。
+  //
   // ── a: ジャケットの絵 ─────────────────────────────────────
   // その曲が鳴る場面に出てくる相手の絵を、そのまま使っている。
   // 曲名だけ並べても「どの場面の曲か」が伝わらないので、顔で思い出せるようにした。
@@ -705,7 +714,8 @@
     { t: "battle3",     k: "arena3",   a: "../assets/enemies/wolf.png"       },  // 第3戦
     { t: "battle4",     k: "arena4",   a: "../assets/enemies/mush.png"       },  // 第4戦
     { t: "twin dragon", k: "midboss",  a: "../assets/enemies/dragon.png"     },  // 第5戦 洞窟の古竜（双頭の赤竜）
-    { t: "Haul",        k: "king1",    a: "../assets/enemies/gen_r.png"      },  // 第6戦 四天王ハウル
+    // s: があると、その行の上に区切りが入る。四天王はここから4連戦
+    { t: "Howl",        k: "king1",    a: "../assets/enemies/gen_r.png",      s: "THE FOUR GENERALS" },  // 第6戦 四天王ハウル
     { t: "Gag",         k: "king2",    a: "../assets/enemies/king_gag.png"   },  // 第7戦 四天王ガグ
     { t: "Brank",       k: "king3",    a: "../assets/enemies/king_blank.png" },  // 第8戦 四天王ブランク
     { t: "Iraze",       k: "king4",    a: "../assets/enemies/king_erase.png" },  // 第9戦 四天王イレイズ
@@ -724,7 +734,9 @@
     // 番号は 01〜12 とゼロ詰め。アルバムの裏の曲目表の見え方に寄せる
     function no(i) { return (i + 1 < 10 ? "0" : "") + (i + 1); }
     var rows = OST.map(function (o, i) {
-      return '<button class="ost-row" data-i="' + i + '">' +
+      // 区切り。曲名と同じく本人の文字列なので、あとで textContent で入れる
+      return (o.s ? '<div class="ost-sec"><span></span></div>' : "") +
+             '<button class="ost-row" data-i="' + i + '">' +
              '<span class="ost-art"><img src="' + o.a + '" alt=""></span>' +
              '<span class="ost-n">' + no(i) + '</span>' +
              '<span class="ost-t"></span>' +
@@ -744,6 +756,10 @@
     // 曲名は本人が付けた文字列。innerHTML に混ぜず textContent で入れる
     var rowEls = [].slice.call(wrap.querySelectorAll(".ost-row"));
     rowEls.forEach(function (el, i) { el.querySelector(".ost-t").textContent = OST[i].t; });
+    var secEls = [].slice.call(wrap.querySelectorAll(".ost-sec span"));
+    OST.filter(function (o) { return o.s; }).forEach(function (o, i) {
+      if (secEls[i]) secEls[i].textContent = o.s;
+    });
     var now = wrap.querySelector(".ost-now");
     var bar = wrap.querySelector(".ost-bar");
     var bart = wrap.querySelector(".ost-bart img");
