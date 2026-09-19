@@ -775,9 +775,11 @@
     var b = $("pbtn-ost");
     if (!b) return;
     var n = loadRec().clears || 0, open = ostOpen();
-    // 一度もクリアしていない人には、存在も伏せておく。
-    // 1回クリアすると「あと何回か」が見える鍵つきの項目になる
-    b.style.display = (open || n >= 1) ? "" : "none";
+    // 最初から出す（2026-09-19 本人の指定）。
+    // はじめは伏せていたが、「何があるか分からないと目指しようがない」ので、
+    // 鍵つきの項目として最初から置き、押せば条件が読めるようにした。
+    // 曲名そのものは Secret で伏せてあるので、先の展開は漏れない
+    b.style.display = "";
     // 鍵つきのときは絵を灰色にする（CSS の .title-btn.locked）。
     // 鍵の絵文字に差し替えていたが、ほかの項目が絵なのでここだけ浮いていた
     b.classList.toggle("locked", !open);
@@ -787,7 +789,7 @@
   }
 
   function showOst() {
-    var cur = -1, tick = 0, padWas = null;
+    var cur = -1, tick = 0;
     function no(i) { return (i + 1 < 10 ? "0" : "") + (i + 1); }
     function ms(sec) {
       sec = Math.max(0, Math.floor(sec || 0));
@@ -927,8 +929,23 @@
       }
     }
 
+    // ★ 行は pointerdown で拾ってはいけない。一覧は縦に転がるので、
+    //   スクロールを始めた指の「最初の接触」が選曲になってしまう
+    //   （指で送っただけで曲が変わる、と実機で指摘された）。
+    //   押し始めた位置を覚えておき、ほとんど動かずに離れたときだけ選ぶ。
+    //   click を使う手もあるが、pointerup のほうが反応が早い。
+    var TAP_SLOP = 10;   // この画素数より動いたら、選曲ではなく送り操作とみなす
     rowEls.forEach(function (el, i) {
-      el.onpointerdown = function (e) { e.preventDefault(); pick(i); };
+      var sx = 0, sy = 0, live = false;
+      el.onpointerdown = function (e) { sx = e.clientX; sy = e.clientY; live = true; };
+      el.onpointercancel = function () { live = false; };
+      el.onpointerup = function (e) {
+        if (!live) return;
+        live = false;
+        if (Math.abs(e.clientX - sx) > TAP_SLOP || Math.abs(e.clientY - sy) > TAP_SLOP) return;
+        e.preventDefault();
+        pick(i);
+      };
     });
     [].slice.call(wrap.querySelectorAll(".ost-b")).forEach(function (b) {
       b.onpointerdown = function (e) {
@@ -943,11 +960,10 @@
 
     function closeOst() {
       if (tick) { clearInterval(tick); tick = 0; }
-      var pad = $("controls");
-      if (pad) pad.style.display = (padWas == null ? "" : padWas);
       window.removeEventListener("keydown", onKey, true);
       $("btn-b").removeEventListener("pointerdown", onB, true);
       wrap.remove();
+      syncPad();
       // 聴き終わったらタイトルの曲に戻す。戻さないと、戦闘曲が
       // タイトル画面で鳴りっぱなしになる
       if (window.BGM) BGM.playAny(["title"]);
@@ -963,11 +979,7 @@
     tick = setInterval(draw, 400);
     $("screen").appendChild(wrap);
 
-    // 十字キーとA/Bは、この画面では使わない。隠すと #screen が下まで伸びるので、
-    // 枠も曲目表も大きく取れる。閉じるときに元の指定へ戻す
-    var pad = $("controls");
-    padWas = pad ? pad.style.display : null;
-    if (pad) pad.style.display = "none";
+    syncPad();   // この画面でも十字キーとA・Bは使わない
   }
 
   // ---- 称号・記録 (achievements) ----
@@ -1307,6 +1319,33 @@
   refreshArenaBtn();
   refreshTowerBtn();
   refreshOstBtn();
+
+  // ── 十字キーとA・Bの出し入れ ───────────────────────────────
+  // タイトル画面とサウンドトラック画面では、どちらも指で直接押すので使わない。
+  // 出しっぱなしだと、そのぶん上の画面が狭くなる。項目が増えてタイトルが
+  // 窮屈になったため外した（2026-09-19）。
+  //
+  // ★ タイトルの表示を切り替えている場所は8か所ある。全部に書き足すと
+  //   必ずどこかが漏れるので、タイトルを見張って、変わったら合わせる形にした。
+  //
+  // 消しても閉じられなくなる画面は無い。タイトルから開くものは、
+  // 称号・記録と単語帳と学習の記録が ✕ を持ち、選択パネル類は自前のボタンと
+  // 「外側をタップ」で閉じられる（choiceOverlay / pstore.js の overlay）。
+  function syncPad() {
+    var pad = $("controls"), t = $("ptitle-screen");
+    if (!pad || !t) return;
+    var onTitle = getComputedStyle(t).display !== "none";
+    var onOst = !!document.querySelector(".ost-ovl");
+    pad.style.display = (onTitle || onOst) ? "none" : "";
+  }
+  (function watchPad() {
+    var t = $("ptitle-screen");
+    if (!t) return;
+    if (window.MutationObserver) {
+      new MutationObserver(syncPad).observe(t, { attributes: true, attributeFilter: ["style", "class"] });
+    }
+    syncPad();
+  })();
   refreshModeBtn();
   refreshVoiceBtn();
 
