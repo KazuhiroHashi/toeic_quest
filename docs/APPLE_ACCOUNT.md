@@ -102,6 +102,14 @@ Apple ID:  hashino0519@yahoo.co.jp     ← gmail ではない
 Entity ID: 94850034（BRIDGE AI (Tokyo)） / 94651308（Kazuhiro Hashino）
 D-U-N-S:   699799177
 登録ID:    7B8K5QVZ2T
+App ID:    6805523364（App Store Connect のアプリ）
+```
+
+`App ID` は App Store のページの番号でもある。アプリの中から
+評価ページを開くのに使っている（`party/js/prate.js` の `APPSTORE_URL`）。
+
+```
+https://apps.apple.com/jp/app/id6805523364?action=write-review
 ```
 
 ### 本文

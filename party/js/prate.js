@@ -31,6 +31,9 @@
 
   // Google Play に登録したパッケージ名。iOS とは別（docs/PLAY_CONSOLE.md）
   var PLAY_URL = "https://play.google.com/store/apps/details?id=com.bridgeai.wordria";
+  // App Store Connect の App ID は 6805523364（docs/APPLE_ACCOUNT.md）。
+  // ?action=write-review を付けると、App Store が評価の入力欄まで開いてくれる
+  var APPSTORE_URL = "https://apps.apple.com/jp/app/id6805523364?action=write-review";
 
   // ── 聞く条件 ───────────────────────────────────────────
   // 1周目から聞く（本人の判断・2026-09-12）。
@@ -97,20 +100,17 @@
     // タイトルの「評価する」ボタンから。こちらは本人が書きに来ているので、
     // 回数制限も間隔もかけない。
     //
-    // Android は Play のページを直接開く。OSの評価シートは回数の上限に
-    // 当たると黙って何も出さないので、押したのに無反応に見えてしまう。
-    // 自分から押した人には、確実に開くほうを見せる。
+    // **両方ともストアのページを直接開く。評価シートは使わない。**
+    // OSの評価シートは回数の上限に当たると黙って何も出さない。自分から
+    // 押した人に無反応を返すことになるので、確実に開くほうを見せる。
     //
-    // iOS は App Store の数字ID（apps.apple.com/app/id########）が要るが、
-    // まだ採番されていない。判明したら
-    //   https://apps.apple.com/jp/app/id########?action=write-review
-    // に差し替えること。それまでは評価シートで代用する
+    // iOS は長らく評価シートで代用していた。App Store の数字IDが
+    // 採番されていなかったため。いまは 6805523364 と分かっている
+    // （2026-09-19 本人が App Store Connect で確認）。
     openStore: function () {
-      if (platform() === "android" || !native()) {
-        window.open(PLAY_URL, "_blank", "noopener");
-        return Promise.resolve();
-      }
-      return sheet();
+      var url = (platform() === "ios") ? APPSTORE_URL : PLAY_URL;
+      window.open(url, "_blank", "noopener");
+      return Promise.resolve();
     }
   };
 })();
