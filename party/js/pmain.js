@@ -544,6 +544,14 @@
             "🗼　挑戦の塔が 開放された！\n\nタイトルの「挑戦の塔」から のぼれる。\n" +
             "レベルは固定、道具もなし。\nどこまで のぼれるか——腕だめしの場だ。");
         }
+        // サウンドトラック集も同じ考え方で、解放された回だけ伝える。
+        // 5回目は初回より重いので、後ろ（完結の宣言の直前）に置く
+        if (rc.clears === OST_CLEARS) {
+          ending.splice(ending.length - 1, 0,
+            "🎵　サウンドトラックが 開放された！\n\n" +
+            OST_CLEARS + "回の 冒険、おつかれさま。\n" +
+            "タイトルの「サウンドトラック」で\nこの旅の曲を いつでも 聴ける。");
+        }
         for (var e = 0; e < ending.length; e++) await gsay(ending[e]);
         // ending movie after the epilogue text (skippable; failures fall through)
         if (window.PMOVIE) { if (window.BGM) BGM.stop(); await PMOVIE.play("ed"); }
@@ -567,7 +575,7 @@
     if (window.BGM) BGM.stop();
     $("pbattle-screen").style.display = "none"; // clear the battle layer so the title/zukan show cleanly
     $("ptitle-screen").style.display = "flex";
-    refreshStamina(); refreshArenaBtn(); refreshReviewBtn(); refreshTowerBtn(); refreshModeBtn(); refreshVoiceBtn();
+    refreshStamina(); refreshArenaBtn(); refreshReviewBtn(); refreshTowerBtn(); refreshOstBtn(); refreshModeBtn(); refreshVoiceBtn();
     if (window.BGM) BGM.playAny(["title"]);
   }
 
@@ -642,7 +650,7 @@
     if (window.BGM) BGM.stop();
     $("pbattle-screen").style.display = "none";
     $("ptitle-screen").style.display = "flex";
-    refreshStamina(); refreshRecords(); refreshReviewBtn(); refreshTowerBtn();
+    refreshStamina(); refreshRecords(); refreshReviewBtn(); refreshTowerBtn(); refreshOstBtn();
     if (window.BGM) BGM.playAny(["title"]);
   }
 
@@ -659,6 +667,108 @@
     $("pbtn-tower").style.display = (rc.clears > 0) ? "" : "none"; // unlocked after a first clear
     var tx = $("pbtn-tower").querySelector(".tx");
     if (tx) tx.textContent = "挑戦の塔" + (rc.bestFloor ? "（最高 " + rc.bestFloor + "階）" : "");
+  }
+
+  // ---- サウンドトラック集 ----
+  //
+  // 冒険を5回 完結させると、タイトルに項目が出る。
+  //
+  // ── なぜ安く作れるのか ────────────────────────────────────
+  // 曲はすべて配信ビルドに同梱済み（www/assets/bgm/）。戦闘中に鳴っている
+  // ものと同じファイルを指すだけなので、**アプリは1バイトも大きくならない。**
+  //
+  // ── なぜ bgm.js を書き換えていないのか ──────────────────────
+  // 下の12曲は全部 bgm.js の TRACKS に載っている名前で、BGM.play() を
+  // そのまま呼べる。しかも12曲とも NO_RESUME に入っているので、呼ぶたびに
+  // 頭から鳴る。ギャラリーとして欲しい動きが、何も足さずに出る。
+  //
+  // bgm.js は実機で何度も焼かれている場所（「タップのたびに戦闘曲が鳴り直す」、
+  // まだ直っていない「iPhone で効果音が途切れる」）。踏まずに済むなら踏まない。
+  //
+  // ── 曲名について ────────────────────────────────────────
+  // 中の名前（arena1 / king2 / lastboss）は場面の識別子であって曲名ではない。
+  // t: が本人の付けた曲名、k: が鳴らすファイル。対応の根拠は docs/OST_PLAN.md。
+  var OST_CLEARS = 5;
+  var OST = [
+    { t: "battle1",     k: "arena1"   },  // 第1戦
+    { t: "battle2",     k: "arena2"   },  // 第2戦
+    { t: "battle3",     k: "arena3"   },  // 第3戦
+    { t: "battle4",     k: "arena4"   },  // 第4戦
+    { t: "twin dragon", k: "midboss"  },  // 第5戦 中ボス 洞窟の古竜（双頭の赤竜）
+    { t: "Haul",        k: "king1"    },  // 第6戦 四天王ハウル
+    { t: "Gag",         k: "king2"    },  // 第7戦 四天王ガグ
+    { t: "Brank",       k: "king3"    },  // 第8戦 四天王ブランク
+    { t: "Iraze",       k: "king4"    },  // 第9戦 四天王イレイズ
+    { t: "Mutos",       k: "boss"     },  // 第10戦 沈黙王ミュートス
+    { t: "Last Mutos",  k: "lastboss" },  // 第11戦 真・沈黙王ミュートス
+    { t: "Ending",      k: "ending"   }   // エンディング
+  ];
+  function ostOpen() { return (loadRec().clears || 0) >= OST_CLEARS; }
+  function refreshOstBtn() {
+    var b = $("pbtn-ost");
+    if (b) b.style.display = ostOpen() ? "" : "none";
+  }
+
+  function showOst() {
+    var cur = -1;
+    var rows = OST.map(function (o, i) {
+      return '<button class="ost-row" data-i="' + i + '">' +
+             '<span class="ost-n">' + (i + 1) + '</span>' +
+             '<span class="ost-t"></span>' +
+             '<span class="ost-p">▶</span></button>';
+    }).join("");
+    var wrap = document.createElement("div");
+    wrap.className = "wq2-store-ovl";
+    wrap.innerHTML = '<div class="wq2-store-panel dq-window ost-panel">' +
+      '<div class="wq2-store-h">🎵 サウンドトラック</div>' +
+      '<div class="ost-list">' + rows + '</div>' +
+      '<div class="ost-now"></div></div>';
+    // 曲名は本人が付けた文字列。innerHTML に混ぜず textContent で入れる
+    var rowEls = [].slice.call(wrap.querySelectorAll(".ost-row"));
+    rowEls.forEach(function (el, i) { el.querySelector(".ost-t").textContent = OST[i].t; });
+    var now = wrap.querySelector(".ost-now");
+
+    // BGM を切っていると、押しても何も起きない。黙って無反応にすると
+    // 「壊れている」と読まれるので、その場で理由を出す
+    var bgmOff = !(window.BGM && BGM.isEnabled());
+    function say(s) { now.textContent = s; }
+    say(bgmOff ? "BGM が オフに なっています（右上の 🔊）" : "曲を えらんでください");
+
+    function pick(i) {
+      if (!window.BGM) return;
+      if (!BGM.isEnabled()) { say("BGM が オフに なっています（右上の 🔊）"); return; }
+      cur = i;
+      rowEls.forEach(function (el, j) {
+        el.classList.toggle("on", j === i);
+        el.querySelector(".ost-p").textContent = (j === i) ? "♪" : "▶";
+      });
+      BGM.play(OST[i].k);
+      say("♪ " + OST[i].t + "　くりかえし 再生中");
+    }
+    rowEls.forEach(function (el, i) {
+      el.onpointerdown = function (e) { e.preventDefault(); pick(i); };
+    });
+
+    function closeOst() {
+      window.removeEventListener("keydown", onKey, true);
+      $("btn-b").removeEventListener("pointerdown", onB, true);
+      wrap.remove();
+      // 聴き終わったらタイトルの曲に戻す。戻さないと、戦闘曲が
+      // タイトル画面で鳴りっぱなしになる
+      if (window.BGM) BGM.playAny(["title"]);
+    }
+    function onKey(e) { if (e.key === "Escape" || e.key === "x") { e.preventDefault(); e.stopPropagation(); closeOst(); } }
+    function onB(e) { e.preventDefault(); e.stopPropagation(); closeOst(); }
+    wrap.onpointerdown = function (e) { if (e.target === wrap) { e.preventDefault(); closeOst(); } };
+    window.addEventListener("keydown", onKey, true);
+    $("btn-b").addEventListener("pointerdown", onB, true);
+    var x = document.createElement("button");
+    x.className = "wq2-x";
+    x.textContent = "✕";
+    x.setAttribute("aria-label", "閉じる");
+    x.onclick = function (e) { e.preventDefault(); closeOst(); };
+    wrap.querySelector(".wq2-store-panel").appendChild(x);
+    $("screen").appendChild(wrap);
   }
 
   // ---- 称号・記録 (achievements) ----
@@ -831,7 +941,7 @@
       if (s) window.G.study = JSON.parse(s);
     } catch (e) {}
     refreshModeBtn(); refreshStamina(); refreshArenaBtn();
-    refreshReviewBtn(); refreshTowerBtn(); refreshRecords();
+    refreshReviewBtn(); refreshTowerBtn(); refreshOstBtn(); refreshRecords();
   };
   if ($("pbtn-mode")) $("pbtn-mode").addEventListener("click", function () {
     $("pbtn-mode").blur();
@@ -865,6 +975,7 @@
   });
   $("pbtn-tower").addEventListener("click", function () { $("pbtn-tower").blur(); holdRun(runTower()); });
   $("pbtn-achv").addEventListener("click", function () { $("pbtn-achv").blur(); showAchievements(); });
+  $("pbtn-ost").addEventListener("click", function () { $("pbtn-ost").blur(); showOst(); });
   // 自分から評価しに来た人の入口。何も見返りは無い（prate.js の冒頭に理由）
   if ($("pbtn-rate")) $("pbtn-rate").addEventListener("click", function () {
     $("pbtn-rate").blur();
@@ -996,6 +1107,7 @@
   refreshStreak();
   refreshArenaBtn();
   refreshTowerBtn();
+  refreshOstBtn();
   refreshModeBtn();
   refreshVoiceBtn();
 
