@@ -80,9 +80,10 @@ var filter = [
     ":shadowcolor=black@0.45:shadowx=0:shadowy=3[t1]",
   // 金の罫。細い線を1本
   "[t1]drawbox=x=218:y=210:w=136:h=3:color=" + GOLD + "@0.95:t=fill[t2]",
-  // 英語を、冒険にする。
+  // 単語帳を開くより、冒険しよう
+  // 14文字あるのでロゴに当たらない大きさにしてある(28px で右端は約620px)
   "[t2]drawtext=" + fontOpt +
-    ":text='英語を、冒険にする。':fontcolor=white:fontsize=31:x=228:y=243" +
+    ":text='単語帳を開くより、冒険しよう':fontcolor=white:fontsize=28:x=228:y=245" +
     ":shadowcolor=black@0.45:shadowx=0:shadowy=2[out]"
 ].join(";");
 
