@@ -544,14 +544,19 @@
             "🗼　挑戦の塔が 開放された！\n\nタイトルの「挑戦の塔」から のぼれる。\n" +
             "レベルは固定、道具もなし。\nどこまで のぼれるか——腕だめしの場だ。");
         }
-        // サウンドトラック集も同じ考え方で、解放された回だけ伝える。
-        // 5回目は初回より重いので、後ろ（完結の宣言の直前）に置く
-        if (rc.clears === OST_CLEARS) {
+        // サウンドトラック集は、解放された回だけ伝える。
+        // プレミアムの人は最初から聴けているので、ここでは何も言わない
+        if (rc.clears === OST_CLEARS && !ostPremium()) {
           ending.splice(ending.length - 1, 0,
-            "🎵　サウンドトラックが 開放された！\n\n" +
+            "🎵　サウンドトラック集が 解放されました！\n\n" +
             OST_CLEARS + "回の 冒険、おつかれさま。\n" +
             "タイトルの「サウンドトラック」で\nこの旅の曲を いつでも 聴ける。");
         }
+        // 初回クリアの人には、タイトルに戻ったところで
+        // サウンドトラックの画面そのものを見せる（鍵つき）。
+        // 何が待っているかを見せてから条件を伝えるほうが、文字だけより伝わる。
+        // プレミアムの人はもう開いているので出さない
+        if (rc.clears === 1 && !ostPremium()) ostTease = true;
         for (var e = 0; e < ending.length; e++) await gsay(ending[e]);
         // ending movie after the epilogue text (skippable; failures fall through)
         if (window.PMOVIE) { if (window.BGM) BGM.stop(); await PMOVIE.play("ed"); }
@@ -577,6 +582,7 @@
     $("ptitle-screen").style.display = "flex";
     refreshStamina(); refreshArenaBtn(); refreshReviewBtn(); refreshTowerBtn(); refreshOstBtn(); refreshModeBtn(); refreshVoiceBtn();
     if (window.BGM) BGM.playAny(["title"]);
+    if (ostTease) { ostTease = false; showOst(); }
   }
 
   // ================= 挑戦の塔（endless mode・闘技場のバランスには一切触れない） =================
@@ -712,6 +718,7 @@
   //    一覧に 2:47 のように出すためだけのもの。再生位置は BGM.now() から取るので、
   //    ここがずれても鳴り方には影響しない。**曲を録り直したら直すこと。**
   var OST_CLEARS = 5;
+  var ostTease = false;   // 初回クリア直後に、鍵つきの画面を一度だけ見せる
   // 背景と枠。どちらも本人が用意した絵（2026-09-19）。
   // ★ パスは二重引用符でひとつながりに書くこと（build_www.js の書き換えのため）
   var OST_BG = "../assets/ui/ost_bg.png";
@@ -731,10 +738,27 @@
     { t: "Last Mutos",  k: "lastboss", d: 197, a: "../assets/enemies/maou_true.png"  },  // 第11戦 真・沈黙王ミュートス
     { t: "Ending",      k: "ending",   d: 176, a: "../assets/party/yu.png"           }   // エンディング（主人公ユウ）
   ];
-  function ostOpen() { return (loadRec().clears || 0) >= OST_CLEARS; }
+  // 解放の条件は2つ。どちらかを満たせば開く。
+  //   ・冒険を OST_CLEARS 回 完結させる
+  //   ・プレミアムに入っている（2026-09-19 追加。当初は「入れない」判断だったが、
+  //     本人がプレミアムの value を厚くする方に倒した）
+  function ostPremium() {
+    return !!(window.WQ2_STORE && WQ2_STORE.isPremium && WQ2_STORE.isPremium());
+  }
+  function ostOpen() { return ostPremium() || (loadRec().clears || 0) >= OST_CLEARS; }
   function refreshOstBtn() {
     var b = $("pbtn-ost");
-    if (b) b.style.display = ostOpen() ? "" : "none";
+    if (!b) return;
+    var n = loadRec().clears || 0, open = ostOpen();
+    // 一度もクリアしていない人には、存在も伏せておく。
+    // 1回クリアすると「あと何回か」が見える鍵つきの項目になる
+    b.style.display = (open || n >= 1) ? "" : "none";
+    b.classList.toggle("locked", !open);
+    var ic = b.querySelector(".ic");
+    if (ic) ic.textContent = open ? "\u266b" : "\ud83d\udd12";
+    var tx = b.querySelector(".tx");
+    if (tx) tx.textContent = open ? "サウンドトラック"
+      : "サウンドトラック（" + Math.min(n, OST_CLEARS) + "／" + OST_CLEARS + "）";
   }
 
   function showOst() {
@@ -744,18 +768,21 @@
       sec = Math.max(0, Math.floor(sec || 0));
       return Math.floor(sec / 60) + ":" + ("0" + (sec % 60)).slice(-2);
     }
+    // 鍵つきで開くと、絵と曲名は見えるが押せない。
+    // 「何が待っているか」を見せてから条件を伝えるほうが、文字だけより伝わる
+    var open = ostOpen();
     var rows = OST.map(function (o, i) {
       return (o.s ? '<div class="ost-sec"><span></span></div>' : "") +
         '<button class="ost-row" data-i="' + i + '">' +
           '<span class="ost-n">' + no(i) + '</span>' +
           '<span class="ost-art"><img src="' + o.a + '" alt=""></span>' +
           '<span class="ost-t"></span>' +
-          '<span class="ost-d">' + ms(o.d) + '</span>' +
+          '<span class="ost-d">' + (open ? ms(o.d) : "\ud83d\udd12") + '</span>' +
         '</button>';
     }).join("");
 
     var wrap = document.createElement("div");
-    wrap.className = "ost-ovl";
+    wrap.className = "ost-ovl" + (open ? "" : " locked");
     wrap.innerHTML =
       '<div class="ost-head">' +
         '<button class="ost-back" aria-label="もどる">‹</button>' +
@@ -778,9 +805,9 @@
       '<div class="ost-note"></div>' +
       '<div class="ost-list">' + rows + '</div>' +
       '<div class="ost-ctrl">' +
-        '<button class="ost-b" data-k="prev" aria-label="前の曲">⏮</button>' +
-        '<button class="ost-b ost-play" data-k="play" aria-label="再生／停止">▶</button>' +
-        '<button class="ost-b" data-k="next" aria-label="次の曲">⏭</button>' +
+        '<button class="ost-b" data-k="prev" aria-label="前の曲">\u25c0\u25c0</button>' +
+        '<button class="ost-b ost-play" data-k="play" aria-label="再生／停止">\u25b6</button>' +
+        '<button class="ost-b" data-k="next" aria-label="次の曲">\u25b6\u25b6</button>' +
       '</div>';
     wrap.style.backgroundImage = "url('" + OST_BG + "')";
 
@@ -808,6 +835,20 @@
       rail.style.width = "0%"; elEl.textContent = "0:00"; toEl.textContent = "—";
       playB.textContent = "▶";
       pTitle.classList.add("lbl");
+      if (!open) {
+        var n = loadRec().clears || 0;
+        pTitle.textContent = "LOCKED";
+        note.innerHTML = "";
+        note.appendChild(document.createTextNode(
+          "冒険を " + OST_CLEARS + "回 クリアすると 解放されます。（いま " +
+          Math.min(n, OST_CLEARS) + " ／ " + OST_CLEARS + "）"));
+        note.appendChild(document.createElement("br"));
+        var b2 = document.createElement("b");
+        b2.textContent = "プレミアムなら、いますぐ 聴けます。";
+        note.appendChild(b2);
+        note.style.display = "";
+        return;
+      }
       var off = window.BGM && !BGM.isEnabled();
       pTitle.textContent = off ? "BGM OFF" : "SELECT TRACK";
       note.textContent = off ? "BGM が オフに なっています。右上の 🔊 で オンに してください。" : "";
@@ -826,7 +867,7 @@
     }
 
     function pick(i) {
-      if (!window.BGM) return;
+      if (!open || !window.BGM) return;
       if (!BGM.isEnabled()) { idle(); return; }
       cur = i;
       rowEls.forEach(function (el, j) { el.classList.toggle("on", j === i); });
@@ -882,6 +923,7 @@
     window.addEventListener("keydown", onKey, true);
     $("btn-b").addEventListener("pointerdown", onB, true);
 
+    if (!open) wrap.querySelector(".ost-ctrl").style.display = "none";
     idle();
     tick = setInterval(draw, 400);
     $("screen").appendChild(wrap);
