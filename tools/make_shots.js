@@ -253,19 +253,23 @@ async function fightRounds(page, n) {
 
   // rec を渡すと、遊んだ記録（wq2_records_v1）も仕込む。
   // サウンドトラックのように「条件を満たした人にしか出ない画面」を撮るため
-  async function open(rec) {
+  async function open(rec, store) {
     var ctx = await browser.newContext({
       viewport: { width: CSS_W, height: CSS_H }, deviceScaleFactor: DPR,
       locale: "ja-JP", reducedMotion: "reduce"
     });
     // 初回の「出題範囲を えらぶ」が被さるので、選んだ状態にしておく。
     // 撮るのは、一度遊んだ人が見ている画面
-    await ctx.addInitScript(function (r) {
+    //
+    // store は wq2_store_v1（プレミアムの状態）。プレミアムで解放した人の
+    // 画面を撮るときだけ渡す
+    await ctx.addInitScript(function (o) {
       try {
         localStorage.setItem("wq2_mode_v1", JSON.stringify({ mode: "toeic", grade: "j3", lock: null }));
-        if (r) localStorage.setItem("wq2_records_v1", JSON.stringify(r));
+        if (o.r) localStorage.setItem("wq2_records_v1", JSON.stringify(o.r));
+        if (o.s) localStorage.setItem("wq2_store_v1", JSON.stringify(o.s));
       } catch (e) {}
-    }, rec || null);
+    }, { r: rec || null, s: store || null });
     var page = await ctx.newPage();
     page.on("response", function (r) {
       if (r.status() >= 400 && r.url().indexOf("favicon") < 0) missing.push(r.status() + " " + r.url());
@@ -324,9 +328,24 @@ async function fightRounds(page, n) {
 
   // ---- 10_ost サウンドトラック ----
   // 解放済みの状態でしか出ない画面なので、記録を仕込んで開く。
-  // clears は解放の条件（5回）、bestRound 12 は「全部の敵に会った」の印で、
-  // これが無いと 07 以降が Secret のまま写ってしまう
-  var o = await open({ clears: 5, bestRound: 12, bestFloor: 12, bestChain: 7 });
+  //
+  // ★ 07 以降は Secret のまま撮る（2026-09-19 本人の指定）。
+  //   店頭の絵に曲名を出すと、ガグ・ブランク・イレイズ、そして
+  //   沈黙王ミュートスの名まで、遊ぶ前に漏れてしまう。
+  //   区切りの THE FOUR GENERALS と 06 Howl までは出るので、
+  //   「この先にまだ何かある」ことは絵として伝わる。
+  //
+  // ★ そのために clears ではなく premium で解放している。
+  //   bestRound() は「1回でも完結していれば 12」と補うので
+  //   （記録を入れる前から遊んでいる人のための救済）、
+  //   clears を 5 にすると必ず全曲が見えてしまう。クリアした人は
+  //   実際に全員と戦っているので、この補正は正しい。
+  //   Secret が出るのは「プレミアムで解放したが、まだ 6戦目までしか
+  //   進んでいない人」の画面 ＝ ここで撮っている状態。
+  var o = await open(
+    { clears: 0, bestRound: 6, bestFloor: 6, bestChain: 7 },
+    { premium: true, premiumUntil: 0 }
+  );
   await o.page.click("#pbtn-ost");
   await o.page.waitForTimeout(800);
   // 5曲目（twin dragon）を鳴らした状態にする。窪みに曲名と再生位置が出る
