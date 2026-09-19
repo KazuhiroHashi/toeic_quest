@@ -784,18 +784,18 @@
   function refreshOstBtn() {
     var b = $("pbtn-ost");
     if (!b) return;
-    var n = loadRec().clears || 0, open = ostOpen();
     // 最初から出す（2026-09-19 本人の指定）。
     // はじめは伏せていたが、「何があるか分からないと目指しようがない」ので、
     // 鍵つきの項目として最初から置き、押せば条件が読めるようにした。
     // 曲名そのものは Secret で伏せてあるので、先の展開は漏れない
     b.style.display = "";
     // 鍵つきのときは絵を灰色にする（CSS の .title-btn.locked）。
-    // 鍵の絵文字に差し替えていたが、ほかの項目が絵なのでここだけ浮いていた
-    b.classList.toggle("locked", !open);
-    var tx = b.querySelector(".tx");
-    if (tx) tx.textContent = open ? "サウンドトラック"
-      : "サウンドトラック（" + Math.min(n, OST_CLEARS) + "／" + OST_CLEARS + "）";
+    //
+    // ★ 文字は「サウンドトラック」だけ。一度「（2／5）」と進み具合を出したが、
+    //   **2/5 が曲数なのか進捗なのか読み取れない**（2026-09-19 本人の指摘）。
+    //   数字は、押した先の案内で「冒険を 5回 クリアすると…（現在 2 ／ 5）」と
+    //   文章つきで出る。そこなら意味が伝わる
+    b.classList.toggle("locked", !ostOpen());
   }
 
   // onClose … 閉じたあとに一度だけ呼ぶ。初回クリアの案内のあとで
