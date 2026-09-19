@@ -30,7 +30,9 @@ var OUT = path.join(root, "store", "upload");
 // 4人パーティとコマンドが並ぶ絵を先に置き、2枚目のクイズで「単語で戦う」と分かる並びにする。
 // 03_boss（ボス戦のクイズ）は外した（2026-09-19）。1枚目のコマンド画面と同じ
 // 四天王ハウルなので、同じ敵が2回出てしまう。ボスの絵は1枚目が担う。
-var ORDER = ["09_boss_command", "02_quiz", "01_title", "06_grades", "04_wordbook", "05_records"];
+// 10_ost（サウンドトラック）は最後。見栄えはするが、遊びの本体ではなく
+// 解放して手に入るもの。学習の機能（単語帳・記録）を先に見せる
+var ORDER = ["09_boss_command", "02_quiz", "01_title", "06_grades", "04_wordbook", "05_records", "10_ost"];
 
 var SIZES = [
   { name: "6.9inch", w: 1290, h: 2796 },

@@ -32,7 +32,8 @@ var SHOTS = [
   ["03_title.png", "03_title.png"],
   ["04_grades.png", "04_grades.png"],
   ["05_wordbook.png", "05_wordbook.png"],
-  ["06_records.png", "06_records.png"]
+  ["06_records.png", "06_records.png"],
+  ["07_ost.png", "07_ost.png"]
 ];
 
 function ff(args) {

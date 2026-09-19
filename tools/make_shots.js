@@ -4,7 +4,8 @@
 //   npm run build:www
 //   npm install playwright-core --no-save
 //   node tools/make_shots.js
-//   → store/screenshots/01_title 02_quiz 03_boss 04_wordbook 05_records 06_grades（1290×2796）
+//   → store/screenshots/01_title 02_quiz 03_boss 04_wordbook 05_records 06_grades
+//     08_command 09_boss_command 10_ost（1290×2796）
 //
 // そのあと、いつもの並びに組み直す：
 //   node tools/make_store_assets.js   # → 6.9inch / 6.5inch
@@ -250,18 +251,21 @@ async function fightRounds(page, n) {
   var browser = await chromium.launch({ executablePath: EXE });
   var missing = [];
 
-  async function open() {
+  // rec を渡すと、遊んだ記録（wq2_records_v1）も仕込む。
+  // サウンドトラックのように「条件を満たした人にしか出ない画面」を撮るため
+  async function open(rec) {
     var ctx = await browser.newContext({
       viewport: { width: CSS_W, height: CSS_H }, deviceScaleFactor: DPR,
       locale: "ja-JP", reducedMotion: "reduce"
     });
     // 初回の「出題範囲を えらぶ」が被さるので、選んだ状態にしておく。
     // 撮るのは、一度遊んだ人が見ている画面
-    await ctx.addInitScript(function () {
+    await ctx.addInitScript(function (r) {
       try {
         localStorage.setItem("wq2_mode_v1", JSON.stringify({ mode: "toeic", grade: "j3", lock: null }));
+        if (r) localStorage.setItem("wq2_records_v1", JSON.stringify(r));
       } catch (e) {}
-    });
+    }, rec || null);
     var page = await ctx.newPage();
     page.on("response", function (r) {
       if (r.status() >= 400 && r.url().indexOf("favicon") < 0) missing.push(r.status() + " " + r.url());
@@ -317,6 +321,19 @@ async function fightRounds(page, n) {
   await toQuiz(c.page);
   await shot(c.page, "02_quiz");
   await c.ctx.close();
+
+  // ---- 10_ost サウンドトラック ----
+  // 解放済みの状態でしか出ない画面なので、記録を仕込んで開く。
+  // clears は解放の条件（5回）、bestRound 12 は「全部の敵に会った」の印で、
+  // これが無いと 07 以降が Secret のまま写ってしまう
+  var o = await open({ clears: 5, bestRound: 12, bestFloor: 12, bestChain: 7 });
+  await o.page.click("#pbtn-ost");
+  await o.page.waitForTimeout(800);
+  // 5曲目（twin dragon）を鳴らした状態にする。窪みに曲名と再生位置が出る
+  await o.page.locator(".ost-row").nth(4).click();
+  await o.page.waitForTimeout(2200);
+  await shot(o.page, "10_ost");
+  await o.ctx.close();
 
   // ---- 08_command 第1戦のコマンド選択 ----
   // 店頭の絵がクイズばかりだと「単語クイズのアプリ」に見えてしまう。
