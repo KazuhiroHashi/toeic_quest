@@ -746,7 +746,7 @@
     wrap.className = "wq2-store-ovl";
     wrap.innerHTML = '<div class="wq2-store-panel dq-window ost-panel">' +
       '<div class="wq2-store-h">🎵 サウンドトラック</div>' +
-      '<div class="ost-sub">ORIGINAL SOUNDTRACK　全' + OST.length + '曲</div>' +
+      '<div class="ost-sub">ORIGINAL SOUNDTRACK</div>' +
       '<div class="ost-list">' + rows + '</div>' +
       '<div class="ost-bar">' +
         '<span class="ost-bart"><img alt=""></span>' +
