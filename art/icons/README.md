@@ -35,3 +35,20 @@ node tools/make_icons.js
 | メダル | `ic_medal.png` |
 
 発注に使ったプロンプトは `docs/ICON_PROMPTS.md`。
+
+## ic_ost（サウンドトラック）だけ出どころが違う
+
+ほかの7枚は生成AIの出力だが、これは **`assets/ui/ost_frame.png`（サウンドトラック
+画面のジュークボックス）の上から 65.5% を切り出したもの。** 画面の絵と同じものを
+使うことで、どの項目がどの画面につながるかが一目で分かる。
+
+作り直すとき：
+
+```
+ffmpeg -y -i assets/ui/ost_frame.png -vf "crop=iw:ih*0.655:0:0" art/icons/ic_ost.png
+node tools/make_icons.js
+```
+
+> **なぜ 65.5% なのか。** ちょうど「NOW PLAYING」の金の帯までで切ると、
+> 台座のある閉じた形になる。それより上で切ると柱が途中で切れ、
+> それより下だと曲名の窪みが入って、128pxでは文字が潰れて汚れに見える。

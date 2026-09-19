@@ -98,9 +98,9 @@
             <button id="pbtn-diff" class="title-btn"><span class="ic"><img src="../assets/ui/icons/ic_gear.png" alt=""></span><span class="tx">難易度：ふつう</span></button>
             <button id="pbtn-zukan" class="title-btn"><span class="ic"><img src="../assets/ui/icons/ic_wordbook.png" alt=""></span><span class="tx">単語帳</span></button>
             <button id="pbtn-achv" class="title-btn"><span class="ic"><img src="../assets/ui/icons/ic_medal.png" alt=""></span><span class="tx">称号・記録</span></button>
-            <!-- 冒険を5回 完結させると出る。それまでは display:none（pmain.js の refreshOstBtn）。
-                 ここだけ絵ではなく絵文字なのは、音符のアイコンを作っていないため -->
-            <button id="pbtn-ost" class="title-btn" style="display:none"><span class="ic">🎵</span><span class="tx">サウンドトラック</span></button>
+            <!-- 冒険を1回 完結させると出る（鍵つき）。5回 または プレミアムで解放。
+                 判定と文言は pmain.js の refreshOstBtn -->
+            <button id="pbtn-ost" class="title-btn" style="display:none"><span class="ic"><img src="../assets/ui/icons/ic_ost.png" alt=""></span><span class="tx">サウンドトラック</span></button>
           </div>
           <div id="title-copy">4人パーティで 早押し英単語バトル。<br>2秒以内の正解で クリティカル！</div>
           <!-- 残りプレイ回数。以前はロゴの直下に置いていたが、遊ぶ前の人が

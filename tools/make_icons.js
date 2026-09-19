@@ -35,8 +35,9 @@ var SIZE = 128;         // 書き出す1辺
 var MARGIN = 0.08;      // 上下左右の余白（1辺に対する割合）
 var ALPHA_MIN = 8;      // これより濃ければ「絵がある」とみなす
 
-// タイトルの7項目。ここに無い名前のファイルは無視する
-var WANT = ["ic_adventure", "ic_tower", "ic_stats", "ic_books", "ic_gear", "ic_wordbook", "ic_medal"];
+// タイトルの項目。ここに無い名前のファイルは無視する
+// ic_ost はサウンドトラックのジュークボックス（assets/ui/ost_frame.png と同じ絵）
+var WANT = ["ic_adventure", "ic_tower", "ic_stats", "ic_books", "ic_gear", "ic_wordbook", "ic_medal", "ic_ost"];
 
 function ff(args) {
   execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y"].concat(args),

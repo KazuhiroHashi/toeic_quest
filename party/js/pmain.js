@@ -778,9 +778,9 @@
     // 一度もクリアしていない人には、存在も伏せておく。
     // 1回クリアすると「あと何回か」が見える鍵つきの項目になる
     b.style.display = (open || n >= 1) ? "" : "none";
+    // 鍵つきのときは絵を灰色にする（CSS の .title-btn.locked）。
+    // 鍵の絵文字に差し替えていたが、ほかの項目が絵なのでここだけ浮いていた
     b.classList.toggle("locked", !open);
-    var ic = b.querySelector(".ic");
-    if (ic) ic.textContent = open ? "\u266b" : "\ud83d\udd12";
     var tx = b.querySelector(".tx");
     if (tx) tx.textContent = open ? "サウンドトラック"
       : "サウンドトラック（" + Math.min(n, OST_CLEARS) + "／" + OST_CLEARS + "）";

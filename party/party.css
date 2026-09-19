@@ -612,9 +612,11 @@
   background: radial-gradient(circle at 50% 42%, rgba(60,70,110,.28), rgba(8,12,32,.92) 72%);
 }
 
-/* タイトルの項目。解放前は鍵と「1／5」を出す */
-#ptitle-menu .title-btn.locked { opacity: .80; }
+/* タイトルの項目。解放前は絵を灰色にして「1／5」を出す。
+   鍵の絵文字に差し替えていたが、ほかの項目が絵なのでここだけ浮いていた */
+#ptitle-menu .title-btn.locked { opacity: .78; }
 #ptitle-menu .title-btn.locked .tx { color: #b9c2dd; }
+#ptitle-menu .title-btn.locked .ic img { filter: grayscale(1) brightness(.85); }
 
 /* 画面の短い端末では、枠を小さくして曲目表を残す */
 @media (max-height: 700px) {
