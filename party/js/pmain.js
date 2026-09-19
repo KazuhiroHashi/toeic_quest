@@ -688,20 +688,30 @@
   // ── 曲名について ────────────────────────────────────────
   // 中の名前（arena1 / king2 / lastboss）は場面の識別子であって曲名ではない。
   // t: が本人の付けた曲名、k: が鳴らすファイル。対応の根拠は docs/OST_PLAN.md。
+  //
+  // ── a: ジャケットの絵 ─────────────────────────────────────
+  // その曲が鳴る場面に出てくる相手の絵を、そのまま使っている。
+  // 曲名だけ並べても「どの場面の曲か」が伝わらないので、顔で思い出せるようにした。
+  // 絵はすべて配信ビルドに入っているものなので、ここでも容量は増えない。
+  //
+  // ★ パスは途中で切らず、ひとつながりの二重引用符で書くこと。
+  //   build_www.js が `"../assets/` → `"assets/`、`.png"` → `.webp"` と
+  //   書き換える。つなぎ合わせて組み立てると書き換えが効かず、出荷ビルドで絵が消える。
+  //   単引用符でも効かない（正規表現が二重引用符を見ている）。
   var OST_CLEARS = 5;
   var OST = [
-    { t: "battle1",     k: "arena1"   },  // 第1戦
-    { t: "battle2",     k: "arena2"   },  // 第2戦
-    { t: "battle3",     k: "arena3"   },  // 第3戦
-    { t: "battle4",     k: "arena4"   },  // 第4戦
-    { t: "twin dragon", k: "midboss"  },  // 第5戦 中ボス 洞窟の古竜（双頭の赤竜）
-    { t: "Haul",        k: "king1"    },  // 第6戦 四天王ハウル
-    { t: "Gag",         k: "king2"    },  // 第7戦 四天王ガグ
-    { t: "Brank",       k: "king3"    },  // 第8戦 四天王ブランク
-    { t: "Iraze",       k: "king4"    },  // 第9戦 四天王イレイズ
-    { t: "Mutos",       k: "boss"     },  // 第10戦 沈黙王ミュートス
-    { t: "Last Mutos",  k: "lastboss" },  // 第11戦 真・沈黙王ミュートス
-    { t: "Ending",      k: "ending"   }   // エンディング
+    { t: "battle1",     k: "arena1",   a: "../assets/enemies/bee.png"        },  // 第1戦 スペルバード
+    { t: "battle2",     k: "arena2",   a: "../assets/enemies/goblin.png"     },  // 第2戦
+    { t: "battle3",     k: "arena3",   a: "../assets/enemies/wolf.png"       },  // 第3戦
+    { t: "battle4",     k: "arena4",   a: "../assets/enemies/mush.png"       },  // 第4戦
+    { t: "twin dragon", k: "midboss",  a: "../assets/enemies/dragon.png"     },  // 第5戦 洞窟の古竜（双頭の赤竜）
+    { t: "Haul",        k: "king1",    a: "../assets/enemies/gen_r.png"      },  // 第6戦 四天王ハウル
+    { t: "Gag",         k: "king2",    a: "../assets/enemies/king_gag.png"   },  // 第7戦 四天王ガグ
+    { t: "Brank",       k: "king3",    a: "../assets/enemies/king_blank.png" },  // 第8戦 四天王ブランク
+    { t: "Iraze",       k: "king4",    a: "../assets/enemies/king_erase.png" },  // 第9戦 四天王イレイズ
+    { t: "Mutos",       k: "boss",     a: "../assets/enemies/maou_mutos.png" },  // 第10戦 沈黙王ミュートス
+    { t: "Last Mutos",  k: "lastboss", a: "../assets/enemies/maou_true.png"  },  // 第11戦 真・沈黙王ミュートス
+    { t: "Ending",      k: "ending",   a: "../assets/party/yu.png"           }   // エンディング（主人公ユウ）
   ];
   function ostOpen() { return (loadRec().clears || 0) >= OST_CLEARS; }
   function refreshOstBtn() {
@@ -711,9 +721,12 @@
 
   function showOst() {
     var cur = -1;
+    // 番号は 01〜12 とゼロ詰め。アルバムの裏の曲目表の見え方に寄せる
+    function no(i) { return (i + 1 < 10 ? "0" : "") + (i + 1); }
     var rows = OST.map(function (o, i) {
       return '<button class="ost-row" data-i="' + i + '">' +
-             '<span class="ost-n">' + (i + 1) + '</span>' +
+             '<span class="ost-art"><img src="' + o.a + '" alt=""></span>' +
+             '<span class="ost-n">' + no(i) + '</span>' +
              '<span class="ost-t"></span>' +
              '<span class="ost-p">▶</span></button>';
     }).join("");
@@ -721,12 +734,19 @@
     wrap.className = "wq2-store-ovl";
     wrap.innerHTML = '<div class="wq2-store-panel dq-window ost-panel">' +
       '<div class="wq2-store-h">🎵 サウンドトラック</div>' +
+      '<div class="ost-sub">ORIGINAL SOUNDTRACK　全' + OST.length + '曲</div>' +
       '<div class="ost-list">' + rows + '</div>' +
-      '<div class="ost-now"></div></div>';
+      '<div class="ost-bar">' +
+        '<span class="ost-bart"><img alt=""></span>' +
+        '<span class="ost-now"></span>' +
+        '<span class="ost-eq"><i></i><i></i><i></i><i></i></span>' +
+      '</div></div>';
     // 曲名は本人が付けた文字列。innerHTML に混ぜず textContent で入れる
     var rowEls = [].slice.call(wrap.querySelectorAll(".ost-row"));
     rowEls.forEach(function (el, i) { el.querySelector(".ost-t").textContent = OST[i].t; });
     var now = wrap.querySelector(".ost-now");
+    var bar = wrap.querySelector(".ost-bar");
+    var bart = wrap.querySelector(".ost-bart img");
 
     // BGM を切っていると、押しても何も起きない。黙って無反応にすると
     // 「壊れている」と読まれるので、その場で理由を出す
@@ -743,7 +763,9 @@
         el.querySelector(".ost-p").textContent = (j === i) ? "♪" : "▶";
       });
       BGM.play(OST[i].k);
-      say("♪ " + OST[i].t + "　くりかえし 再生中");
+      bart.src = OST[i].a;
+      bar.classList.add("on");          // ジャケットと波形を出す
+      say(OST[i].t);
     }
     rowEls.forEach(function (el, i) {
       el.onpointerdown = function (e) { e.preventDefault(); pick(i); };

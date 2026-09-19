@@ -334,29 +334,89 @@
 .achv-row img.achv-img { width: 15px; height: 15px; vertical-align: -2px; }
 
 /* ---- サウンドトラック集 ---- */
-/* 曲名は battle1 / twin dragon / Last Mutos のような英字なので、
-   等幅寄りの字面がそろうよう letter-spacing を少し入れている。
-   一覧は長いので max-height でパネルの中だけを転がす（背面は動かさない） */
-.ost-list { text-align: left; max-height: 62vh; overflow-y: auto;
-  -webkit-overflow-scrolling: touch; margin-bottom: 8px; }
+/* アルバムの裏の曲目表に寄せた見た目。番号はゼロ詰めの2桁、
+   ジャケットはその場面に出てくる相手の絵。曲名だけ並べても
+   「どの場面の曲か」が伝わらないので、顔で思い出せるようにしている。 */
+.ost-sub {
+  font-size: 10.5px; letter-spacing: 2.4px; color: #7f8bb0;
+  text-align: center; margin: -2px 0 8px;
+}
+.ost-list {
+  text-align: left; max-height: 64vh; overflow-y: auto;
+  -webkit-overflow-scrolling: touch; margin-bottom: 8px;
+}
 .ost-row {
-  display: flex; align-items: center; gap: 10px; width: 100%;
-  background: rgba(255,255,255,.05); border: 0; border-radius: 8px;
+  position: relative; display: flex; align-items: center; gap: 9px; width: 100%;
+  background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.02));
+  border: 0; border-radius: 9px; overflow: hidden;
   color: #cfd8ee; font: inherit; font-size: 13.5px; letter-spacing: .6px;
-  padding: 9px 10px; margin-bottom: 5px; text-align: left; cursor: pointer;
+  padding: 4px 10px 4px 6px; margin-bottom: 4px; text-align: left; cursor: pointer;
 }
 .ost-row:active { filter: brightness(1.2); }
-/* いま鳴っている曲。色だけだと暗い画面で見分けづらいので、枠も足す */
-.ost-row.on {
-  background: rgba(120,100,230,.35); color: #fff;
-  box-shadow: inset 0 0 0 1px rgba(255,224,138,.55);
+/* ジャケット。敵の絵は透過PNGで全身が入っているので、切らずに contain で
+   収める。背後に淡い光を敷かないと、暗い絵が背景に溶けて見えなくなる */
+.ost-art {
+  flex: none; width: 34px; height: 34px; border-radius: 7px; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 50% 42%, rgba(120,140,220,.30), rgba(8,12,32,.85) 72%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.10);
 }
-.ost-n { flex: none; width: 20px; text-align: right; color: #8b95b5; font-size: 12px; letter-spacing: 0; }
+.ost-art img {
+  width: 31px; height: 31px; object-fit: contain; display: block;
+  pointer-events: none; -webkit-touch-callout: none; -webkit-user-drag: none;
+}
+.ost-n {
+  flex: none; width: 22px; text-align: right; letter-spacing: 0;
+  color: #8390b4; font-size: 11.5px; font-variant-numeric: tabular-nums;
+}
 .ost-t { flex: 1; }
 .ost-p { flex: none; color: #ffe08a; font-size: 12px; letter-spacing: 0; }
+
+/* いま鳴っている曲。色だけだと暗い画面で見分けづらいので、
+   左に金の帯を立てて、行そのものも少し浮かせる */
+.ost-row.on {
+  background: linear-gradient(90deg, rgba(120,100,230,.42), rgba(120,100,230,.14));
+  color: #fff; box-shadow: 0 0 0 1px rgba(255,224,138,.45), 0 3px 12px rgba(0,0,0,.35);
+}
+.ost-row.on::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: linear-gradient(180deg, #ffe9a8, #e0a83c);
+}
+.ost-row.on .ost-n { color: #ffe08a; }
+.ost-row.on .ost-art { box-shadow: inset 0 0 0 1px rgba(255,224,138,.55); }
+
+/* 下の帯。曲を選ぶまではジャケットも波形も出さない */
+.ost-bar {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 2px 0; border-top: 1px solid rgba(255,255,255,.08); min-height: 34px;
+}
+.ost-bart {
+  flex: none; width: 0; height: 26px; border-radius: 6px; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; transition: width .18s;
+  background: radial-gradient(circle at 50% 42%, rgba(120,140,220,.30), rgba(8,12,32,.85) 72%);
+}
+.ost-bar.on .ost-bart { width: 26px; box-shadow: inset 0 0 0 1px rgba(255,224,138,.4); }
+.ost-bart img { width: 24px; height: 24px; object-fit: contain; display: block; }
 .ost-now {
-  font-size: 12px; color: #ffd9a8; padding: 7px 2px 0;
-  border-top: 1px solid rgba(255,255,255,.08); min-height: 17px;
+  flex: 1; font-size: 12.5px; color: #ffd9a8; letter-spacing: .6px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* 波形。鳴っていることが一目で分かればよいので、4本だけ */
+.ost-eq { flex: none; display: none; align-items: flex-end; gap: 2px; height: 14px; }
+.ost-bar.on .ost-eq { display: flex; }
+.ost-eq i {
+  width: 3px; border-radius: 2px; background: linear-gradient(180deg, #ffe9a8, #c98f28);
+  animation: ostEq .9s ease-in-out infinite;
+}
+.ost-eq i:nth-child(1) { height: 60%; animation-delay: 0s; }
+.ost-eq i:nth-child(2) { height: 100%; animation-delay: .18s; }
+.ost-eq i:nth-child(3) { height: 45%; animation-delay: .36s; }
+.ost-eq i:nth-child(4) { height: 80%; animation-delay: .12s; }
+@keyframes ostEq { 0%,100% { transform: scaleY(.35); } 50% { transform: scaleY(1); } }
+.ost-eq i { transform-origin: 50% 100%; }
+/* 動きを減らす設定の人には、揺らさず立てたままにする */
+@media (prefers-reduced-motion: reduce) {
+  .ost-eq i { animation: none; transform: scaleY(.8); }
 }
 
 /* daily streak chip */
