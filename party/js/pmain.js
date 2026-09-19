@@ -707,21 +707,29 @@
   //   build_www.js が `"../assets/` → `"assets/`、`.png"` → `.webp"` と
   //   書き換える。つなぎ合わせて組み立てると書き換えが効かず、出荷ビルドで絵が消える。
   //   単引用符でも効かない（正規表現が二重引用符を見ている）。
+  //
+  // d: 曲の長さ（秒）。www/assets/bgm/*.mp3 を ffprobe で測った値（2026-09-19）。
+  //    一覧に 2:47 のように出すためだけのもの。再生位置は BGM.now() から取るので、
+  //    ここがずれても鳴り方には影響しない。**曲を録り直したら直すこと。**
   var OST_CLEARS = 5;
+  // 背景と枠。どちらも本人が用意した絵（2026-09-19）。
+  // ★ パスは二重引用符でひとつながりに書くこと（build_www.js の書き換えのため）
+  var OST_BG = "../assets/ui/ost_bg.png";
+  var OST_FRAME = "../assets/ui/ost_frame.png";
   var OST = [
-    { t: "battle1",     k: "arena1",   a: "../assets/enemies/bee.png"        },  // 第1戦 スペルバード
-    { t: "battle2",     k: "arena2",   a: "../assets/enemies/goblin.png"     },  // 第2戦
-    { t: "battle3",     k: "arena3",   a: "../assets/enemies/wolf.png"       },  // 第3戦
-    { t: "battle4",     k: "arena4",   a: "../assets/enemies/mush.png"       },  // 第4戦
-    { t: "twin dragon", k: "midboss",  a: "../assets/enemies/dragon.png"     },  // 第5戦 洞窟の古竜（双頭の赤竜）
+    { t: "battle1",     k: "arena1",   d: 167, a: "../assets/enemies/bee.png"        },  // 第1戦 スペルバード
+    { t: "battle2",     k: "arena2",   d: 179, a: "../assets/enemies/goblin.png"     },  // 第2戦
+    { t: "battle3",     k: "arena3",   d: 152, a: "../assets/enemies/wolf.png"       },  // 第3戦
+    { t: "battle4",     k: "arena4",   d:  73, a: "../assets/enemies/mush.png"       },  // 第4戦
+    { t: "twin dragon", k: "midboss",  d: 308, a: "../assets/enemies/dragon.png"     },  // 第5戦 洞窟の古竜（双頭の赤竜）
     // s: があると、その行の上に区切りが入る。四天王はここから4連戦
-    { t: "Howl",        k: "king1",    a: "../assets/enemies/gen_r.png",      s: "THE FOUR GENERALS" },  // 第6戦 四天王ハウル
-    { t: "Gag",         k: "king2",    a: "../assets/enemies/king_gag.png"   },  // 第7戦 四天王ガグ
-    { t: "Brank",       k: "king3",    a: "../assets/enemies/king_blank.png" },  // 第8戦 四天王ブランク
-    { t: "Iraze",       k: "king4",    a: "../assets/enemies/king_erase.png" },  // 第9戦 四天王イレイズ
-    { t: "Mutos",       k: "boss",     a: "../assets/enemies/maou_mutos.png" },  // 第10戦 沈黙王ミュートス
-    { t: "Last Mutos",  k: "lastboss", a: "../assets/enemies/maou_true.png"  },  // 第11戦 真・沈黙王ミュートス
-    { t: "Ending",      k: "ending",   a: "../assets/party/yu.png"           }   // エンディング（主人公ユウ）
+    { t: "Howl",        k: "king1",    d:  80, a: "../assets/enemies/gen_r.png",      s: "THE FOUR GENERALS" },  // 第6戦 四天王ハウル
+    { t: "Gag",         k: "king2",    d: 419, a: "../assets/enemies/king_gag.png"   },  // 第7戦 四天王ガグ
+    { t: "Brank",       k: "king3",    d: 221, a: "../assets/enemies/king_blank.png" },  // 第8戦 四天王ブランク
+    { t: "Iraze",       k: "king4",    d: 104, a: "../assets/enemies/king_erase.png" },  // 第9戦 四天王イレイズ
+    { t: "Mutos",       k: "boss",     d:  94, a: "../assets/enemies/maou_mutos.png" },  // 第10戦 沈黙王ミュートス
+    { t: "Last Mutos",  k: "lastboss", d: 197, a: "../assets/enemies/maou_true.png"  },  // 第11戦 真・沈黙王ミュートス
+    { t: "Ending",      k: "ending",   d: 176, a: "../assets/party/yu.png"           }   // エンディング（主人公ユウ）
   ];
   function ostOpen() { return (loadRec().clears || 0) >= OST_CLEARS; }
   function refreshOstBtn() {
@@ -730,64 +738,135 @@
   }
 
   function showOst() {
-    var cur = -1;
-    // 番号は 01〜12 とゼロ詰め。アルバムの裏の曲目表の見え方に寄せる
+    var cur = -1, tick = 0;
     function no(i) { return (i + 1 < 10 ? "0" : "") + (i + 1); }
+    function ms(sec) {
+      sec = Math.max(0, Math.floor(sec || 0));
+      return Math.floor(sec / 60) + ":" + ("0" + (sec % 60)).slice(-2);
+    }
     var rows = OST.map(function (o, i) {
-      // 区切り。曲名と同じく本人の文字列なので、あとで textContent で入れる
       return (o.s ? '<div class="ost-sec"><span></span></div>' : "") +
-             '<button class="ost-row" data-i="' + i + '">' +
-             '<span class="ost-art"><img src="' + o.a + '" alt=""></span>' +
-             '<span class="ost-n">' + no(i) + '</span>' +
-             '<span class="ost-t"></span>' +
-             '<span class="ost-p">▶</span></button>';
+        '<button class="ost-row" data-i="' + i + '">' +
+          '<span class="ost-n">' + no(i) + '</span>' +
+          '<span class="ost-art"><img src="' + o.a + '" alt=""></span>' +
+          '<span class="ost-t"></span>' +
+          '<span class="ost-d">' + ms(o.d) + '</span>' +
+        '</button>';
     }).join("");
+
     var wrap = document.createElement("div");
-    wrap.className = "wq2-store-ovl";
-    wrap.innerHTML = '<div class="wq2-store-panel dq-window ost-panel">' +
-      '<div class="wq2-store-h">🎵 サウンドトラック</div>' +
-      '<div class="ost-sub">ORIGINAL SOUNDTRACK</div>' +
+    wrap.className = "ost-ovl";
+    wrap.innerHTML =
+      '<div class="ost-head">' +
+        '<button class="ost-back" aria-label="もどる">‹</button>' +
+        '<div class="ost-h1">SOUNDTRACK</div>' +
+        '<div class="ost-h2">MUSIC LIVES IN MEMORIES</div>' +
+      '</div>' +
+      '<div class="ost-stage">' +
+        '<img class="ost-frameimg" src="' + OST_FRAME + '" alt="">' +
+        // 枠の絵には見本の曲名と再生位置が焼き込まれている。その窪みに
+        // ぴったり重ねて隠し、生きた文字をこちらで描く。位置は枠の絵に
+        // 対する割合なので、枠を大きくしても小さくしてもずれない
+        '<div class="ost-plaque">' +
+          '<div class="ost-ptitle"></div>' +
+          '<div class="ost-rail"><i></i></div>' +
+          '<div class="ost-time"><span class="ost-el">0:00</span><span class="ost-to">—</span></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="ost-lh">♫<span>TRACK LIST</span></div>' +
+      // BGM を切っているときの案内。窪みは横幅が無いので、ここに出す
+      '<div class="ost-note"></div>' +
       '<div class="ost-list">' + rows + '</div>' +
-      '<div class="ost-bar">' +
-        '<span class="ost-bart"><img alt=""></span>' +
-        '<span class="ost-now"></span>' +
-        '<span class="ost-eq"><i></i><i></i><i></i><i></i></span>' +
-      '</div></div>';
-    // 曲名は本人が付けた文字列。innerHTML に混ぜず textContent で入れる
+      '<div class="ost-ctrl">' +
+        '<button class="ost-b" data-k="prev" aria-label="前の曲">⏮</button>' +
+        '<button class="ost-b ost-play" data-k="play" aria-label="再生／停止">▶</button>' +
+        '<button class="ost-b" data-k="next" aria-label="次の曲">⏭</button>' +
+      '</div>';
+    wrap.style.backgroundImage = "url('" + OST_BG + "')";
+
+    // 曲名と区切りは本人の文字列。innerHTML に混ぜず textContent で入れる
     var rowEls = [].slice.call(wrap.querySelectorAll(".ost-row"));
     rowEls.forEach(function (el, i) { el.querySelector(".ost-t").textContent = OST[i].t; });
     var secEls = [].slice.call(wrap.querySelectorAll(".ost-sec span"));
     OST.filter(function (o) { return o.s; }).forEach(function (o, i) {
       if (secEls[i]) secEls[i].textContent = o.s;
     });
-    var now = wrap.querySelector(".ost-now");
-    var bar = wrap.querySelector(".ost-bar");
-    var bart = wrap.querySelector(".ost-bart img");
 
-    // BGM を切っていると、押しても何も起きない。黙って無反応にすると
-    // 「壊れている」と読まれるので、その場で理由を出す
-    var bgmOff = !(window.BGM && BGM.isEnabled());
-    function say(s) { now.textContent = s; }
-    say(bgmOff ? "BGM が オフに なっています（右上の 🔊）" : "曲を えらんでください");
+    var pTitle = wrap.querySelector(".ost-ptitle");
+    var rail   = wrap.querySelector(".ost-rail i");
+    var elEl   = wrap.querySelector(".ost-el");
+    var toEl   = wrap.querySelector(".ost-to");
+    var playB  = wrap.querySelector(".ost-play");
+
+    var note = wrap.querySelector(".ost-note");
+
+    // 窪みは横幅が 100px ほどしかない。和文を入れると切れるので、
+    // ここに出すのは欧文の短いラベルだけにして、案内は一覧の上に出す
+    function idle() {
+      cur = -1;
+      rowEls.forEach(function (el) { el.classList.remove("on"); });
+      rail.style.width = "0%"; elEl.textContent = "0:00"; toEl.textContent = "—";
+      playB.textContent = "▶";
+      pTitle.classList.add("lbl");
+      var off = window.BGM && !BGM.isEnabled();
+      pTitle.textContent = off ? "BGM OFF" : "SELECT TRACK";
+      note.textContent = off ? "BGM が オフに なっています。右上の 🔊 で オンに してください。" : "";
+      note.style.display = off ? "" : "none";
+    }
+
+    function draw() {
+      if (cur < 0) return;
+      var n = window.BGM && BGM.now && BGM.now();
+      // 別の曲に差し替わっている途中は触らない（ちらつきを避ける）
+      if (!n || n.track !== OST[cur].k) return;
+      var dur = n.duration || OST[cur].d || 0;
+      rail.style.width = dur ? Math.min(100, n.time / dur * 100) + "%" : "0%";
+      elEl.textContent = ms(n.time);
+      if (dur) toEl.textContent = ms(dur);
+    }
 
     function pick(i) {
       if (!window.BGM) return;
-      if (!BGM.isEnabled()) { say("BGM が オフに なっています（右上の 🔊）"); return; }
+      if (!BGM.isEnabled()) { idle(); return; }
       cur = i;
-      rowEls.forEach(function (el, j) {
-        el.classList.toggle("on", j === i);
-        el.querySelector(".ost-p").textContent = (j === i) ? "♪" : "▶";
-      });
+      rowEls.forEach(function (el, j) { el.classList.toggle("on", j === i); });
       BGM.play(OST[i].k);
-      bart.src = OST[i].a;
-      bar.classList.add("on");          // ジャケットと波形を出す
-      say(OST[i].t);
+      note.style.display = "none";
+      pTitle.classList.remove("lbl");
+      pTitle.textContent = OST[i].t;
+      toEl.textContent = ms(OST[i].d);
+      elEl.textContent = "0:00";
+      rail.style.width = "0%";
+      playB.textContent = "⏹";
+      // 選んだ行が一覧の外にあるときだけ、見えるところまで寄せる
+      var el = rowEls[i];
+      if (el && el.scrollIntoView) {
+        try { el.scrollIntoView({ block: "nearest" }); } catch (e) { el.scrollIntoView(false); }
+      }
+      draw();
     }
+    function stopAll() { if (window.BGM) BGM.stop(); idle(); }
+    function step(d) {
+      if (cur < 0) { pick(0); return; }
+      pick((cur + d + OST.length) % OST.length);
+    }
+
     rowEls.forEach(function (el, i) {
       el.onpointerdown = function (e) { e.preventDefault(); pick(i); };
     });
+    [].slice.call(wrap.querySelectorAll(".ost-b")).forEach(function (b) {
+      b.onpointerdown = function (e) {
+        e.preventDefault();
+        var k = b.getAttribute("data-k");
+        if (k === "prev") step(-1);
+        else if (k === "next") step(1);
+        else if (cur < 0) pick(0);
+        else stopAll();
+      };
+    });
 
     function closeOst() {
+      if (tick) { clearInterval(tick); tick = 0; }
       window.removeEventListener("keydown", onKey, true);
       $("btn-b").removeEventListener("pointerdown", onB, true);
       wrap.remove();
@@ -797,15 +876,12 @@
     }
     function onKey(e) { if (e.key === "Escape" || e.key === "x") { e.preventDefault(); e.stopPropagation(); closeOst(); } }
     function onB(e) { e.preventDefault(); e.stopPropagation(); closeOst(); }
-    wrap.onpointerdown = function (e) { if (e.target === wrap) { e.preventDefault(); closeOst(); } };
+    wrap.querySelector(".ost-back").onpointerdown = function (e) { e.preventDefault(); closeOst(); };
     window.addEventListener("keydown", onKey, true);
     $("btn-b").addEventListener("pointerdown", onB, true);
-    var x = document.createElement("button");
-    x.className = "wq2-x";
-    x.textContent = "✕";
-    x.setAttribute("aria-label", "閉じる");
-    x.onclick = function (e) { e.preventDefault(); closeOst(); };
-    wrap.querySelector(".wq2-store-panel").appendChild(x);
+
+    idle();
+    tick = setInterval(draw, 400);
     $("screen").appendChild(wrap);
   }
 

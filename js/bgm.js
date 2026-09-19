@@ -229,5 +229,21 @@
     }, { passive: true });
   });
 
-  window.BGM = { play: play, playAny: playAny, stop: stop, setEnabled: setEnabled, isEnabled: function () { return enabled; } };
+  // ── 読み取り専用の覗き窓（2026-09-19 追加）──────────────────
+  // サウンドトラック集の再生位置バーのためだけに足した。
+  // **鳴り方には一切触れていない。** 値を返すだけ。
+  // このファイルは実機で何度も焼かれている場所なので、
+  // 再生の流れに手を入れる変更はここに足さないこと。
+  function now() {
+    if (!el) return null;
+    return {
+      track: loaded,
+      time: el.currentTime || 0,
+      duration: isFinite(el.duration) ? el.duration : 0,
+      playing: !el.paused
+    };
+  }
+
+  window.BGM = { play: play, playAny: playAny, stop: stop, setEnabled: setEnabled,
+                 isEnabled: function () { return enabled; }, now: now };
 })();
