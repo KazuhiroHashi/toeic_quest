@@ -28,11 +28,11 @@ var SHOT_W = 1080, SHOT_H = 1920;
 var SHOTS = [
   ["01_boss_command.png", "01_boss_command.png"],
   ["02_quiz.png", "02_quiz.png"],
-  ["03_boss.png", "03_boss.png"],
-  ["04_title.png", "04_title.png"],
-  ["05_grades.png", "05_grades.png"],
-  ["06_wordbook.png", "06_wordbook.png"],
-  ["07_records.png", "07_records.png"]
+  // ボス戦のクイズは外した。1枚目と同じ四天王ハウルで、同じ敵が2回出てしまうため
+  ["03_title.png", "03_title.png"],
+  ["04_grades.png", "04_grades.png"],
+  ["05_wordbook.png", "05_wordbook.png"],
+  ["06_records.png", "06_records.png"]
 ];
 
 function ff(args) {
