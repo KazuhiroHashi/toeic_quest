@@ -425,7 +425,7 @@
 /* ---- 枠と、その中の窪み ---- */
 .ost-stage {
   flex: 0 1 auto; align-self: center; position: relative;
-  height: 268px; min-height: 150px; margin: 2px 0 4px;
+  height: 234px; min-height: 150px; margin: 2px 0 2px;
 }
 .ost-frameimg {
   height: 100%; width: auto; display: block;
@@ -494,7 +494,7 @@
   background: linear-gradient(180deg, rgba(18,26,50,.80), rgba(10,15,32,.80));
   border: 1px solid rgba(255,255,255,.07); border-radius: 8px; overflow: hidden;
   color: #c9d3ee; font: inherit; font-size: 13px;
-  padding: 4px 10px 4px 8px; margin-bottom: 4px; text-align: left; cursor: pointer;
+  padding: 3px 10px 3px 8px; margin-bottom: 3px; text-align: left; cursor: pointer;
 }
 .ost-row:active { filter: brightness(1.25); }
 .ost-n {
@@ -532,7 +532,7 @@
 .ost-row.on .ost-n, .ost-row.on .ost-d { color: var(--ost-gold); }
 
 /* 章の区切り。いまは四天王の4連戦の頭にだけ入る */
-.ost-sec { display: flex; align-items: center; gap: 8px; margin: 8px 2px 6px; }
+.ost-sec { display: flex; align-items: center; gap: 8px; margin: 6px 2px 5px; }
 .ost-sec::before, .ost-sec::after {
   content: ""; flex: 1; height: 1px;
   background: linear-gradient(90deg, transparent, rgba(240,208,129,.40), transparent);
@@ -545,7 +545,7 @@
 /* ---- 送り・停止 ---- */
 .ost-ctrl {
   flex: none; display: flex; align-items: center; justify-content: center; gap: 22px;
-  padding: 7px 0 10px;
+  padding: 5px 0 8px;
 }
 .ost-b {
   width: 38px; height: 38px; border-radius: 50%; cursor: pointer;

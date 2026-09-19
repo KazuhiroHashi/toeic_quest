@@ -738,7 +738,7 @@
   }
 
   function showOst() {
-    var cur = -1, tick = 0;
+    var cur = -1, tick = 0, padWas = null;
     function no(i) { return (i + 1 < 10 ? "0" : "") + (i + 1); }
     function ms(sec) {
       sec = Math.max(0, Math.floor(sec || 0));
@@ -867,6 +867,8 @@
 
     function closeOst() {
       if (tick) { clearInterval(tick); tick = 0; }
+      var pad = $("controls");
+      if (pad) pad.style.display = (padWas == null ? "" : padWas);
       window.removeEventListener("keydown", onKey, true);
       $("btn-b").removeEventListener("pointerdown", onB, true);
       wrap.remove();
@@ -883,6 +885,12 @@
     idle();
     tick = setInterval(draw, 400);
     $("screen").appendChild(wrap);
+
+    // 十字キーとA/Bは、この画面では使わない。隠すと #screen が下まで伸びるので、
+    // 枠も曲目表も大きく取れる。閉じるときに元の指定へ戻す
+    var pad = $("controls");
+    padWas = pad ? pad.style.display : null;
+    if (pad) pad.style.display = "none";
   }
 
   // ---- 称号・記録 (achievements) ----
