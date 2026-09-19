@@ -840,7 +840,7 @@
         pTitle.textContent = "LOCKED";
         note.innerHTML = "";
         note.appendChild(document.createTextNode(
-          "冒険を " + OST_CLEARS + "回 クリアすると 解放されます。（いま " +
+          "冒険を " + OST_CLEARS + "回 クリアすると 解放されます。（現在 " +
           Math.min(n, OST_CLEARS) + " ／ " + OST_CLEARS + "）"));
         note.appendChild(document.createElement("br"));
         var b2 = document.createElement("b");
