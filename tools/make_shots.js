@@ -133,11 +133,10 @@ async function dismissResume(page) {
   if (had) await page.waitForTimeout(700);
 }
 
-// 戦闘に入り、コマンドから「こうげき」を選んでクイズを出す。
-// 途中の文章は A を押して送る。何回で終わるかは戦いによって違うので、
-// 目的の要素が出るまで押す
-async function toQuiz(page) {
-  // 「Ａボタンで 開始！」のカードと、登場〜口上を送る
+// 戦闘に入り、コマンドが出るところまで運ぶ。
+// 「Ａボタンで 開始！」のカードと、登場〜口上を A で送る。
+// 何回押せば終わるかは戦いによって違うので、出るまで押す
+async function toCommand(page) {
   var ready = false;
   for (var i = 0; i < 30; i++) {
     ready = await page.evaluate(function () {
@@ -149,6 +148,11 @@ async function toQuiz(page) {
     await page.waitForTimeout(450);
   }
   if (!ready) throw new Error("戦闘のコマンドが出ませんでした");
+}
+
+// コマンドから「こうげき」を選んでクイズを出す
+async function toQuiz(page) {
+  await toCommand(page);
 
   // ★ メニューの項目は onpointerdown でしか動かない。el.click() では反応しない。
   //   Playwright の本物のクリックなら pointerdown が飛ぶので、そちらを使う
@@ -259,6 +263,31 @@ async function toQuiz(page) {
   await toQuiz(c.page);
   await shot(c.page, "02_quiz");
   await c.ctx.close();
+
+  // ---- 08_command 第1戦のコマンド選択 ----
+  // 店頭の絵がクイズばかりだと「単語クイズのアプリ」に見えてしまう。
+  // こうげき・まほう を選んでいる画面が1枚あると、RPG だと伝わる
+  // （2026-09-19 本人の指摘で追加）
+  var e = await open();
+  await clickText(e.page, ".title-btn", "ことばの冒険");
+  await e.page.waitForTimeout(700);
+  await dismissResume(e.page);
+  await toCommand(e.page);
+  await e.page.waitForTimeout(500);          // カーソルの点滅が落ち着くまで
+  await shot(e.page, "08_command");
+  await e.ctx.close();
+
+  // ---- 09_boss_command 四天王ハウル戦のコマンド選択 ----
+  // どちらが店頭で映えるか、撮ってから選ぶ
+  var f = await open();
+  await seedRun(f.page, 5);
+  await f.page.click("#pbtn-arena");
+  await f.page.waitForTimeout(700);
+  await clickText(f.page, ".wq2-store-btn", "続きから");
+  await toCommand(f.page);
+  await f.page.waitForTimeout(500);
+  await shot(f.page, "09_boss_command");
+  await f.ctx.close();
 
   // ---- 03_boss 四天王ハウル戦のクイズ ----
   var d = await open();

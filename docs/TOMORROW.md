@@ -1,8 +1,8 @@
 # 次にやること（2026-09-19 時点）
 
 ```
-App Store    1.0    公開済み
-             1.0.1  提出準備中 ← まだ審査に出していない
+App Store    1.0    公開済み（中のビルドは 1.0.1 (10)。ここがねじれの元）
+             1.0.1  提出準備中 ← この番号はもう使えない。1.0.2 に直す
 Google Play  versionCode 8（1.0）審査中（9/16 時点。結果の確認が要る）
              versionCode 10（1.0.1・エンディング修正）準備済み・未ビルド
 ```
@@ -21,6 +21,59 @@ Google Play  versionCode 8（1.0）審査中（9/16 時点。結果の確認が�
 | Google 販売アカウント | 🔄 通れば Play の定期購入を登録できる |
 | app-ads.txt の巡回 | 🔄 配信済み。AdMob が読むまで数日〜2週間 |
 | Apple の納税フォーム | ⚠ 金子さんへのメールを送るところで止まっている（`docs/APPLE_ACCOUNT.md`） |
+
+## ⚠️ 2026-09-19：アップロードが弾かれた。1.0.1 は使い終わっている
+
+Xcode から 1.0.1 (11) を上げたら、2つのエラーで落ちた。
+
+```
+90186  Invalid Pre-Release Train.
+       The train version '1.0.1' is closed for new build submissions
+
+90062  This bundle is invalid. The value for key CFBundleShortVersionString [1.0.1]
+       in the Info.plist file must contain a higher version than that of
+       the previously approved version [1.0.1].
+```
+
+### 何が起きていたか
+
+**9/16 の提出のとき、番号が2つの場所でずれていた。**
+
+| | 値 |
+|---|---|
+| App Store Connect のバージョン記録 | **1.0** |
+| 中に入れたビルドの `CFBundleShortVersionString` | **1.0.1** |
+
+この組み合わせのまま承認されたので、**Apple から見ると 1.0.1 は消化済みの番号**。
+一方 App Store Connect には「1.0.1 提出準備中」という記録が残っていて、
+こちらは**永久に埋められない**。1.0.1 のビルドはもう受け付けられないため。
+
+`version.json` の `name` を 1.0.1 のままにしていたのが直接の原因。
+ビルド番号（`code`）だけ上げれば済むと思っていたが、**バージョン文字列のほうが
+塞がっていた。**
+
+### どう直したか
+
+`version.json` を `1.0.2` にした。ビルド番号は 11 のまま
+（アップロードが失敗しているので、11 はまだ Apple に登録されていない）。
+
+```json
+{ "code": 11, "name": "1.0.2" }
+```
+
+**App Store Connect 側も「バージョン」欄を 1.0.2 に直す必要がある。**
+記録を作り直さなくてよい。あの欄は提出準備中なら編集できる。
+
+### 次から踏まないために
+
+**App Store Connect のバージョン記録の番号と、`version.json` の `name` を必ず一致させる。**
+食い違ったまま承認されると、片方の番号が使えなくなる。
+
+提出の前に、この2つを並べて見ること。
+
+```
+App Store Connect の「バージョン」欄   ←→   version.json の name
+```
 
 ## 1.0.1 で実際に変わるもの＝`ja` の追加だけ
 
