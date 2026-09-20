@@ -1,0 +1,12 @@
+{
+  "appId": "com.bridgeai.wordria",
+  "appName": "WORDRIA",
+  "webDir": "www",
+  "backgroundColor": "#05060f",
+  "android": {
+    "allowMixedContent": false
+  },
+  "ios": {
+    "contentInset": "never"
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "op": {
+    "crossfade": 0.4,
+    "bgm": {
+      "file": "assets/bgm/title.mp3",
+      "start": 0,
+      "fadeIn": 0.6,
+      "fadeOut": 2.0,
+      "volume": 0.85
+    },
+    "tail": {
+      "logo": "assets/ui/logo.png",
+      "hold": 2.4,
+      "scale": 0.8,
+      "y": 0.4
+    },
+    "cuts": [
+      {
+        "name": "OP-1 世界とヒーローたち",
+        "src": "movie/src/op1.mp4",
+        "trim": [
+          0,
+          8.3
+        ],
+        "speed": 1.2048
+      },
+      {
+        "name": "OP-2 沈黙王の玉座",
+        "src": "movie/src/op2.mp4"
+      },
+      {
+        "name": "OP-3 英単語の剣",
+        "src": "movie/src/op3.mp4",
+        "skip": [
+          6.85,
+          8.55
+        ],
+        "dissolve": 0.5
+      }
+    ]
+  },
+  "ed": {
+    "crossfade": 0.5,
+    "bgm": {
+      "file": "assets/bgm/ending.mp3",
+      "start": 0,
+      "fadeIn": 1.0,
+      "fadeOut": 2.5,
+      "volume": 0.85
+    },
+    "tail": {
+      "logo": "assets/ui/logo.png",
+      "hold": 3.0,
+      "scale": 0.8,
+      "y": 0.42
+    },
+    "cuts": [
+      {
+        "name": "ED-1 魔王の消滅",
+        "src": "movie/src/ed1.mp4"
+      },
+      {
+        "name": "ED-2 ことばが還る",
+        "src": "movie/src/ed2.mp4"
+      }
+    ]
+  }
+}

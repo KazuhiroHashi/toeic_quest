@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#05060f">
+<title>WORDRIA - 英単語RPG</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="party.css">
+</head>
+<body>
+<div id="app">
+  <div id="game-wrap">
+    <div id="screen">
+      <!-- field explore -->
+      <div id="pfield-wrap">
+        <canvas id="field-canvas"></canvas>
+        <div id="status-win" class="dq-window"></div>
+      </div>
+      <div id="msg-win" class="dq-window"></div>
+      <div id="cmd-win" class="dq-window menu-win"></div>
+      <div id="sub-win" class="dq-window menu-win"></div>
+
+      <!-- party battle -->
+      <div id="pbattle-screen">
+        <div id="pbattle-bg"></div>
+        <div id="penemy-row"></div>
+        <div id="pchain-badge"></div>
+        <div id="pbattle-msg" class="dq-window"></div>
+        <div id="pparty-strip"></div>
+        <div id="pbattle-cmd" class="dq-window menu-win"></div>
+        <div id="pbattle-sub" class="dq-window menu-win"></div>
+      </div>
+
+      <!-- quiz overlay (same ids as quiz.js expects) -->
+      <div id="quiz-overlay">
+        <div id="quiz-box" class="dq-window">
+          <div id="quiz-level-tag"></div>
+          <div id="quiz-word"></div>
+          <div id="quiz-hint"></div>
+          <div id="timer-bar-wrap"><div id="timer-bar"></div></div>
+          <div id="quiz-choices"></div>
+          <div id="quiz-result"></div>
+        </div>
+      </div>
+
+      <!-- word encyclopedia -->
+      <div id="zukan">
+        <!-- 一覧をスクロールしてもヘッダごと流れてしまうので、画面に固定した閉じ口を別に置く -->
+        <button id="zukan-x" aria-label="閉じる">✕</button>
+        <!-- 閉じ口は左上の丸い×ひとつ。右上にも「✕ 閉じる」を出していたが、
+             同じ働きのものが2つ並ぶと、どちらを押すのか迷わせるだけだった -->
+        <div id="zukan-head">
+          <div id="zukan-title">単語帳</div>
+        </div>
+        <div id="zukan-tabs"></div>
+        <div id="zukan-summary"></div>
+        <div id="zukan-list"></div>
+      </div>
+
+      <div id="fade-layer"></div>
+
+      <!-- title screen -->
+      <!-- art-wait は最初から付けておく。JSで後から付けると、pmain.js が動き出す
+           までの十数フレーム、絵の入っていないタイトルが素で見えてしまう
+           （実機で「別のタイトルが一瞬出る」と見えていた）。
+           style にも直接書いてあるのは、party.css が届くより前の数フレームを
+           塞ぐため。class だけだと、そこがすり抜ける。
+           どちらも外すのは絵がそろってから／遅くとも2.5秒後で、pmain.js がやる -->
+      <div id="ptitle-screen" class="art-wait" style="opacity:0">
+        <div id="ptitle-inner">
+          <div id="ptitle-badge">英単語 × RPG</div>
+          <div id="ptitle-logo">WORDRIA</div>
+          <div id="ptitle-sub">〜 沈黙の四天王 〜</div>
+          <div id="ptitle-start">▶ タップして スタート</div>
+          <div id="ptitle-streak" style="display:none"></div>
+          <div id="ptitle-records"></div>
+          <div id="ptitle-menu">
+            <!-- しるしは7つとも絵。以前は絵文字（🏰📊📚⚙📖🏅）だったが、絵文字は
+                 端末のOSが描くので、こちらから形も色も決められない。⚙ は異体字
+                 セレクタが無く単色で出る端末があり、実機で白い線になっていた。
+                 絵にすれば、どの端末でも同じ絵になる。原寸は art/icons/、
+                 128pxへの縮小は tools/make_icons.js（assets/ui/icons/）。
+                 ※ ここは .png と書く。出荷ビルドでは build_www.js が .webp に直す -->
+            <!-- 本編。以前は「ことばの闘技場」だったが、腕試しの余興に見えて
+                 これが game の本体だと伝わらなかった。城のしるしを添えて
+                 「ことばの冒険」にしてある。ストアの見出し「単語帳を開くより、冒険しよう。」
+                 への返事でもある（制作中のストーリーモードとは別物） -->
+            <button id="pbtn-arena" class="title-btn primary"><span class="ic"><img src="../assets/ui/icons/ic_adventure.png" alt=""></span><span class="tx">ことばの冒険</span></button>
+            <!-- 塔は絵文字では描けなかった。🗼 は東京タワーそのもので、汎用の
+                 「塔」は Unicode に存在しない。以前ここだけ手描きSVGだった -->
+            <button id="pbtn-tower" class="title-btn" style="display:none"><span class="ic"><img src="../assets/ui/icons/ic_tower.png" alt=""></span><span class="tx">挑戦の塔</span></button>
+            <button id="pbtn-analysis" class="title-btn"><span class="ic"><img src="../assets/ui/icons/ic_stats.png" alt=""></span><span class="tx">学習の記録</span></button>
+            <button id="pbtn-mode" class="title-btn"><span class="ic"><img src="../assets/ui/icons/ic_books.png" alt=""></span><span class="tx">出題：TOEIC</span></button>
+            <button id="pbtn-diff" class="title-btn"><span class="ic"><img src="../assets/ui/icons/ic_gear.png" alt=""></span><span class="tx">難易度：ふつう</span></button>
+            <button id="pbtn-zukan" class="title-btn"><span class="ic"><img src="../assets/ui/icons/ic_wordbook.png" alt=""></span><span class="tx">単語帳</span></button>
+            <button id="pbtn-achv" class="title-btn"><span class="ic"><img src="../assets/ui/icons/ic_medal.png" alt=""></span><span class="tx">称号・記録</span></button>
+            <!-- 冒険を1回 完結させると出る（鍵つき）。5回 または プレミアムで解放。
+                 判定と文言は pmain.js の refreshOstBtn -->
+            <button id="pbtn-ost" class="title-btn" style="display:none"><span class="ic"><img src="../assets/ui/icons/ic_ost.png" alt=""></span><span class="tx">サウンドトラック</span></button>
+          </div>
+          <div id="title-copy">4人パーティで 早押し英単語バトル。<br>2秒以内の正解で クリティカル！</div>
+          <!-- 残りプレイ回数。以前はロゴの直下に置いていたが、遊ぶ前の人が
+               最初に見るものが「制限」になっていた。プレミアムに入ると
+               refreshStamina() がこの札を「★ プレミアム加入中」に差し替え、
+               下の申し込みボタンを消す。対になっているので、隣に置く -->
+          <div id="ptitle-stamina"></div>
+          <!-- 文言と金額は pmain.js の refreshStamina() が pstore.js の PRICE から入れる -->
+          <button id="pbtn-unlock" class="title-btn ghost">★ プレミアム</button>
+          <!-- 評価は「お願い」であって、取引ではない。押しても何ももらえないし、
+               押さなくても何も起きない。星の数でゲームの中身を変えることは
+               ストアの規約で禁止されている（party/js/prate.js に詳しく書いた） -->
+          <button id="pbtn-rate" class="title-btn ghost">☆ このアプリを評価する</button>
+          <div id="ptitle-foot"><span id="pbtn-field">※ ストーリーモードは 制作中です</span></div>
+        <!-- どのビルドが端末に入っているかを、道具なしで確かめられるようにする。
+             cap sync の掛け忘れやXcodeのキャッシュで古いコードが動いていたことが
+             実際にあり、ウェブインスペクタを開かないと分からない状態だった -->
+        <div id="ptitle-build">build 2026-09-10a</div>
+        </div>
+        <!-- OPは初回に1回だけ自動再生される。もう一度見たい人のための入口。
+             左上に置いたのは、右上の2つ（音声・BGM）が設定の切り替えで、
+             これは「再生する」という別種の操作だから -->
+        <div id="pbtn-movie" class="title-corner" title="オープニングを見る">🎬</div>
+        <div id="pbtn-bgm" class="title-corner" title="BGM">🔊</div>
+      </div>
+    </div>
+
+    <!-- touch controls -->
+    <div id="controls">
+      <div id="dpad">
+        <div id="dpad-up" class="dpad-btn">▲</div>
+        <div id="dpad-down" class="dpad-btn">▼</div>
+        <div id="dpad-left" class="dpad-btn">◀</div>
+        <div id="dpad-right" class="dpad-btn">▶</div>
+      </div>
+      <div id="ab-btns">
+        <div>
+          <div id="btn-b" class="act-btn">Ｂ</div>
+          <!-- 以前は「メニュー/戻る」だったが、メニューを開くのは pfield.js＝
+               制作中のストーリーモードの中だけ。出荷ビルドで B がするのは
+               閉じる／戻るだけ（称号・記録、プレミアムの案内、確認パネル）。
+               押しても開かないものが書いてあると、遊ぶ人を迷わせる -->
+          <div class="btn-label">戻る</div>
+        </div>
+        <div>
+          <div id="btn-a" class="act-btn">Ａ</div>
+          <div class="btn-label">決定</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../data/vocab_400.js"></script>
+<script src="../data/vocab_500.js"></script>
+<script src="../data/vocab_600.js"></script>
+<script src="../data/vocab_700.js"></script>
+<script src="../data/vocab_800.js"></script>
+<script src="../data/vocab_900.js"></script>
+<script src="../data/vocab_jhs.js"></script>
+<script src="../data/vocab_hs.js"></script>
+<script src="../data/enemies.js"></script>
+<script src="data/maps_wq2.js"></script>
+<script src="../js/audio.js"></script>
+<script src="../js/bgm.js"></script>
+<script src="../js/quiz.js"></script>
+<script src="../js/voice.js"></script>
+<script src="js/pvocab.js"></script>
+<script src="js/pstore.js"></script>
+<script src="js/pnative.js"></script>
+<script src="js/prate.js"></script>
+<script src="js/pmovie.js"></script>
+<script src="js/pbattle.js"></script>
+<script src="js/pdrill.js"></script>
+<script src="js/pfield.js"></script>
+<script src="js/pmain.js"></script>
+</body>
+</html>
