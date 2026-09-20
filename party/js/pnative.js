@@ -193,7 +193,15 @@
         }
         loads++; pending = true;
         start().then(
-          function () { pending = false; self.ready = true; fails = 0; note(name + " 用意できた"); },
+          // 成功したら loads も 0 に戻す。MAX_LOADS は「続けて失敗したら諦める」
+          // ための安全弁で、打ち切りのメッセージも「20回試して駄目だった」と書いて
+          // ある。ところが loads++ は成否に関係なく増えるので、戻さないと
+          // 「20回試して全部うまくいった」場合にも打ち切ってしまう。実際、表示の
+          // たびに consumed() → load() を通るので、全画面広告を20本見た人には
+          // それ以降ひとつも出なくなっていた（リクエストすら飛ばない）。
+          // リワードだけ無事だったのは、showRewarded が毎回 revive() を呼んで
+          // loads を 0 に戻していたため。
+          function () { pending = false; self.ready = true; fails = 0; loads = 0; note(name + " 用意できた"); },
           function (e) { pending = false; self.retry(e); }
         );
       };
