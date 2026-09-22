@@ -1,0 +1,210 @@
+{
+  "font": "M PLUS 2 ExtraBold",
+  "defaults": {
+    "crossfade": 0.35,
+    "band": 0.5,
+    "bgm": {
+      "file": "assets/bgm/title.mp3",
+      "start": 13.5,
+      "fadeIn": 0.8,
+      "fadeOut": 2.6,
+      "volume": 0.9
+    },
+    "endcard": {
+      "logo": "assets/ui/logo.png",
+      "catch": "単語帳を開くより、冒険しよう。",
+      "hold": 5.8,
+      "scale": 0.78,
+      "y": 0.31,
+      "scrim": 0.46
+    }
+  },
+
+  "reels": {
+    "main": {
+      "title": "汎用（速さ）",
+      "out": "movie/out/PR_main.mp4",
+      "endcard": {
+        "text": ["速く答えるほど、強くなる英単語RPG"],
+        "note": "※「TOEIC」はETSの登録商標です。本アプリはETSおよびTOEICプログラムとは一切関係ありません。"
+      },
+      "sfx": [
+        { "file": "assets/sfx/slash.mp3", "cut": 3, "at": 0.2, "volume": 0.45 },
+        { "file": "assets/sfx/ng.mp3", "cut": 4, "at": 0.25, "volume": 0.4 },
+        { "file": "assets/sfx/crit.mp3", "cut": 8, "at": 0.1, "volume": 0.5 }
+      ],
+      "cuts": [
+        { "name": "英単語の剣", "src": "movie/src/op3.mp4", "trim": [0.2, 3.8],
+          "text": ["「知ってる」だけでは、{g}倒せない{/}。"], "pos": "bottom" },
+        { "name": "4択クイズ", "img": "store/screenshots/02_quiz.png", "dur": 3.4, "yoff": 0.42, "zoom": 1.09,
+          "text": ["制限時間内に、意味を選ぶ。"], "pos": "top" },
+        { "name": "こうげき", "img": "store/screenshots/08_command.png", "dur": 3.4, "yoff": 0.52, "zoom": 1.1,
+          "text": ["速く答えるほど、{g}強い一撃{/}。"], "pos": "top" },
+        { "name": "沈黙王の玉座", "src": "movie/src/op2.mp4", "trim": [5.6, 8.8],
+          "text": ["迷えば、こちらがやられる。"], "pos": "bottom" },
+        { "name": "四天王ハウル", "img": "store/screenshots/09_boss_command.png", "dur": 3.6, "yoff": 0.38, "zoom": 1.1,
+          "text": ["四天王も、英単語で倒す。"], "pos": "top" },
+        { "name": "単語帳", "img": "store/screenshots/04_wordbook.png", "dur": 3.4, "yoff": 0.3, "zoom": 1.08,
+          "text": ["{g}「曖昧」な単語{/}が、あなたの弱点。"], "pos": "bottom" },
+        { "name": "ことばが還る", "src": "movie/src/ed2.mp4", "trim": [2.2, 5.8],
+          "text": ["中学英語から、", "大学受験・TOEIC®帯まで。"], "pos": "bottom" },
+        { "name": "剣の一撃", "src": "movie/src/op3.mp4", "trim": [7.5, 10.1], "text": [] },
+        { "name": "エンドカード", "src": "movie/src/op1.mp4", "trim": [2.6, 8.4], "text": [] }
+      ]
+    },
+
+    "toeic": {
+      "title": "TOEIC学習者向け",
+      "out": "movie/out/PR_toeic.mp4",
+      "bgm": { "file": "assets/bgm/battle.mp3", "start": 30, "volume": 0.85 },
+      "endcard": {
+        "text": ["TOEIC®対策に、「速さ」という武器を。"],
+        "note": "※「TOEIC」はETSの登録商標です。本アプリはETSおよびTOEICプログラムとは一切関係ありません。"
+      },
+      "sfx": [
+        { "file": "assets/sfx/ng.mp3", "cut": 3, "at": 0.3, "volume": 0.4 },
+        { "file": "assets/sfx/slash.mp3", "cut": 4, "at": 0.2, "volume": 0.45 },
+        { "file": "assets/sfx/crit.mp3", "cut": 8, "at": 0.1, "volume": 0.5 }
+      ],
+      "cuts": [
+        { "name": "玉座", "src": "movie/src/op2.mp4", "trim": [5.4, 8.8],
+          "text": ["600から、動かない。"], "pos": "bottom" },
+        { "name": "タイトル", "img": "store/screenshots/01_title.png", "dur": 3.2, "keep": [0.02, 0.72], "zoom": 1.07,
+          "text": ["足りないのは、語彙量じゃない。"], "pos": "bottom" },
+        { "name": "4択クイズ", "img": "store/screenshots/02_quiz.png", "dur": 3.4, "yoff": 0.42, "zoom": 1.09,
+          "text": ["{g}「知ってる」のに、出てこない{/}。"], "pos": "top" },
+        { "name": "こうげき", "img": "store/screenshots/08_command.png", "dur": 3.4, "yoff": 0.52, "zoom": 1.1,
+          "text": ["速く答えるほど、強い一撃。"], "pos": "top" },
+        { "name": "単語帳", "img": "store/screenshots/04_wordbook.png", "dur": 3.4, "yoff": 0.3, "zoom": 1.08,
+          "text": ["{g}即答・曖昧・苦手{/}で、弱点が見える。"], "pos": "bottom" },
+        { "name": "ボス戦", "img": "store/screenshots/03_boss.png", "dur": 3.4, "yoff": 0.42, "zoom": 1.09,
+          "text": ["スコア700レベルの語も、戦いながら。"], "pos": "top" },
+        { "name": "ことばが還る", "src": "movie/src/ed2.mp4", "trim": [2.2, 5.6],
+          "text": ["3秒かかる単語は、", "本番では使えない。"], "pos": "bottom" },
+        { "name": "剣の一撃", "src": "movie/src/op3.mp4", "trim": [7.5, 10.1], "text": [] },
+        { "name": "エンドカード", "src": "movie/src/op1.mp4", "trim": [2.6, 8.4], "text": [] }
+      ]
+    },
+
+    "jhs": {
+      "title": "中学生向け",
+      "out": "movie/out/PR_jhs.mp4",
+      "bgm": { "file": "assets/bgm/field.mp3", "start": 8, "volume": 0.9 },
+      "endcard": { "text": ["中学英語からはじめる英単語RPG"] },
+      "sfx": [
+        { "file": "assets/sfx/ok.mp3", "cut": 4, "at": 0.25, "volume": 0.4 },
+        { "file": "assets/sfx/slash.mp3", "cut": 5, "at": 0.2, "volume": 0.45 },
+        { "file": "assets/sfx/win.mp3", "cut": 8, "at": 0.1, "volume": 0.45 }
+      ],
+      "cuts": [
+        { "name": "旅立ち", "src": "movie/src/op1.mp4", "trim": [0.3, 3.7],
+          "text": ["単語帳、何回も閉じた。"], "pos": "bottom" },
+        { "name": "学年をえらぶ", "img": "store/screenshots/06_grades.png", "dur": 3.4, "yoff": 0.15, "zoom": 1.08,
+          "text": ["{g}中1・中2・中3{/}、学年でえらぶ。"], "pos": "top" },
+        { "name": "4択クイズ", "img": "store/screenshots/02_quiz.png", "dur": 3.4, "yoff": 0.42, "zoom": 1.09,
+          "text": ["やることは、意味を4つから選ぶだけ。"], "pos": "top" },
+        { "name": "こうげき", "img": "store/screenshots/08_command.png", "dur": 3.4, "yoff": 0.52, "zoom": 1.1,
+          "text": ["正解＝こうげき。速いほど強い。"], "pos": "top" },
+        { "name": "四天王ハウル", "img": "store/screenshots/09_boss_command.png", "dur": 3.6, "yoff": 0.38, "zoom": 1.1,
+          "text": ["ボスも、英単語で倒す。"], "pos": "top" },
+        { "name": "単語帳", "img": "store/screenshots/04_wordbook.png", "dur": 3.4, "yoff": 0.3, "zoom": 1.08,
+          "text": ["覚えた単語は、ここに増えていく。"], "pos": "bottom" },
+        { "name": "ことばが還る", "src": "movie/src/ed2.mp4", "trim": [2.2, 5.6],
+          "text": ["覚えた単語が、そのまま強さになる。"], "pos": "bottom" },
+        { "name": "剣の一撃", "src": "movie/src/op3.mp4", "trim": [7.5, 10.1], "text": [] },
+        { "name": "エンドカード", "src": "movie/src/ed3.mp4", "trim": [0.2, 6.0], "text": [] }
+      ]
+    },
+
+    "hs": {
+      "title": "高校生・大学受験向け",
+      "out": "movie/out/PR_hs.mp4",
+      "bgm": { "file": "assets/bgm/battle2.mp3", "start": 24, "volume": 0.85 },
+      "endcard": {
+        "text": ["大学受験の語彙まで、遊びながら。"],
+        "note": "※「TOEIC」はETSの登録商標です。本アプリはETSおよびTOEICプログラムとは一切関係ありません。"
+      },
+      "sfx": [
+        { "file": "assets/sfx/ng.mp3", "cut": 1, "at": 2.2, "volume": 0.35 },
+        { "file": "assets/sfx/slash.mp3", "cut": 4, "at": 0.2, "volume": 0.45 },
+        { "file": "assets/sfx/crit.mp3", "cut": 8, "at": 0.1, "volume": 0.5 }
+      ],
+      "cuts": [
+        { "name": "玉座", "src": "movie/src/op2.mp4", "trim": [5.4, 8.8],
+          "text": ["読めるのに、間に合わない。"], "pos": "bottom" },
+        { "name": "学年をえらぶ", "img": "store/screenshots/06_grades.png", "dur": 3.4, "yoff": 0.15, "zoom": 1.08,
+          "text": ["高1・高2・高3で、範囲を切り替え。"], "pos": "top" },
+        { "name": "4択クイズ", "img": "store/screenshots/02_quiz.png", "dur": 3.4, "yoff": 0.42, "zoom": 1.09,
+          "text": ["制限時間内に、意味を選ぶ。"], "pos": "top" },
+        { "name": "こうげき", "img": "store/screenshots/08_command.png", "dur": 3.4, "yoff": 0.52, "zoom": 1.1,
+          "text": ["速く答えるほど、{g}強い一撃{/}。"], "pos": "top" },
+        { "name": "ボス戦", "img": "store/screenshots/03_boss.png", "dur": 3.4, "yoff": 0.42, "zoom": 1.09,
+          "text": ["受験語彙も、戦いながら。"], "pos": "top" },
+        { "name": "単語帳", "img": "store/screenshots/04_wordbook.png", "dur": 3.4, "yoff": 0.3, "zoom": 1.08,
+          "text": ["{g}「曖昧」な単語{/}が、本番で落とす点。"], "pos": "bottom" },
+        { "name": "ことばが還る", "src": "movie/src/ed2.mp4", "trim": [2.2, 5.6],
+          "text": ["3秒かかる単語は、", "試験では使えない。"], "pos": "bottom" },
+        { "name": "剣の一撃", "src": "movie/src/op3.mp4", "trim": [7.5, 10.1], "text": [] },
+        { "name": "エンドカード", "src": "movie/src/op1.mp4", "trim": [2.6, 8.4], "text": [] }
+      ]
+    },
+
+    "parent": {
+      "title": "保護者向け",
+      "out": "movie/out/PR_parent.mp4",
+      "bgm": { "file": "assets/bgm/ending.mp3", "start": 18, "volume": 0.85 },
+      "endcard": { "text": ["学習そのものに、上限は置きません。"] },
+      "sfx": [
+        { "file": "assets/sfx/ok.mp3", "cut": 3, "at": 0.3, "volume": 0.35 },
+        { "file": "assets/sfx/level.mp3", "cut": 7, "at": 0.3, "volume": 0.35 }
+      ],
+      "cuts": [
+        { "name": "旅立ち", "src": "movie/src/op1.mp4", "trim": [0.3, 3.9],
+          "text": ["「勉強しなさい」の、前に。"], "pos": "bottom" },
+        { "name": "4択クイズ", "img": "store/screenshots/02_quiz.png", "dur": 3.4, "yoff": 0.42, "zoom": 1.09,
+          "text": ["やっているのは、英単語の4択です。"], "pos": "top" },
+        { "name": "学年をえらぶ", "img": "store/screenshots/06_grades.png", "dur": 3.4, "yoff": 0.15, "zoom": 1.08,
+          "text": ["学年に合わせた範囲が出ます。"], "pos": "top" },
+        { "name": "こうげき", "img": "store/screenshots/08_command.png", "dur": 3.4, "yoff": 0.52, "zoom": 1.1,
+          "text": ["速く答えるほど、強い一撃。"], "pos": "top" },
+        { "name": "単語帳", "img": "store/screenshots/04_wordbook.png", "dur": 3.4, "yoff": 0.3, "zoom": 1.08,
+          "text": ["どこまで進んだかが、残ります。"], "pos": "bottom" },
+        { "name": "タイトル", "img": "store/screenshots/01_title.png", "dur": 3.4, "keep": [0.02, 0.72], "zoom": 1.07,
+          "text": ["{g}ガチャはありません{/}。"], "pos": "bottom" },
+        { "name": "ことばが還る", "src": "movie/src/ed2.mp4", "trim": [2.2, 5.8],
+          "text": ["復習は、回数無制限。無料で遊べます。"], "pos": "bottom" },
+        { "name": "旅の続き", "src": "movie/src/ed3.mp4", "trim": [0.2, 2.8], "text": [] },
+        { "name": "エンドカード", "src": "movie/src/op1.mp4", "trim": [2.6, 8.4], "text": [] }
+      ]
+    },
+
+    "dev": {
+      "title": "X・AI界隈向け（個人開発）",
+      "out": "movie/out/PR_dev.mp4",
+      "bgm": { "file": "assets/bgm/battle2.mp3", "start": 40, "volume": 0.85 },
+      "endcard": { "text": ["絵・音・動画・コードまで、生成AIで。"] },
+      "sfx": [
+        { "file": "assets/sfx/slash.mp3", "cut": 4, "at": 0.2, "volume": 0.45 },
+        { "file": "assets/sfx/crit.mp3", "cut": 8, "at": 0.1, "volume": 0.5 }
+      ],
+      "cuts": [
+        { "name": "旅立ち", "src": "movie/src/op1.mp4", "trim": [0.3, 3.7],
+          "text": ["個人開発で、ここまで作れる。"], "pos": "bottom" },
+        { "name": "4択クイズ", "img": "store/screenshots/02_quiz.png", "dur": 3.4, "yoff": 0.42, "zoom": 1.09,
+          "text": ["英単語RPG『WORDRIA』"], "pos": "top" },
+        { "name": "こうげき", "img": "store/screenshots/08_command.png", "dur": 3.4, "yoff": 0.52, "zoom": 1.1,
+          "text": ["{g}問題を解く＝攻撃する{/}RPG。"], "pos": "top" },
+        { "name": "四天王ハウル", "img": "store/screenshots/09_boss_command.png", "dur": 3.6, "yoff": 0.38, "zoom": 1.1,
+          "text": ["ボスも敵も、画像生成から。"], "pos": "top" },
+        { "name": "サウンドトラック", "img": "store/screenshots/10_ost.png", "dur": 3.4, "yoff": 0.35, "zoom": 1.08,
+          "text": ["BGMは全曲、生成AI。"], "pos": "bottom" },
+        { "name": "単語帳", "img": "store/screenshots/04_wordbook.png", "dur": 3.4, "yoff": 0.3, "zoom": 1.08,
+          "text": ["語彙データも、読み上げ音声も。"], "pos": "bottom" },
+        { "name": "ことばが還る", "src": "movie/src/ed2.mp4", "trim": [2.2, 5.6],
+          "text": ["このOP・EDも、生成AIの動画。"], "pos": "bottom" },
+        { "name": "剣の一撃", "src": "movie/src/op3.mp4", "trim": [7.5, 10.1], "text": [] },
+        { "name": "エンドカード", "src": "movie/src/op1.mp4", "trim": [2.6, 8.4], "text": [] }
+      ]
+    }
+  }
+}
