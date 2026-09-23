@@ -116,6 +116,7 @@ function renderCut(cut, i, reel, dur, frames, beatLen) {
     `scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},fps=${FPS},` +
     `tpad=stop_mode=clone:stop_duration=3,` +
     `zoompan=z='${zExpr}':x='${xExpr}':y='${yExpr}':d=1:s=${W}x${H}:fps=${FPS},setsar=1`;
+  if (cut.stripes) vf += `,drawgrid=w=iw:h=${cut.stripes}:t=${Math.max(2, Math.round(cut.stripes / 5))}:c=0xE9E9EC`;
   if (cut.dim) vf += `,colorchannelmixer=rr=${1 - cut.dim}:gg=${1 - cut.dim}:bb=${1 - cut.dim}`;
   if (cut.flash) vf += `,fade=t=in:st=0:d=0.18:color=white`;
   vf += ",format=yuv420p";
@@ -134,8 +135,9 @@ function renderCut(cut, i, reel, dur, frames, beatLen) {
 // 文字の組版は ffmpeg より Chrome のほうがずっと上手い（角丸の札、グラデーション、
 // ゲームと同じ丸ゴシック）。1枚ずつ透過PNGに書き出して、ffmpeg では重ねるだけ。
 function fontCss() {
-  const css = path.join(ROOT, "node_modules", "@fontsource", "m-plus-rounded-1c", "800.css");
-  return fs.existsSync(css) ? `<link rel="stylesheet" href="file://${css}">` : "";
+  const dir = path.join(ROOT, "node_modules", "@fontsource", "m-plus-rounded-1c");
+  return ["800.css", "900.css"].filter(f => fs.existsSync(path.join(dir, f)))
+    .map(f => `<link rel="stylesheet" href="file://${path.join(dir, f)}">`).join("");
 }
 
 const STYLE = (th) => `
@@ -159,6 +161,18 @@ const STYLE = (th) => `
     text-shadow: 0 0 18px ${th.edge}aa, 0 4px 0 rgba(0,0,0,.45), 0 10px 24px rgba(0,0,0,.6);
   }
   .sub { font-size: 40px; }
+  /* 大きく色つきの字幕（家族制作のPR動画と同じ見せ方）。札は付けず、
+     ピンクの極太丸ゴシックに太い白フチとピンクの光 */
+  .big { display:inline-block; font-weight:900; font-size:${th.capSize || 104}px; line-height:1.15;
+         letter-spacing:.01em; white-space:nowrap; color:${th.fill || "#ff2fa6"};
+         -webkit-text-stroke:${Math.round((th.capSize || 104) * 0.15)}px #fff; paint-order: stroke fill;
+         filter: drop-shadow(0 0 12px ${th.glow || "rgba(255,70,185,.95)"}) drop-shadow(0 0 4px ${th.glow || "rgba(255,70,185,.95)"})
+                 drop-shadow(0 5px 6px rgba(0,0,0,.35)); }
+  .big em { color:${th.accent2 || th.fill || "#ff2fa6"}; }
+  .catch.gold { font-weight:900; font-size:${th.catchSize || 78}px; -webkit-text-stroke:0; text-shadow:none;
+         background: linear-gradient(180deg, #dcb83e 0%, #a07a16 58%, #6a4e08 100%);
+         -webkit-background-clip:text; background-clip:text; color:transparent;
+         filter: drop-shadow(0 0 7px #ffe600) drop-shadow(0 0 16px rgba(255,215,0,.85)); }
   .note { display:inline-block; color:rgba(235,235,245,.85); font-size:22px; font-weight:700;
           text-shadow: 0 1px 3px rgba(0,0,0,.9); white-space:nowrap; }
 `;
@@ -175,7 +189,7 @@ async function renderPngs(items, theme) {
   fs.mkdirSync(dir, { recursive: true });
   const todo = items.filter(it => {
     it.file = path.join(dir, crypto.createHash("md5")
-      .update(JSON.stringify([it.kind, it.text, theme, STYLE(theme)])).digest("hex").slice(0, 12) + ".png");
+      .update(JSON.stringify([it.kind, it.text, it.size, theme, STYLE(theme), "f2"])).digest("hex").slice(0, 12) + ".png");
     return !fs.existsSync(it.file);
   });
   if (todo.length) {
@@ -185,19 +199,27 @@ async function renderPngs(items, theme) {
       <style>${STYLE(theme)}</style></head><body><div id="wrap"></div></body></html>`);
     await page.evaluate(() => document.fonts.ready);
     for (const it of todo) {
-      const cls = it.kind === "cap" ? "cap" : it.kind === "sub" ? "cap sub" : it.kind;
+      const cls = it.kind === "cap" ? "cap" : it.kind === "sub" ? "cap sub"
+                : it.kind === "catch" && theme.catchStyle === "gold" ? "catch gold" : it.kind;
       const two = Array.isArray(it.text) && it.text.length > 1 ? " two" : "";
-      await page.evaluate(([html, c]) => {
+      await page.evaluate(([html, c, sz]) => {
         const w = document.getElementById("wrap");
-        w.innerHTML = `<div class="${c}">${html}</div>`;
-      }, [markup(it.text), cls + two]);
-      await page.evaluate(() => document.fonts.ready);
+        w.innerHTML = `<div class="${c}"${sz ? ` data-size="${sz}"` : ""}>${html}</div>`;
+      }, [markup(it.text), cls + two, it.size || 0]);
+      // unicode-range で分かれたフォントは、使う字を指定して読ませないと
+      // 間に合わず別の書体で描かれることがある（実際に明朝で出た）
+      await page.evaluate(async (t) => {
+        await document.fonts.load("900 100px 'M PLUS Rounded 1c'", t);
+        await document.fonts.load("800 100px 'M PLUS Rounded 1c'", t);
+        await document.fonts.ready;
+      }, [].concat(it.text).join(""));
       // 横幅が画面の9割を超えたら字を詰める
       await page.evaluate((max) => {
         const el = document.querySelector("#wrap > div");
+        if (el.dataset.size) el.style.fontSize = el.dataset.size + "px";
         let fs = parseFloat(getComputedStyle(el).fontSize);
         while (el.offsetWidth > max && fs > 18) { fs -= 1; el.style.fontSize = fs + "px"; }
-      }, it.kind === "note" ? 1020 : 960);
+      }, it.kind === "note" ? 1020 : it.kind === "big" || it.kind === "catch" ? 1010 : 960);
       await page.locator("#wrap").screenshot({ path: it.file, omitBackground: true });
     }
     await browser.close();
@@ -290,8 +312,8 @@ async function buildReel(name, cfg, defaults) {
   // 叩きつけて、そこで音楽を切る。そのあと hold 秒だけ余韻を残して終わる
   const letters = ec.mode === "letters";
   const lastA = plan[plan.length - 1].a;
-  const slamT = letters ? T(lastA + (ec.slamBeat || 8)) : null;
-  const total = letters ? slamT + (ec.hold || 1.8)
+  const slamT = (letters || ec.slamBeat) ? T(lastA + (ec.slamBeat || 8)) : null;
+  const total = slamT != null ? slamT + (ec.hold || 1.8)
                         : plan[plan.length - 1].t1 + (ec.tail || 0.9);   // 最後の拍のあと、余韻を少し
   plan[plan.length - 1].t1 = total;
 
@@ -319,15 +341,24 @@ async function buildReel(name, cfg, defaults) {
     if (!p.c.cap) return;
     const a = p.t0 + (p.c.capIn || 0) * beatLen;
     const endBeat = p.a + (p.c.capBeats || p.c.beats);
-    caps.push({ kind: "cap", text: p.c.cap, a, b: endBeat >= k ? total : T(endBeat), pop: p.c.capPop, y: p.c.capY });
+    const b = endBeat >= k ? total : T(endBeat);
+    if (theme.capStyle === "big") {
+      // 1行ずつ別の絵にして、2行目は lineStep 拍遅れて出す（拍に乗せて畳みかける）
+      const lines = [].concat(p.c.cap);
+      const step = (p.c.lineStep == null ? (theme.lineStep == null ? 1 : theme.lineStep) : p.c.lineStep) * beatLen;
+      lines.forEach((ln, i) => caps.push({ kind: "big", text: ln, a: a + i * step, b, pop: p.c.capPop,
+        y: p.c.capY, line: i, lines: lines.length, size: p.c.capSize }));
+    } else {
+      caps.push({ kind: "cap", text: p.c.cap, a, b, pop: p.c.capPop, y: p.c.capY });
+    }
   });
   // エンドカード：拍0でロゴ、拍1でキャッチ（ロゴの上）、拍2で締めの一行
   const ep = plan[plan.length - 1];
   const E = j => ep.t0 + j * beatLen;
   // catch を null にすると、ロゴだけで締める
-  const endItems = (!letters && ec.catch) ? [{ kind: "catch", text: ec.catch, a: E(1), b: total }] : [];
+  const endItems = (!letters && ec.catch) ? [{ kind: "catch", text: ec.catch, a: E(ec.catchBeat == null ? 1 : ec.catchBeat), b: total }] : [];
   if (!letters && ec.text) endItems.push({ kind: "sub", text: ec.text, a: E(2), b: total });
-  if (ec.note) endItems.push({ kind: "note", text: ec.note, a: letters ? slamT : E(3), b: total });
+  if (ec.note) endItems.push({ kind: "note", text: ec.note, a: letters ? slamT : E(ec.noteBeat == null ? 3 : ec.noteBeat), b: total });
   const word = letters ? await renderLetters(ec.word || "WORDRIA", theme) : null;
   await renderPngs(caps.concat(endItems), theme);
 
@@ -356,7 +387,11 @@ async function buildReel(name, cfg, defaults) {
   }
 
   const capY = ec.capY || 1630;
-  caps.forEach(c => pop(c.file, c.a, c.b, W / 2, c.y || capY, null, c.pop));
+  caps.forEach(c => {
+    let y = c.y || capY;
+    if (c.kind === "big") y += Math.round((c.line - (c.lines - 1) / 2) * (c.size || theme.capSize || 104) * 1.28);
+    pop(c.file, c.a, c.b, W / 2, y, null, c.pop);
+  });
 
   // ロゴ：エンドカードの頭（拍0）で大きく入る
   const logoW = Math.round(W * (ec.scale || 0.8));
@@ -382,7 +417,7 @@ async function buildReel(name, cfg, defaults) {
   const logoH = Math.round(logoW * pngSize(abs(ec.logo)).h / pngSize(abs(ec.logo)).w);
   endItems.forEach(it => {
     const sz = pngSize(it.file);
-    const cy = it.kind === "catch" ? logoY - logoH / 2 - sz.h / 2 + 30
+    const cy = it.kind === "catch" ? (ec.catchY ? Math.round(H * ec.catchY) : logoY - logoH / 2 - sz.h / 2 + 30)
              : it.kind === "sub" ? logoY + logoH / 2 + sz.h / 2 - 10
              : H - 40 - sz.h / 2;
     pop(it.file, it.a, it.b, W / 2, Math.round(cy), null, it.kind === "note" ? 0 : 0.2);
@@ -394,8 +429,8 @@ async function buildReel(name, cfg, defaults) {
   const mi = idx();
   const fo = music.fadeOut || 1.4;
   // letters のときは、叩きつけた拍の頭だけ鳴らして音楽を切る
-  const fadeSt = letters ? slamT + 0.14 : total - fo;
-  const fadeD = letters ? 0.3 : fo;
+  const fadeSt = slamT != null ? slamT + 0.14 : total - fo;
+  const fadeD = slamT != null ? 0.3 : fo;
   fc += `[${mi}:a]asetpts=PTS-STARTPTS,afade=t=in:st=0:d=0.03,` +
         `afade=t=out:st=${n3(fadeSt)}:d=${fadeD},volume=${music.volume || 1},` +
         `aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo[am];`;
@@ -409,6 +444,17 @@ async function buildReel(name, cfg, defaults) {
           `aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo[x${i}_${j}];`;
     mix.push(`[x${i}_${j}]`);
   }));
+  if (!letters && slamT != null) {
+    // ロゴの締め：エンドカードの頭でロゴが叩きつけられ、slamBeat 拍目の頭で音楽を切る
+    [["crit", ep.t0, 0.6]].concat((ec.slamSfx || [["magic_holy", 0.55]]).map(([nm, vol]) => [nm, slamT, vol]))
+      .forEach(([nm, at, vol], j) => {
+        inputs.push("-i", need(`assets/sfx/${nm}.mp3`, "効果音"));
+        const si = idx();
+        const ms = Math.round(at * 1000);
+        fc += `[${si}:a]adelay=${ms}|${ms},volume=${vol},aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo[g${j}];`;
+        mix.push(`[g${j}]`);
+      });
+  }
   if (letters) {
     const hits = [];
     word.letters.forEach((L, i) => hits.push([ec.letterSfx || "hit", ep.t0 + i * (ec.every || 1) * beatLen, 0.32]));
