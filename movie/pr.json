@@ -42,12 +42,15 @@
         "slamBeat": 8,
         "catchBeat": 0,
         "noteBeat": 2,
-        "hold": 1.2,
+        "hold": 0.3,
         "scale": 0.84,
         "y": 0.5,
         "catchY": 0.33,
         "capY": 860,
-        "shot": {"src": "color:#fbfbfd", "stripes": 28, "drift": 0.0, "fx": []}
+        "shot": {"src": "color:#fbfbfd", "stripes": 28, "drift": 0.0, "fx": []},
+        "cutAfter": 0.18,
+        "cutFade": 0.06,
+        "slamSfx": []
       },
       "cuts": [
         {"src": "play/dragon", "beats": 2, "at": 1.1, "pulse": 0.022, "sfx": [["encounter", 0, 0.45]], "cap": ["WORDRIAは"], "capBeats": 8, "capPop": 0.35},

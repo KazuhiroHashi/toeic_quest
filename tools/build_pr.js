@@ -429,8 +429,9 @@ async function buildReel(name, cfg, defaults) {
   const mi = idx();
   const fo = music.fadeOut || 1.4;
   // letters のときは、叩きつけた拍の頭だけ鳴らして音楽を切る
-  const fadeSt = slamT != null ? slamT + 0.14 : total - fo;
-  const fadeD = slamT != null ? 0.3 : fo;
+  // cutAfter 秒だけ拍の頭を鳴らしてから cutFade 秒で落とす。小さくすると「スパッ」と切れる
+  const fadeSt = slamT != null ? slamT + (ec.cutAfter == null ? 0.14 : ec.cutAfter) : total - fo;
+  const fadeD = slamT != null ? (ec.cutFade == null ? 0.3 : ec.cutFade) : fo;
   fc += `[${mi}:a]asetpts=PTS-STARTPTS,afade=t=in:st=0:d=0.03,` +
         `afade=t=out:st=${n3(fadeSt)}:d=${fadeD},volume=${music.volume || 1},` +
         `aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo[am];`;
