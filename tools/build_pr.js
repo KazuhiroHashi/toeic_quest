@@ -66,6 +66,7 @@ const n3 = x => (+x).toFixed(3);
 // ---- 素材の解決 ---------------------------------------------------------
 // "play/battle" → movie/play/battle.mp4 ＋ 出来事の表 movie/play/battle.json
 function source(src) {
+  if (src.startsWith("color:")) return { file: null, events: {} };   // 無地の背景
   if (src.startsWith("play/")) {
     const base = path.join(ROOT, "movie", src);
     const file = need(base + ".mp4", "実プレイの録画");
@@ -119,7 +120,9 @@ function renderCut(cut, i, reel, dur, frames, beatLen) {
   if (cut.flash) vf += `,fade=t=in:st=0:d=0.18:color=white`;
   vf += ",format=yuv420p";
 
-  const input = cut.src.endsWith(".png")
+  const input = cut.src.startsWith("color:")
+    ? ["-f", "lavfi", "-i", `color=c=0x${cut.src.slice(7).replace("#", "")}:s=${W}x${H}:r=${FPS}:d=${n3(dur + 1)}`]
+    : cut.src.endsWith(".png")
     ? ["-loop", "1", "-framerate", String(FPS), "-t", n3(dur + 1), "-i", file]
     : ["-ss", n3(from), "-t", n3(dur * speed + 1), "-i", file];
   ff(input.concat(["-vf", vf, "-frames:v", String(frames), "-an",
@@ -142,14 +145,14 @@ const STYLE = (th) => `
   #wrap { display:inline-block; padding: 34px 40px 44px; }
   em { font-style: normal; color: ${th.accent}; }
   .cap {
-    display:inline-block; color:#fff; font-size:44px; line-height:1.25; letter-spacing:.03em;
-    padding: 17px 38px 19px; border-radius: 999px; text-align:center; white-space:nowrap;
+    display:inline-block; color:#fff; font-size:${th.capSize || 44}px; line-height:1.25; letter-spacing:.03em;
+    padding: .38em .86em .43em; border-radius: 999px; text-align:center; white-space:nowrap;
     background: linear-gradient(120deg, ${th.bg1} 0%, ${th.bg2} 100%);
-    border: 3.5px solid ${th.edge};
+    border: ${th.capSize > 50 ? 5 : 3.5}px solid ${th.edge};
     box-shadow: 0 10px 26px rgba(0,0,0,.55), inset 0 2px 0 rgba(255,255,255,.22);
     text-shadow: 0 2px 0 rgba(0,0,0,.35);
   }
-  .cap.two { border-radius: 38px; }
+  .cap.two { border-radius: .86em; }
   .catch {
     display:inline-block; color:#fff; font-size:60px; letter-spacing:.04em; white-space:nowrap;
     -webkit-text-stroke: 3px rgba(20,12,60,.9); paint-order: stroke fill;
@@ -201,6 +204,59 @@ async function renderPngs(items, theme) {
   }
   return items;
 }
+// 締めの「WORDRIA」を1文字ずつ透過PNGにする。ゲームのタイトルと同じ Cinzel の
+// 金文字。1文字ずつ、単語の中心から見た位置（cx, cy）も返すので、ffmpeg 側で
+// 1文字ずつ拍に合わせて叩き込める。最後にもう1枚、光を強めた単語全体を作る。
+async function renderLetters(text, theme) {
+  const { chromium } = require("playwright-core");
+  const dir = path.join(TMP, "letters");
+  fs.mkdirSync(dir, { recursive: true });
+  const key = crypto.createHash("md5").update(JSON.stringify([text, theme.wordSize, "v1"])).digest("hex").slice(0, 10);
+  const meta = path.join(dir, key + ".json");
+  if (fs.existsSync(meta)) return JSON.parse(fs.readFileSync(meta, "utf8"));
+  const font = path.join(ROOT, "assets", "fonts", "Cinzel-latin.woff2");
+  const size = theme.wordSize || 170;
+  const browser = await chromium.launch({ executablePath: EXE });
+  const page = await browser.newPage({ viewport: { width: 1400, height: 700 }, deviceScaleFactor: 1 });
+  await page.setContent(`<!doctype html><html><head><meta charset="utf-8"><style>
+    @font-face { font-family: Cinzel; src: url(file://${font}); font-weight: 400 900; }
+    html, body { margin:0; background: transparent; }
+    #wrap { position:absolute; left:80px; top:120px; padding: 40px; }
+    #word { font-family: Cinzel, serif; font-weight: 900; font-size: ${size}px; letter-spacing: .02em;
+            white-space: nowrap; line-height: 1; }
+    #word span { display:inline-block;
+      background: linear-gradient(180deg, #fffbe6 0%, #ffe07a 38%, #e0a02a 62%, #fff1b8 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      -webkit-text-stroke: 3px #3b2206;
+      filter: drop-shadow(0 0 14px rgba(255,200,80,.75)) drop-shadow(0 6px 8px rgba(0,0,0,.85)); }
+    #word.glow span { filter: drop-shadow(0 0 26px rgba(255,220,120,.95)) drop-shadow(0 0 60px rgba(255,170,40,.6))
+                                drop-shadow(0 6px 8px rgba(0,0,0,.85)); }
+    .off { visibility: hidden; }
+  </style></head><body><div id="wrap"><div id="word">${[...text].map(c => `<span>${c}</span>`).join("")}</div></div></body></html>`);
+  await page.evaluate(() => document.fonts.ready);
+  const wr = await page.locator("#word").boundingBox();
+  const out = { letters: [], word: null };
+  const pad = 50;
+  const n = text.length;
+  for (let i = 0; i < n; i++) {
+    await page.evaluate(i => document.querySelectorAll("#word span").forEach((s, j) => s.classList.toggle("off", j !== i)), i);
+    const r = await page.locator(`#word span >> nth=${i}`).boundingBox();
+    const file = path.join(dir, `${key}_${i}.png`);
+    await page.screenshot({ path: file, omitBackground: true,
+      clip: { x: r.x - pad, y: r.y - pad, width: r.width + pad * 2, height: r.height + pad * 2 } });
+    out.letters.push({ file, cx: Math.round(r.x + r.width / 2 - (wr.x + wr.width / 2)),
+                             cy: Math.round(r.y + r.height / 2 - (wr.y + wr.height / 2)) });
+  }
+  await page.evaluate(() => { document.querySelectorAll("#word span").forEach(s => s.classList.remove("off"));
+                               document.getElementById("word").classList.add("glow"); });
+  out.word = path.join(dir, `${key}_word.png`);
+  await page.screenshot({ path: out.word, omitBackground: true,
+    clip: { x: wr.x - pad * 2, y: wr.y - pad * 2, width: wr.width + pad * 4, height: wr.height + pad * 4 } });
+  await browser.close();
+  fs.writeFileSync(meta, JSON.stringify(out));
+  return out;
+}
+
 function pngSize(file) {
   const b = fs.readFileSync(file);
   return { w: b.readUInt32BE(16), h: b.readUInt32BE(20) };
@@ -230,7 +286,13 @@ async function buildReel(name, cfg, defaults) {
     if (s0 + b >= B.length) throw new Error("曲が足りません。startBeat を前にしてください");
     return { c, a, b, t0: T(a), t1: T(b) };
   });
-  const total = plan[plan.length - 1].t1 + (ec.tail || 0.9);   // 最後の拍のあと、余韻を少し
+  // letters：締めは文字だけ。1拍に1文字ずつ入り、slamBeat 拍目で単語全体を
+  // 叩きつけて、そこで音楽を切る。そのあと hold 秒だけ余韻を残して終わる
+  const letters = ec.mode === "letters";
+  const lastA = plan[plan.length - 1].a;
+  const slamT = letters ? T(lastA + (ec.slamBeat || 8)) : null;
+  const total = letters ? slamT + (ec.hold || 1.8)
+                        : plan[plan.length - 1].t1 + (ec.tail || 0.9);   // 最後の拍のあと、余韻を少し
   plan[plan.length - 1].t1 = total;
 
   // 小節の頭に来るカットだけフラッシュ
@@ -263,9 +325,10 @@ async function buildReel(name, cfg, defaults) {
   const ep = plan[plan.length - 1];
   const E = j => ep.t0 + j * beatLen;
   // catch を null にすると、ロゴだけで締める
-  const endItems = ec.catch ? [{ kind: "catch", text: ec.catch, a: E(1), b: total }] : [];
-  if (ec.text) endItems.push({ kind: "sub", text: ec.text, a: E(2), b: total });
-  if (ec.note) endItems.push({ kind: "note", text: ec.note, a: E(3), b: total });
+  const endItems = (!letters && ec.catch) ? [{ kind: "catch", text: ec.catch, a: E(1), b: total }] : [];
+  if (!letters && ec.text) endItems.push({ kind: "sub", text: ec.text, a: E(2), b: total });
+  if (ec.note) endItems.push({ kind: "note", text: ec.note, a: letters ? slamT : E(3), b: total });
+  const word = letters ? await renderLetters(ec.word || "WORDRIA", theme) : null;
   await renderPngs(caps.concat(endItems), theme);
 
   // ---- 重ねる ----
@@ -298,7 +361,23 @@ async function buildReel(name, cfg, defaults) {
   // ロゴ：エンドカードの頭（拍0）で大きく入る
   const logoW = Math.round(W * (ec.scale || 0.8));
   const logoY = Math.round(H * (ec.y || 0.40));
-  pop(need(ec.logo, "ロゴ"), ep.t0, total, W / 2, logoY, logoW, 0.45);
+  if (letters) {
+    // 1拍に1文字。叩きつけるように大きめに弾ませる
+    const wy = Math.round(H * (ec.y || 0.46));
+    const every = ec.every || 1;
+    word.letters.forEach((L, i) => {
+      const a = ep.t0 + i * every * beatLen;
+      pop(L.file, a, slamT, Math.round(W / 2 + L.cx), wy + L.cy, null, 0.7);
+    });
+    // 小節の頭で、光った単語全体を重ねて白く飛ばす
+    pop(word.word, slamT, total, W / 2, wy, null, 0.28);
+    const fl = lab();
+    fc += `color=c=white:s=${W}x${H}:r=${FPS}:d=0.4,format=rgba,fade=t=out:st=0:d=0.4:alpha=1,` +
+          `setpts=PTS+${n3(slamT)}/TB[fw${nlab}];[${v}][fw${nlab}]overlay=eof_action=pass:format=auto[${fl}];`;
+    v = fl;
+  } else {
+    pop(need(ec.logo, "ロゴ"), ep.t0, total, W / 2, logoY, logoW, 0.45);
+  }
   // キャッチはロゴの上、締めの一行はロゴの下、注記はいちばん下
   const logoH = Math.round(logoW * pngSize(abs(ec.logo)).h / pngSize(abs(ec.logo)).w);
   endItems.forEach(it => {
@@ -314,8 +393,11 @@ async function buildReel(name, cfg, defaults) {
   inputs.push("-ss", n3(B[s0]), "-t", n3(total), "-i", need(grid.file, "BGM"));
   const mi = idx();
   const fo = music.fadeOut || 1.4;
+  // letters のときは、叩きつけた拍の頭だけ鳴らして音楽を切る
+  const fadeSt = letters ? slamT + 0.14 : total - fo;
+  const fadeD = letters ? 0.3 : fo;
   fc += `[${mi}:a]asetpts=PTS-STARTPTS,afade=t=in:st=0:d=0.03,` +
-        `afade=t=out:st=${n3(total - fo)}:d=${fo},volume=${music.volume || 1},` +
+        `afade=t=out:st=${n3(fadeSt)}:d=${fadeD},volume=${music.volume || 1},` +
         `aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo[am];`;
   const mix = ["[am]"];
   plan.forEach((p, i) => (p.c.sfx || []).forEach((sx, j) => {
@@ -327,6 +409,19 @@ async function buildReel(name, cfg, defaults) {
           `aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo[x${i}_${j}];`;
     mix.push(`[x${i}_${j}]`);
   }));
+  if (letters) {
+    const hits = [];
+    word.letters.forEach((L, i) => hits.push([ec.letterSfx || "hit", ep.t0 + i * (ec.every || 1) * beatLen, 0.32]));
+    (ec.slamSfx || [["crit", 0.75], ["magic_holy", 0.5]]).forEach(([nm, vol]) => hits.push([nm, slamT, vol]));
+    hits.forEach(([nm, at, vol], j) => {
+      inputs.push("-i", need(`assets/sfx/${nm}.mp3`, "効果音"));
+      const si = idx();
+      const ms = Math.round(at * 1000);
+      fc += `[${si}:a]adelay=${ms}|${ms},volume=${vol},` +
+            `aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo[e${j}];`;
+      mix.push(`[e${j}]`);
+    });
+  }
   fc += `${mix.join("")}amix=inputs=${mix.length}:duration=first:normalize=0,` +
         `loudnorm=I=-14:TP=-1.5:LRA=11[aout]`;
 

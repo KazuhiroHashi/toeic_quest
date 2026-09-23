@@ -272,6 +272,21 @@ async function turn(page, kind, opt) {
   await wait(page, 1500);
 }
 
+// 「続きから」で idx 戦目（0始まり）に入り、登場から turns ターン戦う
+async function fight(open, name, idx, turns) {
+  var a = await open();
+  await seedRun(a.page, idx);
+  await a.page.click("#pbtn-arena");
+  await wait(a.page, 700);
+  var rec = await startRec(a.page, name);
+  await clickText(a.page, ".wq2-store-btn", "続きから");
+  for (var r = 0; r < turns; r++) {
+    await turn(a.page, r === 2 ? "まほう" : "こうげき", { after: 460, pace: 520 });
+  }
+  await wait(a.page, 600);
+  await stopRec(rec);
+}
+
 // ---- 場面 ---------------------------------------------------------------
 var SCENES = {
   // タイトル画面 → ことばの冒険 → 最初の敵が出るまで
@@ -317,6 +332,13 @@ var SCENES = {
     await wait(a.page, 600);
     await stopRec(rec);
   },
+
+  // 第3〜5戦（5戦目は中ボスの古竜）。4人パーティで速答を重ねる。
+  // 第7戦以降は録らない。四天王の残りやラスボスは、遊ぶ前の人に見せない
+  // （サウンドトラックの曲名を Secret にしているのと同じ理由）
+  b3: async function (open) { await fight(open, "b3", 2, 5); },
+  b4: async function (open) { await fight(open, "b4", 3, 5); },
+  dragon: async function (open) { await fight(open, "dragon", 4, 6); },
 
   // 迷っているうちに時間切れ → 反撃される
   miss: async function (open) {
