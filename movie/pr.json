@@ -1,209 +1,236 @@
 {
-  "font": "M PLUS 2 ExtraBold",
   "defaults": {
-    "crossfade": 0.35,
-    "band": 0.5,
-    "bgm": {
-      "file": "assets/bgm/title.mp3",
-      "start": 13.5,
-      "fadeIn": 0.8,
-      "fadeOut": 2.6,
-      "volume": 0.9
+    "theme": {
+      "bg1": "#1b1650",
+      "bg2": "#4b2391",
+      "edge": "#FFD24A",
+      "accent": "#FFD24A"
     },
     "endcard": {
       "logo": "assets/ui/logo.png",
       "catch": "単語帳を開くより、冒険しよう。",
-      "hold": 5.8,
-      "scale": 0.78,
-      "y": 0.31,
-      "scrim": 0.46
+      "beats": 8,
+      "scale": 0.8,
+      "y": 0.42,
+      "shot": {"src": "movie/src/op1.mp4", "at": 2.4, "dim": 0.42, "drift": 0.06},
+      "note": "※「TOEIC」はETSの登録商標です。本アプリはETSおよびTOEICプログラムとは一切関係ありません。",
+      "capY": 1575
     }
   },
-
   "reels": {
     "main": {
       "title": "汎用（速さ）",
-      "out": "movie/out/PR_main.mp4",
+      "music": {
+        "track": "boss",
+        "startBeat": 96
+      },
       "endcard": {
-        "text": ["速く答えるほど、強くなる英単語RPG"],
+        "text": "速く答えるほど、強くなる英単語RPG",
         "note": "※「TOEIC」はETSの登録商標です。本アプリはETSおよびTOEICプログラムとは一切関係ありません。"
       },
-      "sfx": [
-        { "file": "assets/sfx/slash.mp3", "cut": 3, "at": 0.2, "volume": 0.45 },
-        { "file": "assets/sfx/ng.mp3", "cut": 4, "at": 0.25, "volume": 0.4 },
-        { "file": "assets/sfx/crit.mp3", "cut": 8, "at": 0.1, "volume": 0.5 }
-      ],
       "cuts": [
-        { "name": "英単語の剣", "src": "movie/src/op3.mp4", "trim": [0.2, 3.8],
-          "text": ["「知ってる」だけでは、{g}倒せない{/}。"], "pos": "bottom" },
-        { "name": "4択クイズ", "img": "store/screenshots/02_quiz.png", "dur": 3.4, "yoff": 0.42, "zoom": 1.09,
-          "text": ["制限時間内に、意味を選ぶ。"], "pos": "top" },
-        { "name": "こうげき", "img": "store/screenshots/08_command.png", "dur": 3.4, "yoff": 0.52, "zoom": 1.1,
-          "text": ["速く答えるほど、{g}強い一撃{/}。"], "pos": "top" },
-        { "name": "沈黙王の玉座", "src": "movie/src/op2.mp4", "trim": [5.6, 8.8],
-          "text": ["迷えば、こちらがやられる。"], "pos": "bottom" },
-        { "name": "四天王ハウル", "img": "store/screenshots/09_boss_command.png", "dur": 3.6, "yoff": 0.38, "zoom": 1.1,
-          "text": ["四天王も、英単語で倒す。"], "pos": "top" },
-        { "name": "単語帳", "img": "store/screenshots/04_wordbook.png", "dur": 3.4, "yoff": 0.3, "zoom": 1.08,
-          "text": ["{g}「曖昧」な単語{/}が、あなたの弱点。"], "pos": "bottom" },
-        { "name": "ことばが還る", "src": "movie/src/ed2.mp4", "trim": [2.2, 5.8],
-          "text": ["中学英語から、", "大学受験・TOEIC®帯まで。"], "pos": "bottom" },
-        { "name": "剣の一撃", "src": "movie/src/op3.mp4", "trim": [7.5, 10.1], "text": [] },
-        { "name": "エンドカード", "src": "movie/src/op1.mp4", "trim": [2.6, 8.4], "text": [] }
-      ]
+        {"src": "movie/src/op3.mp4", "at": 0.2, "beats": 4, "cap": "「知ってる」だけでは、{g}倒せない{/}。"},
+        {"src": "play/title", "at": 0.3, "beats": 2},
+        {"src": "movie/src/op1.mp4", "at": 1.2, "beats": 2},
+        {"src": "play/battle", "sync": {"event": "answer1", "beat": 3}, "beats": 4, "zoom": 1.12, "focus": [0.5, 0.25], "cap": "制限時間内に、{g}意味を選ぶ{/}。", "sfx": [["ok", 3, 0.55]]},
+        {"src": "play/battle", "at": "answer1", "shift": 0.7, "beats": 2, "fx": ["punch", "shake"], "sfx": [["slash", 0, 0.5]]},
+        {"src": "play/battle", "sync": {"event": "answer2", "beat": 1}, "beats": 2, "zoom": 1.12, "focus": [0.5, 0.25], "cap": "速く答えるほど、{g}強い一撃{/}。", "capBeats": 4, "sfx": [["ok", 1, 0.5]]},
+        {"src": "play/battle", "at": "answer2", "shift": 0.7, "beats": 2, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.55]]},
+        {"src": "movie/src/op2.mp4", "at": 5.8, "beats": 2, "cap": "迷えば、{g}反撃される{/}。", "capBeats": 6},
+        {"src": "play/miss", "at": 4.9, "speed": 1.5, "beats": 4, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ng", 3, 0.5]]},
+        {"src": "play/boss", "at": 1.0, "beats": 2, "cap": "四天王も、{g}英単語で倒す{/}。", "capBeats": 6, "sfx": [["boss", 0, 0.4]]},
+        {"src": "play/boss", "sync": {"event": "answer1", "beat": 1}, "beats": 2, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]]},
+        {"src": "play/boss", "at": "answer1", "shift": 0.75, "beats": 2, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.55]]},
+        {"src": "play/boss", "at": "answer3", "shift": 0.8, "beats": 1, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
+        {"src": "play/battle", "at": "answer4", "shift": 0.75, "beats": 1, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
+        {"src": "play/boss", "at": "answer5", "shift": 0.8, "beats": 1, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
+        {"src": "movie/src/op3.mp4", "at": 8.4, "beats": 1, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.5]]},
+        {"src": "play/wordbook", "at": 0.5, "beats": 4, "cap": "{g}「曖昧」な単語{/}が、あなたの弱点。"},
+        {"src": "play/grades", "at": 1.2, "beats": 2, "zoom": 1.05, "cap": "中学英語から、大学受験・{g}TOEIC®{/}まで。", "capBeats": 6},
+        {"src": "movie/src/ed2.mp4", "at": 2.4, "beats": 4},
+        {"src": "movie/src/op3.mp4", "at": 7.4, "beats": 4, "sfx": [["magic_holy", 0, 0.4]]}
+      ],
+      "theme": {
+        "bg1": "#1b1650",
+        "bg2": "#4b2391",
+        "edge": "#FFD24A",
+        "accent": "#FFD24A"
+      }
     },
-
     "toeic": {
       "title": "TOEIC学習者向け",
-      "out": "movie/out/PR_toeic.mp4",
-      "bgm": { "file": "assets/bgm/battle.mp3", "start": 30, "volume": 0.85 },
-      "endcard": {
-        "text": ["TOEIC®対策に、「速さ」という武器を。"],
-        "note": "※「TOEIC」はETSの登録商標です。本アプリはETSおよびTOEICプログラムとは一切関係ありません。"
+      "music": {
+        "track": "lastboss",
+        "startBeat": 64
       },
-      "sfx": [
-        { "file": "assets/sfx/ng.mp3", "cut": 3, "at": 0.3, "volume": 0.4 },
-        { "file": "assets/sfx/slash.mp3", "cut": 4, "at": 0.2, "volume": 0.45 },
-        { "file": "assets/sfx/crit.mp3", "cut": 8, "at": 0.1, "volume": 0.5 }
-      ],
+      "theme": {
+        "bg1": "#0c1a44",
+        "bg2": "#0c5a78",
+        "edge": "#5CE1FF",
+        "accent": "#FFD24A"
+      },
+      "endcard": {
+        "text": "TOEIC®対策に、「速さ」という武器を。"
+      },
       "cuts": [
-        { "name": "玉座", "src": "movie/src/op2.mp4", "trim": [5.4, 8.8],
-          "text": ["600から、動かない。"], "pos": "bottom" },
-        { "name": "タイトル", "img": "store/screenshots/01_title.png", "dur": 3.2, "keep": [0.02, 0.72], "zoom": 1.07,
-          "text": ["足りないのは、語彙量じゃない。"], "pos": "bottom" },
-        { "name": "4択クイズ", "img": "store/screenshots/02_quiz.png", "dur": 3.4, "yoff": 0.42, "zoom": 1.09,
-          "text": ["{g}「知ってる」のに、出てこない{/}。"], "pos": "top" },
-        { "name": "こうげき", "img": "store/screenshots/08_command.png", "dur": 3.4, "yoff": 0.52, "zoom": 1.1,
-          "text": ["速く答えるほど、強い一撃。"], "pos": "top" },
-        { "name": "単語帳", "img": "store/screenshots/04_wordbook.png", "dur": 3.4, "yoff": 0.3, "zoom": 1.08,
-          "text": ["{g}即答・曖昧・苦手{/}で、弱点が見える。"], "pos": "bottom" },
-        { "name": "ボス戦", "img": "store/screenshots/03_boss.png", "dur": 3.4, "yoff": 0.42, "zoom": 1.09,
-          "text": ["スコア700レベルの語も、戦いながら。"], "pos": "top" },
-        { "name": "ことばが還る", "src": "movie/src/ed2.mp4", "trim": [2.2, 5.6],
-          "text": ["3秒かかる単語は、", "本番では使えない。"], "pos": "bottom" },
-        { "name": "剣の一撃", "src": "movie/src/op3.mp4", "trim": [7.5, 10.1], "text": [] },
-        { "name": "エンドカード", "src": "movie/src/op1.mp4", "trim": [2.6, 8.4], "text": [] }
+        {"src": "movie/src/op2.mp4", "at": 5.2, "beats": 4, "cap": "スコアが、{g}600から動かない{/}。"},
+        {"src": "play/title", "at": 0.3, "beats": 2, "cap": "足りないのは、{g}語彙量じゃない{/}。", "capBeats": 4},
+        {"src": "play/miss", "at": 3.0, "beats": 2, "zoom": 1.12, "focus": [0.5, 0.25]},
+        {"src": "play/miss", "at": 5.2, "beats": 4, "speed": 1.6, "zoom": 1.12, "focus": [0.5, 0.25], "cap": "「知ってる」のに、{g}出てこない{/}。", "sfx": [["ng", 3, 0.5]]},
+        {"src": "movie/src/op3.mp4", "at": 0.3, "beats": 2, "cap": "だから、{g}速さ{/}を鍛える。", "capBeats": 6},
+        {"src": "play/boss", "at": 1.0, "beats": 2, "sfx": [["boss", 0, 0.4]]},
+        {"src": "play/boss", "sync": {"event": "answer1", "beat": 1}, "beats": 2, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]]},
+        {"src": "play/boss", "at": "answer1", "shift": 0.8, "beats": 2, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.5]]},
+        {"src": "play/battle", "sync": {"event": "answer3", "beat": 1}, "beats": 2, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]], "cap": "速く答えるほど、{g}強い一撃{/}。", "capBeats": 4},
+        {"src": "play/battle", "at": "answer3", "shift": 0.7, "beats": 2, "fx": ["punch", "shake"], "sfx": [["slash", 0, 0.5]]},
+        {"src": "play/boss", "sync": {"event": "answer2", "beat": 1}, "beats": 2, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]]},
+        {"src": "play/boss", "at": "answer2", "shift": 0.8, "beats": 2, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.5]]},
+        {"src": "play/boss", "at": "answer4", "shift": 0.8, "beats": 1, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
+        {"src": "play/boss", "at": "answer6", "shift": 0.8, "beats": 1, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
+        {"src": "play/battle", "at": "answer5", "shift": 0.7, "beats": 1, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
+        {"src": "movie/src/op3.mp4", "at": 8.5, "shift": 0, "beats": 1, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.5]]},
+        {"src": "play/wordbook", "at": 0.2, "beats": 4, "cap": "{g}スコア帯{/}ごとに、単語を攻略。"},
+        {"src": "movie/src/ed2.mp4", "at": 2.4, "beats": 4, "cap": "3秒かかる単語は、{g}本番で使えない{/}。"},
+        {"src": "movie/src/op3.mp4", "at": 7.4, "beats": 4, "sfx": [["magic_holy", 0, 0.4]]}
       ]
     },
-
     "jhs": {
       "title": "中学生向け",
-      "out": "movie/out/PR_jhs.mp4",
-      "bgm": { "file": "assets/bgm/field.mp3", "start": 8, "volume": 0.9 },
-      "endcard": { "text": ["中学英語からはじめる英単語RPG"] },
-      "sfx": [
-        { "file": "assets/sfx/ok.mp3", "cut": 4, "at": 0.25, "volume": 0.4 },
-        { "file": "assets/sfx/slash.mp3", "cut": 5, "at": 0.2, "volume": 0.45 },
-        { "file": "assets/sfx/win.mp3", "cut": 8, "at": 0.1, "volume": 0.45 }
-      ],
+      "music": {
+        "track": "field",
+        "startBeat": 104
+      },
+      "theme": {
+        "bg1": "#3a1d78",
+        "bg2": "#c93d78",
+        "edge": "#FFE066",
+        "accent": "#FFE066"
+      },
+      "endcard": {
+        "text": "中学英語からはじめる英単語RPG"
+      },
       "cuts": [
-        { "name": "旅立ち", "src": "movie/src/op1.mp4", "trim": [0.3, 3.7],
-          "text": ["単語帳、何回も閉じた。"], "pos": "bottom" },
-        { "name": "学年をえらぶ", "img": "store/screenshots/06_grades.png", "dur": 3.4, "yoff": 0.15, "zoom": 1.08,
-          "text": ["{g}中1・中2・中3{/}、学年でえらぶ。"], "pos": "top" },
-        { "name": "4択クイズ", "img": "store/screenshots/02_quiz.png", "dur": 3.4, "yoff": 0.42, "zoom": 1.09,
-          "text": ["やることは、意味を4つから選ぶだけ。"], "pos": "top" },
-        { "name": "こうげき", "img": "store/screenshots/08_command.png", "dur": 3.4, "yoff": 0.52, "zoom": 1.1,
-          "text": ["正解＝こうげき。速いほど強い。"], "pos": "top" },
-        { "name": "四天王ハウル", "img": "store/screenshots/09_boss_command.png", "dur": 3.6, "yoff": 0.38, "zoom": 1.1,
-          "text": ["ボスも、英単語で倒す。"], "pos": "top" },
-        { "name": "単語帳", "img": "store/screenshots/04_wordbook.png", "dur": 3.4, "yoff": 0.3, "zoom": 1.08,
-          "text": ["覚えた単語は、ここに増えていく。"], "pos": "bottom" },
-        { "name": "ことばが還る", "src": "movie/src/ed2.mp4", "trim": [2.2, 5.6],
-          "text": ["覚えた単語が、そのまま強さになる。"], "pos": "bottom" },
-        { "name": "剣の一撃", "src": "movie/src/op3.mp4", "trim": [7.5, 10.1], "text": [] },
-        { "name": "エンドカード", "src": "movie/src/ed3.mp4", "trim": [0.2, 6.0], "text": [] }
+        {"src": "movie/src/op1.mp4", "at": 0.3, "beats": 4, "cap": "単語帳、{g}何回も閉じた{/}。"},
+        {"src": "play/title", "at": 0.3, "beats": 2, "cap": "だったら、{g}冒険{/}にしよう。", "capBeats": 4},
+        {"src": "play/battle", "at": 0.0, "beats": 2},
+        {"src": "play/grades", "at": 2.2, "beats": 4, "zoom": 1.04, "cap": "{g}中1〜中3{/}、学年でえらべる。"},
+        {"src": "play/battle", "sync": {"event": "answer1", "beat": 3}, "beats": 4, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 3, 0.5]], "cap": "意味を{g}4つから選ぶ{/}だけ。"},
+        {"src": "play/battle", "at": "answer1", "shift": 0.7, "beats": 2, "fx": ["punch", "shake"], "sfx": [["slash", 0, 0.5]]},
+        {"src": "play/battle", "sync": {"event": "answer2", "beat": 1}, "beats": 2, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]], "cap": "正解すると、{g}こうげき{/}！", "capBeats": 4},
+        {"src": "play/battle", "at": "answer2", "shift": 0.7, "beats": 2, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.5]]},
+        {"src": "play/battle", "at": "cmd3", "beats": 2, "shift": -0.5},
+        {"src": "play/boss", "at": 1.0, "beats": 2, "cap": "ボスだって、{g}英単語で倒す{/}。", "capBeats": 6, "sfx": [["boss", 0, 0.4]]},
+        {"src": "play/boss", "sync": {"event": "answer1", "beat": 1}, "beats": 2, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]]},
+        {"src": "play/boss", "at": "answer1", "shift": 0.8, "beats": 2, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.5]]},
+        {"src": "play/battle", "at": "answer3", "shift": 0.7, "beats": 1, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
+        {"src": "play/battle", "at": "answer4", "shift": 0.7, "beats": 1, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
+        {"src": "play/boss", "at": "answer3", "shift": 0.8, "beats": 1, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
+        {"src": "movie/src/op3.mp4", "at": 8.5, "shift": 0, "beats": 1, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.5]]},
+        {"src": "play/wordbook", "at": 0.2, "beats": 4, "cap": "覚えた単語が、{g}どんどん増える{/}。"},
+        {"src": "movie/src/ed2.mp4", "at": 2.4, "beats": 4, "cap": "毎日ちょっとずつ、{g}強くなる{/}。"},
+        {"src": "movie/src/op3.mp4", "at": 7.4, "beats": 4, "sfx": [["win", 0, 0.4]]}
       ]
     },
-
     "hs": {
       "title": "高校生・大学受験向け",
-      "out": "movie/out/PR_hs.mp4",
-      "bgm": { "file": "assets/bgm/battle2.mp3", "start": 24, "volume": 0.85 },
-      "endcard": {
-        "text": ["大学受験の語彙まで、遊びながら。"],
-        "note": "※「TOEIC」はETSの登録商標です。本アプリはETSおよびTOEICプログラムとは一切関係ありません。"
+      "music": {
+        "track": "battle",
+        "startBeat": 64
       },
-      "sfx": [
-        { "file": "assets/sfx/ng.mp3", "cut": 1, "at": 2.2, "volume": 0.35 },
-        { "file": "assets/sfx/slash.mp3", "cut": 4, "at": 0.2, "volume": 0.45 },
-        { "file": "assets/sfx/crit.mp3", "cut": 8, "at": 0.1, "volume": 0.5 }
-      ],
+      "theme": {
+        "bg1": "#0e2350",
+        "bg2": "#1f4fb8",
+        "edge": "#7CF0C8",
+        "accent": "#7CF0C8"
+      },
+      "endcard": {
+        "text": "大学受験の語彙まで、遊びながら。"
+      },
       "cuts": [
-        { "name": "玉座", "src": "movie/src/op2.mp4", "trim": [5.4, 8.8],
-          "text": ["読めるのに、間に合わない。"], "pos": "bottom" },
-        { "name": "学年をえらぶ", "img": "store/screenshots/06_grades.png", "dur": 3.4, "yoff": 0.15, "zoom": 1.08,
-          "text": ["高1・高2・高3で、範囲を切り替え。"], "pos": "top" },
-        { "name": "4択クイズ", "img": "store/screenshots/02_quiz.png", "dur": 3.4, "yoff": 0.42, "zoom": 1.09,
-          "text": ["制限時間内に、意味を選ぶ。"], "pos": "top" },
-        { "name": "こうげき", "img": "store/screenshots/08_command.png", "dur": 3.4, "yoff": 0.52, "zoom": 1.1,
-          "text": ["速く答えるほど、{g}強い一撃{/}。"], "pos": "top" },
-        { "name": "ボス戦", "img": "store/screenshots/03_boss.png", "dur": 3.4, "yoff": 0.42, "zoom": 1.09,
-          "text": ["受験語彙も、戦いながら。"], "pos": "top" },
-        { "name": "単語帳", "img": "store/screenshots/04_wordbook.png", "dur": 3.4, "yoff": 0.3, "zoom": 1.08,
-          "text": ["{g}「曖昧」な単語{/}が、本番で落とす点。"], "pos": "bottom" },
-        { "name": "ことばが還る", "src": "movie/src/ed2.mp4", "trim": [2.2, 5.6],
-          "text": ["3秒かかる単語は、", "試験では使えない。"], "pos": "bottom" },
-        { "name": "剣の一撃", "src": "movie/src/op3.mp4", "trim": [7.5, 10.1], "text": [] },
-        { "name": "エンドカード", "src": "movie/src/op1.mp4", "trim": [2.6, 8.4], "text": [] }
+        {"src": "movie/src/op2.mp4", "at": 5.2, "beats": 4, "cap": "読めるのに、{g}間に合わない{/}。"},
+        {"src": "play/title", "at": 0.3, "beats": 2},
+        {"src": "play/miss", "at": 5.0, "beats": 4, "speed": 1.6, "zoom": 1.12, "focus": [0.5, 0.25], "cap": "試験は、{g}時間との勝負{/}。", "sfx": [["ng", 3, 0.5]]},
+        {"src": "play/grades", "at": 2.2, "beats": 4, "zoom": 1.04, "cap": "{g}高1〜高3{/}、受験レベルまで。"},
+        {"src": "play/battle", "sync": {"event": "answer1", "beat": 3}, "beats": 4, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 3, 0.5]], "cap": "制限時間内に、{g}意味を選ぶ{/}。"},
+        {"src": "play/battle", "at": "answer1", "shift": 0.7, "beats": 2, "fx": ["punch", "shake"], "sfx": [["slash", 0, 0.5]]},
+        {"src": "play/boss", "at": 1.0, "beats": 2, "cap": "速く答えるほど、{g}強い一撃{/}。", "capBeats": 6, "sfx": [["boss", 0, 0.4]]},
+        {"src": "play/boss", "sync": {"event": "answer2", "beat": 1}, "beats": 2, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]]},
+        {"src": "play/boss", "at": "answer2", "shift": 0.8, "beats": 2, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.5]]},
+        {"src": "play/boss", "sync": {"event": "answer4", "beat": 1}, "beats": 2, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]]},
+        {"src": "play/boss", "at": "answer4", "shift": 0.8, "beats": 2, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.5]]},
+        {"src": "play/boss", "at": "answer3", "shift": 0.8, "beats": 1, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
+        {"src": "play/battle", "at": "answer4", "shift": 0.7, "beats": 1, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
+        {"src": "play/boss", "at": "answer5", "shift": 0.8, "beats": 1, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
+        {"src": "movie/src/op3.mp4", "at": 8.5, "shift": 0, "beats": 1, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.5]]},
+        {"src": "play/wordbook", "at": 0.2, "beats": 4, "cap": "{g}「曖昧」な単語{/}が、本番で落とす点。"},
+        {"src": "movie/src/ed2.mp4", "at": 2.4, "beats": 4, "cap": "3秒かかる単語は、{g}試験で使えない{/}。"},
+        {"src": "movie/src/op3.mp4", "at": 7.4, "beats": 4, "sfx": [["magic_holy", 0, 0.4]]}
       ]
     },
-
     "parent": {
       "title": "保護者向け",
-      "out": "movie/out/PR_parent.mp4",
-      "bgm": { "file": "assets/bgm/ending.mp3", "start": 18, "volume": 0.85 },
-      "endcard": { "text": ["学習そのものに、上限は置きません。"] },
-      "sfx": [
-        { "file": "assets/sfx/ok.mp3", "cut": 3, "at": 0.3, "volume": 0.35 },
-        { "file": "assets/sfx/level.mp3", "cut": 7, "at": 0.3, "volume": 0.35 }
-      ],
+      "music": {
+        "track": "title",
+        "startBeat": 16
+      },
+      "theme": {
+        "bg1": "#5a2d0c",
+        "bg2": "#b8651b",
+        "edge": "#FFE7A0",
+        "accent": "#FFE7A0"
+      },
+      "endcard": {
+        "text": "学習そのものに、上限は置きません。"
+      },
       "cuts": [
-        { "name": "旅立ち", "src": "movie/src/op1.mp4", "trim": [0.3, 3.9],
-          "text": ["「勉強しなさい」の、前に。"], "pos": "bottom" },
-        { "name": "4択クイズ", "img": "store/screenshots/02_quiz.png", "dur": 3.4, "yoff": 0.42, "zoom": 1.09,
-          "text": ["やっているのは、英単語の4択です。"], "pos": "top" },
-        { "name": "学年をえらぶ", "img": "store/screenshots/06_grades.png", "dur": 3.4, "yoff": 0.15, "zoom": 1.08,
-          "text": ["学年に合わせた範囲が出ます。"], "pos": "top" },
-        { "name": "こうげき", "img": "store/screenshots/08_command.png", "dur": 3.4, "yoff": 0.52, "zoom": 1.1,
-          "text": ["速く答えるほど、強い一撃。"], "pos": "top" },
-        { "name": "単語帳", "img": "store/screenshots/04_wordbook.png", "dur": 3.4, "yoff": 0.3, "zoom": 1.08,
-          "text": ["どこまで進んだかが、残ります。"], "pos": "bottom" },
-        { "name": "タイトル", "img": "store/screenshots/01_title.png", "dur": 3.4, "keep": [0.02, 0.72], "zoom": 1.07,
-          "text": ["{g}ガチャはありません{/}。"], "pos": "bottom" },
-        { "name": "ことばが還る", "src": "movie/src/ed2.mp4", "trim": [2.2, 5.8],
-          "text": ["復習は、回数無制限。無料で遊べます。"], "pos": "bottom" },
-        { "name": "旅の続き", "src": "movie/src/ed3.mp4", "trim": [0.2, 2.8], "text": [] },
-        { "name": "エンドカード", "src": "movie/src/op1.mp4", "trim": [2.6, 8.4], "text": [] }
+        {"src": "movie/src/op1.mp4", "at": 0.3, "beats": 4, "cap": "「勉強しなさい」の、{g}前に{/}。"},
+        {"src": "play/title", "at": 0.3, "beats": 2},
+        {"src": "play/battle", "sync": {"event": "answer1", "beat": 2}, "beats": 4, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 2, 0.5]], "cap": "遊んでいるのは、{g}英単語の4択{/}。"},
+        {"src": "play/battle", "at": "answer1", "shift": 0.7, "beats": 2, "fx": ["punch", "shake"], "sfx": [["slash", 0, 0.5]]},
+        {"src": "play/battle", "sync": {"event": "answer2", "beat": 1}, "beats": 2, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]]},
+        {"src": "play/battle", "at": "answer2", "shift": 0.7, "beats": 2, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.5]]},
+        {"src": "play/grades", "at": 2.2, "beats": 4, "zoom": 1.04, "cap": "{g}学年{/}に合わせた単語が出ます。"},
+        {"src": "play/wordbook", "at": 0.2, "beats": 4, "cap": "覚えた単語が、{g}記録に残ります{/}。"},
+        {"src": "play/boss", "sync": {"event": "answer1", "beat": 1}, "beats": 2, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]], "cap": "{g}ガチャはありません{/}。", "capBeats": 4},
+        {"src": "play/boss", "at": "answer1", "shift": 0.8, "beats": 2, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.5]]},
+        {"src": "movie/src/ed2.mp4", "at": 2.4, "beats": 4, "cap": "復習は、{g}回数無制限{/}。"},
+        {"src": "movie/src/op3.mp4", "at": 7.4, "beats": 4, "sfx": [["magic_holy", 0, 0.4]]}
       ]
     },
-
     "dev": {
       "title": "X・AI界隈向け（個人開発）",
-      "out": "movie/out/PR_dev.mp4",
-      "bgm": { "file": "assets/bgm/battle2.mp3", "start": 40, "volume": 0.85 },
-      "endcard": { "text": ["絵・音・動画・コードまで、生成AIで。"] },
-      "sfx": [
-        { "file": "assets/sfx/slash.mp3", "cut": 4, "at": 0.2, "volume": 0.45 },
-        { "file": "assets/sfx/crit.mp3", "cut": 8, "at": 0.1, "volume": 0.5 }
-      ],
+      "music": {
+        "track": "arena4",
+        "startBeat": 80
+      },
+      "theme": {
+        "bg1": "#0d0d1a",
+        "bg2": "#2b2450",
+        "edge": "#9B8CFF",
+        "accent": "#B9AEFF"
+      },
+      "endcard": {
+        "text": "絵・音・動画・コードまで、生成AIで。",
+        "beats": 10
+      },
       "cuts": [
-        { "name": "旅立ち", "src": "movie/src/op1.mp4", "trim": [0.3, 3.7],
-          "text": ["個人開発で、ここまで作れる。"], "pos": "bottom" },
-        { "name": "4択クイズ", "img": "store/screenshots/02_quiz.png", "dur": 3.4, "yoff": 0.42, "zoom": 1.09,
-          "text": ["英単語RPG『WORDRIA』"], "pos": "top" },
-        { "name": "こうげき", "img": "store/screenshots/08_command.png", "dur": 3.4, "yoff": 0.52, "zoom": 1.1,
-          "text": ["{g}問題を解く＝攻撃する{/}RPG。"], "pos": "top" },
-        { "name": "四天王ハウル", "img": "store/screenshots/09_boss_command.png", "dur": 3.6, "yoff": 0.38, "zoom": 1.1,
-          "text": ["ボスも敵も、画像生成から。"], "pos": "top" },
-        { "name": "サウンドトラック", "img": "store/screenshots/10_ost.png", "dur": 3.4, "yoff": 0.35, "zoom": 1.08,
-          "text": ["BGMは全曲、生成AI。"], "pos": "bottom" },
-        { "name": "単語帳", "img": "store/screenshots/04_wordbook.png", "dur": 3.4, "yoff": 0.3, "zoom": 1.08,
-          "text": ["語彙データも、読み上げ音声も。"], "pos": "bottom" },
-        { "name": "ことばが還る", "src": "movie/src/ed2.mp4", "trim": [2.2, 5.6],
-          "text": ["このOP・EDも、生成AIの動画。"], "pos": "bottom" },
-        { "name": "剣の一撃", "src": "movie/src/op3.mp4", "trim": [7.5, 10.1], "text": [] },
-        { "name": "エンドカード", "src": "movie/src/op1.mp4", "trim": [2.6, 8.4], "text": [] }
+        {"src": "movie/src/op1.mp4", "at": 0.3, "beats": 4, "cap": "個人開発で、{g}ここまで作れる{/}。", "capBeats": 8},
+        {"src": "movie/src/op3.mp4", "at": 0.3, "beats": 4},
+        {"src": "play/title", "at": 0.3, "beats": 4, "cap": "英単語RPG{g}『WORDRIA』{/}"},
+        {"src": "play/battle", "sync": {"event": "answer1", "beat": 2}, "beats": 4, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 2, 0.5]], "cap": "問題を解く＝{g}攻撃する{/}。", "capBeats": 8},
+        {"src": "play/battle", "at": "answer1", "shift": 0.7, "beats": 4, "fx": ["punch", "shake"], "sfx": [["slash", 0, 0.5]]},
+        {"src": "play/boss", "at": 1.0, "beats": 4, "cap": "キャラも背景も、{g}画像生成AI{/}。", "capBeats": 8, "sfx": [["boss", 0, 0.4]]},
+        {"src": "play/boss", "sync": {"event": "answer1", "beat": 2}, "beats": 4, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 2, 0.5]]},
+        {"src": "play/boss", "at": "answer1", "shift": 0.8, "beats": 4, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.5]], "cap": "BGMは全曲、{g}Suno{/}。", "capBeats": 8},
+        {"src": "play/boss", "at": "answer3", "shift": 0.8, "beats": 2, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
+        {"src": "play/battle", "at": "answer4", "shift": 0.7, "beats": 2, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
+        {"src": "play/miss", "at": 5.0, "beats": 4, "speed": 1.6, "zoom": 1.12, "focus": [0.5, 0.25], "cap": "読み上げ音声も、{g}AIで{/}。", "capBeats": 8, "sfx": [["ng", 3, 0.5]]},
+        {"src": "play/boss", "at": "answer5", "shift": 0.8, "beats": 2, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
+        {"src": "play/battle", "at": "answer2", "shift": 0.7, "beats": 2, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
+        {"src": "movie/src/ed2.mp4", "at": 2.4, "beats": 4, "cap": "OP・EDは、{g}動画生成AI{/}。", "capBeats": 8},
+        {"src": "movie/src/op2.mp4", "at": 5.6, "beats": 4},
+        {"src": "play/wordbook", "at": 0.2, "beats": 4, "cap": "コードは、{g}Claude Code{/}。"},
+        {"src": "movie/src/op3.mp4", "at": 7.4, "beats": 4, "sfx": [["magic_holy", 0, 0.4]]}
       ]
     }
   }
