@@ -46,7 +46,7 @@
         "scale": 0.84,
         "y": 0.5,
         "catchY": 0.33,
-        "capY": 860,
+        "capY": 985,
         "shot": {"src": "color:#fbfbfd", "stripes": 28, "drift": 0.0, "fx": []},
         "cutAfter": 0.18,
         "cutFade": 0.06,
@@ -115,7 +115,7 @@
         "scale": 0.84,
         "y": 0.5,
         "catchY": 0.33,
-        "capY": 860,
+        "capY": 985,
         "shot": {"src": "color:#fbfbfd", "stripes": 28, "drift": 0.0, "fx": []}
       },
       "cuts": [

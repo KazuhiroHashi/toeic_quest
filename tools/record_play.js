@@ -14,8 +14,17 @@
 // 届いた時刻どおりに並べて 30fps に直す。画面が変わらない間はコマが
 // 来ないので、時刻で長さを決めないと早送りになる。
 //
-// 画面は 360×640 の3倍 ＝ 1080×1920。PR動画のキャンバスとぴったり同じなので
-// 切り落としも拡大もしない。
+// 画面は iPhone 17 と同じ 402×874 の3倍（1206×2622）。以前は 360×640 で録っていたが、
+// これは iPhone SE ほどの幅で、敵の名前やメッセージが窮屈に折り返していた。
+// PR動画（1080×1920）に入れるときは、上の空と下のボタンの端を少し切り落とす
+// （build_pr.js が中央で切り抜く）。
+//
+// ── 日本語フォント ─────────────────────────────────
+// fontconfig の既定のままだと、日本語が WenQuanYi（中国語の字形）で描かれる。
+// 録る前に必ず確かめること：
+//   fc-match "sans-serif:lang=ja"   → Noto Sans CJK JP なら正しい
+// 違っていたら store/screenshots/README.md の手順で Noto Sans CJK JP を優先させる。
+// 下の checkFont() が、中国語のフォントのままなら止める。
 //
 // ── 操作 ──────────────────────────────────────────
 // 押し方は tools/make_shots.js と同じ（そちらのコメントに理由がある）。
@@ -36,7 +45,7 @@ var TMP = path.join(ROOT, "movie", "tmp", "play");
 var EXE = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 var FFMPEG = process.env.FFMPEG || "ffmpeg";
 
-var CSS_W = 360, CSS_H = 640, DPR = 3;
+var CSS_W = 402, CSS_H = 874, DPR = 3;   // iPhone 17
 var PORT = 8972;
 
 var TYPES = {
@@ -440,7 +449,19 @@ var SCENES = {
   }
 };
 
+// 日本語が中国語の字形で録れてしまうのを防ぐ
+function checkFont() {
+  var got = "";
+  try { got = execFileSync("fc-match", ["sans-serif:lang=ja"], { encoding: "utf8" }); } catch (e) { return; }
+  if (!/Noto Sans CJK JP|Hiragino|IPA|M\+|M PLUS/i.test(got)) {
+    console.error("日本語フォントが中国語のものになっています: " + got.trim());
+    console.error("  Noto Sans CJK JP を優先させてから録ってください（store/screenshots/README.md）");
+    process.exit(1);
+  }
+}
+
 (async function () {
+  checkFont();
   if (!fs.existsSync(path.join(WWW, "index.html"))) {
     console.error("www/ がありません。先に npm run build:www を実行してください。");
     process.exit(1);

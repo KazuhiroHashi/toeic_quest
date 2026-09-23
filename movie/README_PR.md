@@ -75,7 +75,7 @@ ffmpeg は PATH に要る（無ければ `FFMPEG=/path/to/ffmpeg`）。
 - 単語帳・称号の画面は、遊び込んだ記録（400帯 421/500語、連続学習23日など）を仕込んで録ってある（`record_play.js` の `seedPlayed`）
 - 札の色は `theme`（`bg1`→`bg2` のグラデーション、縁 `edge`、強調 `accent`）。字の大きさは `theme.capSize`
 - `theme.capStyle: "big"` … 札なしの大きな字幕（ピンク `fill`・白フチ・ピンクの光）。`cap` を配列にすると
-  1行ずつ `lineStep` 拍遅れて出る。位置は `endcard.capY`（main は 860＝画面の中央あたり）
+  1行ずつ `lineStep` 拍遅れて出る。位置は `endcard.capY`（main / toeic は 985。クイズの英単語の少し下）
 - `theme.catchStyle: "gold"` … 締めのキャッチを金色の光る字にする。`endcard.slamBeat` を付けると、
   その拍の頭で音楽を切る。`"stripes": 28` で白地に横じま
 - `endcard.mode: "letters"` … 背景は無地（`"src": "color:#06070f"`）、`word` の文字を1拍に1文字ずつ入れ、
@@ -83,6 +83,13 @@ ffmpeg は PATH に要る（無ければ `FFMPEG=/path/to/ffmpeg`）。
 - バトルの録画は第1戦・第3戦・第4戦・第5戦（古竜）・第6戦（ハウル）。第7戦以降は録らない（遊ぶ前の人に見せない）
 
 ## 気をつけること
+
+- **録画は iPhone 17 の画面（402×874 の3倍）で撮る**（`record_play.js`）。以前の 360×640 は
+  iPhone SE ほどの幅で、敵の名前やメッセージが窮屈だった。動画に入れるときは上下を少し切り落とす
+- **日本語フォントを必ず確かめる**。`fc-match "sans-serif:lang=ja"` が WenQuanYi などの中国語の
+  フォントだと、ゲームの文字が中国語の字形で録れてしまう（実際に一度そうなった）。
+  Noto Sans CJK JP を優先させる設定は `store/screenshots/README.md` にある。`record_play.js` は
+  中国語のフォントのままなら止まる
 
 - **画面を変えたら `record_play.js` から録り直す**。店頭の動画と中身が違うのは
   ガイドライン 2.3.3 に触れる。録り直しても、カットは出来事の名前で指しているので
