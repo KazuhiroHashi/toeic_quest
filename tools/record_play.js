@@ -150,6 +150,38 @@ async function seedRun(page, nextIndex) {
   }, nextIndex);
 }
 
+// 遊び込んだ人の記録を仕込む（単語帳・称号の画面を、まっさらでなく撮るため）。
+// 乱数は種を固定してあるので、何度録り直しても同じ画面になる。
+// 仕込むのは localStorage だけで、アプリには手を入れない。読み直さないと
+// アプリ側の G.study に反映されないので、呼んだあとで reload すること。
+async function seedPlayed(page) {
+  await page.evaluate(function () {
+    var seed = 20260923;
+    function rnd() { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; }
+    var today = window.QUIZ_DNUM ? window.QUIZ_DNUM(0) : 0;
+    var share = { 400: 0.86, 500: 0.64, 600: 0.41, 700: 0.23, 800: 0.11, 900: 0.04 };
+    var words = {};
+    Object.keys(share).forEach(function (lv) {
+      (window.VOCAB[lv] || []).forEach(function (e) {
+        if (rnd() > share[lv]) return;
+        var c = 1 + Math.floor(rnd() * 6), fast = rnd() < 0.62, gold = c >= 3 && rnd() < 0.55;
+        var miss = rnd() < 0.16 ? 1 + Math.floor(rnd() * 2) : 0;
+        words[e.w] = { l: +lv, m: e.m, p: e.p, c: c, wr: miss, s: gold ? 3 : Math.min(c, 2),
+                       f: fast ? 1 : 0, g: gold ? 1 : 0, t: c * (fast ? 1.4 : 2.7),
+                       d: today - Math.floor(rnd() * 21), box: miss ? 2 : undefined, due: miss ? today + 2 : undefined };
+      });
+    });
+    var key = window.WQ2_MODE ? window.WQ2_MODE.studyKey() : "wq2_study_v1";
+    localStorage.setItem(key, JSON.stringify({ missed: {}, answered: 5480, correct: 4912, words: words }));
+    var d = new Date();
+    localStorage.setItem("wq2_streak", JSON.stringify({ last: d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(), n: 23 }));
+    localStorage.setItem("wq2_records_v1", JSON.stringify({ clears: 9, bestRound: 12, bestMs: 1386000, bestChain: 27, bestFloor: 18 }));
+  });
+  await page.reload({ waitUntil: "networkidle" });
+  await page.mouse.click(CSS_W / 2, CSS_H / 2);     // 「タップして スタート」
+  await wait(page, 1600);
+}
+
 async function dismissResume(page) {
   var had = await page.evaluate(function () {
     var o = document.querySelector(".wq2-store-ovl");
@@ -312,19 +344,76 @@ var SCENES = {
     await stopRec(rec);
   },
 
-  // 単語帳：スコア帯のタブを送りながら一覧を流す
+  // 単語帳：遊び込んだ記録を仕込んで開き、一覧をなめらかに流してから次の帯へ
   wordbook: async function (open) {
     var a = await open();
+    await seedPlayed(a.page);
     await a.page.click("#pbtn-zukan");
     await wait(a.page, 900);
     var rec = await startRec(a.page, "wordbook");
-    await wait(a.page, 700);
-    await a.page.mouse.move(CSS_W / 2, CSS_H * 0.7);   // 一覧の上で回す
-    for (var s = 0; s < 14; s++) {
-      await a.page.mouse.wheel(0, 120);
-      await wait(a.page, 120);
+    await wait(a.page, 900);
+    mark("scroll");
+    for (var s = 0; s < 4; s++) {
+      await a.page.evaluate(function () {
+        document.getElementById("zukan-list").scrollBy({ top: 330, behavior: "smooth" });
+      });
+      await wait(a.page, 520);
     }
+    await wait(a.page, 300);
+    mark("band");
+    await a.page.keyboard.press("ArrowRight");        // 次の帯（スコア500）へ
+    await wait(a.page, 1400);
+    await stopRec(rec);
+  },
+
+  // 称号・記録：同じ記録を仕込んだ状態で開く
+  records: async function (open) {
+    var a = await open();
+    await seedPlayed(a.page);
+    var rec = await startRec(a.page, "records");
+    await wait(a.page, 600);
+    mark("open");
+    await a.page.click("#pbtn-achv");
+    await wait(a.page, 2600);
+    await stopRec(rec);
+  },
+
+  // 攻撃の戦略：コマンドでカーソルを動かし、まほうの一覧から選んで速答する
+  strategy: async function (open) {
+    var a = await open();
+    await seedRun(a.page, 5);
+    await a.page.click("#pbtn-arena");
     await wait(a.page, 700);
+    await clickText(a.page, ".wq2-store-btn", "続きから");
+    await toCommand(a.page);
+    var rec = await startRec(a.page, "strategy");
+    await wait(a.page, 500);
+    mark("cursor");
+    for (var i = 0; i < 2; i++) { await a.page.keyboard.press("ArrowDown"); await wait(a.page, 380); }
+    await a.page.keyboard.press("ArrowUp");
+    await wait(a.page, 420);
+    mark("magic");
+    await a.page.locator("#pbattle-cmd .menu-item", { hasText: "まほう" }).first().click();
+    await wait(a.page, 900);
+    mark("spells");
+    // 一覧を下までたどって、いちばん強い攻撃呪文（インフェルノ）を選ぶ。
+    // 先頭はヒールなので、1つめを押すと「HPが0回復した」になってしまう
+    if (await isOn(a.page, "pbattle-sub")) {
+      for (var k = 0; k < 6; k++) { await a.page.keyboard.press("ArrowDown"); await wait(a.page, 230); }
+      await wait(a.page, 300);
+      mark("pick");
+      await a.page.locator("#pbattle-sub .menu-item", { hasText: "インフェルノ" }).first().click();
+      await wait(a.page, 400);
+      if (await isOn(a.page, "pbattle-sub")) {
+        await a.page.locator("#pbattle-sub .menu-item").first().click();
+        await wait(a.page, 400);
+      }
+    }
+    for (var j = 0; j < 40 && !(await quizShown(a.page)); j++) { await a.page.click("#btn-a"); await wait(a.page, 330); }
+    mark("quiz");
+    await answer(a.page, 480);
+    mark("answer");
+    await wait(a.page, 2600);
     await stopRec(rec);
   }
 };

@@ -104,7 +104,10 @@ function renderCut(cut, i, reel, dur, frames, beatLen) {
   const punch = fx.includes("punch") ? (cut.punch || 0.09) : 0;
   const shake = fx.includes("shake") ? 16 : 0;
   const fxp = cut.focus || [0.5, 0.5];
-  const zExpr = `${z0}+${drift}*in_time/${n3(dur)}+${punch}*pow(max(0\\,1-in_time/0.26)\\,2)`;
+  // pulse: カットの途中でも拍ごとに小さく跳ねる（音ハメを画面の動きでも見せる）
+  const pulse = cut.pulse || 0;
+  const zExpr = `${z0}+${drift}*in_time/${n3(dur)}+${punch}*pow(max(0\\,1-in_time/0.26)\\,2)` +
+    (pulse ? `+${pulse}*pow(max(0\\,1-mod(in_time\\,${n3(beatLen / speed)})/0.13)\\,2)` : "");
   const xExpr = `(iw-iw/zoom)*${fxp[0]}` + (shake ? `+${shake}*sin(in_time*75)*max(0\\,1-in_time/0.32)` : "");
   const yExpr = `(ih-ih/zoom)*${fxp[1]}` + (shake ? `+${shake * 0.6}*cos(in_time*61)*max(0\\,1-in_time/0.32)` : "");
 
@@ -254,12 +257,13 @@ async function buildReel(name, cfg, defaults) {
     if (!p.c.cap) return;
     const a = p.t0 + (p.c.capIn || 0) * beatLen;
     const endBeat = p.a + (p.c.capBeats || p.c.beats);
-    caps.push({ kind: "cap", text: p.c.cap, a, b: endBeat >= k ? total : T(endBeat) });
+    caps.push({ kind: "cap", text: p.c.cap, a, b: endBeat >= k ? total : T(endBeat), pop: p.c.capPop, y: p.c.capY });
   });
   // エンドカード：拍0でロゴ、拍1でキャッチ（ロゴの上）、拍2で締めの一行
   const ep = plan[plan.length - 1];
   const E = j => ep.t0 + j * beatLen;
-  const endItems = [{ kind: "catch", text: ec.catch, a: E(1), b: total }];
+  // catch を null にすると、ロゴだけで締める
+  const endItems = ec.catch ? [{ kind: "catch", text: ec.catch, a: E(1), b: total }] : [];
   if (ec.text) endItems.push({ kind: "sub", text: ec.text, a: E(2), b: total });
   if (ec.note) endItems.push({ kind: "note", text: ec.note, a: E(3), b: total });
   await renderPngs(caps.concat(endItems), theme);
@@ -289,7 +293,7 @@ async function buildReel(name, cfg, defaults) {
   }
 
   const capY = ec.capY || 1630;
-  caps.forEach(c => pop(c.file, c.a, c.b, W / 2, capY));
+  caps.forEach(c => pop(c.file, c.a, c.b, W / 2, c.y || capY, null, c.pop));
 
   // ロゴ：エンドカードの頭（拍0）で大きく入る
   const logoW = Math.round(W * (ec.scale || 0.8));

@@ -19,43 +19,53 @@
   },
   "reels": {
     "main": {
-      "title": "汎用（速さ）",
+      "title": "汎用（ファミリー版の文言）",
       "music": {
-        "track": "boss",
-        "startBeat": 96
+        "track": "arena4",
+        "startBeat": 93
       },
-      "endcard": {
-        "text": "速く答えるほど、強くなる英単語RPG",
-        "note": "※「TOEIC」はETSの登録商標です。本アプリはETSおよびTOEICプログラムとは一切関係ありません。"
-      },
-      "cuts": [
-        {"src": "movie/src/op3.mp4", "at": 0.2, "beats": 4, "cap": "「知ってる」だけでは、{g}倒せない{/}。"},
-        {"src": "play/title", "at": 0.3, "beats": 2},
-        {"src": "movie/src/op1.mp4", "at": 1.2, "beats": 2},
-        {"src": "play/battle", "sync": {"event": "answer1", "beat": 3}, "beats": 4, "zoom": 1.12, "focus": [0.5, 0.25], "cap": "制限時間内に、{g}意味を選ぶ{/}。", "sfx": [["ok", 3, 0.55]]},
-        {"src": "play/battle", "at": "answer1", "shift": 0.7, "beats": 2, "fx": ["punch", "shake"], "sfx": [["slash", 0, 0.5]]},
-        {"src": "play/battle", "sync": {"event": "answer2", "beat": 1}, "beats": 2, "zoom": 1.12, "focus": [0.5, 0.25], "cap": "速く答えるほど、{g}強い一撃{/}。", "capBeats": 4, "sfx": [["ok", 1, 0.5]]},
-        {"src": "play/battle", "at": "answer2", "shift": 0.7, "beats": 2, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.55]]},
-        {"src": "movie/src/op2.mp4", "at": 5.8, "beats": 2, "cap": "迷えば、{g}反撃される{/}。", "capBeats": 6},
-        {"src": "play/miss", "at": 4.9, "speed": 1.5, "beats": 4, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ng", 3, 0.5]]},
-        {"src": "play/boss", "at": 1.0, "beats": 2, "cap": "四天王も、{g}英単語で倒す{/}。", "capBeats": 6, "sfx": [["boss", 0, 0.4]]},
-        {"src": "play/boss", "sync": {"event": "answer1", "beat": 1}, "beats": 2, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]]},
-        {"src": "play/boss", "at": "answer1", "shift": 0.75, "beats": 2, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.55]]},
-        {"src": "play/boss", "at": "answer3", "shift": 0.8, "beats": 1, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
-        {"src": "play/battle", "at": "answer4", "shift": 0.75, "beats": 1, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
-        {"src": "play/boss", "at": "answer5", "shift": 0.8, "beats": 1, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
-        {"src": "movie/src/op3.mp4", "at": 8.4, "beats": 1, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.5]]},
-        {"src": "play/wordbook", "at": 0.5, "beats": 4, "cap": "{g}「曖昧」な単語{/}が、あなたの弱点。"},
-        {"src": "play/grades", "at": 1.2, "beats": 2, "zoom": 1.05, "cap": "中学英語から、大学受験・{g}TOEIC®{/}まで。", "capBeats": 6},
-        {"src": "movie/src/ed2.mp4", "at": 2.4, "beats": 4},
-        {"src": "movie/src/op3.mp4", "at": 7.4, "beats": 4, "sfx": [["magic_holy", 0, 0.4]]}
-      ],
       "theme": {
         "bg1": "#1b1650",
         "bg2": "#4b2391",
         "edge": "#FFD24A",
         "accent": "#FFD24A"
-      }
+      },
+      "endcard": {
+        "catch": null,
+        "text": null,
+        "beats": 10,
+        "scale": 0.86,
+        "y": 0.45,
+        "shot": {"src": "play/boss", "at": "answer6", "shift": 1.2, "dim": 0.5, "drift": 0.05},
+        "tail": 0.5
+      },
+      "cuts": [
+        {"src": "movie/src/op3.mp4", "beats": 4, "at": 0.2, "flash": false, "pulse": 0.022},
+        {"src": "play/title", "beats": 4, "at": 0.4, "flash": true, "pulse": 0.022, "cap": "{g}WORDRIA{/}は", "capPop": 0.35, "sfx": [["cursor", 0, 0.5]], "capY": 1770},
+        {"src": "play/strategy", "beats": 4, "sync": {"event": "answer1", "beat": 3}, "zoom": 1.12, "focus": [0.5, 0.25], "pulse": 0.022, "flash": true, "cap": "{g}TOEIC950点{/}保持者が開発", "capPop": 0.35, "sfx": [["ok", 3, 0.5]]},
+        {"src": "play/grades", "beats": 4, "at": 0.6, "flash": true, "pulse": 0.022, "zoom": 1.04, "cap": "中学・高校英語から{g}TOEIC{/}まで学べる", "capBeats": 8, "capPop": 0.35, "capY": 1790},
+        {"src": "play/grades", "beats": 4, "at": 2.4, "flash": false, "pulse": 0.022, "zoom": 1.04},
+        {"src": "play/battle", "beats": 2, "at": 0.1, "flash": true, "cap": "爽快{g}コマンドバトル{/}英単語RPG！", "capBeats": 8, "capPop": 0.35, "sfx": [["cursor", 0, 0.5]]},
+        {"src": "play/battle", "beats": 2, "sync": {"event": "answer1", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]]},
+        {"src": "play/battle", "beats": 2, "at": "answer1", "shift": 0.7, "fx": ["punch", "shake"], "sfx": [["slash", 0, 0.5]]},
+        {"src": "play/boss", "beats": 2, "at": "answer1", "shift": 0.75, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.55]]},
+        {"src": "play/boss", "beats": 4, "at": 1.0, "flash": true, "pulse": 0.03, "cap": "クリアの{g}秘訣{/}は", "capPop": 0.35, "sfx": [["boss", 0, 0.4]]},
+        {"src": "play/strategy", "beats": 4, "sync": {"event": "pick1", "beat": 4}, "flash": true, "zoom": 1.1, "focus": [0.5, 0.72], "cap": ["解答の{g}スピードの速さ{/}と", "{g}攻撃の戦略{/}が鍵！"], "capBeats": 8, "capPop": 0.3},
+        {"src": "play/boss", "beats": 2, "sync": {"event": "answer2", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]]},
+        {"src": "play/strategy", "beats": 2, "at": "answer1", "shift": 0.8, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.6]]},
+        {"src": "play/boss", "beats": 1, "at": "answer2", "shift": 0.8, "fx": ["punch", "shake"], "flash": true, "sfx": [["hit", 0, 0.45]], "cap": "つい{g}夢中{/}になる！", "capBeats": 8, "capPop": 0.4},
+        {"src": "play/battle", "beats": 1, "at": "answer3", "shift": 0.7, "fx": ["punch", "shake"], "flash": false, "sfx": [["hit", 0, 0.45]]},
+        {"src": "play/boss", "beats": 1, "at": "answer3", "shift": 0.8, "fx": ["punch", "shake"], "flash": false, "sfx": [["hit", 0, 0.45]]},
+        {"src": "play/battle", "beats": 1, "at": "answer4", "shift": 0.7, "fx": ["punch", "shake"], "flash": false, "sfx": [["hit", 0, 0.45]]},
+        {"src": "play/boss", "beats": 1, "at": "answer4", "shift": 0.8, "fx": ["punch", "shake"], "flash": false, "sfx": [["hit", 0, 0.45]]},
+        {"src": "play/battle", "beats": 1, "at": "answer5", "shift": 0.7, "fx": ["punch", "shake"], "flash": false, "sfx": [["hit", 0, 0.45]]},
+        {"src": "play/boss", "beats": 1, "at": "answer5", "shift": 0.8, "fx": ["punch", "shake"], "flash": false, "sfx": [["hit", 0, 0.45]]},
+        {"src": "movie/src/op3.mp4", "beats": 1, "at": 8.5, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.5]]},
+        {"src": "play/wordbook", "beats": 4, "at": "scroll1", "shift": -0.6, "flash": true, "pulse": 0.022, "cap": "自然と{g}単語が身につく{/}！", "capBeats": 8, "capPop": 0.35},
+        {"src": "play/records", "beats": 4, "at": 2.3, "pulse": 0.022, "zoom": 1.06, "focus": [0.5, 0.4]},
+        {"src": "movie/src/op3.mp4", "beats": 4, "at": 7.4, "flash": true, "sfx": [["magic_holy", 0, 0.4]]},
+        {"src": "play/boss", "beats": 4, "at": "answer6", "shift": 0.8, "fx": ["punch", "shake"], "flash": true, "sfx": [["crit", 0, 0.6]]}
+      ]
     },
     "toeic": {
       "title": "TOEIC学習者向け",
