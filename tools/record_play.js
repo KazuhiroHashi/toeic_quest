@@ -95,7 +95,8 @@ async function startRec(page, name) {
     cdp.send("Page.screencastFrameAck", { sessionId: f.sessionId }).catch(function () {});
   });
   await cdp.send("Page.startScreencast", {
-    format: "jpeg", quality: 92, maxWidth: CSS_W * DPR, maxHeight: CSS_H * DPR, everyNthFrame: 1
+    // 画質は最高（100）。92 だと文字のふちに JPEG のにじみが出て、SNS で再圧縮されると目立った
+    format: "jpeg", quality: 100, maxWidth: CSS_W * DPR, maxHeight: CSS_H * DPR, everyNthFrame: 1
   });
   CUR = { cdp: cdp, frames: frames, dir: dir, name: name, events: [], count: {} };
   return CUR;
@@ -123,7 +124,8 @@ async function stopRec(rec) {
   execFileSync(FFMPEG, ["-hide_banner", "-loglevel", "error", "-y",
     "-f", "concat", "-safe", "0", "-i", lf,
     "-vf", "fps=30,scale=" + CSS_W * DPR + ":" + CSS_H * DPR + ",setsar=1,format=yuv420p",
-    "-c:v", "libx264", "-preset", "medium", "-crf", "16", "-an", out]);
+    "-c:v", "libx264", "-preset", "slow", "-crf", "10", "-tune", "animation", "-an", out]);
+  fs.rmSync(rec.dir, { recursive: true, force: true });   // 1コマずつの JPEG は大きいので消す
   var len = tEnd - fr[0].t;
   // 出来事は動画の頭（最初のコマ）からの秒で書き出す
   var ev = {};

@@ -103,7 +103,7 @@ function renderCut(cut, i, reel, dur, frames, beatLen) {
   const z0 = cut.zoom || 1.0;
   const drift = cut.drift == null ? 0.04 : cut.drift;
   const punch = fx.includes("punch") ? (cut.punch || 0.09) : 0;
-  const shake = fx.includes("shake") ? 16 : 0;
+  const shake = fx.includes("shake") ? 32 : 0;   // 2倍の大きさで計算するので px も2倍（仕上がりで16px）
   const fxp = cut.focus || [0.5, 0.5];
   // pulse: カットの途中でも拍ごとに小さく跳ねる（音ハメを画面の動きでも見せる）
   const pulse = cut.pulse || 0;
@@ -112,10 +112,16 @@ function renderCut(cut, i, reel, dur, frames, beatLen) {
   const xExpr = `(iw-iw/zoom)*${fxp[0]}` + (shake ? `+${shake}*sin(in_time*75)*max(0\\,1-in_time/0.32)` : "");
   const yExpr = `(ih-ih/zoom)*${fxp[1]}` + (shake ? `+${shake * 0.6}*cos(in_time*61)*max(0\\,1-in_time/0.32)` : "");
 
+  // 寄り・揺れは2倍の大きさ（2160×3840）で計算してから、最後に1回だけ縮める。
+  // 1080×1920 に縮めてから zoompan で寄ると「縮めて→拡げる」の二度手間になり、
+  // 文字のふちがぼやける（SNS に上げると特に荒く見えた）。2倍で計算すると
+  // 位置も半ピクセル単位で動くので、ゆっくり寄るときのカクつきも減る。
+  const W2 = W * 2, H2 = H * 2;
   let vf = `setpts=(PTS-STARTPTS)/${speed},` +
-    `scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},fps=${FPS},` +
+    `scale=${W2}:${H2}:force_original_aspect_ratio=increase:flags=lanczos,crop=${W2}:${H2},fps=${FPS},` +
     `tpad=stop_mode=clone:stop_duration=3,` +
-    `zoompan=z='${zExpr}':x='${xExpr}':y='${yExpr}':d=1:s=${W}x${H}:fps=${FPS},setsar=1`;
+    `zoompan=z='${zExpr}':x='${xExpr}':y='${yExpr}':d=1:s=${W2}x${H2}:fps=${FPS},` +
+    `scale=${W}:${H}:flags=lanczos,setsar=1`;
   if (cut.stripes) vf += `,drawgrid=w=iw:h=${cut.stripes}:t=${Math.max(2, Math.round(cut.stripes / 5))}:c=0xE9E9EC`;
   if (cut.dim) vf += `,colorchannelmixer=rr=${1 - cut.dim}:gg=${1 - cut.dim}:bb=${1 - cut.dim}`;
   if (cut.flash) vf += `,fade=t=in:st=0:d=0.18:color=white`;
@@ -127,7 +133,8 @@ function renderCut(cut, i, reel, dur, frames, beatLen) {
     ? ["-loop", "1", "-framerate", String(FPS), "-t", n3(dur + 1), "-i", file]
     : ["-ss", n3(from), "-t", n3(dur * speed + 1), "-i", file];
   ff(input.concat(["-vf", vf, "-frames:v", String(frames), "-an",
-    "-c:v", "libx264", "-preset", "medium", "-crf", "17", "-pix_fmt", "yuv420p", "-r", String(FPS), out]));
+    // 途中のファイルはほぼ劣化なし（crf 8）。最後の書き出しまで画質を落とさない
+    "-c:v", "libx264", "-preset", "fast", "-crf", "8", "-pix_fmt", "yuv420p", "-r", String(FPS), out]));
   return out;
 }
 
@@ -475,8 +482,12 @@ async function buildReel(name, cfg, defaults) {
   const out = abs(cfg.out || `movie/out/PR_${name}.mp4`);
   fs.mkdirSync(path.dirname(out), { recursive: true });
   ff(inputs.concat(["-filter_complex", fc, "-map", "[vout]", "-map", "[aout]", "-t", n3(total),
-    "-c:v", "libx264", "-preset", "slow", "-crf", "19", "-pix_fmt", "yuv420p",
-    "-profile:v", "high", "-level", "4.0", "-r", String(FPS),
+    // SNS は上げた動画をもう一度圧縮する。元のビットレートが低いと、そこで一気に荒れる。
+    // crf 15 ＋ 上限 14Mbps（30秒でおよそ 25〜30MB）。tune animation は、ゲーム画面や
+    // 字幕のような平らな色と輪郭のはっきりした絵に向いた設定
+    "-c:v", "libx264", "-preset", "slow", "-crf", "15", "-tune", "animation",
+    "-maxrate", "14M", "-bufsize", "28M", "-pix_fmt", "yuv420p",
+    "-profile:v", "high", "-level", "4.2", "-r", String(FPS),
     "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2", "-movflags", "+faststart", out]));
   const mb = (fs.statSync(out).size / 1048576).toFixed(1);
   console.log(`  ✓ ${rel(out)}  ${total.toFixed(1)}秒 / ${mb}MB`);
