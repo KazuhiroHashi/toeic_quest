@@ -350,10 +350,12 @@ async function buildReel(name, cfg, defaults) {
     const endBeat = p.a + (p.c.capBeats || p.c.beats);
     const b = endBeat >= k ? total : T(endBeat);
     if (theme.capStyle === "big") {
-      // 1行ずつ別の絵にして、2行目は lineStep 拍遅れて出す（拍に乗せて畳みかける）
+      // 1行ずつ別の絵にして、2行目は lineStep 拍遅れて出す（拍に乗せて畳みかける）。
+      // lineAt: [0, 1, 1] のように書くと、行ごとに何拍目に出すかを決められる（同じ数字の行は同時）
       const lines = [].concat(p.c.cap);
       const step = (p.c.lineStep == null ? (theme.lineStep == null ? 1 : theme.lineStep) : p.c.lineStep) * beatLen;
-      lines.forEach((ln, i) => caps.push({ kind: "big", text: ln, a: a + i * step, b, pop: p.c.capPop,
+      const at = i => (p.c.lineAt ? p.c.lineAt[i] * beatLen : i * step);
+      lines.forEach((ln, i) => caps.push({ kind: "big", text: ln, a: a + at(i), b, pop: p.c.capPop,
         y: p.c.capY, line: i, lines: lines.length, size: p.c.capSize }));
     } else {
       caps.push({ kind: "cap", text: p.c.cap, a, b, pop: p.c.capPop, y: p.c.capY });

@@ -150,7 +150,7 @@
       "title": "中学生向け（バトルだけ・大きなピンク字幕・白地のロゴで締める）",
       "music": {
         "track": "battle2",
-        "startBeat": 37
+        "startBeat": 1
       },
       "theme": {
         "bg1": "#1b1650",
@@ -181,10 +181,12 @@
         "slamSfx": []
       },
       "cuts": [
-        {"src": "play/dragon_j3", "beats": 2, "at": 1.1, "pulse": 0.022, "sfx": [["encounter", 0, 0.45]], "cap": ["英単語の暗記に", "苦労している君！"], "capBeats": 16, "capPop": 0.35},
+        {"src": "play/dragon_j3", "beats": 2, "at": 1.1, "pulse": 0.022, "sfx": [["encounter", 0, 0.45]], "cap": ["英単語の暗記に", "苦労している君！"], "capBeats": 20, "capPop": 0.35},
         {"src": "play/b3_j3", "beats": 2, "at": 2.3, "pulse": 0.022},
         {"src": "play/b4_j3", "beats": 2, "at": 2.5, "pulse": 0.022},
         {"src": "play/b3_j3", "beats": 2, "at": "cmd1", "shift": 0.3, "pulse": 0.022, "sfx": [["cursor", 0, 0.5]]},
+        {"src": "play/dragon_j3", "beats": 2, "sync": {"event": "answer1", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]]},
+        {"src": "play/dragon_j3", "beats": 2, "at": "answer1", "shift": 0.75, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.55]]},
         {"src": "play/battle_j3", "beats": 4, "sync": {"event": "answer1", "beat": 3}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 3, 0.5]], "pulse": 0.022},
         {"src": "play/battle_j3", "beats": 2, "at": "answer1", "shift": 0.7, "fx": ["punch", "shake"], "sfx": [["slash", 0, 0.5]]},
         {"src": "play/b4_j3", "beats": 2, "sync": {"event": "answer2", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]]},
@@ -206,7 +208,7 @@
         {"src": "play/dragon_j3", "beats": 1, "at": "answer4", "shift": 0.75, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
         {"src": "play/boss_j3", "beats": 1, "sync": {"event": "answer5", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["cursor", 0, 0.35]]},
         {"src": "play/boss_j3", "beats": 1, "at": "answer5", "shift": 0.75, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
-        {"src": "play/battle_j3", "beats": 2, "sync": {"event": "answer3", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]], "cap": ["つい夢中に！", "いつの間にか", "単語が身につく！"], "capBeats": 16, "capPop": 0.35, "flash": true},
+        {"src": "play/battle_j3", "beats": 2, "sync": {"event": "answer3", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]], "cap": ["つい夢中に！", "いつの間にか", "単語が身につく！"], "capBeats": 16, "capPop": 0.35, "flash": true, "lineAt": [0, 1, 1]},
         {"src": "play/battle_j3", "beats": 2, "at": "answer3", "shift": 0.7, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.55]]},
         {"src": "play/b4_j3", "beats": 1, "sync": {"event": "answer5", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["cursor", 0, 0.35]]},
         {"src": "play/b4_j3", "beats": 1, "at": "answer5", "shift": 0.7, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
