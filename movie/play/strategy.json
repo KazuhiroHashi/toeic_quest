@@ -1,11 +1,18 @@
 {
- "length": 9.402,
+ "length": 9.338,
+ "size": [
+  1206,
+  2622
+ ],
  "events": {
-  "cursor1": 0.476,
-  "magic1": 1.672,
-  "spells1": 2.61,
-  "pick1": 4.332,
-  "quiz1": 6.315,
-  "answer1": 6.801
+  "cursor1": 0.483,
+  "magic1": 1.679,
+  "spells1": 2.626,
+  "pick1": 4.319,
+  "quiz1": 6.256,
+  "answer1": 6.737
+ },
+ "levels": {
+  "answer1": "スコア700"
  }
 }

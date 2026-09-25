@@ -114,7 +114,10 @@ async function startRec(page, name) {
   fs.rmSync(dir, { recursive: true, force: true });
   fs.mkdirSync(dir, { recursive: true });
   var frames = [];
+  var stopped = false;
   cdp.on("Page.screencastFrame", function (f) {
+    // 止めたあとに遅れて届いたコマは捨てる（一時フォルダはもう消してある）
+    if (stopped) return;
     var file = path.join(dir, String(frames.length).padStart(6, "0") + ".png");
     fs.writeFileSync(file, Buffer.from(f.data, "base64"));
     frames.push({ file: file, t: f.metadata.timestamp });
@@ -124,7 +127,8 @@ async function startRec(page, name) {
     // PNG（劣化なし）。JPEG は 100 にしても、ここで一度圧縮することになる
     format: "png", maxWidth: CSS_W * DPR, maxHeight: CSS_H * DPR, everyNthFrame: 1
   });
-  CUR = { cdp: cdp, frames: frames, dir: dir, name: name, events: [], count: {}, levels: {} };
+  CUR = { cdp: cdp, frames: frames, dir: dir, name: name, events: [], count: {}, levels: {},
+          stop: function () { stopped = true; } };
   return CUR;
 }
 
@@ -132,6 +136,7 @@ async function stopRec(rec) {
   var tEnd = Date.now() / 1000;
   await rec.cdp.send("Page.stopScreencast");
   await new Promise(function (r) { setTimeout(r, 300); });
+  rec.stop();
   var fr = rec.frames;
   if (fr.length < 2) throw new Error("コマが届いていません: " + rec.name);
   // 届いた時刻の差がそのままそのコマの長さ
