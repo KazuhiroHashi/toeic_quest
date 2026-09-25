@@ -36,7 +36,7 @@ X にそのまま添付でき、App Store のプレビュー動画の規定（15
 # 1. 実プレイを録る（www/ から。速答・時間切れ・ボス戦などを自動で遊ぶ）
 npm run build:www
 npm install playwright-core @fontsource/m-plus-rounded-1c --no-save
-node tools/record_play.js          # → movie/play/*.mp4 と、出来事の時刻 *.json
+node tools/record_play.js          # → movie/play/*.mkv（劣化なし）と、出来事の時刻 *.json
 REC_GRADE=j3 node tools/record_play.js battle boss b3 b4 dragon miss strategy   # 中学3年の出題で → *_j3
 REC_GRADE=h3 node tools/record_play.js battle boss b3 b4 dragon miss strategy   # 高校3年の出題で → *_h3
 REC_GRADE=h1 node tools/record_play.js battle boss b3 b4 dragon strategy        # 高校1年の出題で → *_h1
@@ -50,7 +50,8 @@ node tools/build_pr.js             # 6本ぜんぶ
 node tools/build_pr.js toeic student   # 名前を指定して一部だけ
 ```
 
-1 と 2 の結果はコミットしてあるので、**文言やカットを直すだけなら 3 だけでいい**。
+2 の結果と、1 の出来事の表（*.json）はコミットしてある。1 の録画（*.mkv）は大きいのでコミットしていない。
+**同じ作業場所で文言やカットを直すだけなら 3 だけでいい**。新しい作業場所では 1 から（1場面5分ほど）。
 ffmpeg は PATH に要る（無ければ `FFMPEG=/path/to/ffmpeg`）。
 
 ## 直したいとき — `movie/pr.json` だけ触る
@@ -94,10 +95,21 @@ ffmpeg は PATH に要る（無ければ `FFMPEG=/path/to/ffmpeg`）。
 
 ## 気をつけること
 
-- **画質**（SNS に上げると一度再圧縮されるので、元をできるだけきれいにしておく）
-  - 録画は JPEG 画質 100 で受け取り、crf 10 で保存（`record_play.js`）
-  - 寄り・揺れは 2160×3840 で計算してから lanczos で 1080×1920 に1回だけ縮める（`build_pr.js`）
-  - 途中のファイルは crf 8、書き出しは crf 15・上限 14Mbps・`-tune animation`
+- **画質：動画として圧縮するのは、最後の書き出しの1回だけ**
+  | 段 | やっていること | 圧縮 |
+  |---|---|---|
+  | 録画（`record_play.js`） | Chrome を本物の3倍で動かし、1206×2622 のコマを PNG で受け取る → `movie/play/*.mkv` | なし（x264rgb `-qp 0`） |
+  | 1カット（`build_pr.js`） | lanczos で1回だけ拡大 → 切り抜き → ちょうど半分に縮めて 1080×1920 | なし（RGB のまま `-qp 0`） |
+  | つなぐ | コピーするだけ | なし |
+  | 書き出し | 字幕を重ね、BT.709 で yuv420p に直して H.264 に | **ここで1回だけ**（crf 16） |
+  - 以前は画質が粗かった。原因は録画の最初の段で、Playwright の `deviceScaleFactor: 3` は
+    「3倍のふり」なので、画面配信のコマが 402×874 のまま届き、それを3倍に引き伸ばしていた。
+    そのうえで JPEG → crf 10 → crf 8 → crf 15 と4回圧縮していた
+  - 1206×2622 を PNG で受け取ると、Chrome は1秒に5コマほどしか出せない（CPU 4つ）。
+    そこでゲームの時計を 0.1倍にして「スローで遊び」、届いた時刻に 0.1 を掛けて元の速さに戻す。
+    ゲーム内の1秒に 45コマほど入る。そのかわり録画には実際の10倍の時間がかかる（1場面5分ほど）
+  - `*.mkv` は1本 100MB を超えるのでコミットしない（`.gitignore`）。新しく作業するときは録り直す。
+    無いときは古い `*.mp4`（粗い）を使い、`build_pr.js` がそのことを表示する
   - X に上げるときは、アプリの「設定 → アクセシビリティ、表示、言語 → データ利用の設定 →
     高画質の動画をアップロード」をオンにしておくと、アップロード時に縮められにくい
 

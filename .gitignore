@@ -1,3 +1,4 @@
 movie/tmp/
 node_modules/
 www/
+movie/play/*.mkv

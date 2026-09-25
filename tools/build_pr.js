@@ -10,7 +10,8 @@
 //   npm install playwright-core @fontsource/m-plus-rounded-1c --no-save
 //     … 字幕の絵を Chromium で描くため。フォントはゲームと同じ M PLUS Rounded 1c
 //   movie/beats/<曲>.json … tools/beat_grid.py で作る拍の表（コミット済み）
-//   movie/play/*.mp4     … tools/record_play.js で録った実プレイ（コミット済み）
+//   movie/play/*.mkv     … tools/record_play.js で録った実プレイ（1206×2622・劣化なし。
+//                          大きいのでコミットしない。無ければ録り直す。古い *.mp4 は予備）
 //
 // ── 考え方 ──────────────────────────────────────────
 // 1. 時間の単位は「秒」ではなく「拍」。カットの長さは拍の数で書く。
@@ -21,6 +22,10 @@
 //    フラッシュは小節の頭だけ。全部に入れるとうるさい。
 // 4. 字幕は小さめの色付きの札。画面の下、ゲームの十字キーのあたりに出す
 //    （プレイ画面の大事なところには被せない）。拍に合わせてポンと出る。
+// 5. 画質：動画として圧縮するのは、最後の書き出しの1回だけ。
+//    録画（劣化なし）→ 1カットずつ（劣化なし・RGB のまま）→ つなぐ（コピー）
+//    → 字幕を重ねて、ここで初めて H.264（yuv420p）に圧縮する。
+//    絵の大きさを変えるのも、1カットにつき lanczos で1回（＋2倍の画面からの半分への縮小）。
 "use strict";
 const fs = require("fs");
 const path = require("path");
@@ -64,22 +69,29 @@ function need(p, what) {
 const n3 = x => (+x).toFixed(3);
 
 // ---- 素材の解決 ---------------------------------------------------------
-// "play/battle" → movie/play/battle.mp4 ＋ 出来事の表 movie/play/battle.json
+// "play/battle" → movie/play/battle.mkv ＋ 出来事の表 movie/play/battle.json
+// .mkv（劣化なしの録画）を使う。無いときだけ古い .mp4 を使い、そのことを知らせる
 function source(src) {
   if (src.startsWith("color:")) return { file: null, events: {} };   // 無地の背景
   if (src.startsWith("play/")) {
     const base = path.join(ROOT, "movie", src);
-    const file = need(base + ".mp4", "実プレイの録画");
+    let file = base + ".mkv";
+    if (!fs.existsSync(file)) {
+      file = need(base + ".mp4", "実プレイの録画");
+      if (!warned.has(src)) { warned.add(src); console.warn(`    ! ${src} は劣化なしの録画（.mkv）がありません。古い .mp4 を使います（画質が落ちます）`); }
+    }
     const ev = fs.existsSync(base + ".json") ? JSON.parse(fs.readFileSync(base + ".json", "utf8")).events : {};
     return { file, events: ev };
   }
   return { file: need(src, "素材"), events: {} };
 }
 
+const warned = new Set();
+
 // ---- 1カット -------------------------------------------------------------
 // dur 秒ぶんを、ちょうど frames コマで書き出す（拍の位置とコマをずらさない）
 function renderCut(cut, i, reel, dur, frames, beatLen) {
-  const out = path.join(TMP, `${reel}_${String(i).padStart(2, "0")}.mp4`);
+  const out = path.join(TMP, `${reel}_${String(i).padStart(2, "0")}.mkv`);
   const { file, events } = source(cut.src);
   const speed = cut.speed || 1;
 
@@ -107,25 +119,26 @@ function renderCut(cut, i, reel, dur, frames, beatLen) {
   const fxp = cut.focus || [0.5, 0.5];
   // pulse: カットの途中でも拍ごとに小さく跳ねる（音ハメを画面の動きでも見せる）
   const pulse = cut.pulse || 0;
-  const zExpr = `${z0}+${drift}*in_time/${n3(dur)}+${punch}*pow(max(0\\,1-in_time/0.26)\\,2)` +
-    (pulse ? `+${pulse}*pow(max(0\\,1-mod(in_time\\,${n3(beatLen / speed)})/0.13)\\,2)` : "");
-  const xExpr = `(iw-iw/zoom)*${fxp[0]}` + (shake ? `+${shake}*sin(in_time*75)*max(0\\,1-in_time/0.32)` : "");
-  const yExpr = `(ih-ih/zoom)*${fxp[1]}` + (shake ? `+${shake * 0.6}*cos(in_time*61)*max(0\\,1-in_time/0.32)` : "");
+  const Z = `${z0}+${drift}*t/${n3(dur)}+${punch}*pow(max(0\\,1-t/0.26)\\,2)` +
+    (pulse ? `+${pulse}*pow(max(0\\,1-mod(t\\,${n3(beatLen / speed)})/0.13)\\,2)` : "");
+  const sx = shake ? `+${shake}*sin(t*75)*max(0\\,1-t/0.32)` : "";
+  const sy = shake ? `+${shake * 0.6}*cos(t*61)*max(0\\,1-t/0.32)` : "";
 
-  // 寄り・揺れは2倍の大きさ（2160×3840）で計算してから、最後に1回だけ縮める。
-  // 1080×1920 に縮めてから zoompan で寄ると「縮めて→拡げる」の二度手間になり、
-  // 文字のふちがぼやける（SNS に上げると特に荒く見えた）。2倍で計算すると
-  // 位置も半ピクセル単位で動くので、ゆっくり寄るときのカクつきも減る。
+  // 寄り・揺れ：元の録画（1206×2622）を、寄りの倍率ぶんまで lanczos で1回だけ拡げ
+  // （2倍の画面 2160×3840 を覆う大きさ）、切り抜いて、最後にちょうど半分に縮める。
+  // 以前は「2倍に拡げる → zoompan の中でもう一度拡大縮小 → 縮める」で、
+  // 大きさを変える処理が3回重なっていた。2倍の画面で切り抜くのは、ゆっくり寄るときに
+  // 1ピクセル単位でカクつかないようにするため（仕上がりで半ピクセル単位になる）。
   const W2 = W * 2, H2 = H * 2;
-  let vf = `setpts=(PTS-STARTPTS)/${speed},` +
-    `scale=${W2}:${H2}:force_original_aspect_ratio=increase:flags=lanczos,crop=${W2}:${H2},fps=${FPS},` +
-    `tpad=stop_mode=clone:stop_duration=3,` +
-    `zoompan=z='${zExpr}':x='${xExpr}':y='${yExpr}':d=1:s=${W2}x${H2}:fps=${FPS},` +
-    `scale=${W}:${H}:flags=lanczos,setsar=1`;
+  const cover = `max(${W2}/iw\\,${H2}/ih)*(${Z})`;
+  let vf = `setpts=(PTS-STARTPTS)/${speed},fps=${FPS},tpad=stop_mode=clone:stop_duration=3,format=gbrp,` +
+    `scale=w='2*trunc(iw*${cover}/2)':h='2*trunc(ih*${cover}/2)':eval=frame:flags=lanczos+accurate_rnd+full_chroma_int,` +
+    `crop=${W2}:${H2}:x='clip((iw-${W2})*${fxp[0]}${sx}\\,0\\,iw-${W2})':y='clip((ih-${H2})*${fxp[1]}${sy}\\,0\\,ih-${H2})',` +
+    `scale=${W}:${H}:flags=lanczos+accurate_rnd,setsar=1`;
   if (cut.stripes) vf += `,drawgrid=w=iw:h=${cut.stripes}:t=${Math.max(2, Math.round(cut.stripes / 5))}:c=0xE9E9EC`;
   if (cut.dim) vf += `,colorchannelmixer=rr=${1 - cut.dim}:gg=${1 - cut.dim}:bb=${1 - cut.dim}`;
   if (cut.flash) vf += `,fade=t=in:st=0:d=0.18:color=white`;
-  vf += ",format=yuv420p";
+  vf += ",format=rgb24";
 
   const input = cut.src.startsWith("color:")
     ? ["-f", "lavfi", "-i", `color=c=0x${cut.src.slice(7).replace("#", "")}:s=${W}x${H}:r=${FPS}:d=${n3(dur + 1)}`]
@@ -133,8 +146,8 @@ function renderCut(cut, i, reel, dur, frames, beatLen) {
     ? ["-loop", "1", "-framerate", String(FPS), "-t", n3(dur + 1), "-i", file]
     : ["-ss", n3(from), "-t", n3(dur * speed + 1), "-i", file];
   ff(input.concat(["-vf", vf, "-frames:v", String(frames), "-an",
-    // 途中のファイルはほぼ劣化なし（crf 8）。最後の書き出しまで画質を落とさない
-    "-c:v", "libx264", "-preset", "fast", "-crf", "8", "-pix_fmt", "yuv420p", "-r", String(FPS), out]));
+    // 途中のファイルは劣化なし（RGB のまま -qp 0）。圧縮は最後の書き出しの1回だけ
+    "-c:v", "libx264rgb", "-qp", "0", "-preset", "ultrafast", "-r", String(FPS), out]));
   return out;
 }
 
@@ -339,7 +352,7 @@ async function buildReel(name, cfg, defaults) {
   });
   const list = path.join(TMP, `${name}_list.txt`);
   fs.writeFileSync(list, files.map(f => `file '${f}'`).join("\n") + "\n");
-  const seq = path.join(TMP, `${name}_seq.mp4`);
+  const seq = path.join(TMP, `${name}_seq.mkv`);
   ff(["-f", "concat", "-safe", "0", "-i", list, "-c", "copy", seq]);
 
   // 字幕：カットの頭の拍でポンと出て、capBeats 拍ぶん残る
@@ -431,7 +444,8 @@ async function buildReel(name, cfg, defaults) {
              : H - 40 - sz.h / 2;
     pop(it.file, it.a, it.b, W / 2, Math.round(cy), null, it.kind === "note" ? 0 : 0.2);
   });
-  fc += `[${v}]null[vout];`;
+  // ここで初めて RGB → yuv420p（HD の標準の BT.709 で変換し、そのことを書き込む）
+  fc += `[${v}]scale=out_color_matrix=bt709:out_range=tv:flags=accurate_rnd+full_chroma_int,format=yuv420p[vout];`;
 
   // ---- 音 ----
   inputs.push("-ss", n3(B[s0]), "-t", n3(total), "-i", need(grid.file, "BGM"));
@@ -484,11 +498,11 @@ async function buildReel(name, cfg, defaults) {
   const out = abs(cfg.out || `movie/out/PR_${name}.mp4`);
   fs.mkdirSync(path.dirname(out), { recursive: true });
   ff(inputs.concat(["-filter_complex", fc, "-map", "[vout]", "-map", "[aout]", "-t", n3(total),
-    // SNS は上げた動画をもう一度圧縮する。元のビットレートが低いと、そこで一気に荒れる。
-    // crf 15 ＋ 上限 14Mbps（30秒でおよそ 25〜30MB）。tune animation は、ゲーム画面や
-    // 字幕のような平らな色と輪郭のはっきりした絵に向いた設定
-    "-c:v", "libx264", "-preset", "slow", "-crf", "15", "-tune", "animation",
+    // 圧縮はこの1回だけ。SNS は上げた動画をもう一度圧縮するので、ここは余裕を持たせる。
+    // tune animation は、ゲーム画面や字幕のような平らな色と輪郭のはっきりした絵に向いた設定
+    "-c:v", "libx264", "-preset", "slow", "-crf", String(process.env.CRF || 16), "-tune", "animation",
     "-maxrate", "14M", "-bufsize", "28M", "-pix_fmt", "yuv420p",
+    "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv",
     "-profile:v", "high", "-level", "4.2", "-r", String(FPS),
     "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2", "-movflags", "+faststart", out]));
   const mb = (fs.statSync(out).size / 1048576).toFixed(1);

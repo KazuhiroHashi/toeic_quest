@@ -5,10 +5,10 @@
 //   npm install playwright-core --no-save
 //   node tools/record_play.js            # 全部
 //   node tools/record_play.js boss miss  # 名前を指定して一部だけ
-//   → movie/play/<名前>.mp4（1080×1920 / 30fps / 音なし）
+//   → movie/play/<名前>.mkv（1206×2622 / 30fps / 音なし / 劣化なし）＋ 出来事の表 <名前>.json
 //
 //   REC_GRADE=j2 node tools/record_play.js battle b3   # 学生モード（中学2年）で録る
-//   → movie/play/battle_j2.mp4 …（名前の後ろに学年が付く。j1〜j3 / h1〜h3）
+//   → movie/play/battle_j2.mkv …（名前の後ろに学年が付く。j1〜j3 / h1〜h3）
 //   中学生・高校生向けの動画で、画面に出る単語をその学年のものにするため
 //
 // 音は入らない（画面だけ）。BGM と効果音は tools/build_pr.js が後から乗せる。
@@ -22,6 +22,18 @@
 // これは iPhone SE ほどの幅で、敵の名前やメッセージが窮屈に折り返していた。
 // PR動画（1080×1920）に入れるときは、上の空と下のボタンの端を少し切り落とす
 // （build_pr.js が中央で切り抜く）。
+//
+// ── 画質（ここで落とすと、あとでは取り戻せない）──────────────
+// ・Playwright の deviceScaleFactor: 3 は「3倍のふり」で、画面配信のコマは
+//   402×874 のまま届く。以前はそれを 3倍に引き伸ばしていたので、絵も字も
+//   ドットが粗かった。Chrome 自体を 3倍（--force-device-scale-factor=3）で
+//   起動し、画面の大きさだけ 402×874 に固定すると、本物の 1206×2622 が届く。
+// ・コマは PNG（劣化なし）で受け取り、x264rgb の -qp 0（劣化なし）でまとめる。
+//   動画として圧縮するのは build_pr.js の最後の書き出しの1回だけ。
+// ・1206×2622 を PNG で描き出すと、1秒に 14コマほどしか届かない（CPU 4つ）。
+//   そこで、ゲームの時計（タイマー・requestAnimationFrame・CSS のアニメ）を
+//   RATE 倍（0.3倍）の速さにして「スローで遊ぶ」。届いた時刻に RATE を掛けて
+//   元の速さに戻すので、動画ではゲーム内の 1秒に 45コマほどが入る。
 //
 // ── 日本語フォント ─────────────────────────────────
 // fontconfig の既定のままだと、日本語が WenQuanYi（中国語の字形）で描かれる。
@@ -50,6 +62,7 @@ var EXE = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 var FFMPEG = process.env.FFMPEG || "ffmpeg";
 
 var CSS_W = 402, CSS_H = 874, DPR = 3;   // iPhone 17
+var RATE = +(process.env.REC_RATE || 0.1);  // ゲームを何倍の速さで動かして録るか（上の「画質」を参照）
 var PORT = 8972;
 var GRADE = process.env.REC_GRADE || "";   // 空なら TOEIC モード
 
@@ -74,7 +87,14 @@ function serve() {
   });
 }
 
-function wait(page, ms) { return page.waitForTimeout(ms); }
+// CSS のアニメ・トランジションも RATE 倍の速さに（読み込むたびに掛け直す）
+async function slowAnimations(page) {
+  await page._slow.send("Animation.enable");
+  await page._slow.send("Animation.setPlaybackRate", { playbackRate: RATE });
+}
+
+// ゲームは RATE 倍の速さで動いているので、待つ時間も 1/RATE 倍にする（ゲーム内の ms で書く）
+function wait(page, ms) { return page.waitForTimeout(ms / RATE); }
 
 // 録画中の出来事（クイズが出た・答えた・時間切れ）の時刻を控える。
 // build_pr.js はこれを見て「2問目に答えた瞬間」のような所を拍に合わせる。
@@ -95,14 +115,14 @@ async function startRec(page, name) {
   fs.mkdirSync(dir, { recursive: true });
   var frames = [];
   cdp.on("Page.screencastFrame", function (f) {
-    var file = path.join(dir, String(frames.length).padStart(6, "0") + ".jpg");
+    var file = path.join(dir, String(frames.length).padStart(6, "0") + ".png");
     fs.writeFileSync(file, Buffer.from(f.data, "base64"));
     frames.push({ file: file, t: f.metadata.timestamp });
     cdp.send("Page.screencastFrameAck", { sessionId: f.sessionId }).catch(function () {});
   });
   await cdp.send("Page.startScreencast", {
-    // 画質は最高（100）。92 だと文字のふちに JPEG のにじみが出て、SNS で再圧縮されると目立った
-    format: "jpeg", quality: 100, maxWidth: CSS_W * DPR, maxHeight: CSS_H * DPR, everyNthFrame: 1
+    // PNG（劣化なし）。JPEG は 100 にしても、ここで一度圧縮することになる
+    format: "png", maxWidth: CSS_W * DPR, maxHeight: CSS_H * DPR, everyNthFrame: 1
   });
   CUR = { cdp: cdp, frames: frames, dir: dir, name: name, events: [], count: {}, levels: {} };
   return CUR;
@@ -118,25 +138,32 @@ async function stopRec(rec) {
   var list = "ffconcat version 1.0\n";
   for (var i = 0; i < fr.length; i++) {
     // 最後のコマは、止めた時刻まで出しっぱなし（静止した画面はコマが来ない）
-    var d = i < fr.length - 1 ? Math.max(0.001, fr[i + 1].t - fr[i].t)
-                              : Math.min(10, Math.max(0.2, tEnd - fr[i].t));
+    // 実際の時刻の差 × RATE ＝ ゲームの中での長さ
+    var d = (i < fr.length - 1 ? Math.max(0.001, fr[i + 1].t - fr[i].t)
+                               : Math.min(10, Math.max(0.2, tEnd - fr[i].t))) * RATE;
     list += "file '" + fr[i].file + "'\nduration " + d.toFixed(4) + "\n";
   }
   list += "file '" + fr[fr.length - 1].file + "'\n";
   var lf = path.join(rec.dir, "list.txt");
   fs.writeFileSync(lf, list);
   fs.mkdirSync(OUT, { recursive: true });
-  var out = path.join(OUT, rec.name + ".mp4");
+  var out = path.join(OUT, rec.name + ".mkv");
+  // 劣化なし（RGB のまま -qp 0）。大きさを変える処理もしない（届いたコマがそのまま 1206×2622）
+  // 本当に 1206×2622 で届いているか（402×874 なら、引き伸ばしになるので止める）
+  var head = fs.readFileSync(fr[0].file).subarray(16, 24);
+  fr.w = head.readUInt32BE(0); fr.h = head.readUInt32BE(4);
+  if (fr.w !== CSS_W * DPR || fr.h !== CSS_H * DPR) {
+    throw new Error("コマの大きさが " + fr.w + "×" + fr.h + " です（" + CSS_W * DPR + "×" + CSS_H * DPR + " のはず）");
+  }
   execFileSync(FFMPEG, ["-hide_banner", "-loglevel", "error", "-y",
     "-f", "concat", "-safe", "0", "-i", lf,
-    "-vf", "fps=30,scale=" + CSS_W * DPR + ":" + CSS_H * DPR + ",setsar=1,format=yuv420p",
-    "-c:v", "libx264", "-preset", "slow", "-crf", "10", "-tune", "animation", "-an", out]);
-  fs.rmSync(rec.dir, { recursive: true, force: true });   // 1コマずつの JPEG は大きいので消す
-  var len = tEnd - fr[0].t;
+    "-vf", "fps=30,format=rgb24", "-c:v", "libx264rgb", "-qp", "0", "-preset", "veryfast", "-an", out]);
+  fs.rmSync(rec.dir, { recursive: true, force: true });   // 1コマずつの PNG は大きいので消す
+  var len = (tEnd - fr[0].t) * RATE;
   // 出来事は動画の頭（最初のコマ）からの秒で書き出す
   var ev = {};
-  rec.events.forEach(function (e) { ev[e.label] = +(e.wall - fr[0].t).toFixed(3); });
-  fs.writeFileSync(path.join(OUT, rec.name + ".json"), JSON.stringify({ length: +len.toFixed(3), events: ev, levels: rec.levels }, null, 1));
+  rec.events.forEach(function (e) { ev[e.label] = +((e.wall - fr[0].t) * RATE).toFixed(3); });
+  fs.writeFileSync(path.join(OUT, rec.name + ".json"), JSON.stringify({ length: +len.toFixed(3), size: [fr.w, fr.h], events: ev, levels: rec.levels }, null, 1));
   CUR = null;
   console.log("  " + rec.name.padEnd(10) + len.toFixed(1) + "秒  " + fr.length + "コマ  → " + path.relative(ROOT, out));
 }
@@ -195,6 +222,7 @@ async function seedPlayed(page) {
     localStorage.setItem("wq2_records_v1", JSON.stringify({ clears: 9, bestRound: 12, bestMs: 1386000, bestChain: 27, bestFloor: 18 }));
   });
   await page.reload({ waitUntil: "networkidle" });
+  await slowAnimations(page);
   await page.mouse.click(CSS_W / 2, CSS_H / 2);     // 「タップして スタート」
   await wait(page, 1600);
 }
@@ -489,14 +517,28 @@ function checkFont() {
   var want = process.argv.slice(2);
   var names = Object.keys(SCENES).filter(function (n) { return !want.length || want.indexOf(n) >= 0; });
   var srv = await serve();
-  var browser = await chromium.launch({ executablePath: EXE, args: ["--autoplay-policy=no-user-gesture-required"] });
+  // Chrome そのものを 3倍で動かす（上の「画質」を参照）。窓は画面より大きければいい
+  var browser = await chromium.launch({ executablePath: EXE, args: ["--autoplay-policy=no-user-gesture-required",
+    "--force-device-scale-factor=" + DPR, "--window-size=600,1000"] });
   var ctxs = [];
 
   async function open() {
-    var ctx = await browser.newContext({
-      viewport: { width: CSS_W, height: CSS_H }, deviceScaleFactor: DPR, locale: "ja-JP"
-    });
+    var ctx = await browser.newContext({ viewport: null, locale: "ja-JP" });
     ctxs.push(ctx);
+    // ゲームの時計を RATE 倍にする。ページのスクリプトより先に差し替える
+    await ctx.addInitScript(function (R) {
+      var pn = performance.now.bind(performance), p0 = pn();
+      var RealDate = Date, dn = RealDate.now, d0 = dn();
+      performance.now = function () { return p0 + (pn() - p0) * R; };
+      RealDate.now = function () { return d0 + (dn() - d0) * R; };
+      window.Date = new Proxy(RealDate, {
+        construct: function (t, a) { return a.length ? new (Function.prototype.bind.apply(RealDate, [null].concat(a)))() : new RealDate(RealDate.now()); }
+      });
+      var st = window.setTimeout, si = window.setInterval, raf = window.requestAnimationFrame;
+      window.setTimeout = function (f, d) { var a = [].slice.call(arguments, 2); return st.apply(window, [f, (d || 0) / R].concat(a)); };
+      window.setInterval = function (f, d) { var a = [].slice.call(arguments, 2); return si.apply(window, [f, (d || 0) / R].concat(a)); };
+      window.requestAnimationFrame = function (cb) { return raf(function (t) { cb(p0 + (t - p0) * R); }); };
+    }, RATE);
     await ctx.addInitScript(function (g) {
       try {
         localStorage.setItem("wq2_mode_v1", JSON.stringify(
@@ -504,13 +546,18 @@ function checkFont() {
       } catch (e) {}
     }, GRADE);
     var page = await ctx.newPage();
+    var cdp = await ctx.newCDPSession(page);
+    // 画面の大きさは iPhone 17（402×874）。倍率は Chrome の本物の3倍をそのまま使う
+    await cdp.send("Emulation.setDeviceMetricsOverride", { width: CSS_W, height: CSS_H, deviceScaleFactor: DPR, mobile: false });
+    page._slow = cdp;
     await page.goto("http://127.0.0.1:" + PORT + "/index.html", { waitUntil: "networkidle" });
+    await slowAnimations(page);
     await page.mouse.click(CSS_W / 2, CSS_H / 2);     // 「タップして スタート」
     await wait(page, 1600);
     return { ctx: ctx, page: page };
   }
 
-  console.log("\n" + CSS_W * DPR + "×" + CSS_H * DPR + " で録ります（www/ ビルドから）\n");
+  console.log("\n" + CSS_W * DPR + "×" + CSS_H * DPR + " で録ります（www/ ビルドから・" + RATE + "倍の速さで遊んで元に戻す）\n");
   for (var i = 0; i < names.length; i++) {
     try {
       await SCENES[names[i]](open);
