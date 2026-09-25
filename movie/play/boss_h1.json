@@ -1,0 +1,27 @@
+{
+ "length": 27.787,
+ "events": {
+  "cmd1": 3.01,
+  "quiz1": 5.508,
+  "answer1": 6.007,
+  "quiz2": 8.761,
+  "answer2": 9.25,
+  "quiz3": 12.097,
+  "answer3": 12.586,
+  "quiz4": 15.466,
+  "answer4": 15.956,
+  "cmd2": 19.427,
+  "quiz5": 21.832,
+  "answer5": 22.321,
+  "quiz6": 25.094,
+  "answer6": 25.587
+ },
+ "levels": {
+  "answer1": "高校基礎",
+  "answer2": "高校基礎",
+  "answer3": "高校基礎",
+  "answer4": "中3",
+  "answer5": "高校基礎",
+  "answer6": "高校基礎"
+ }
+}

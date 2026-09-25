@@ -104,7 +104,7 @@ async function startRec(page, name) {
     // 画質は最高（100）。92 だと文字のふちに JPEG のにじみが出て、SNS で再圧縮されると目立った
     format: "jpeg", quality: 100, maxWidth: CSS_W * DPR, maxHeight: CSS_H * DPR, everyNthFrame: 1
   });
-  CUR = { cdp: cdp, frames: frames, dir: dir, name: name, events: [], count: {} };
+  CUR = { cdp: cdp, frames: frames, dir: dir, name: name, events: [], count: {}, levels: {} };
   return CUR;
 }
 
@@ -136,7 +136,7 @@ async function stopRec(rec) {
   // 出来事は動画の頭（最初のコマ）からの秒で書き出す
   var ev = {};
   rec.events.forEach(function (e) { ev[e.label] = +(e.wall - fr[0].t).toFixed(3); });
-  fs.writeFileSync(path.join(OUT, rec.name + ".json"), JSON.stringify({ length: +len.toFixed(3), events: ev }, null, 1));
+  fs.writeFileSync(path.join(OUT, rec.name + ".json"), JSON.stringify({ length: +len.toFixed(3), events: ev, levels: rec.levels }, null, 1));
   CUR = null;
   console.log("  " + rec.name.padEnd(10) + len.toFixed(1) + "秒  " + fr.length + "コマ  → " + path.relative(ROOT, out));
 }
@@ -276,6 +276,13 @@ async function answer(page, after, wrong) {
   });
   if (typeof idx === "string") throw new Error("正解が見つかりません: " + idx.split("\t").slice(1).join("  "));
   if (wrong) idx = (idx + 1) % 4;
+  // 何レベルの問題だったかを残す（「高校基礎の問題だけ使う」のように選べるように）
+  if (CUR) {
+    var lv = await page.evaluate(function () {
+      return ((document.getElementById("quiz-level-tag") || {}).textContent || "").replace(/\s*レベル\s*$/, "");
+    });
+    CUR.levels["answer" + ((CUR.count.answer || 0) + 1)] = lv;
+  }
   await page.keyboard.press(String(idx + 1));
 }
 

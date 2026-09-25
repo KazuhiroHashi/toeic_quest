@@ -1,0 +1,26 @@
+{
+ "length": 37.099,
+ "events": {
+  "cmd1": -0.026,
+  "quiz1": 3.39,
+  "answer1": 3.975,
+  "cmd2": 6.534,
+  "quiz2": 7.765,
+  "answer2": 8.341,
+  "cmd3": 16.256,
+  "quiz3": 21.451,
+  "answer3": 22.081,
+  "quiz4": 24.681,
+  "answer4": 25.332,
+  "cmd4": 27.985,
+  "quiz5": 30.494,
+  "answer5": 31.185
+ },
+ "levels": {
+  "answer1": "中3",
+  "answer2": "中3",
+  "answer3": "中3",
+  "answer4": "中3",
+  "answer5": "中3"
+ }
+}

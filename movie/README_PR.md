@@ -13,7 +13,8 @@ X にそのまま添付でき、App Store のプレビュー動画の規定（15
   main / toeic / student / hs / parent はバトルの場面だけで組み、字幕は家族制作のPR動画と同じ「大きなピンク字＋白フチ」を画面中央に出す。
   最後は白地（横じま）に金色の「単語帳を開くより、冒険しよう。」とロゴ。toeic・student・hs・parent も同じ作りで、曲と展開だけ変えてある。
   hs は高校3年の出題で録った実プレイ（`play/*_h3`）を使うので、画面に出る英単語が大学受験のもの。
-  student（中高生）と parent は、中学3年の出題（`play/*_j3`）と半分ずつ混ぜている。dev だけは前の作り（小さめの札の字幕）のまま
+  parent は、中学3年の出題（`play/*_j3`）と半分ずつ混ぜている。
+  student（中高生）は、問題の画面を中学（`play/*_j3`）と高校基礎（`play/*_h1` のうち「高校基礎」の問題）で半分ずつにしてある。dev だけは前の作り（小さめの札の字幕）のまま
 
 ## 6本
 
@@ -38,6 +39,7 @@ npm install playwright-core @fontsource/m-plus-rounded-1c --no-save
 node tools/record_play.js          # → movie/play/*.mp4 と、出来事の時刻 *.json
 REC_GRADE=j3 node tools/record_play.js battle boss b3 b4 dragon miss strategy   # 中学3年の出題で → *_j3
 REC_GRADE=h3 node tools/record_play.js battle boss b3 b4 dragon miss strategy   # 高校3年の出題で → *_h3
+REC_GRADE=h1 node tools/record_play.js battle boss b3 b4 dragon strategy        # 高校1年の出題で → *_h1
 
 # 2. BGM の拍を測る（曲を替えたときだけ）
 pip install librosa
@@ -71,7 +73,9 @@ ffmpeg は PATH に要る（無ければ `FFMPEG=/path/to/ffmpeg`）。
 { "src": "movie/src/op3.mp4", "at": 7.4, "beats": 4 }
 ```
 
-- 使える出来事の名前は `movie/play/<名前>.json` にある（`quiz1` `answer1` … `late1`）
+- 使える出来事の名前は `movie/play/<名前>.json` にある（`quiz1` `answer1` … `late1`）。
+  `levels` には、何問目が何レベルの問題だったか（`"answer2": "高校基礎"`）が入っている。
+  高校1年は中2・中3・高校基礎が混ざって出るので、高校基礎を見せたいカットはこれを見て選ぶ
 - `music.startBeat` で曲のどこから使うかを決める（小節の頭に自動でそろう）。
   選ぶときは打楽器の強さ（疾走感）を小節ごとに測って決める。battle4 は 38秒前後が一番落ち着く
   区間で、そこから始めると出だしがもたつく。main は一番勢いのある 8.4秒（21拍目）から使い、
