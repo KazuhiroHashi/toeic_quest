@@ -7,6 +7,10 @@
 //   node tools/record_play.js boss miss  # 名前を指定して一部だけ
 //   → movie/play/<名前>.mp4（1080×1920 / 30fps / 音なし）
 //
+//   REC_GRADE=j2 node tools/record_play.js battle b3   # 学生モード（中学2年）で録る
+//   → movie/play/battle_j2.mp4 …（名前の後ろに学年が付く。j1〜j3 / h1〜h3）
+//   中学生・高校生向けの動画で、画面に出る単語をその学年のものにするため
+//
 // 音は入らない（画面だけ）。BGM と効果音は tools/build_pr.js が後から乗せる。
 //
 // ── 録り方 ──────────────────────────────────────────
@@ -47,6 +51,7 @@ var FFMPEG = process.env.FFMPEG || "ffmpeg";
 
 var CSS_W = 402, CSS_H = 874, DPR = 3;   // iPhone 17
 var PORT = 8972;
+var GRADE = process.env.REC_GRADE || "";   // 空なら TOEIC モード
 
 var TYPES = {
   ".html": "text/html", ".js": "text/javascript", ".css": "text/css",
@@ -83,6 +88,7 @@ function mark(label) {
 
 // ---- 録画 ---------------------------------------------------------------
 async function startRec(page, name) {
+  if (GRADE) name += "_" + GRADE;
   var cdp = await page.context().newCDPSession(page);
   var dir = path.join(TMP, name);
   fs.rmSync(dir, { recursive: true, force: true });
@@ -255,15 +261,20 @@ async function answer(page, after, wrong) {
   var idx = await page.evaluate(function () {
     var w = (document.getElementById("quiz-word") || {}).textContent;
     var bs = [].slice.call(document.querySelectorAll("#quiz-choices .quiz-choice"))
-      .map(function (b) { return b.textContent.replace(/^\s*\d+\s*/, ""); });
+      .map(function (b) { return b.textContent.replace(/^\s*\d+\s*/, "").trim(); });
+    // 選択肢は innerHTML で入るので、意味も同じように文字だけにしてから比べる
+    var tmp = document.createElement("div");
+    function text(m) { tmp.innerHTML = m; return tmp.textContent.trim(); }
     var means = [];
-    Object.keys(window.VOCAB || {}).forEach(function (lv) {
-      window.VOCAB[lv].forEach(function (e) { if (e.w === w) means.push(e.m); });
+    [window.VOCAB, window.VOCAB_JHS, window.VOCAB_HS].forEach(function (V) {
+      Object.keys(V || {}).forEach(function (lv) {
+        (V[lv] || []).forEach(function (e) { if (e.w === w) means.push(text(e.m)); });
+      });
     });
     for (var i = 0; i < bs.length; i++) if (means.indexOf(bs[i]) >= 0) return i;
-    return -1;
+    return -1 + "\t" + w + "\t" + bs.join(" / ");
   });
-  if (idx < 0) throw new Error("正解が見つかりません");
+  if (typeof idx === "string") throw new Error("正解が見つかりません: " + idx.split("\t").slice(1).join("  "));
   if (wrong) idx = (idx + 1) % 4;
   await page.keyboard.press(String(idx + 1));
 }
@@ -479,11 +490,12 @@ function checkFont() {
       viewport: { width: CSS_W, height: CSS_H }, deviceScaleFactor: DPR, locale: "ja-JP"
     });
     ctxs.push(ctx);
-    await ctx.addInitScript(function () {
+    await ctx.addInitScript(function (g) {
       try {
-        localStorage.setItem("wq2_mode_v1", JSON.stringify({ mode: "toeic", grade: "j3", lock: null }));
+        localStorage.setItem("wq2_mode_v1", JSON.stringify(
+          g ? { mode: "student", grade: g, lock: null } : { mode: "toeic", grade: "j3", lock: null }));
       } catch (e) {}
-    });
+    }, GRADE);
     var page = await ctx.newPage();
     await page.goto("http://127.0.0.1:" + PORT + "/index.html", { waitUntil: "networkidle" });
     await page.mouse.click(CSS_W / 2, CSS_H / 2);     // 「タップして スタート」
