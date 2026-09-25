@@ -3,7 +3,12 @@
 #
 #   pip install librosa
 #   python3 tools/beat_grid.py boss field title   # assets/bgm/<名前>.mp3
+#   python3 tools/beat_grid.py battle2 --double   # 拍が半分の速さで取れる曲
 #   → movie/beats/<名前>.json
+#
+# --double は、拍と拍の間にもう1つ拍を足す。battle2 は実際は 1分に約167拍だが、
+# 解析では強い拍（1拍目と3拍目）だけが取れて 83拍になる。そのままだと
+# カットが間延びするので、倍にしてから小節の頭を探し直す。
 #
 # 中身は { tempo, beats: [秒...], down: [小節頭の拍の番号...], energy: [拍ごとの強さ] }。
 # tools/build_pr.js はこの表だけを見てカットの長さを決める（librosa は要らない）。
@@ -19,7 +24,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "movie", "beats")
 
 
-def grid(name, seconds=150):
+def grid(name, seconds=150, double=False):
     path = os.path.join(ROOT, "assets", "bgm", name + ".mp3")
     y, sr = librosa.load(path, sr=22050, mono=True, duration=seconds)
     # 打楽器成分だけでオンセットを取ると、メロディに引っぱられにくい
@@ -27,6 +32,10 @@ def grid(name, seconds=150):
     env = librosa.onset.onset_strength(y=perc, sr=sr, aggregate=np.median)
     tempo, frames = librosa.beat.beat_track(onset_envelope=env, sr=sr, tightness=120)
     beats = librosa.frames_to_time(frames, sr=sr)
+    if double:
+        mids = (beats[:-1] + beats[1:]) / 2
+        beats = np.sort(np.concatenate([beats, mids]))
+        tempo = np.atleast_1d(tempo)[0] * 2
 
     # 低音（〜150Hz）の立ち上がりで小節の頭を探す
     S = np.abs(librosa.stft(perc, n_fft=2048, hop_length=512))
@@ -54,6 +63,7 @@ def grid(name, seconds=150):
 
 
 if __name__ == "__main__":
-    names = sys.argv[1:] or ["boss"]
+    double = "--double" in sys.argv
+    names = [a for a in sys.argv[1:] if not a.startswith("--")] or ["boss"]
     for n in names:
-        grid(n)
+        grid(n, double=double)
