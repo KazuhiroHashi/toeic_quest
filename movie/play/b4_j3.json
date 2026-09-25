@@ -1,17 +1,28 @@
 {
- "length": 28.383,
+ "length": 27.926,
+ "size": [
+  1206,
+  2622
+ ],
  "events": {
-  "cmd1": 2.231,
-  "quiz1": 6.075,
-  "answer1": 6.544,
-  "quiz2": 9.764,
-  "answer2": 10.23,
-  "quiz3": 13.545,
-  "answer3": 14.033,
-  "quiz4": 17.372,
-  "answer4": 17.845,
-  "cmd2": 23.499,
-  "quiz5": 25.805,
-  "answer5": 26.282
+  "cmd1": 2.148,
+  "quiz1": 5.963,
+  "answer1": 6.425,
+  "quiz2": 9.595,
+  "answer2": 10.056,
+  "quiz3": 13.331,
+  "answer3": 13.798,
+  "quiz4": 17.069,
+  "answer4": 17.533,
+  "cmd2": 23.056,
+  "quiz5": 25.36,
+  "answer5": 25.821
+ },
+ "levels": {
+  "answer1": "中3",
+  "answer2": "中2",
+  "answer3": "中2",
+  "answer4": "中2",
+  "answer5": "中3"
  }
 }

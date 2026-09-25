@@ -1,24 +1,28 @@
 {
- "length": 31.348,
+ "length": 30.318,
+ "size": [
+  1206,
+  2622
+ ],
  "events": {
-  "cmd1": 2.308,
-  "quiz1": 6.39,
-  "answer1": 6.86,
-  "quiz2": 10.168,
-  "answer2": 10.65,
-  "quiz3": 14.03,
-  "answer3": 14.504,
-  "cmd2": 20.872,
-  "quiz4": 24.904,
-  "answer4": 25.373,
-  "quiz5": 28.675,
-  "answer5": 29.146
+  "cmd1": 2.298,
+  "quiz1": 6.114,
+  "answer1": 6.576,
+  "quiz2": 9.765,
+  "answer2": 10.226,
+  "quiz3": 13.496,
+  "answer3": 13.96,
+  "cmd2": 20.132,
+  "quiz4": 24.014,
+  "answer4": 24.476,
+  "quiz5": 27.655,
+  "answer5": 28.118
  },
  "levels": {
   "answer1": "高校基礎",
   "answer2": "中3",
   "answer3": "中3",
   "answer4": "中3",
-  "answer5": "高校基礎"
+  "answer5": "中3"
  }
 }

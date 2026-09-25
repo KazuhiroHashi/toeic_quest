@@ -1,12 +1,16 @@
 {
- "length": 9.492,
+ "length": 9.338,
+ "size": [
+  1206,
+  2622
+ ],
  "events": {
-  "cursor1": 0.468,
-  "magic1": 1.668,
-  "spells1": 2.639,
-  "pick1": 4.354,
-  "quiz1": 6.389,
-  "answer1": 6.883
+  "cursor1": 0.443,
+  "magic1": 1.633,
+  "spells1": 2.579,
+  "pick1": 4.276,
+  "quiz1": 6.256,
+  "answer1": 6.737
  },
  "levels": {
   "answer1": "高校基礎"
