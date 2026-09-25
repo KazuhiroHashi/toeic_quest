@@ -1,0 +1,93 @@
+--- a/party/js/prate.js	2026-09-25 15:54:32.023322797 +0000
++++ b/party/js/prate.js	2026-09-25 15:54:55.702447052 +0000
+@@ -31,6 +31,7 @@
+ 
+   // Google Play に登録したパッケージ名。iOS とは別（docs/PLAY_CONSOLE.md）
+   var PLAY_URL = "https://play.google.com/store/apps/details?id=com.bridgeai.wordria";
++  var APPSTORE_REVIEW_URL = "https://apps.apple.com/jp/app/id6805523364?action=write-review";
+ 
+   // ── 聞く条件 ───────────────────────────────────────────
+   // 1周目から聞く（本人の判断・2026-09-12）。
+@@ -75,25 +76,36 @@
+     ]).catch(function () {});
+   }
+ 
++  // 回数（一生で3回）と間隔（90日）の上限を見てから評価シートを出す。
++  // 制覇時と5戦目の勝利時で上限を共有する
++  function ask() {
++    if (!native()) return Promise.resolve();
++
++    var s = load();
++    if ((s.asks || 0) >= MAX_ASKS) return Promise.resolve();
++    if (s.last && Date.now() - s.last < COOLDOWN_MS) return Promise.resolve();
++
++    s.asks = (s.asks || 0) + 1;
++    s.last = Date.now();
++    save(s);   // 出す前に記録する。出たか分からない以上、
++               // 「出なかったから数えない」は無限に聞き続ける実装になる
++
++    return sheet();
++  }
++
+   window.WQ2_RATE = {
+     // 制覇の直後に呼ぶ。条件を満たさなければ、何もせずすぐ返る。
+     // 必ず解決する Promise を返すので、await して詰まることはない
+     maybeAsk: function (clears) {
+-      if (!native()) return Promise.resolve();
+       if (!(clears >= MIN_CLEARS)) return Promise.resolve();
+-
+-      var s = load();
+-      if ((s.asks || 0) >= MAX_ASKS) return Promise.resolve();
+-      if (s.last && Date.now() - s.last < COOLDOWN_MS) return Promise.resolve();
+-
+-      s.asks = (s.asks || 0) + 1;
+-      s.last = Date.now();
+-      save(s);   // 出す前に記録する。出たか分からない以上、
+-                 // 「出なかったから数えない」は無限に聞き続ける実装になる
+-
+-      return sheet();
++      return ask();
+     },
+ 
++    // 5戦目（古竜）に勝った直後に呼ぶ。
++    // 制覇まで届く人はごく一部で、そこでしか聞かないとレビューがほとんど
++    // 集まらない。古竜は1周の前半の山場で、勝った直後は気持ちが乗っている
++    maybeAskMidway: function () { return ask(); },
++
+     // タイトルの「評価する」ボタンから。こちらは本人が書きに来ているので、
+     // 回数制限も間隔もかけない。
+     //
+@@ -101,16 +113,15 @@
+     // 当たると黙って何も出さないので、押したのに無反応に見えてしまう。
+     // 自分から押した人には、確実に開くほうを見せる。
+     //
+-    // iOS は App Store の数字ID（apps.apple.com/app/id########）が要るが、
+-    // まだ採番されていない。判明したら
+-    //   https://apps.apple.com/jp/app/id########?action=write-review
+-    // に差し替えること。それまでは評価シートで代用する
++    // iOS も同じ理由で、App Store のレビューを書く画面を直接開く
++    //（ID 6805523364 が採番されたので、評価シートでの代用をやめた）
+     openStore: function () {
+       if (platform() === "android" || !native()) {
+         window.open(PLAY_URL, "_blank", "noopener");
+         return Promise.resolve();
+       }
+-      return sheet();
++      window.open(APPSTORE_REVIEW_URL, "_blank", "noopener");
++      return Promise.resolve();
+     }
+   };
+ })();
+--- a/party/js/pmain.js	2026-09-25 15:54:32.023358450 +0000
++++ b/party/js/pmain.js	2026-09-25 15:54:55.703302737 +0000
+@@ -514,6 +514,10 @@
+           var m = window.PBATTLE.addMember(join.id, window.PBATTLE.getParty()[0].lv);
+           if (m) { m.bag = ["herb", "elixir"]; for (var s = 0; s < join.scene.length; s++) await gsay(join.scene[s]); }
+         }
++        // 5戦目（古竜）に勝ち、仲間が加わる場面を見終えたところで評価をお願いする。
++        // 6戦目の前には全画面広告があるが、間に開始カード（Ａボタン）を挟むので、
++        // 評価シートと広告が続けて出ることはない
++        if (i === 4 && window.WQ2_RATE && WQ2_RATE.maybeAskMidway) await WQ2_RATE.maybeAskMidway();
+       } else {
+         if (window.BGM) BGM.playAny(["ending", "title"]); // victory epilogue music
+         // ending scene: clear the fallen boss and switch to a bright, hopeful backdrop
