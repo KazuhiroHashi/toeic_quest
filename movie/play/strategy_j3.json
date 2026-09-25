@@ -1,11 +1,18 @@
 {
- "length": 9.411,
+ "length": 9.688,
+ "size": [
+  1206,
+  2622
+ ],
  "events": {
-  "cursor1": 0.469,
-  "magic1": 1.666,
-  "spells1": 2.613,
-  "pick1": 4.327,
-  "quiz1": 6.315,
-  "answer1": 6.81
+  "cursor1": 0.477,
+  "magic1": 1.699,
+  "spells1": 2.662,
+  "pick1": 4.398,
+  "quiz1": 6.604,
+  "answer1": 7.088
+ },
+ "levels": {
+  "answer1": "中3"
  }
 }

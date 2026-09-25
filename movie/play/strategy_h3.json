@@ -1,11 +1,18 @@
 {
- "length": 9.413,
+ "length": 9.501,
+ "size": [
+  1206,
+  2622
+ ],
  "events": {
-  "cursor1": 0.474,
-  "magic1": 1.667,
-  "spells1": 2.616,
-  "pick1": 4.331,
-  "quiz1": 6.319,
-  "answer1": 6.812
+  "cursor1": 0.455,
+  "magic1": 1.674,
+  "spells1": 2.619,
+  "pick1": 4.364,
+  "quiz1": 6.419,
+  "answer1": 6.9
+ },
+ "levels": {
+  "answer1": "難関大"
  }
 }
