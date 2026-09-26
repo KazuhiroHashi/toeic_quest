@@ -340,10 +340,10 @@
       ]
     },
     "dev": {
-      "title": "AI界隈向け（どのAIを掛け合わせて作ったか・バトルとOP映像・大きなピンク字幕・白地のロゴで締める）",
+      "title": "AI界隈向け（全編AIで作成・使ったAIとバージョン・バトルとOP映像・大きなピンク字幕・白地のロゴで締める）",
       "music": {
-        "track": "arena3",
-        "startBeat": 224
+        "track": "king1",
+        "startBeat": 95
       },
       "theme": {
         "bg1": "#1b1650",
@@ -374,34 +374,27 @@
         "slamSfx": []
       },
       "cuts": [
-        {"src": "movie/src/op3.mp4", "at": 1.5, "beats": 8, "drift": 0.06, "sfx": [["magic_holy", 0, 0.4]], "cap": ["WORDRIAは", "AIの掛け合わせで誕生！"], "capBeats": 8, "capPop": 0.35, "capSize": 92},
-        {"src": "play/boss", "beats": 2, "at": 0.8, "pulse": 0.022, "sfx": [["boss", 0, 0.45]], "cap": ["キャラ・敵・背景は", "ChatGPTの画像生成"], "capBeats": 8, "capPop": 0.35, "capSize": 94, "flash": true},
-        {"src": "play/dragon", "beats": 2, "at": 1.1, "pulse": 0.022, "sfx": [["encounter", 0, 0.4]]},
+        {"src": "movie/src/op3.mp4", "at": 1.5, "beats": 4, "drift": 0.06, "sfx": [["magic_holy", 0, 0.4]], "cap": ["このゲームは", "全編AIで作成"], "capBeats": 8, "capPop": 0.35},
+        {"src": "play/boss", "beats": 4, "at": 0.8, "pulse": 0.03, "sfx": [["boss", 0, 0.45]]},
+        {"src": "play/strategy", "beats": 4, "sync": {"event": "pick1", "beat": 4}, "zoom": 1.1, "focus": [0.5, 0.72], "capSize": 84, "sfx": [["cursor", 1, 0.4], ["cursor", 2, 0.4], ["cursor", 3, 0.4]], "cap": ["設計・プログラム", "Claude Code Fable5"], "capBeats": 8, "capPop": 0.35, "flash": true},
+        {"src": "play/strategy", "beats": 2, "at": "answer1", "shift": 0.7, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.55]]},
+        {"src": "play/battle", "beats": 2, "sync": {"event": "answer1", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]]},
+        {"src": "play/dragon", "beats": 2, "at": 1.1, "pulse": 0.022, "sfx": [["encounter", 0, 0.4]], "cap": ["キャラ・敵・背景", "GPT-image 2.0"], "capBeats": 8, "capPop": 0.35, "flash": true},
         {"src": "play/b3", "beats": 2, "at": 2.3, "pulse": 0.022},
         {"src": "play/battle", "beats": 2, "at": 1.0, "pulse": 0.022},
-        {"src": "play/battle", "beats": 2, "sync": {"event": "answer1", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]], "cap": ["BGMは", "Sunoで作曲"], "capBeats": 8, "capPop": 0.35, "flash": true},
-        {"src": "play/battle", "beats": 2, "at": "answer1", "shift": 0.7, "fx": ["punch", "shake"], "sfx": [["slash", 0, 0.5]]},
-        {"src": "play/b4", "beats": 2, "sync": {"event": "answer2", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]]},
-        {"src": "play/b4", "beats": 2, "at": "answer2", "shift": 0.7, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.55]]},
-        {"src": "play/dragon", "beats": 1, "at": "answer3", "shift": 0.75, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.5]], "cap": ["効果音は", "ElevenLabsで生成"], "capBeats": 8, "capPop": 0.35, "capSize": 94, "flash": true},
+        {"src": "play/b4", "beats": 2, "at": 2.5, "pulse": 0.022},
+        {"src": "play/boss", "beats": 2, "sync": {"event": "answer2", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]], "cap": ["BGM", "Suno v5.5 / v6"], "capBeats": 8, "capPop": 0.35, "flash": true},
+        {"src": "play/boss", "beats": 2, "at": "answer2", "shift": 0.75, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.55]]},
+        {"src": "play/dragon", "beats": 2, "sync": {"event": "answer2", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]]},
+        {"src": "play/dragon", "beats": 2, "at": "answer2", "shift": 0.75, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.55]]},
+        {"src": "movie/src/op1.mp4", "at": 0.5, "beats": 4, "drift": 0.06, "cap": ["映像", "Seedance 2.5"], "capBeats": 8, "capPop": 0.35, "flash": true},
+        {"src": "movie/src/ed2.mp4", "at": 4.5, "beats": 4, "drift": 0.06},
+        {"src": "play/dragon", "beats": 1, "at": "answer3", "shift": 0.75, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.5]], "cap": ["AIの掛け合わせで", "ここまで作れる！"], "capBeats": 8, "capPop": 0.35, "flash": true},
         {"src": "play/b4", "beats": 1, "at": "answer3", "shift": 0.7, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.5]]},
         {"src": "play/boss", "beats": 1, "at": "answer4", "shift": 0.75, "fx": ["punch", "shake"], "sfx": [["slash", 0, 0.5]]},
         {"src": "play/dragon", "beats": 1, "at": "answer4", "shift": 0.75, "fx": ["punch", "shake"], "sfx": [["magic_fire", 0, 0.5]]},
-        {"src": "play/b3", "beats": 1, "at": "answer4", "shift": 0.7, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.5]]},
-        {"src": "play/boss", "beats": 1, "at": "answer5", "shift": 0.75, "fx": ["punch", "shake"], "sfx": [["magic_thunder", 0, 0.5]]},
-        {"src": "play/dragon", "beats": 1, "at": "answer6", "shift": 0.75, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.5]]},
-        {"src": "play/battle", "beats": 1, "at": "answer4", "shift": 0.7, "fx": ["punch", "shake"], "sfx": [["magic_ice", 0, 0.5]]},
-        {"src": "play/dragon", "beats": 4, "sync": {"event": "quiz1", "beat": 1}, "zoom": 1.16, "focus": [0.5, 0.28], "sfx": [["cursor", 1, 0.3], ["voice/appealing", 1, 1.4]], "cap": ["英単語の読み上げは", "音声AI Kokoro"], "capBeats": 8, "capPop": 0.35, "flash": true},
-        {"src": "play/b4", "beats": 4, "sync": {"event": "quiz1", "beat": 1}, "zoom": 1.16, "focus": [0.5, 0.28], "sfx": [["cursor", 1, 0.3], ["voice/itinerary", 1, 1.4]]},
-        {"src": "movie/src/op1.mp4", "at": 0.5, "beats": 4, "drift": 0.06, "cap": ["オープニング映像は", "Seedanceで生成"], "capBeats": 8, "capPop": 0.35, "flash": true},
-        {"src": "movie/src/ed2.mp4", "at": 4.5, "beats": 4, "drift": 0.06},
-        {"src": "play/strategy", "beats": 4, "sync": {"event": "pick1", "beat": 4}, "zoom": 1.1, "focus": [0.5, 0.72], "capSize": 92, "sfx": [["cursor", 1, 0.4], ["cursor", 2, 0.4], ["cursor", 3, 0.4]], "cap": ["設計とプログラムは", "Claude Code"], "capBeats": 8, "capPop": 0.35, "flash": true},
-        {"src": "play/strategy", "beats": 2, "at": "answer1", "shift": 0.7, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.55]]},
-        {"src": "play/boss", "beats": 2, "sync": {"event": "answer3", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]]},
-        {"src": "play/dragon", "beats": 2, "at": "answer5", "shift": 0.12, "zoom": 1.16, "focus": [0.5, 0.42], "pulse": 0.022, "sfx": [["ok", 0, 0.4]], "cap": ["AIを掛け合わせて", "個人で開発！"], "capBeats": 8, "capPop": 0.35, "flash": true},
-        {"src": "play/b4", "beats": 2, "at": "answer4", "shift": 0.12, "zoom": 1.16, "focus": [0.5, 0.42], "pulse": 0.022, "sfx": [["ok", 0, 0.4]]},
-        {"src": "play/boss", "beats": 2, "at": "answer6", "shift": 0.12, "zoom": 1.16, "focus": [0.5, 0.42], "pulse": 0.022, "sfx": [["ok", 0, 0.4]]},
-        {"src": "play/b3", "beats": 2, "at": "answer5", "shift": 0.12, "zoom": 1.16, "focus": [0.5, 0.42], "pulse": 0.022, "sfx": [["ok", 0, 0.4]]}
+        {"src": "play/dragon", "beats": 2, "at": "answer5", "shift": 0.12, "zoom": 1.16, "focus": [0.5, 0.42], "pulse": 0.022, "sfx": [["ok", 0, 0.4]]},
+        {"src": "play/boss", "beats": 2, "at": "answer6", "shift": 0.12, "zoom": 1.16, "focus": [0.5, 0.42], "pulse": 0.022, "sfx": [["ok", 0, 0.4]]}
       ]
     }
   }
