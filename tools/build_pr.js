@@ -87,6 +87,8 @@ function source(src) {
 }
 
 const warned = new Set();
+// 効果音の名前 → ファイル。"voice/itinerary" のように書くと、ゲームの英単語の読み上げ（assets/voice）を鳴らす
+const sfxFile = nm => (nm.includes("/") ? `assets/${nm}.mp3` : `assets/sfx/${nm}.mp3`);
 
 // ---- 1カット -------------------------------------------------------------
 // dur 秒ぶんを、ちょうど frames コマで書き出す（拍の位置とコマをずらさない）
@@ -461,7 +463,7 @@ async function buildReel(name, cfg, defaults) {
   const mix = ["[am]"];
   plan.forEach((p, i) => (p.c.sfx || []).forEach((sx, j) => {
     const [nm, beat, vol] = sx;
-    inputs.push("-i", need(`assets/sfx/${nm}.mp3`, "効果音"));
+    inputs.push("-i", need(sfxFile(nm), "効果音"));
     const si = idx();
     const ms = Math.round((p.t0 + (beat || 0) * beatLen) * 1000);
     fc += `[${si}:a]adelay=${ms}|${ms},volume=${vol == null ? 0.5 : vol},` +
@@ -472,7 +474,7 @@ async function buildReel(name, cfg, defaults) {
     // ロゴの締め：エンドカードの頭でロゴが叩きつけられ、slamBeat 拍目の頭で音楽を切る
     [["crit", ep.t0, 0.6]].concat((ec.slamSfx || [["magic_holy", 0.55]]).map(([nm, vol]) => [nm, slamT, vol]))
       .forEach(([nm, at, vol], j) => {
-        inputs.push("-i", need(`assets/sfx/${nm}.mp3`, "効果音"));
+        inputs.push("-i", need(sfxFile(nm), "効果音"));
         const si = idx();
         const ms = Math.round(at * 1000);
         fc += `[${si}:a]adelay=${ms}|${ms},volume=${vol},aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo[g${j}];`;
@@ -484,7 +486,7 @@ async function buildReel(name, cfg, defaults) {
     word.letters.forEach((L, i) => hits.push([ec.letterSfx || "hit", ep.t0 + i * (ec.every || 1) * beatLen, 0.32]));
     (ec.slamSfx || [["crit", 0.75], ["magic_holy", 0.5]]).forEach(([nm, vol]) => hits.push([nm, slamT, vol]));
     hits.forEach(([nm, at, vol], j) => {
-      inputs.push("-i", need(`assets/sfx/${nm}.mp3`, "効果音"));
+      inputs.push("-i", need(sfxFile(nm), "効果音"));
       const si = idx();
       const ms = Math.round(at * 1000);
       fc += `[${si}:a]adelay=${ms}|${ms},volume=${vol},` +
