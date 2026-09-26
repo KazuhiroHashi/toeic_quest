@@ -25,9 +25,9 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FF = os.environ.get("FFMPEG", "ffmpeg")
 
 QUIZ = [
-    ("itinerary",   "b4",        1, "TOEIC®500点レベル", "旅程表"),
+    ("inspection",  "boss",      4, "TOEIC®500点レベル", "検査"),      # itinerary は 500点には難しかった
     ("turnout",     "dragon",    5, "TOEIC®600点レベル", "参加者数"),
-    ("apologize",   "dragon_j3", 1, "中学レベル",         "謝る"),
+    ("fair",        "dragon_j3", 4, "中学レベル",         "公平な"),    # apologize は中学には難しかった
     ("unusual",     "b4_j3",     1, "中学レベル",         "珍しい"),
     ("anxious",     "boss_h1",   2, "高校基礎レベル",     "心配して"),
     ("generous",    "boss_h1",   6, "高校基礎レベル",     "寛大な"),

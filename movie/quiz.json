@@ -23,9 +23,9 @@
   }
  },
  "reels": {
-  "q_itinerary": {
-   "title": "英単語クイズ：itinerary（TOEIC®500点レベル）",
-   "out": "movie/out/quiz/Q_01_itinerary.mp4",
+  "q_inspection": {
+   "title": "英単語クイズ：inspection（TOEIC®500点レベル）",
+   "out": "movie/out/quiz/Q_01_inspection.mp4",
    "music": {
     "track": "arena4",
     "startBeat": 21
@@ -65,9 +65,9 @@
    },
    "cuts": [
     {
-     "src": "play/b4",
+     "src": "play/boss",
      "beats": 2,
-     "at": "quiz1",
+     "at": "quiz4",
      "shift": -0.05,
      "speed": 0.35,
      "zoom": 1.0,
@@ -81,7 +81,7 @@
        0.35
       ],
       [
-       "voice/itinerary",
+       "voice/inspection",
        0,
        1.5
       ]
@@ -96,7 +96,7 @@
      "capSize": 92
     },
     {
-     "src": "movie/tmp/quiz/itinerary.png",
+     "src": "movie/tmp/quiz/inspection.png",
      "beats": 3,
      "zoom": 1.0,
      "drift": 0.0,
@@ -119,7 +119,7 @@
      "capSize": 240
     },
     {
-     "src": "movie/tmp/quiz/itinerary.png",
+     "src": "movie/tmp/quiz/inspection.png",
      "beats": 3,
      "zoom": 1.0,
      "drift": 0.0,
@@ -142,7 +142,7 @@
      "capSize": 240
     },
     {
-     "src": "movie/tmp/quiz/itinerary.png",
+     "src": "movie/tmp/quiz/inspection.png",
      "beats": 3,
      "zoom": 1.0,
      "drift": 0.0,
@@ -165,10 +165,10 @@
      "capSize": 240
     },
     {
-     "src": "play/b4",
+     "src": "play/boss",
      "beats": 4,
      "sync": {
-      "event": "answer1",
+      "event": "answer4",
       "beat": 1
      },
      "zoom": 1.0,
@@ -186,7 +186,7 @@
      ],
      "cap": [
       "正解は",
-      "「旅程表」"
+      "「検査」"
      ],
      "capIn": 1,
      "capBeats": 7,
@@ -194,10 +194,10 @@
      "capY": 250
     },
     {
-     "src": "play/b4",
+     "src": "play/boss",
      "beats": 3,
-     "at": "answer1",
-     "shift": 0.7,
+     "at": "answer4",
+     "shift": 0.75,
      "fx": [
       "punch",
       "shake"
@@ -401,9 +401,9 @@
     }
    ]
   },
-  "q_apologize": {
-   "title": "英単語クイズ：apologize（中学レベル）",
-   "out": "movie/out/quiz/Q_03_apologize.mp4",
+  "q_fair": {
+   "title": "英単語クイズ：fair（中学レベル）",
+   "out": "movie/out/quiz/Q_03_fair.mp4",
    "music": {
     "track": "arena4",
     "startBeat": 21
@@ -445,7 +445,7 @@
     {
      "src": "play/dragon_j3",
      "beats": 2,
-     "at": "quiz1",
+     "at": "quiz4",
      "shift": -0.05,
      "speed": 0.35,
      "zoom": 1.0,
@@ -459,7 +459,7 @@
        0.35
       ],
       [
-       "voice/apologize",
+       "voice/fair",
        0,
        1.5
       ]
@@ -474,7 +474,7 @@
      "capSize": 92
     },
     {
-     "src": "movie/tmp/quiz/apologize.png",
+     "src": "movie/tmp/quiz/fair.png",
      "beats": 3,
      "zoom": 1.0,
      "drift": 0.0,
@@ -497,7 +497,7 @@
      "capSize": 240
     },
     {
-     "src": "movie/tmp/quiz/apologize.png",
+     "src": "movie/tmp/quiz/fair.png",
      "beats": 3,
      "zoom": 1.0,
      "drift": 0.0,
@@ -520,7 +520,7 @@
      "capSize": 240
     },
     {
-     "src": "movie/tmp/quiz/apologize.png",
+     "src": "movie/tmp/quiz/fair.png",
      "beats": 3,
      "zoom": 1.0,
      "drift": 0.0,
@@ -546,7 +546,7 @@
      "src": "play/dragon_j3",
      "beats": 4,
      "sync": {
-      "event": "answer1",
+      "event": "answer4",
       "beat": 1
      },
      "zoom": 1.0,
@@ -564,7 +564,7 @@
      ],
      "cap": [
       "正解は",
-      "「謝る」"
+      "「公平な」"
      ],
      "capIn": 1,
      "capBeats": 7,
@@ -574,7 +574,7 @@
     {
      "src": "play/dragon_j3",
      "beats": 3,
-     "at": "answer1",
+     "at": "answer4",
      "shift": 0.75,
      "fx": [
       "punch",
