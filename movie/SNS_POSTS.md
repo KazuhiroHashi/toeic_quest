@@ -69,15 +69,12 @@ WORDRIAは、遊ぶほど英単語を覚えるRPG。
 ## AI紹介（PR_dev.mp4）
 
 ```
-このゲーム、全編AIで作りました🤖
+TOEIC®950点を持つ私が「英語を楽しく学べるゲームを作りたい」と思い、全編AIで作った英単語RPG「WORDRIA」。
 
 設計・プログラム：Claude Code Fable5
 キャラ・敵・背景：GPT-image 2.0
 BGM：Suno v5.5 / v6
 映像：Seedance 2.5
 
-AIの掛け合わせで、ここまで作れる。
-英単語RPG「WORDRIA」
-
-#生成AI #ClaudeCode #Suno #WORDRIA
+#AI #ゲーム制作 #英語学習 #TOEIC
 ```
