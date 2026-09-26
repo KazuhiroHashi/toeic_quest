@@ -129,3 +129,15 @@ ffmpeg は PATH に要る（無ければ `FFMPEG=/path/to/ffmpeg`）。
 - dev は、まだ記録なし（0/500語）の単語帳を使ったまま。
   直すときは `play/wordbook` を使えば、記録入りの画面に変わる
 - 配信が始まったら、`endcard.text` に「App Store / Google Play で配信中」を足せる
+
+## 英単語クイズ動画（SNS 用・1本 約10秒）
+
+```bash
+python3 tools/make_quiz.py          # movie/quiz.json を書いて8本ぜんぶ → movie/out/quiz/
+python3 tools/make_quiz.py turnout  # 1本だけ
+```
+
+問題が出る（読み上げ音声つき）→ 答える直前の画面で止めて 3・2・1 → 「正解は〇〇」→ 攻撃 → ロゴ。
+録画のプレイヤーは 0.46秒で答えてしまうので、答える直前のコマを静止画にして数える。
+単語を足すときは `tools/make_quiz.py` の `QUIZ` に1行足す。投稿文は `movie/QUIZ_POSTS.md`。
+組み立ては `build_pr.js` をそのまま使い、設定ファイルだけ `PR_CFG=movie/quiz.json` で差し替えている。

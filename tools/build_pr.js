@@ -33,7 +33,8 @@ const crypto = require("crypto");
 const { execFileSync } = require("child_process");
 
 const ROOT = path.resolve(__dirname, "..");
-const CFG = path.join(ROOT, "movie", "pr.json");
+// PR_CFG=movie/quiz.json のように、別の設定ファイルでも組み立てられる（クイズ動画など）
+const CFG = process.env.PR_CFG ? path.resolve(ROOT, process.env.PR_CFG) : path.join(ROOT, "movie", "pr.json");
 const TMP = path.join(ROOT, "movie", "tmp", "pr");
 const FFMPEG = process.env.FFMPEG || "ffmpeg";
 const EXE = process.env.CHROMIUM || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
