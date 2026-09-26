@@ -4,7 +4,8 @@
 #   python3 tools/make_quiz.py          # movie/quiz.json を書いて、全部組み立てる
 #   python3 tools/make_quiz.py turnout  # 1本だけ
 #   python3 tools/make_quiz.py --images # X に貼る問題の画像だけ（tools/quiz_image.js）
-#   → movie/out/quiz/Q_<番号>_<単語>.mp4 と、問題の画像 Q_<番号>_<単語>.png（答えは載せない）
+#   → movie/out/quiz/Q_<番号>_<単語>.mp4 と、問題の画像 Q_<番号>_<単語>.png（答えは載せない）、
+#     答えの画像 Q_<番号>_<単語>_answer.png（正解の選択肢が光った画面）
 #
 # 流れ（曲は arena4、1拍 約0.4秒）
 #   1. 問題が出る（2拍）……… ゲームの読み上げ音声で単語を読む。上に「〇〇レベル／3秒で答えられる？」
@@ -38,12 +39,13 @@ QUIZ = [
 HOOK_Y, COUNT_Y = 250, 1760   # 上の字幕（問題の枠より上）と、数字（十字キーのあたり）
 
 
-def still(clip, n, word):
-    """答える直前（0.08秒前）のコマを、劣化なしの録画から PNG で抜く"""
+def still(clip, n, word, after=-0.08, tag=""):
+    """劣化なしの録画から1コマを PNG で抜く。
+    after=-0.08 … 答える直前（問題）。after=0.4 … 答えた直後（正解の選択肢が光り、「単語 = 意味」が出ている）"""
     ev = json.load(open(os.path.join(ROOT, "movie/play", clip + ".json")))["events"]
-    out = os.path.join(ROOT, "movie/tmp/quiz", word + ".png")
+    out = os.path.join(ROOT, "movie/tmp/quiz", word + tag + ".png")
     os.makedirs(os.path.dirname(out), exist_ok=True)
-    subprocess.run([FF, "-hide_banner", "-loglevel", "error", "-y", "-ss", "%.3f" % (ev["answer%d" % n] - 0.08),
+    subprocess.run([FF, "-hide_banner", "-loglevel", "error", "-y", "-ss", "%.3f" % (ev["answer%d" % n] + after),
                     "-i", os.path.join(ROOT, "movie/play", clip + ".mkv"), "-frames:v", "1", out], check=True)
     return os.path.relpath(out, ROOT)
 
@@ -85,8 +87,11 @@ def main():
             continue
         if not images_only:
             reels["q_" + q[0]] = reel(i, *q, pr)
-        words.append({"word": q[0], "level": q[3], "still": still(q[1], q[2], q[0]),
-                      "out": "movie/out/quiz/Q_%02d_%s.png" % (i + 1, q[0])})
+        words.append({"word": q[0], "level": q[3], "meaning": q[4],
+                      "still": still(q[1], q[2], q[0]),
+                      "out": "movie/out/quiz/Q_%02d_%s.png" % (i + 1, q[0]),
+                      "answer_still": still(q[1], q[2], q[0], after=0.4, tag="_answer"),
+                      "answer_out": "movie/out/quiz/Q_%02d_%s_answer.png" % (i + 1, q[0])})
     os.makedirs(os.path.join(ROOT, "movie/out/quiz"), exist_ok=True)
     if reels:
         cfg = {"defaults": pr["defaults"], "reels": reels}
@@ -94,7 +99,7 @@ def main():
             json.dump(cfg, f, ensure_ascii=False, indent=1)
         env = dict(os.environ, PR_CFG="movie/quiz.json")
         subprocess.run(["node", os.path.join(ROOT, "tools/build_pr.js")], env=env, check=True)
-    # X に貼る問題の画像
+    # X に貼る問題の画像と、答えの画像
     with open(os.path.join(ROOT, "movie/tmp/quiz/words.json"), "w") as f:
         json.dump(words, f, ensure_ascii=False)
     subprocess.run(["node", os.path.join(ROOT, "tools/quiz_image.js")], check=True)
