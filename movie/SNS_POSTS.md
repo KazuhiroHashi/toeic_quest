@@ -68,7 +68,7 @@ WORDRIAは、遊ぶほど英単語を覚えるRPG。
 
 ## AI紹介（PR_dev.mp4）・採用版（2026-09-26）
 
-X の数え方で 513（280 を超えるので X Premium で1つの投稿にする）。
+X の数え方で 517（280 を超えるので X Premium で1つの投稿にする）。
 
 ```
 TOEIC®950点保有者が「英語を楽しく学べるゲームを作りたい」と思い、全編AIで作った英単語RPG「WORDRIA」
@@ -83,9 +83,9 @@ BGM：Suno v5.5 / v6
 AIでゲームを作ってみたい方、参考に遊んでみてください。
 熱中できるゲーム性にもこだわっています！
 
-iPhoneは App Storeにて基本無料で公開中！
+iPhoneには App Storeにて基本無料で公開中！
 https://apps.apple.com/jp/app/id6805523364
-（androidは近日公開予定）
+（Android版は近日公開予定）
 
 #AI #ゲーム制作 #英語学習 #TOEIC
 ```
