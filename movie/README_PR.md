@@ -140,4 +140,5 @@ python3 tools/make_quiz.py turnout  # 1本だけ
 問題が出る（読み上げ音声つき）→ 答える直前の画面で止めて 3・2・1 → 「正解は〇〇」→ 攻撃 → ロゴ。
 録画のプレイヤーは 0.46秒で答えてしまうので、答える直前のコマを静止画にして数える。
 単語を足すときは `tools/make_quiz.py` の `QUIZ` に1行足す。投稿文は `movie/QUIZ_POSTS.md`。
+X に画像だけで出す用に、答えを載せない問題の画像（1080×1350・4:5）も `Q_番号_単語.png` で作る（`tools/quiz_image.js`。`--images` を付けると画像だけ）。
 組み立ては `build_pr.js` をそのまま使い、設定ファイルだけ `PR_CFG=movie/quiz.json` で差し替えている。

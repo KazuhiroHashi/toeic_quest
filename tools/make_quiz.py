@@ -3,7 +3,8 @@
 #
 #   python3 tools/make_quiz.py          # movie/quiz.json を書いて、全部組み立てる
 #   python3 tools/make_quiz.py turnout  # 1本だけ
-#   → movie/out/quiz/Q_<番号>_<単語>.mp4
+#   python3 tools/make_quiz.py --images # X に貼る問題の画像だけ（tools/quiz_image.js）
+#   → movie/out/quiz/Q_<番号>_<単語>.mp4 と、問題の画像 Q_<番号>_<単語>.png（答えは載せない）
 #
 # 流れ（曲は arena4、1拍 約0.4秒）
 #   1. 問題が出る（2拍）……… ゲームの読み上げ音声で単語を読む。上に「〇〇レベル／3秒で答えられる？」
@@ -76,17 +77,27 @@ def reel(i, word, clip, n, level, meaning, pr):
 
 def main():
     pr = json.load(open(os.path.join(ROOT, "movie/pr.json")))
-    want = sys.argv[1:]
-    reels = {}
+    images_only = "--images" in sys.argv
+    want = [a for a in sys.argv[1:] if not a.startswith("--")]
+    reels, words = {}, []
     for i, q in enumerate(QUIZ):
         if want and q[0] not in want:
             continue
-        reels["q_" + q[0]] = reel(i, *q, pr)
-    cfg = {"defaults": pr["defaults"], "reels": reels}
-    with open(os.path.join(ROOT, "movie/quiz.json"), "w") as f:
-        json.dump(cfg, f, ensure_ascii=False, indent=1)
-    env = dict(os.environ, PR_CFG="movie/quiz.json")
-    subprocess.run(["node", os.path.join(ROOT, "tools/build_pr.js")], env=env, check=True)
+        if not images_only:
+            reels["q_" + q[0]] = reel(i, *q, pr)
+        words.append({"word": q[0], "level": q[3], "still": still(q[1], q[2], q[0]),
+                      "out": "movie/out/quiz/Q_%02d_%s.png" % (i + 1, q[0])})
+    os.makedirs(os.path.join(ROOT, "movie/out/quiz"), exist_ok=True)
+    if reels:
+        cfg = {"defaults": pr["defaults"], "reels": reels}
+        with open(os.path.join(ROOT, "movie/quiz.json"), "w") as f:
+            json.dump(cfg, f, ensure_ascii=False, indent=1)
+        env = dict(os.environ, PR_CFG="movie/quiz.json")
+        subprocess.run(["node", os.path.join(ROOT, "tools/build_pr.js")], env=env, check=True)
+    # X に貼る問題の画像
+    with open(os.path.join(ROOT, "movie/tmp/quiz/words.json"), "w") as f:
+        json.dump(words, f, ensure_ascii=False)
+    subprocess.run(["node", os.path.join(ROOT, "tools/quiz_image.js")], check=True)
 
 
 if __name__ == "__main__":
