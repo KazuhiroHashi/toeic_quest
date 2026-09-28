@@ -4,6 +4,7 @@
 #   python3 tools/make_quiz.py          # movie/quiz.json を書いて、全部組み立てる
 #   python3 tools/make_quiz.py turnout  # 1本だけ
 #   python3 tools/make_quiz.py --images # X に貼る問題の画像だけ（tools/quiz_image.js）
+#   python3 tools/make_quiz.py --hard   # 難問セット（HARD）→ movie/out/quiz/H_<番号>_<単語>.*
 #   → movie/out/quiz/Q_<番号>_<単語>.mp4 と、問題の画像 Q_<番号>_<単語>.png（答えは載せない）、
 #     答えの画像 Q_<番号>_<単語>_answer.png（正解の選択肢が光った画面）
 #
@@ -36,6 +37,20 @@ QUIZ = [
     ("obscure",     "dragon_h3", 2, "難関大レベル",       "不明瞭な"),
 ]
 
+# 難問セット。ゲームに実際にある難しい単語だけ（TOEIC 800・900点は、出題レベルを固定して録った
+# battle_l800 / battle_l900 から。難関大は高校3年の録画から）。上の2行目は「この難問、わかる？」
+HARD = [
+    ("upheaval",     "b3_h3",   2, "難関大レベル", "激変"),
+    ("jurisdiction", "b4_h3",   3, "難関大レベル", "管轄権"),
+    ("elaborate",    "boss_h3", 1, "難関大レベル", "精巧な"),
+    ("underlying",   "boss_h3", 6, "難関大レベル", "根底にある"),
+]
+
+SETS = {  # 名前: (単語の一覧, ファイル名の頭, 設定ファイル, 上の2行目)
+    "normal": ("QUIZ", "Q", "movie/quiz.json", "3秒で答えられる？"),
+    "hard":   ("HARD", "H", "movie/quiz_hard.json", "この難問、わかる？"),
+}
+
 HOOK_Y, COUNT_Y = 250, 1760   # 上の字幕（問題の枠より上）と、数字（十字キーのあたり）
 
 
@@ -50,14 +65,14 @@ def still(clip, n, word, after=-0.08, tag=""):
     return os.path.relpath(out, ROOT)
 
 
-def reel(i, word, clip, n, level, meaning, pr):
+def reel(i, word, clip, n, level, meaning, pr, prefix="Q", hook="3秒で答えられる？"):
     png = still(clip, n, word)
     calm = {"zoom": 1.0, "drift": 0.0, "fx": [], "flash": False}
     cuts = [
         # 1 問題が出る（0.35倍。答える前で切れる）
         dict(src="play/" + clip, beats=2, at="quiz%d" % n, shift=-0.05, speed=0.35, **calm,
              sfx=[["cursor", 0, 0.35], ["voice/" + word, 0, 1.5]],
-             cap=[level, "3秒で答えられる？"], capBeats=11, capPop=0.35, capY=HOOK_Y, capSize=92),
+             cap=[level, hook], capBeats=11, capPop=0.35, capY=HOOK_Y, capSize=92),
         # 2 3・2・1
         *[dict(src=png, beats=3, **calm, pulse=0.012, sfx=[["cursor", 0, 0.5]],
                cap=[str(k)], capBeats=3, capPop=0.5, capY=COUNT_Y, capSize=240) for k in (3, 2, 1)],
@@ -72,7 +87,7 @@ def reel(i, word, clip, n, level, meaning, pr):
     theme = dict(pr["reels"]["main"]["theme"])
     end = dict(pr["reels"]["main"]["endcard"], beats=6, slamBeat=6)
     return {"title": "英単語クイズ：%s（%s）" % (word, level),
-            "out": "movie/out/quiz/Q_%02d_%s.mp4" % (i + 1, word),
+            "out": "movie/out/quiz/%s_%02d_%s.mp4" % (prefix, i + 1, word),
             "music": {"track": "arena4", "startBeat": 21},
             "theme": theme, "endcard": end, "cuts": cuts}
 
@@ -80,24 +95,26 @@ def reel(i, word, clip, n, level, meaning, pr):
 def main():
     pr = json.load(open(os.path.join(ROOT, "movie/pr.json")))
     images_only = "--images" in sys.argv
+    lst, prefix, cfg_path, hook = SETS["hard" if "--hard" in sys.argv else "normal"]
+    lst = globals()[lst]
     want = [a for a in sys.argv[1:] if not a.startswith("--")]
     reels, words = {}, []
-    for i, q in enumerate(QUIZ):
+    for i, q in enumerate(lst):
         if want and q[0] not in want:
             continue
         if not images_only:
-            reels["q_" + q[0]] = reel(i, *q, pr)
-        words.append({"word": q[0], "level": q[3], "meaning": q[4],
-                      "still": still(q[1], q[2], q[0]),
-                      "out": "movie/out/quiz/Q_%02d_%s.png" % (i + 1, q[0]),
+            reels["%s_%s" % (prefix.lower(), q[0])] = reel(i, *q, pr, prefix=prefix, hook=hook)
+        name = "movie/out/quiz/%s_%02d_%s" % (prefix, i + 1, q[0])
+        words.append({"word": q[0], "level": q[3], "meaning": q[4], "hook": hook,
+                      "still": still(q[1], q[2], q[0]), "out": name + ".png",
                       "answer_still": still(q[1], q[2], q[0], after=0.4, tag="_answer"),
-                      "answer_out": "movie/out/quiz/Q_%02d_%s_answer.png" % (i + 1, q[0])})
+                      "answer_out": name + "_answer.png"})
     os.makedirs(os.path.join(ROOT, "movie/out/quiz"), exist_ok=True)
     if reels:
         cfg = {"defaults": pr["defaults"], "reels": reels}
-        with open(os.path.join(ROOT, "movie/quiz.json"), "w") as f:
+        with open(os.path.join(ROOT, cfg_path), "w") as f:
             json.dump(cfg, f, ensure_ascii=False, indent=1)
-        env = dict(os.environ, PR_CFG="movie/quiz.json")
+        env = dict(os.environ, PR_CFG=cfg_path)
         subprocess.run(["node", os.path.join(ROOT, "tools/build_pr.js")], env=env, check=True)
     # X に貼る問題の画像と、答えの画像
     with open(os.path.join(ROOT, "movie/tmp/quiz/words.json"), "w") as f:

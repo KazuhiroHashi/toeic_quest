@@ -37,7 +37,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
   const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
   const jobs = [];
   for (const q of words) {
-    jobs.push({ still: q.still, out: q.out, chip: q.level, big: "3秒で答えられる？", logo: "bottom" });
+    jobs.push({ still: q.still, out: q.out, chip: q.level, big: q.hook || "3秒で答えられる？", logo: "bottom" });
     if (q.answer_still) // 答えた後はゲームの枠が上にずれ、下の「単語 = 意味」がロゴと重なるので、ロゴは左上に置く
     if (q.answer_still) jobs.push({ still: q.answer_still, out: q.answer_out, chip: q.level, big: `正解は「${q.meaning}」`, logo: "top" });
   }

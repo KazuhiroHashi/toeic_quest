@@ -8,6 +8,9 @@
 //   → movie/play/<名前>.mkv（1206×2622 / 30fps / 音なし / 劣化なし）＋ 出来事の表 <名前>.json
 //
 //   REC_GRADE=j2 node tools/record_play.js battle b3   # 学生モード（中学2年）で録る
+//   REC_LOCK=900 node tools/record_play.js battle      # 出題レベルを固定して録る（→ battle_l900）
+//     ゲームのプレミアム機能「出題レベルの固定」をそのまま使う（録画のときだけプレミアム扱いにする）。
+//     終盤でしか出ない TOEIC 800・900点の単語を、SNS のクイズ用に録るため
 //   → movie/play/battle_j2.mkv …（名前の後ろに学年が付く。j1〜j3 / h1〜h3）
 //   中学生・高校生向けの動画で、画面に出る単語をその学年のものにするため
 //
@@ -65,6 +68,7 @@ var CSS_W = 402, CSS_H = 874, DPR = 3;   // iPhone 17
 var RATE = +(process.env.REC_RATE || 0.1);  // ゲームを何倍の速さで動かして録るか（上の「画質」を参照）
 var PORT = 8972;
 var GRADE = process.env.REC_GRADE || "";   // 空なら TOEIC モード
+var LOCK = process.env.REC_LOCK || "";     // 出題レベルの固定（TOEIC は "800" など、学生は "lv3" など）
 
 var TYPES = {
   ".html": "text/html", ".js": "text/javascript", ".css": "text/css",
@@ -109,6 +113,7 @@ function mark(label) {
 // ---- 録画 ---------------------------------------------------------------
 async function startRec(page, name) {
   if (GRADE) name += "_" + GRADE;
+  if (LOCK) name += "_l" + LOCK;
   var cdp = await page.context().newCDPSession(page);
   var dir = path.join(TMP, name);
   fs.rmSync(dir, { recursive: true, force: true });
@@ -544,12 +549,20 @@ function checkFont() {
       window.setInterval = function (f, d) { var a = [].slice.call(arguments, 2); return si.apply(window, [f, (d || 0) / R].concat(a)); };
       window.requestAnimationFrame = function (cb) { return raf(function (t) { cb(p0 + (t - p0) * R); }); };
     }, RATE);
-    await ctx.addInitScript(function (g) {
+    await ctx.addInitScript(function (a) {
+      var g = a[0], lock = a[1] || null;
       try {
         localStorage.setItem("wq2_mode_v1", JSON.stringify(
-          g ? { mode: "student", grade: g, lock: null } : { mode: "toeic", grade: "j3", lock: null }));
+          g ? { mode: "student", grade: g, lock: lock } : { mode: "toeic", grade: "j3", lock: lock }));
       } catch (e) {}
-    }, GRADE);
+      // 出題レベルの固定はプレミアムでだけ効くので、録画のときはプレミアム扱いにする
+      if (lock) {
+        var store;
+        Object.defineProperty(window, "WQ2_STORE", { configurable: true,
+          get: function () { return store; },
+          set: function (v) { if (v) v.isPremium = function () { return true; }; store = v; } });
+      }
+    }, [GRADE, LOCK]);
     var page = await ctx.newPage();
     var cdp = await ctx.newCDPSession(page);
     // 画面の大きさは iPhone 17（402×874）。倍率は Chrome の本物の3倍をそのまま使う
