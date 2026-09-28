@@ -1,0 +1,1917 @@
+{
+ "defaults": {
+  "theme": {
+   "bg1": "#1b1650",
+   "bg2": "#4b2391",
+   "edge": "#FFD24A",
+   "accent": "#FFD24A"
+  },
+  "endcard": {
+   "logo": "assets/ui/logo.png",
+   "catch": "単語帳を開くより、冒険しよう。",
+   "beats": 8,
+   "scale": 0.8,
+   "y": 0.42,
+   "shot": {
+    "src": "movie/src/op1.mp4",
+    "at": 2.4,
+    "dim": 0.42,
+    "drift": 0.06
+   },
+   "note": "※「TOEIC」はETSの登録商標です。本アプリはETSおよびTOEICプログラムとは一切関係ありません。",
+   "capY": 1575
+  }
+ },
+ "reels": {
+  "h_mundane": {
+   "title": "英単語クイズ：mundane（TOEIC®900点レベル）",
+   "out": "movie/out/quiz/H_01_mundane.mp4",
+   "music": {
+    "track": "arena4",
+    "startBeat": 21
+   },
+   "theme": {
+    "bg1": "#1b1650",
+    "bg2": "#4b2391",
+    "edge": "#FFD24A",
+    "accent": "#FFD24A",
+    "capStyle": "big",
+    "capSize": 104,
+    "fill": "#ff2fa6",
+    "lineStep": 1,
+    "catchStyle": "gold"
+   },
+   "endcard": {
+    "catch": "単語帳を開くより、冒険しよう。",
+    "text": null,
+    "beats": 6,
+    "slamBeat": 6,
+    "catchBeat": 0,
+    "noteBeat": 2,
+    "hold": 0.3,
+    "scale": 0.84,
+    "y": 0.5,
+    "catchY": 0.33,
+    "capY": 985,
+    "shot": {
+     "src": "color:#fbfbfd",
+     "stripes": 28,
+     "drift": 0.0,
+     "fx": []
+    },
+    "cutAfter": 0.18,
+    "cutFade": 0.06,
+    "slamSfx": []
+   },
+   "cuts": [
+    {
+     "src": "play/battle_l900",
+     "beats": 2,
+     "at": "quiz3",
+     "shift": -0.05,
+     "speed": 0.35,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.35
+      ],
+      [
+       "voice/mundane",
+       0,
+       1.5
+      ]
+     ],
+     "cap": [
+      "TOEIC®900点レベル",
+      "この難問、わかる？"
+     ],
+     "capBeats": 11,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "movie/tmp/quiz/mundane.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "3"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "movie/tmp/quiz/mundane.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "2"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "movie/tmp/quiz/mundane.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "1"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "play/battle_l900",
+     "beats": 4,
+     "sync": {
+      "event": "answer3",
+      "beat": 1
+     },
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [
+      "punch"
+     ],
+     "flash": true,
+     "sfx": [
+      [
+       "ok",
+       1,
+       0.6
+      ]
+     ],
+     "cap": [
+      "正解は",
+      "「ありふれた」"
+     ],
+     "capIn": 1,
+     "capBeats": 7,
+     "capPop": 0.35,
+     "capY": 250
+    },
+    {
+     "src": "play/battle_l900",
+     "beats": 3,
+     "at": "answer3",
+     "shift": 0.7,
+     "fx": [
+      "punch",
+      "shake"
+     ],
+     "sfx": [
+      [
+       "crit",
+       0,
+       0.55
+      ]
+     ]
+    }
+   ]
+  },
+  "h_upheaval": {
+   "title": "英単語クイズ：upheaval（難関大レベル）",
+   "out": "movie/out/quiz/H_02_upheaval.mp4",
+   "music": {
+    "track": "arena4",
+    "startBeat": 21
+   },
+   "theme": {
+    "bg1": "#1b1650",
+    "bg2": "#4b2391",
+    "edge": "#FFD24A",
+    "accent": "#FFD24A",
+    "capStyle": "big",
+    "capSize": 104,
+    "fill": "#ff2fa6",
+    "lineStep": 1,
+    "catchStyle": "gold"
+   },
+   "endcard": {
+    "catch": "単語帳を開くより、冒険しよう。",
+    "text": null,
+    "beats": 6,
+    "slamBeat": 6,
+    "catchBeat": 0,
+    "noteBeat": 2,
+    "hold": 0.3,
+    "scale": 0.84,
+    "y": 0.5,
+    "catchY": 0.33,
+    "capY": 985,
+    "shot": {
+     "src": "color:#fbfbfd",
+     "stripes": 28,
+     "drift": 0.0,
+     "fx": []
+    },
+    "cutAfter": 0.18,
+    "cutFade": 0.06,
+    "slamSfx": []
+   },
+   "cuts": [
+    {
+     "src": "play/b3_h3",
+     "beats": 2,
+     "at": "quiz2",
+     "shift": -0.05,
+     "speed": 0.35,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.35
+      ],
+      [
+       "voice/upheaval",
+       0,
+       1.5
+      ]
+     ],
+     "cap": [
+      "難関大レベル",
+      "この難問、わかる？"
+     ],
+     "capBeats": 11,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "movie/tmp/quiz/upheaval.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "3"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "movie/tmp/quiz/upheaval.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "2"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "movie/tmp/quiz/upheaval.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "1"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "play/b3_h3",
+     "beats": 4,
+     "sync": {
+      "event": "answer2",
+      "beat": 1
+     },
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [
+      "punch"
+     ],
+     "flash": true,
+     "sfx": [
+      [
+       "ok",
+       1,
+       0.6
+      ]
+     ],
+     "cap": [
+      "正解は",
+      "「激変」"
+     ],
+     "capIn": 1,
+     "capBeats": 7,
+     "capPop": 0.35,
+     "capY": 250
+    },
+    {
+     "src": "play/b3_h3",
+     "beats": 3,
+     "at": "answer2",
+     "shift": 0.7,
+     "fx": [
+      "punch",
+      "shake"
+     ],
+     "sfx": [
+      [
+       "crit",
+       0,
+       0.55
+      ]
+     ]
+    }
+   ]
+  },
+  "h_earmark-funds": {
+   "title": "英単語クイズ：earmark funds（TOEIC®800点レベル）",
+   "out": "movie/out/quiz/H_03_earmark-funds.mp4",
+   "music": {
+    "track": "arena4",
+    "startBeat": 21
+   },
+   "theme": {
+    "bg1": "#1b1650",
+    "bg2": "#4b2391",
+    "edge": "#FFD24A",
+    "accent": "#FFD24A",
+    "capStyle": "big",
+    "capSize": 104,
+    "fill": "#ff2fa6",
+    "lineStep": 1,
+    "catchStyle": "gold"
+   },
+   "endcard": {
+    "catch": "単語帳を開くより、冒険しよう。",
+    "text": null,
+    "beats": 6,
+    "slamBeat": 6,
+    "catchBeat": 0,
+    "noteBeat": 2,
+    "hold": 0.3,
+    "scale": 0.84,
+    "y": 0.5,
+    "catchY": 0.33,
+    "capY": 985,
+    "shot": {
+     "src": "color:#fbfbfd",
+     "stripes": 28,
+     "drift": 0.0,
+     "fx": []
+    },
+    "cutAfter": 0.18,
+    "cutFade": 0.06,
+    "slamSfx": []
+   },
+   "cuts": [
+    {
+     "src": "play/battle_l800",
+     "beats": 2,
+     "at": "quiz1",
+     "shift": -0.05,
+     "speed": 0.35,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.35
+      ],
+      [
+       "voice/earmark-funds",
+       0,
+       1.5
+      ]
+     ],
+     "cap": [
+      "TOEIC®800点レベル",
+      "この難問、わかる？"
+     ],
+     "capBeats": 11,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "movie/tmp/quiz/earmark-funds.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "3"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "movie/tmp/quiz/earmark-funds.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "2"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "movie/tmp/quiz/earmark-funds.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "1"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "play/battle_l800",
+     "beats": 4,
+     "sync": {
+      "event": "answer1",
+      "beat": 1
+     },
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [
+      "punch"
+     ],
+     "flash": true,
+     "sfx": [
+      [
+       "ok",
+       1,
+       0.6
+      ]
+     ],
+     "cap": [
+      "正解は",
+      "「資金を割り当てる」"
+     ],
+     "capIn": 1,
+     "capBeats": 7,
+     "capPop": 0.35,
+     "capY": 250
+    },
+    {
+     "src": "play/battle_l800",
+     "beats": 3,
+     "at": "answer1",
+     "shift": 0.7,
+     "fx": [
+      "punch",
+      "shake"
+     ],
+     "sfx": [
+      [
+       "crit",
+       0,
+       0.55
+      ]
+     ]
+    }
+   ]
+  },
+  "h_jurisdiction": {
+   "title": "英単語クイズ：jurisdiction（難関大レベル）",
+   "out": "movie/out/quiz/H_04_jurisdiction.mp4",
+   "music": {
+    "track": "arena4",
+    "startBeat": 21
+   },
+   "theme": {
+    "bg1": "#1b1650",
+    "bg2": "#4b2391",
+    "edge": "#FFD24A",
+    "accent": "#FFD24A",
+    "capStyle": "big",
+    "capSize": 104,
+    "fill": "#ff2fa6",
+    "lineStep": 1,
+    "catchStyle": "gold"
+   },
+   "endcard": {
+    "catch": "単語帳を開くより、冒険しよう。",
+    "text": null,
+    "beats": 6,
+    "slamBeat": 6,
+    "catchBeat": 0,
+    "noteBeat": 2,
+    "hold": 0.3,
+    "scale": 0.84,
+    "y": 0.5,
+    "catchY": 0.33,
+    "capY": 985,
+    "shot": {
+     "src": "color:#fbfbfd",
+     "stripes": 28,
+     "drift": 0.0,
+     "fx": []
+    },
+    "cutAfter": 0.18,
+    "cutFade": 0.06,
+    "slamSfx": []
+   },
+   "cuts": [
+    {
+     "src": "play/b4_h3",
+     "beats": 2,
+     "at": "quiz3",
+     "shift": -0.05,
+     "speed": 0.35,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.35
+      ],
+      [
+       "voice/jurisdiction",
+       0,
+       1.5
+      ]
+     ],
+     "cap": [
+      "難関大レベル",
+      "この難問、わかる？"
+     ],
+     "capBeats": 11,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "movie/tmp/quiz/jurisdiction.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "3"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "movie/tmp/quiz/jurisdiction.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "2"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "movie/tmp/quiz/jurisdiction.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "1"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "play/b4_h3",
+     "beats": 4,
+     "sync": {
+      "event": "answer3",
+      "beat": 1
+     },
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [
+      "punch"
+     ],
+     "flash": true,
+     "sfx": [
+      [
+       "ok",
+       1,
+       0.6
+      ]
+     ],
+     "cap": [
+      "正解は",
+      "「管轄権」"
+     ],
+     "capIn": 1,
+     "capBeats": 7,
+     "capPop": 0.35,
+     "capY": 250
+    },
+    {
+     "src": "play/b4_h3",
+     "beats": 3,
+     "at": "answer3",
+     "shift": 0.7,
+     "fx": [
+      "punch",
+      "shake"
+     ],
+     "sfx": [
+      [
+       "crit",
+       0,
+       0.55
+      ]
+     ]
+    }
+   ]
+  },
+  "h_foregoing": {
+   "title": "英単語クイズ：foregoing（TOEIC®900点レベル）",
+   "out": "movie/out/quiz/H_05_foregoing.mp4",
+   "music": {
+    "track": "arena4",
+    "startBeat": 21
+   },
+   "theme": {
+    "bg1": "#1b1650",
+    "bg2": "#4b2391",
+    "edge": "#FFD24A",
+    "accent": "#FFD24A",
+    "capStyle": "big",
+    "capSize": 104,
+    "fill": "#ff2fa6",
+    "lineStep": 1,
+    "catchStyle": "gold"
+   },
+   "endcard": {
+    "catch": "単語帳を開くより、冒険しよう。",
+    "text": null,
+    "beats": 6,
+    "slamBeat": 6,
+    "catchBeat": 0,
+    "noteBeat": 2,
+    "hold": 0.3,
+    "scale": 0.84,
+    "y": 0.5,
+    "catchY": 0.33,
+    "capY": 985,
+    "shot": {
+     "src": "color:#fbfbfd",
+     "stripes": 28,
+     "drift": 0.0,
+     "fx": []
+    },
+    "cutAfter": 0.18,
+    "cutFade": 0.06,
+    "slamSfx": []
+   },
+   "cuts": [
+    {
+     "src": "play/battle_l900",
+     "beats": 2,
+     "at": "quiz4",
+     "shift": -0.05,
+     "speed": 0.35,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.35
+      ],
+      [
+       "voice/foregoing",
+       0,
+       1.5
+      ]
+     ],
+     "cap": [
+      "TOEIC®900点レベル",
+      "この難問、わかる？"
+     ],
+     "capBeats": 11,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "movie/tmp/quiz/foregoing.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "3"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "movie/tmp/quiz/foregoing.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "2"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "movie/tmp/quiz/foregoing.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "1"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "play/battle_l900",
+     "beats": 4,
+     "sync": {
+      "event": "answer4",
+      "beat": 1
+     },
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [
+      "punch"
+     ],
+     "flash": true,
+     "sfx": [
+      [
+       "ok",
+       1,
+       0.6
+      ]
+     ],
+     "cap": [
+      "正解は",
+      "「上記の」"
+     ],
+     "capIn": 1,
+     "capBeats": 7,
+     "capPop": 0.35,
+     "capY": 250
+    },
+    {
+     "src": "play/battle_l900",
+     "beats": 3,
+     "at": "answer4",
+     "shift": 0.7,
+     "fx": [
+      "punch",
+      "shake"
+     ],
+     "sfx": [
+      [
+       "crit",
+       0,
+       0.55
+      ]
+     ]
+    }
+   ]
+  },
+  "h_underlying": {
+   "title": "英単語クイズ：underlying（難関大レベル）",
+   "out": "movie/out/quiz/H_06_underlying.mp4",
+   "music": {
+    "track": "arena4",
+    "startBeat": 21
+   },
+   "theme": {
+    "bg1": "#1b1650",
+    "bg2": "#4b2391",
+    "edge": "#FFD24A",
+    "accent": "#FFD24A",
+    "capStyle": "big",
+    "capSize": 104,
+    "fill": "#ff2fa6",
+    "lineStep": 1,
+    "catchStyle": "gold"
+   },
+   "endcard": {
+    "catch": "単語帳を開くより、冒険しよう。",
+    "text": null,
+    "beats": 6,
+    "slamBeat": 6,
+    "catchBeat": 0,
+    "noteBeat": 2,
+    "hold": 0.3,
+    "scale": 0.84,
+    "y": 0.5,
+    "catchY": 0.33,
+    "capY": 985,
+    "shot": {
+     "src": "color:#fbfbfd",
+     "stripes": 28,
+     "drift": 0.0,
+     "fx": []
+    },
+    "cutAfter": 0.18,
+    "cutFade": 0.06,
+    "slamSfx": []
+   },
+   "cuts": [
+    {
+     "src": "play/boss_h3",
+     "beats": 2,
+     "at": "quiz6",
+     "shift": -0.05,
+     "speed": 0.35,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.35
+      ],
+      [
+       "voice/underlying",
+       0,
+       1.5
+      ]
+     ],
+     "cap": [
+      "難関大レベル",
+      "この難問、わかる？"
+     ],
+     "capBeats": 11,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "movie/tmp/quiz/underlying.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "3"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "movie/tmp/quiz/underlying.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "2"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "movie/tmp/quiz/underlying.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "1"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "play/boss_h3",
+     "beats": 4,
+     "sync": {
+      "event": "answer6",
+      "beat": 1
+     },
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [
+      "punch"
+     ],
+     "flash": true,
+     "sfx": [
+      [
+       "ok",
+       1,
+       0.6
+      ]
+     ],
+     "cap": [
+      "正解は",
+      "「根底にある」"
+     ],
+     "capIn": 1,
+     "capBeats": 7,
+     "capPop": 0.35,
+     "capY": 250
+    },
+    {
+     "src": "play/boss_h3",
+     "beats": 3,
+     "at": "answer6",
+     "shift": 0.75,
+     "fx": [
+      "punch",
+      "shake"
+     ],
+     "sfx": [
+      [
+       "crit",
+       0,
+       0.55
+      ]
+     ]
+    }
+   ]
+  },
+  "h_arbitrator": {
+   "title": "英単語クイズ：arbitrator（TOEIC®800点レベル）",
+   "out": "movie/out/quiz/H_07_arbitrator.mp4",
+   "music": {
+    "track": "arena4",
+    "startBeat": 21
+   },
+   "theme": {
+    "bg1": "#1b1650",
+    "bg2": "#4b2391",
+    "edge": "#FFD24A",
+    "accent": "#FFD24A",
+    "capStyle": "big",
+    "capSize": 104,
+    "fill": "#ff2fa6",
+    "lineStep": 1,
+    "catchStyle": "gold"
+   },
+   "endcard": {
+    "catch": "単語帳を開くより、冒険しよう。",
+    "text": null,
+    "beats": 6,
+    "slamBeat": 6,
+    "catchBeat": 0,
+    "noteBeat": 2,
+    "hold": 0.3,
+    "scale": 0.84,
+    "y": 0.5,
+    "catchY": 0.33,
+    "capY": 985,
+    "shot": {
+     "src": "color:#fbfbfd",
+     "stripes": 28,
+     "drift": 0.0,
+     "fx": []
+    },
+    "cutAfter": 0.18,
+    "cutFade": 0.06,
+    "slamSfx": []
+   },
+   "cuts": [
+    {
+     "src": "play/battle_l800",
+     "beats": 2,
+     "at": "quiz3",
+     "shift": -0.05,
+     "speed": 0.35,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.35
+      ],
+      [
+       "voice/arbitrator",
+       0,
+       1.5
+      ]
+     ],
+     "cap": [
+      "TOEIC®800点レベル",
+      "この難問、わかる？"
+     ],
+     "capBeats": 11,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "movie/tmp/quiz/arbitrator.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "3"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "movie/tmp/quiz/arbitrator.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "2"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "movie/tmp/quiz/arbitrator.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "1"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "play/battle_l800",
+     "beats": 4,
+     "sync": {
+      "event": "answer3",
+      "beat": 1
+     },
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [
+      "punch"
+     ],
+     "flash": true,
+     "sfx": [
+      [
+       "ok",
+       1,
+       0.6
+      ]
+     ],
+     "cap": [
+      "正解は",
+      "「仲裁人」"
+     ],
+     "capIn": 1,
+     "capBeats": 7,
+     "capPop": 0.35,
+     "capY": 250
+    },
+    {
+     "src": "play/battle_l800",
+     "beats": 3,
+     "at": "answer3",
+     "shift": 0.7,
+     "fx": [
+      "punch",
+      "shake"
+     ],
+     "sfx": [
+      [
+       "crit",
+       0,
+       0.55
+      ]
+     ]
+    }
+   ]
+  },
+  "h_elaborate": {
+   "title": "英単語クイズ：elaborate（難関大レベル）",
+   "out": "movie/out/quiz/H_08_elaborate.mp4",
+   "music": {
+    "track": "arena4",
+    "startBeat": 21
+   },
+   "theme": {
+    "bg1": "#1b1650",
+    "bg2": "#4b2391",
+    "edge": "#FFD24A",
+    "accent": "#FFD24A",
+    "capStyle": "big",
+    "capSize": 104,
+    "fill": "#ff2fa6",
+    "lineStep": 1,
+    "catchStyle": "gold"
+   },
+   "endcard": {
+    "catch": "単語帳を開くより、冒険しよう。",
+    "text": null,
+    "beats": 6,
+    "slamBeat": 6,
+    "catchBeat": 0,
+    "noteBeat": 2,
+    "hold": 0.3,
+    "scale": 0.84,
+    "y": 0.5,
+    "catchY": 0.33,
+    "capY": 985,
+    "shot": {
+     "src": "color:#fbfbfd",
+     "stripes": 28,
+     "drift": 0.0,
+     "fx": []
+    },
+    "cutAfter": 0.18,
+    "cutFade": 0.06,
+    "slamSfx": []
+   },
+   "cuts": [
+    {
+     "src": "play/boss_h3",
+     "beats": 2,
+     "at": "quiz1",
+     "shift": -0.05,
+     "speed": 0.35,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.35
+      ],
+      [
+       "voice/elaborate",
+       0,
+       1.5
+      ]
+     ],
+     "cap": [
+      "難関大レベル",
+      "この難問、わかる？"
+     ],
+     "capBeats": 11,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "movie/tmp/quiz/elaborate.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "3"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "movie/tmp/quiz/elaborate.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "2"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "movie/tmp/quiz/elaborate.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "1"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "play/boss_h3",
+     "beats": 4,
+     "sync": {
+      "event": "answer1",
+      "beat": 1
+     },
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [
+      "punch"
+     ],
+     "flash": true,
+     "sfx": [
+      [
+       "ok",
+       1,
+       0.6
+      ]
+     ],
+     "cap": [
+      "正解は",
+      "「精巧な」"
+     ],
+     "capIn": 1,
+     "capBeats": 7,
+     "capPop": 0.35,
+     "capY": 250
+    },
+    {
+     "src": "play/boss_h3",
+     "beats": 3,
+     "at": "answer1",
+     "shift": 0.75,
+     "fx": [
+      "punch",
+      "shake"
+     ],
+     "sfx": [
+      [
+       "crit",
+       0,
+       0.55
+      ]
+     ]
+    }
+   ]
+  },
+  "h_commence": {
+   "title": "英単語クイズ：commence（TOEIC®900点レベル）",
+   "out": "movie/out/quiz/H_09_commence.mp4",
+   "music": {
+    "track": "arena4",
+    "startBeat": 21
+   },
+   "theme": {
+    "bg1": "#1b1650",
+    "bg2": "#4b2391",
+    "edge": "#FFD24A",
+    "accent": "#FFD24A",
+    "capStyle": "big",
+    "capSize": 104,
+    "fill": "#ff2fa6",
+    "lineStep": 1,
+    "catchStyle": "gold"
+   },
+   "endcard": {
+    "catch": "単語帳を開くより、冒険しよう。",
+    "text": null,
+    "beats": 6,
+    "slamBeat": 6,
+    "catchBeat": 0,
+    "noteBeat": 2,
+    "hold": 0.3,
+    "scale": 0.84,
+    "y": 0.5,
+    "catchY": 0.33,
+    "capY": 985,
+    "shot": {
+     "src": "color:#fbfbfd",
+     "stripes": 28,
+     "drift": 0.0,
+     "fx": []
+    },
+    "cutAfter": 0.18,
+    "cutFade": 0.06,
+    "slamSfx": []
+   },
+   "cuts": [
+    {
+     "src": "play/battle_l900",
+     "beats": 2,
+     "at": "quiz2",
+     "shift": -0.05,
+     "speed": 0.35,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.35
+      ],
+      [
+       "voice/commence",
+       0,
+       1.5
+      ]
+     ],
+     "cap": [
+      "TOEIC®900点レベル",
+      "この難問、わかる？"
+     ],
+     "capBeats": 11,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "movie/tmp/quiz/commence.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "3"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "movie/tmp/quiz/commence.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "2"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "movie/tmp/quiz/commence.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "1"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "play/battle_l900",
+     "beats": 4,
+     "sync": {
+      "event": "answer2",
+      "beat": 1
+     },
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [
+      "punch"
+     ],
+     "flash": true,
+     "sfx": [
+      [
+       "ok",
+       1,
+       0.6
+      ]
+     ],
+     "cap": [
+      "正解は",
+      "「開始する」"
+     ],
+     "capIn": 1,
+     "capBeats": 7,
+     "capPop": 0.35,
+     "capY": 250
+    },
+    {
+     "src": "play/battle_l900",
+     "beats": 3,
+     "at": "answer2",
+     "shift": 0.7,
+     "fx": [
+      "punch",
+      "shake"
+     ],
+     "sfx": [
+      [
+       "crit",
+       0,
+       0.55
+      ]
+     ]
+    }
+   ]
+  },
+  "h_counterfeit": {
+   "title": "英単語クイズ：counterfeit（TOEIC®800点レベル）",
+   "out": "movie/out/quiz/H_10_counterfeit.mp4",
+   "music": {
+    "track": "arena4",
+    "startBeat": 21
+   },
+   "theme": {
+    "bg1": "#1b1650",
+    "bg2": "#4b2391",
+    "edge": "#FFD24A",
+    "accent": "#FFD24A",
+    "capStyle": "big",
+    "capSize": 104,
+    "fill": "#ff2fa6",
+    "lineStep": 1,
+    "catchStyle": "gold"
+   },
+   "endcard": {
+    "catch": "単語帳を開くより、冒険しよう。",
+    "text": null,
+    "beats": 6,
+    "slamBeat": 6,
+    "catchBeat": 0,
+    "noteBeat": 2,
+    "hold": 0.3,
+    "scale": 0.84,
+    "y": 0.5,
+    "catchY": 0.33,
+    "capY": 985,
+    "shot": {
+     "src": "color:#fbfbfd",
+     "stripes": 28,
+     "drift": 0.0,
+     "fx": []
+    },
+    "cutAfter": 0.18,
+    "cutFade": 0.06,
+    "slamSfx": []
+   },
+   "cuts": [
+    {
+     "src": "play/battle_l800",
+     "beats": 2,
+     "at": "quiz5",
+     "shift": -0.05,
+     "speed": 0.35,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.35
+      ],
+      [
+       "voice/counterfeit",
+       0,
+       1.5
+      ]
+     ],
+     "cap": [
+      "TOEIC®800点レベル",
+      "この難問、わかる？"
+     ],
+     "capBeats": 11,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "movie/tmp/quiz/counterfeit.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "3"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "movie/tmp/quiz/counterfeit.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "2"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "movie/tmp/quiz/counterfeit.png",
+     "beats": 3,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "flash": false,
+     "pulse": 0.012,
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.5
+      ]
+     ],
+     "cap": [
+      "1"
+     ],
+     "capBeats": 3,
+     "capPop": 0.5,
+     "capY": 1760,
+     "capSize": 240
+    },
+    {
+     "src": "play/battle_l800",
+     "beats": 4,
+     "sync": {
+      "event": "answer5",
+      "beat": 1
+     },
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [
+      "punch"
+     ],
+     "flash": true,
+     "sfx": [
+      [
+       "ok",
+       1,
+       0.6
+      ]
+     ],
+     "cap": [
+      "正解は",
+      "「偽造の」"
+     ],
+     "capIn": 1,
+     "capBeats": 7,
+     "capPop": 0.35,
+     "capY": 250
+    },
+    {
+     "src": "play/battle_l800",
+     "beats": 3,
+     "at": "answer5",
+     "shift": 0.7,
+     "fx": [
+      "punch",
+      "shake"
+     ],
+     "sfx": [
+      [
+       "crit",
+       0,
+       0.55
+      ]
+     ]
+    }
+   ]
+  }
+ }
+}

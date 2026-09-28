@@ -39,11 +39,18 @@ QUIZ = [
 
 # 難問セット。ゲームに実際にある難しい単語だけ（TOEIC 800・900点は、出題レベルを固定して録った
 # battle_l800 / battle_l900 から。難関大は高校3年の録画から）。上の2行目は「この難問、わかる？」
+# ignore は難関大に入っているが簡単すぎるので使わない
 HARD = [
-    ("upheaval",     "b3_h3",   2, "難関大レベル", "激変"),
-    ("jurisdiction", "b4_h3",   3, "難関大レベル", "管轄権"),
-    ("elaborate",    "boss_h3", 1, "難関大レベル", "精巧な"),
-    ("underlying",   "boss_h3", 6, "難関大レベル", "根底にある"),
+    ("mundane",       "battle_l900", 3, "TOEIC®900点レベル", "ありふれた"),
+    ("upheaval",      "b3_h3",       2, "難関大レベル",       "激変"),
+    ("earmark funds", "battle_l800", 1, "TOEIC®800点レベル", "資金を割り当てる"),
+    ("jurisdiction",  "b4_h3",       3, "難関大レベル",       "管轄権"),
+    ("foregoing",     "battle_l900", 4, "TOEIC®900点レベル", "上記の"),
+    ("underlying",    "boss_h3",     6, "難関大レベル",       "根底にある"),
+    ("arbitrator",    "battle_l800", 3, "TOEIC®800点レベル", "仲裁人"),
+    ("elaborate",     "boss_h3",     1, "難関大レベル",       "精巧な"),
+    ("commence",      "battle_l900", 2, "TOEIC®900点レベル", "開始する"),
+    ("counterfeit",   "battle_l800", 5, "TOEIC®800点レベル", "偽造の"),
 ]
 
 SETS = {  # 名前: (単語の一覧, ファイル名の頭, 設定ファイル, 上の2行目)
@@ -54,11 +61,16 @@ SETS = {  # 名前: (単語の一覧, ファイル名の頭, 設定ファイル,
 HOOK_Y, COUNT_Y = 250, 1760   # 上の字幕（問題の枠より上）と、数字（十字キーのあたり）
 
 
+def slug(word):
+    """ファイル名・読み上げ音声の名前。空白はハイフンに（assets/voice/earmark-funds.mp3 と同じ）"""
+    return word.replace(" ", "-")
+
+
 def still(clip, n, word, after=-0.08, tag=""):
     """劣化なしの録画から1コマを PNG で抜く。
     after=-0.08 … 答える直前（問題）。after=0.4 … 答えた直後（正解の選択肢が光り、「単語 = 意味」が出ている）"""
     ev = json.load(open(os.path.join(ROOT, "movie/play", clip + ".json")))["events"]
-    out = os.path.join(ROOT, "movie/tmp/quiz", word + tag + ".png")
+    out = os.path.join(ROOT, "movie/tmp/quiz", slug(word) + tag + ".png")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     subprocess.run([FF, "-hide_banner", "-loglevel", "error", "-y", "-ss", "%.3f" % (ev["answer%d" % n] + after),
                     "-i", os.path.join(ROOT, "movie/play", clip + ".mkv"), "-frames:v", "1", out], check=True)
@@ -71,7 +83,7 @@ def reel(i, word, clip, n, level, meaning, pr, prefix="Q", hook="3秒で答え�
     cuts = [
         # 1 問題が出る（0.35倍。答える前で切れる）
         dict(src="play/" + clip, beats=2, at="quiz%d" % n, shift=-0.05, speed=0.35, **calm,
-             sfx=[["cursor", 0, 0.35], ["voice/" + word, 0, 1.5]],
+             sfx=[["cursor", 0, 0.35], ["voice/" + slug(word), 0, 1.5]],
              cap=[level, hook], capBeats=11, capPop=0.35, capY=HOOK_Y, capSize=92),
         # 2 3・2・1
         *[dict(src=png, beats=3, **calm, pulse=0.012, sfx=[["cursor", 0, 0.5]],
@@ -87,7 +99,7 @@ def reel(i, word, clip, n, level, meaning, pr, prefix="Q", hook="3秒で答え�
     theme = dict(pr["reels"]["main"]["theme"])
     end = dict(pr["reels"]["main"]["endcard"], beats=6, slamBeat=6)
     return {"title": "英単語クイズ：%s（%s）" % (word, level),
-            "out": "movie/out/quiz/%s_%02d_%s.mp4" % (prefix, i + 1, word),
+            "out": "movie/out/quiz/%s_%02d_%s.mp4" % (prefix, i + 1, slug(word)),
             "music": {"track": "arena4", "startBeat": 21},
             "theme": theme, "endcard": end, "cuts": cuts}
 
@@ -103,8 +115,8 @@ def main():
         if want and q[0] not in want:
             continue
         if not images_only:
-            reels["%s_%s" % (prefix.lower(), q[0])] = reel(i, *q, pr, prefix=prefix, hook=hook)
-        name = "movie/out/quiz/%s_%02d_%s" % (prefix, i + 1, q[0])
+            reels["%s_%s" % (prefix.lower(), slug(q[0]))] = reel(i, *q, pr, prefix=prefix, hook=hook)
+        name = "movie/out/quiz/%s_%02d_%s" % (prefix, i + 1, slug(q[0]))
         words.append({"word": q[0], "level": q[3], "meaning": q[4], "hook": hook,
                       "still": still(q[1], q[2], q[0]), "out": name + ".png",
                       "answer_still": still(q[1], q[2], q[0], after=0.4, tag="_answer"),

@@ -555,11 +555,13 @@ function checkFont() {
         localStorage.setItem("wq2_mode_v1", JSON.stringify(
           g ? { mode: "student", grade: g, lock: lock } : { mode: "toeic", grade: "j3", lock: lock }));
       } catch (e) {}
-      // 出題レベルの固定はプレミアムでだけ効くので、録画のときはプレミアム扱いにする
+      // 出題レベルの固定はプレミアムでだけ効くので、録画のときはプレミアム扱いにする。
+      // pvocab.js は pstore.js より先に読まれ、読み込んだ瞬間に出題範囲を組むので、
+      // WQ2_STORE ができる前から「プレミアム」と答えないと固定が効かない（実際に効かなかった）
       if (lock) {
         var store;
         Object.defineProperty(window, "WQ2_STORE", { configurable: true,
-          get: function () { return store; },
+          get: function () { return store || { isPremium: function () { return true; } }; },
           set: function (v) { if (v) v.isPremium = function () { return true; }; store = v; } });
       }
     }, [GRADE, LOCK]);

@@ -508,6 +508,9 @@ async function buildReel(name, cfg, defaults) {
     "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv",
     "-profile:v", "high", "-level", "4.2", "-r", String(FPS),
     "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2", "-movflags", "+faststart", out]));
+  // 途中のファイル（劣化なしのカットとつないだもの）は1本で 1〜2GB になるので消す。
+  // 残しておくと何本も組み立てるうちにディスクがいっぱいになった
+  files.concat([seq, list]).forEach(f => fs.rmSync(f, { force: true }));
   const mb = (fs.statSync(out).size / 1048576).toFixed(1);
   console.log(`  ✓ ${rel(out)}  ${total.toFixed(1)}秒 / ${mb}MB`);
   return { out, total };
