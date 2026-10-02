@@ -382,8 +382,8 @@ async function buildReel(name, cfg, defaults) {
   const E = j => ep.t0 + j * beatLen;
   // catch を null にすると、ロゴだけで締める
   const endItems = (!letters && ec.catch) ? [{ kind: "catch", text: ec.catch, a: E(ec.catchBeat == null ? 1 : ec.catchBeat), b: total }] : [];
-  // 締めの一行（ロゴの下の札）。subSize で字の大きさを変えられる（ふだんは 40px）
-  if (!letters && ec.text) endItems.push({ kind: "sub", text: ec.text, a: E(2), b: total, size: ec.subSize });
+  // 締めの一行（ロゴの下の札）。subSize で字の大きさ（ふだんは 40px）、subBeat で出る拍（ふだんは 2。0 でロゴと同時）
+  if (!letters && ec.text) endItems.push({ kind: "sub", text: ec.text, a: E(ec.subBeat == null ? 2 : ec.subBeat), b: total, size: ec.subSize });
   if (ec.note) endItems.push({ kind: "note", text: ec.note, a: letters ? slamT : E(ec.noteBeat == null ? 3 : ec.noteBeat), b: total });
   const word = letters ? await renderLetters(ec.word || "WORDRIA", theme) : null;
   await renderPngs(caps.concat(endItems), theme);

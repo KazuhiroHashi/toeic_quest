@@ -418,6 +418,7 @@
         "catch": "単語帳を開くより、冒険しよう。",
         "text": "App Store・Google Play で配信中",
         "subSize": 55,
+        "subBeat": 0,
         "beats": 8,
         "slamBeat": 8,
         "catchBeat": 0,
