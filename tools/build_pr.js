@@ -183,7 +183,7 @@ const STYLE = (th) => `
     -webkit-text-stroke: 3px rgba(20,12,60,.9); paint-order: stroke fill;
     text-shadow: 0 0 18px ${th.edge}aa, 0 4px 0 rgba(0,0,0,.45), 0 10px 24px rgba(0,0,0,.6);
   }
-  .sub { font-size: 40px; }
+  .sub { font-size: 40px; padding-left: .6em; padding-right: .6em; }
   /* 大きく色つきの字幕（家族制作のPR動画と同じ見せ方）。札は付けず、
      ピンクの極太丸ゴシックに太い白フチとピンクの光 */
   .big { display:inline-block; font-weight:900; font-size:${th.capSize || 104}px; line-height:1.15;
@@ -242,7 +242,7 @@ async function renderPngs(items, theme) {
         if (el.dataset.size) el.style.fontSize = el.dataset.size + "px";
         let fs = parseFloat(getComputedStyle(el).fontSize);
         while (el.offsetWidth > max && fs > 18) { fs -= 1; el.style.fontSize = fs + "px"; }
-      }, it.kind === "note" ? 1020 : it.kind === "big" || it.kind === "catch" ? 1010 : 960);
+      }, it.kind === "note" ? 1020 : it.kind === "big" || it.kind === "catch" ? 1010 : it.kind === "sub" ? 1030 : 960);
       await page.locator("#wrap").screenshot({ path: it.file, omitBackground: true });
     }
     await browser.close();
