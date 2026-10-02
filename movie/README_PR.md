@@ -27,6 +27,7 @@ X にそのまま添付でき、App Store のプレビュー動画の規定（15
 | `out/PR_hs.mp4` | 高校生・大学受験 | boss（52秒あたりから） | 高校生はWORDRIAに集まれ！ → 高校基礎から難関大レベルまで → 楽しく英単語が学べる！ → 攻略の鍵は答えるスピードと戦略！（16拍） → 夢中になる！自然と身につく！ | 同上 |
 | `out/PR_parent.mp4` | 保護者 | arena1（74秒あたりから） | ゲームばかり…と思っていませんか？ → … → 「勉強しなさい」と言う前に。 | 同上 |
 | `out/PR_dev.mp4` | X・AI界隈（全編AIで作成） | king1（ハウル・toeic と同じ区間） | このゲームは全編AIで作成 → 設計・プログラム：Claude Code Fable5 → キャラ・敵・背景：GPT-image 2.0 → BGM：Suno v5.5 / v6 → 映像：Seedance 2.5 → AIの掛け合わせでここまで作れる！ | main と同じ |
+| `out/PR_android.mp4` | Google Play 配信開始 | arena4（battle4・main と同じく締めが一番激しい所に来る） | 英単語はゲームで覚えよう！ → Androidでも配信開始！ → TOEIC950点保持者が開発！ → 全編AIで作った英単語RPG → 中学・高校英語からTOEICまで対応 → 遊ぶほど単語が身につく！（12拍。2つ目と5つ目は8拍） | 白地にキャッチとロゴ、その下に「App Store・Google Play で配信中」 |
 
 言っていることは `docs/MISSION.md` と `docs/STORE_COPY.md` に合わせ、価格・回数・収録語数の
 ような変わりうる数字は出していない。画面に「TOEIC」が映るので、6本とも末尾に免責表記を入れた。

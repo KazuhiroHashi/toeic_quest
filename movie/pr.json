@@ -396,6 +396,78 @@
         {"src": "play/dragon", "beats": 2, "at": "answer5", "shift": 0.12, "zoom": 1.16, "focus": [0.5, 0.42], "pulse": 0.022, "sfx": [["ok", 0, 0.4]]},
         {"src": "play/boss", "beats": 2, "at": "answer6", "shift": 0.12, "zoom": 1.16, "focus": [0.5, 0.42], "pulse": 0.022, "sfx": [["ok", 0, 0.4]]}
       ]
+    },
+    "android": {
+      "title": "Google Play 配信開始（バトルだけ・大きなピンク字幕・白地のロゴ＋配信中）",
+      "music": {
+        "track": "arena4",
+        "startBeat": 21
+      },
+      "theme": {
+        "bg1": "#1b1650",
+        "bg2": "#4b2391",
+        "edge": "#FFD24A",
+        "accent": "#FFD24A",
+        "capStyle": "big",
+        "capSize": 104,
+        "fill": "#ff2fa6",
+        "lineStep": 1,
+        "catchStyle": "gold"
+      },
+      "endcard": {
+        "catch": "単語帳を開くより、冒険しよう。",
+        "text": "App Store・Google Play で配信中",
+        "beats": 8,
+        "slamBeat": 8,
+        "catchBeat": 0,
+        "noteBeat": 2,
+        "hold": 0.3,
+        "scale": 0.84,
+        "y": 0.5,
+        "catchY": 0.33,
+        "capY": 985,
+        "shot": {"src": "color:#fbfbfd", "stripes": 28, "drift": 0.0, "fx": []},
+        "cutAfter": 0.18,
+        "cutFade": 0.06,
+        "slamSfx": []
+      },
+      "cuts": [
+        {"src": "play/boss", "beats": 4, "at": 0.8, "pulse": 0.03, "sfx": [["boss", 0, 0.45]], "cap": ["英単語は", "ゲームで覚えよう！"], "capBeats": 12, "capPop": 0.35},
+        {"src": "play/dragon", "beats": 2, "at": 1.1, "pulse": 0.022, "sfx": [["encounter", 0, 0.4]]},
+        {"src": "play/b3", "beats": 2, "at": 2.3, "pulse": 0.022},
+        {"src": "play/battle", "beats": 4, "sync": {"event": "answer1", "beat": 3}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 3, 0.5]], "pulse": 0.022},
+        {"src": "play/battle", "beats": 2, "at": "answer1", "shift": 0.7, "fx": ["punch", "shake"], "sfx": [["slash", 0, 0.5]], "cap": ["Androidでも", "配信開始！"], "capBeats": 8, "capPop": 0.35, "flash": true},
+        {"src": "play/dragon", "beats": 2, "sync": {"event": "answer2", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]]},
+        {"src": "play/dragon", "beats": 2, "at": "answer2", "shift": 0.75, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.55]]},
+        {"src": "play/b4", "beats": 2, "sync": {"event": "answer2", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]]},
+        {"src": "play/strategy", "beats": 4, "sync": {"event": "pick1", "beat": 4}, "zoom": 1.1, "focus": [0.5, 0.72], "capSize": 92, "sfx": [["cursor", 1, 0.4], ["cursor", 2, 0.4], ["cursor", 3, 0.4]], "cap": ["TOEIC950点", "保持者が開発！"], "capBeats": 12, "capPop": 0.35, "flash": true},
+        {"src": "play/strategy", "beats": 2, "at": "answer1", "shift": 0.7, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.55]]},
+        {"src": "play/b3", "beats": 2, "sync": {"event": "answer1", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]]},
+        {"src": "play/b3", "beats": 2, "at": "answer1", "shift": 0.7, "fx": ["punch", "shake"], "sfx": [["slash", 0, 0.5]]},
+        {"src": "play/b4", "beats": 2, "at": "answer2", "shift": 0.7, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.55]]},
+        {"src": "play/boss", "beats": 2, "sync": {"event": "answer3", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]], "cap": ["全編AIで作った", "英単語RPG"], "capBeats": 12, "capPop": 0.35, "flash": true},
+        {"src": "play/boss", "beats": 2, "at": "answer3", "shift": 0.75, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.55]]},
+        {"src": "play/b4", "beats": 1, "sync": {"event": "answer3", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["cursor", 0, 0.35]]},
+        {"src": "play/b4", "beats": 1, "at": "answer3", "shift": 0.7, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
+        {"src": "play/dragon", "beats": 1, "sync": {"event": "answer3", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["cursor", 0, 0.35]]},
+        {"src": "play/dragon", "beats": 1, "at": "answer3", "shift": 0.75, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
+        {"src": "play/boss", "beats": 1, "sync": {"event": "answer4", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["cursor", 0, 0.35]]},
+        {"src": "play/boss", "beats": 1, "at": "answer4", "shift": 0.75, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
+        {"src": "play/b3", "beats": 1, "sync": {"event": "answer4", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["cursor", 0, 0.35]]},
+        {"src": "play/b3", "beats": 1, "at": "answer4", "shift": 0.7, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
+        {"src": "play/battle", "beats": 2, "sync": {"event": "answer3", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]], "cap": ["中学・高校英語から", "TOEICまで対応"], "capBeats": 8, "capPop": 0.35, "flash": true},
+        {"src": "play/battle", "beats": 2, "at": "answer3", "shift": 0.7, "fx": ["punch", "shake"], "sfx": [["slash", 0, 0.5]]},
+        {"src": "play/b4", "beats": 2, "sync": {"event": "answer5", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["ok", 1, 0.5]]},
+        {"src": "play/b4", "beats": 2, "at": "answer5", "shift": 0.7, "fx": ["punch", "shake"], "sfx": [["crit", 0, 0.55]]},
+        {"src": "play/dragon", "beats": 2, "at": "answer4", "shift": 0.12, "zoom": 1.16, "focus": [0.5, 0.42], "pulse": 0.022, "sfx": [["ok", 0, 0.4]], "cap": ["遊ぶほど", "単語が身につく！"], "capBeats": 12, "capPop": 0.35, "flash": true},
+        {"src": "play/b4", "beats": 2, "at": "answer4", "shift": 0.12, "zoom": 1.16, "focus": [0.5, 0.42], "pulse": 0.022, "sfx": [["ok", 0, 0.4]]},
+        {"src": "play/boss", "beats": 2, "at": "answer6", "shift": 0.12, "zoom": 1.16, "focus": [0.5, 0.42], "pulse": 0.022, "sfx": [["ok", 0, 0.4]]},
+        {"src": "play/dragon", "beats": 2, "at": "answer5", "shift": 0.12, "zoom": 1.16, "focus": [0.5, 0.42], "pulse": 0.022, "sfx": [["ok", 0, 0.4]]},
+        {"src": "play/battle", "beats": 1, "sync": {"event": "answer4", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["cursor", 0, 0.35]]},
+        {"src": "play/battle", "beats": 1, "at": "answer4", "shift": 0.7, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]},
+        {"src": "play/boss", "beats": 1, "sync": {"event": "answer5", "beat": 1}, "zoom": 1.12, "focus": [0.5, 0.25], "sfx": [["cursor", 0, 0.35]]},
+        {"src": "play/boss", "beats": 1, "at": "answer5", "shift": 0.75, "fx": ["punch", "shake"], "sfx": [["hit", 0, 0.45]]}
+      ]
     }
   }
 }
