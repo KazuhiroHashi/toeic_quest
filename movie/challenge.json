@@ -1,0 +1,873 @@
+{
+ "defaults": {
+  "theme": {
+   "bg1": "#1b1650",
+   "bg2": "#4b2391",
+   "edge": "#FFD24A",
+   "accent": "#FFD24A"
+  },
+  "endcard": {
+   "logo": "assets/ui/logo.png",
+   "catch": "単語帳を開くより、冒険しよう。",
+   "beats": 8,
+   "scale": 0.8,
+   "y": 0.42,
+   "shot": {
+    "src": "movie/src/op1.mp4",
+    "at": 2.4,
+    "dim": 0.42,
+    "drift": 0.06
+   },
+   "note": "※「TOEIC」はETSの登録商標です。本アプリはETSおよびTOEICプログラムとは一切関係ありません。",
+   "capY": 1575
+  }
+ },
+ "reels": {
+  "c_mix": {
+   "title": "5問チャレンジ（中学からTOEIC 900点まで）",
+   "out": "movie/out/challenge/C_mix.mp4",
+   "music": {
+    "track": "arena4",
+    "startBeat": 21
+   },
+   "theme": {
+    "bg1": "#1b1650",
+    "bg2": "#4b2391",
+    "edge": "#FFD24A",
+    "accent": "#FFD24A",
+    "capStyle": "big",
+    "capSize": 104,
+    "fill": "#ff2fa6",
+    "lineStep": 1,
+    "catchStyle": "gold"
+   },
+   "endcard": {
+    "catch": "単語帳を開くより、冒険しよう。",
+    "text": "App Store・Google Play で配信中",
+    "subSize": 55,
+    "subBeat": 0,
+    "beats": 6,
+    "slamBeat": 6,
+    "catchBeat": 0,
+    "noteBeat": 2,
+    "hold": 0.3,
+    "scale": 0.84,
+    "y": 0.5,
+    "catchY": 0.33,
+    "capY": 985,
+    "shot": {
+     "src": "color:#fbfbfd",
+     "stripes": 28,
+     "drift": 0.0,
+     "fx": []
+    },
+    "cutAfter": 0.18,
+    "cutFade": 0.06,
+    "slamSfx": []
+   },
+   "cuts": [
+    {
+     "src": "play/boss",
+     "beats": 4,
+     "at": 0.8,
+     "pulse": 0.03,
+     "sfx": [
+      [
+       "boss",
+       0,
+       0.45
+      ]
+     ],
+     "cap": [
+      "5問ぜんぶ",
+      "わかる？"
+     ],
+     "lineAt": [
+      0,
+      0
+     ],
+     "capBeats": 4,
+     "capPop": 0.4,
+     "capSize": 120
+    },
+    {
+     "src": "movie/tmp/quiz/fair.png",
+     "beats": 5,
+     "pulse": 0.012,
+     "flash": true,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.45
+      ],
+      [
+       "voice/fair",
+       0,
+       1.5
+      ]
+     ],
+     "cap": [
+      "Q1",
+      "中学レベル"
+     ],
+     "lineAt": [
+      0,
+      0
+     ],
+     "capBeats": 5,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "play/dragon_j3",
+     "beats": 3,
+     "sync": {
+      "event": "answer4",
+      "beat": 0.3
+     },
+     "fx": [
+      "punch"
+     ],
+     "zoom": 1.0,
+     "drift": 0.0,
+     "flash": false,
+     "sfx": [
+      [
+       "ok",
+       0.3,
+       0.6
+      ]
+     ],
+     "cap": [
+      "正解",
+      "「公平な」"
+     ],
+     "lineAt": [
+      0,
+      0
+     ],
+     "capBeats": 3,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "movie/tmp/quiz/anxious.png",
+     "beats": 5,
+     "pulse": 0.012,
+     "flash": true,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.45
+      ],
+      [
+       "voice/anxious",
+       0,
+       1.5
+      ]
+     ],
+     "cap": [
+      "Q2",
+      "高校基礎レベル"
+     ],
+     "lineAt": [
+      0,
+      0
+     ],
+     "capBeats": 5,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "play/boss_h1",
+     "beats": 3,
+     "sync": {
+      "event": "answer2",
+      "beat": 0.3
+     },
+     "fx": [
+      "punch"
+     ],
+     "zoom": 1.0,
+     "drift": 0.0,
+     "flash": false,
+     "sfx": [
+      [
+       "ok",
+       0.3,
+       0.6
+      ]
+     ],
+     "cap": [
+      "正解",
+      "「心配して」"
+     ],
+     "lineAt": [
+      0,
+      0
+     ],
+     "capBeats": 3,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "movie/tmp/quiz/perspective.png",
+     "beats": 5,
+     "pulse": 0.012,
+     "flash": true,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.45
+      ],
+      [
+       "voice/perspective",
+       0,
+       1.5
+      ]
+     ],
+     "cap": [
+      "Q3",
+      "大学入試レベル"
+     ],
+     "lineAt": [
+      0,
+      0
+     ],
+     "capBeats": 5,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "play/b4_h3",
+     "beats": 3,
+     "sync": {
+      "event": "answer1",
+      "beat": 0.3
+     },
+     "fx": [
+      "punch"
+     ],
+     "zoom": 1.0,
+     "drift": 0.0,
+     "flash": false,
+     "sfx": [
+      [
+       "ok",
+       0.3,
+       0.6
+      ]
+     ],
+     "cap": [
+      "正解",
+      "「観点」"
+     ],
+     "lineAt": [
+      0,
+      0
+     ],
+     "capBeats": 3,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "movie/tmp/quiz/jurisdiction.png",
+     "beats": 5,
+     "pulse": 0.012,
+     "flash": true,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.45
+      ],
+      [
+       "voice/jurisdiction",
+       0,
+       1.5
+      ]
+     ],
+     "cap": [
+      "Q4",
+      "難関大レベル"
+     ],
+     "lineAt": [
+      0,
+      0
+     ],
+     "capBeats": 5,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "play/b4_h3",
+     "beats": 3,
+     "sync": {
+      "event": "answer3",
+      "beat": 0.3
+     },
+     "fx": [
+      "punch"
+     ],
+     "zoom": 1.0,
+     "drift": 0.0,
+     "flash": false,
+     "sfx": [
+      [
+       "ok",
+       0.3,
+       0.6
+      ]
+     ],
+     "cap": [
+      "正解",
+      "「管轄権」"
+     ],
+     "lineAt": [
+      0,
+      0
+     ],
+     "capBeats": 3,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "movie/tmp/quiz/mundane.png",
+     "beats": 5,
+     "pulse": 0.012,
+     "flash": true,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.45
+      ],
+      [
+       "voice/mundane",
+       0,
+       1.5
+      ]
+     ],
+     "cap": [
+      "Q5",
+      "TOEIC®900点レベル"
+     ],
+     "lineAt": [
+      0,
+      0
+     ],
+     "capBeats": 5,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "play/battle_l900",
+     "beats": 3,
+     "sync": {
+      "event": "answer3",
+      "beat": 0.3
+     },
+     "fx": [
+      "punch"
+     ],
+     "zoom": 1.0,
+     "drift": 0.0,
+     "flash": false,
+     "sfx": [
+      [
+       "ok",
+       0.3,
+       0.6
+      ]
+     ],
+     "cap": [
+      "正解",
+      "「ありふれた」"
+     ],
+     "lineAt": [
+      0,
+      0
+     ],
+     "capBeats": 3,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "play/boss",
+     "beats": 4,
+     "at": "answer4",
+     "shift": 0.75,
+     "fx": [
+      "punch",
+      "shake"
+     ],
+     "sfx": [
+      [
+       "crit",
+       0,
+       0.55
+      ]
+     ],
+     "cap": [
+      "何問わかった？",
+      "コメントで教えて！"
+     ],
+     "capBeats": 4,
+     "capPop": 0.35,
+     "flash": true
+    }
+   ]
+  },
+  "c_toeic": {
+   "title": "5問チャレンジ（TOEIC 500点から900点まで）",
+   "out": "movie/out/challenge/C_toeic.mp4",
+   "music": {
+    "track": "arena4",
+    "startBeat": 21
+   },
+   "theme": {
+    "bg1": "#1b1650",
+    "bg2": "#4b2391",
+    "edge": "#FFD24A",
+    "accent": "#FFD24A",
+    "capStyle": "big",
+    "capSize": 104,
+    "fill": "#ff2fa6",
+    "lineStep": 1,
+    "catchStyle": "gold"
+   },
+   "endcard": {
+    "catch": "単語帳を開くより、冒険しよう。",
+    "text": "App Store・Google Play で配信中",
+    "subSize": 55,
+    "subBeat": 0,
+    "beats": 6,
+    "slamBeat": 6,
+    "catchBeat": 0,
+    "noteBeat": 2,
+    "hold": 0.3,
+    "scale": 0.84,
+    "y": 0.5,
+    "catchY": 0.33,
+    "capY": 985,
+    "shot": {
+     "src": "color:#fbfbfd",
+     "stripes": 28,
+     "drift": 0.0,
+     "fx": []
+    },
+    "cutAfter": 0.18,
+    "cutFade": 0.06,
+    "slamSfx": []
+   },
+   "cuts": [
+    {
+     "src": "play/boss",
+     "beats": 4,
+     "at": 0.8,
+     "pulse": 0.03,
+     "sfx": [
+      [
+       "boss",
+       0,
+       0.45
+      ]
+     ],
+     "cap": [
+      "5問ぜんぶ",
+      "わかる？"
+     ],
+     "lineAt": [
+      0,
+      0
+     ],
+     "capBeats": 4,
+     "capPop": 0.4,
+     "capSize": 120
+    },
+    {
+     "src": "movie/tmp/quiz/inspection.png",
+     "beats": 5,
+     "pulse": 0.012,
+     "flash": true,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.45
+      ],
+      [
+       "voice/inspection",
+       0,
+       1.5
+      ]
+     ],
+     "cap": [
+      "Q1",
+      "TOEIC®500点レベル"
+     ],
+     "lineAt": [
+      0,
+      0
+     ],
+     "capBeats": 5,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "play/boss",
+     "beats": 3,
+     "sync": {
+      "event": "answer4",
+      "beat": 0.3
+     },
+     "fx": [
+      "punch"
+     ],
+     "zoom": 1.0,
+     "drift": 0.0,
+     "flash": false,
+     "sfx": [
+      [
+       "ok",
+       0.3,
+       0.6
+      ]
+     ],
+     "cap": [
+      "正解",
+      "「検査」"
+     ],
+     "lineAt": [
+      0,
+      0
+     ],
+     "capBeats": 3,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "movie/tmp/quiz/turnout.png",
+     "beats": 5,
+     "pulse": 0.012,
+     "flash": true,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.45
+      ],
+      [
+       "voice/turnout",
+       0,
+       1.5
+      ]
+     ],
+     "cap": [
+      "Q2",
+      "TOEIC®600点レベル"
+     ],
+     "lineAt": [
+      0,
+      0
+     ],
+     "capBeats": 5,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "play/dragon",
+     "beats": 3,
+     "sync": {
+      "event": "answer5",
+      "beat": 0.3
+     },
+     "fx": [
+      "punch"
+     ],
+     "zoom": 1.0,
+     "drift": 0.0,
+     "flash": false,
+     "sfx": [
+      [
+       "ok",
+       0.3,
+       0.6
+      ]
+     ],
+     "cap": [
+      "正解",
+      "「参加者数」"
+     ],
+     "lineAt": [
+      0,
+      0
+     ],
+     "capBeats": 3,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "movie/tmp/quiz/transit.png",
+     "beats": 5,
+     "pulse": 0.012,
+     "flash": true,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.45
+      ],
+      [
+       "voice/transit",
+       0,
+       1.5
+      ]
+     ],
+     "cap": [
+      "Q3",
+      "TOEIC®700点レベル"
+     ],
+     "lineAt": [
+      0,
+      0
+     ],
+     "capBeats": 5,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "play/boss",
+     "beats": 3,
+     "sync": {
+      "event": "answer6",
+      "beat": 0.3
+     },
+     "fx": [
+      "punch"
+     ],
+     "zoom": 1.0,
+     "drift": 0.0,
+     "flash": false,
+     "sfx": [
+      [
+       "ok",
+       0.3,
+       0.6
+      ]
+     ],
+     "cap": [
+      "正解",
+      "「通過」"
+     ],
+     "lineAt": [
+      0,
+      0
+     ],
+     "capBeats": 3,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "movie/tmp/quiz/arbitrator.png",
+     "beats": 5,
+     "pulse": 0.012,
+     "flash": true,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.45
+      ],
+      [
+       "voice/arbitrator",
+       0,
+       1.5
+      ]
+     ],
+     "cap": [
+      "Q4",
+      "TOEIC®800点レベル"
+     ],
+     "lineAt": [
+      0,
+      0
+     ],
+     "capBeats": 5,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "play/battle_l800",
+     "beats": 3,
+     "sync": {
+      "event": "answer3",
+      "beat": 0.3
+     },
+     "fx": [
+      "punch"
+     ],
+     "zoom": 1.0,
+     "drift": 0.0,
+     "flash": false,
+     "sfx": [
+      [
+       "ok",
+       0.3,
+       0.6
+      ]
+     ],
+     "cap": [
+      "正解",
+      "「仲裁人」"
+     ],
+     "lineAt": [
+      0,
+      0
+     ],
+     "capBeats": 3,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "movie/tmp/quiz/foregoing.png",
+     "beats": 5,
+     "pulse": 0.012,
+     "flash": true,
+     "zoom": 1.0,
+     "drift": 0.0,
+     "fx": [],
+     "sfx": [
+      [
+       "cursor",
+       0,
+       0.45
+      ],
+      [
+       "voice/foregoing",
+       0,
+       1.5
+      ]
+     ],
+     "cap": [
+      "Q5",
+      "TOEIC®900点レベル"
+     ],
+     "lineAt": [
+      0,
+      0
+     ],
+     "capBeats": 5,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "play/battle_l900",
+     "beats": 3,
+     "sync": {
+      "event": "answer4",
+      "beat": 0.3
+     },
+     "fx": [
+      "punch"
+     ],
+     "zoom": 1.0,
+     "drift": 0.0,
+     "flash": false,
+     "sfx": [
+      [
+       "ok",
+       0.3,
+       0.6
+      ]
+     ],
+     "cap": [
+      "正解",
+      "「上記の」"
+     ],
+     "lineAt": [
+      0,
+      0
+     ],
+     "capBeats": 3,
+     "capPop": 0.35,
+     "capY": 250,
+     "capSize": 92
+    },
+    {
+     "src": "play/boss",
+     "beats": 4,
+     "at": "answer4",
+     "shift": 0.75,
+     "fx": [
+      "punch",
+      "shake"
+     ],
+     "sfx": [
+      [
+       "crit",
+       0,
+       0.55
+      ]
+     ],
+     "cap": [
+      "何問わかった？",
+      "コメントで教えて！"
+     ],
+     "capBeats": 4,
+     "capPop": 0.35,
+     "flash": true
+    }
+   ]
+  }
+ }
+}
