@@ -28,6 +28,9 @@ X にそのまま添付でき、App Store のプレビュー動画の規定（15
 | `out/PR_parent.mp4` | 保護者 | arena1（74秒あたりから） | ゲームばかり…と思っていませんか？ → … → 「勉強しなさい」と言う前に。 | 同上 |
 | `out/PR_dev.mp4` | X・AI界隈（全編AIで作成） | king1（ハウル・toeic と同じ区間） | このゲームは全編AIで作成 → 設計・プログラム：Claude Code Fable5 → キャラ・敵・背景：GPT-image 2.0 → BGM：Suno v5.5 / v6 → 映像：Seedance 2.5 → AIの掛け合わせでここまで作れる！ | main と同じ |
 | `out/PR_android.mp4` | Google Play 配信開始 | arena4（battle4・main と同じく締めが一番激しい所に来る） | 英単語はゲームで覚えよう！ → Androidでも配信開始！ → TOEIC950点保持者が開発！ → 全編AIで作った英単語RPG → 中学・高校英語からTOEICまで対応 → 遊ぶほど単語が身につく！（12拍。2つ目と5つ目は8拍） | 白地にキャッチとロゴ、その下に「App Store・Google Play で配信中」 |
+| `out/PR_android2.mp4` | Google Play 配信開始・問いかけ型 | battle2（曲の頭から） | 単語帳、まだ開いてる？ → WORDRIAならバトルで覚える！ → 速く答えるほど一撃が重い！ → 中学・高校英語からTOEICまで対応 → つい夢中で気づけば覚えてる！ → Androidでも配信開始！ | android と同じ |
+| `out/PR_android3.mp4` | Google Play 配信開始・お知らせ型 | king1（ハウル・toeic と同じ区間） | Androidユーザー、お待たせ！ → 英単語RPG「WORDRIA」 → Google Playで配信開始！ → 答える速さが攻撃力になる！ → TOEIC950点保持者が開発 → 遊ぶほど単語が身につく！ | 同上 |
+| `out/PR_android4.mp4` | Google Play 配信開始・言い切り型 | boss（hs と同じ区間） | 暗記は、もう終わり。 → これからはバトルで覚える。 → 正解すると攻撃が決まる！ → 全編AIで作った英単語RPG → iPhoneにもAndroidにも → 今すぐ冒険へ！ | 同上 |
 
 言っていることは `docs/MISSION.md` と `docs/STORE_COPY.md` に合わせ、価格・回数・収録語数の
 ような変わりうる数字は出していない。画面に「TOEIC」が映るので、6本とも末尾に免責表記を入れた。
