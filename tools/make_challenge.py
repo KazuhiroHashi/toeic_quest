@@ -2,7 +2,7 @@
 # SNS 用の「5問チャレンジ」動画（約20秒・縦）。広告っぽさを抑えて、最後まで見て
 # もらう・コメントしてもらう形にしたもの。
 #
-#   python3 tools/make_challenge.py          # 2本とも → movie/out/challenge/C_<名前>.mp4
+#   python3 tools/make_challenge.py          # 全部 → movie/out/challenge/C_<名前>.mp4
 #   python3 tools/make_challenge.py mix      # 1本だけ
 #
 # 流れ（曲は arena4、1拍 約0.4秒）
@@ -35,17 +35,46 @@ SETS = {
         ("arbitrator",   "battle_l800", 3, "TOEIC®800点レベル", "仲裁人"),
         ("foregoing",    "battle_l900", 4, "TOEIC®900点レベル", "上記の"),
     ]),
+    # 2回目の4本。最初の2本と単語が重ならないようにした。3つ目は最初の「つかみ」の字幕
+    "jhs": ("中学英語", [
+        ("advice",       "boss_j3",     3, "中学レベル",         "助言"),
+        ("public",       "b3_j3",       2, "中学レベル",         "公共の"),
+        ("sudden",       "dragon_j3",   2, "中学レベル",         "突然の"),
+        ("range",        "boss_j3",     5, "中学レベル",         "範囲"),
+        ("survey",       "dragon_j3",   6, "中学レベル",         "調査"),
+    ], ["中学英語5問", "ぜんぶわかる？"]),
+    "hs": ("高校基礎から難関大まで", [
+        ("scatter",      "dragon_h1",   1, "高校基礎レベル",     "まき散らす"),
+        ("retain",       "boss_h1",     3, "高校基礎レベル",     "保持する"),
+        ("migration",    "b3_h3",       1, "大学入試レベル",     "移住"),
+        ("hostility",    "b3_h3",       4, "大学入試レベル",     "敵意"),
+        ("deduce",       "dragon_h3",   5, "難関大レベル",       "推論する"),
+    ], ["高校英語5問", "ぜんぶわかる？"]),
+    "toeic_basic": ("TOEIC 400点から700点まで", [
+        ("hurt",         "b4",          4, "TOEIC®400点レベル", "痛める"),
+        ("reply-all",    "b3",          1, "TOEIC®500点レベル", "全員に返信する"),
+        ("correspond",   "b3",          2, "TOEIC®600点レベル", "やり取りする"),
+        ("consist of",   "b4",          2, "TOEIC®600点レベル", "〜から成る"),
+        ("appealing",    "dragon",      1, "TOEIC®700点レベル", "魅力的な"),
+    ], ["TOEIC®5問", "ぜんぶわかる？"]),
+    "toeic_adv": ("TOEIC 800点・900点", [
+        ("set a budget", "battle_l800", 4, "TOEIC®800点レベル", "予算を組む"),
+        ("pending",      "battle_l800", 2, "TOEIC®800点レベル", "保留中の"),
+        ("counterfeit",  "battle_l800", 5, "TOEIC®800点レベル", "偽造の"),
+        ("stockpile",    "battle_l900", 5, "TOEIC®900点レベル", "備蓄"),
+        ("niche",        "battle_l900", 1, "TOEIC®900点レベル", "隙間市場"),
+    ], ["TOEIC®上級5問", "ぜんぶわかる？"]),
 }
 
 TOP_Y = 250          # 上の字幕（問題の枠より上）
 CALM = {"zoom": 1.0, "drift": 0.0, "fx": []}
 
 
-def reel(name, desc, qs, pr):
+def reel(name, desc, qs, pr, hook=None):
     cuts = [
         # 1 つかみ：敵が出る場面に大きく
         {"src": "play/boss", "beats": 4, "at": 0.8, "pulse": 0.03, "sfx": [["boss", 0, 0.45]],
-         "cap": ["5問ぜんぶ", "わかる？"], "lineAt": [0, 0], "capBeats": 4, "capPop": 0.4, "capSize": 120},
+         "cap": hook or ["5問ぜんぶ", "わかる？"], "lineAt": [0, 0], "capBeats": 4, "capPop": 0.4, "capSize": 120},
     ]
     for i, (word, clip, n, level, meaning) in enumerate(qs):
         cuts += [
@@ -73,7 +102,7 @@ def reel(name, desc, qs, pr):
 def main():
     pr = json.load(open(os.path.join(ROOT, "movie/pr.json")))
     want = sys.argv[1:] or list(SETS)
-    reels = {"c_" + n: reel(n, *SETS[n], pr) for n in want}
+    reels = {"c_" + n: reel(n, *SETS[n][:2], pr, *SETS[n][2:]) for n in want}
     os.makedirs(os.path.join(ROOT, "movie/out/challenge"), exist_ok=True)
     cfg = "movie/challenge.json"
     with open(os.path.join(ROOT, cfg), "w") as f:
