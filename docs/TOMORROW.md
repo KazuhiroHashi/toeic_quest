@@ -17,6 +17,9 @@ Google Play  versionCode 8（1.0）審査中。こちらの手は無い
 01_boss_command → 02_quiz → 03_title → 04_grades → 05_wordbook → 06_records → 07_ost
 ```
 
+**2026-10-12 時点：App Store は 1.0.3 が公開済み。Google Play は 8 (1.0) が 10/2 に公開、
+12 はまだ上げていない。テスト用の未送信の変更4件は「後で確認するために保存」を押しても残っている。**
+
 ### 0. いまの状態を見る（2分）
 
 - [ ] App Store Connect：公開中のバージョンと、1.0.3 の状態（未提出／審査中／公開済み）
